@@ -1,0 +1,462 @@
+{
+  "cash_and_marketable_securities": {
+    "name": "Cash and Cash Equivalents",
+    "statement": "BS"
+  },
+  "trade_receivables": {
+    "name": "Accounts Receivable",
+    "statement": "BS"
+  },
+  "inventories": {
+    "name": "Inventory",
+    "statement": "BS"
+  },
+  "deferred_tax_current_assets": {
+    "name": "Deferred Tax Assets, Current",
+    "statement": "BS"
+  },
+  "other_operating_current_assets": {
+    "name": "Other Current Assets",
+    "statement": "BS"
+  },
+  "other_non_operating_current_assets": {
+    "name": "Other Non-Operating Current Assets",
+    "statement": "BS"
+  },
+  "retirement_related_current_assets": {
+    "name": "Retirement Related Assets, Current",
+    "statement": "BS"
+  },
+  "current_assets_total": {
+    "name": "Total Current Assets",
+    "statement": "BS"
+  },
+  "plant_property_equipment_net": {
+    "name": "Property, Plant and Equipment",
+    "statement": "BS"
+  },
+  "goodwill": {
+    "name": "Goodwill",
+    "statement": "BS"
+  },
+  "intangible_assets": {
+    "name": "Intangible Assets",
+    "statement": "BS"
+  },
+  "longterm_investments": {
+    "name": "Long-Term Investments",
+    "statement": "BS"
+  },
+  "deferred_tax_noncurrent_assets": {
+    "name": "Deferred Tax Assets, Non-Current",
+    "statement": "BS"
+  },
+  "other_operating_non_current_assets": {
+    "name": "Other Non-Current Assets",
+    "statement": "BS"
+  },
+  "other_non_operating_non_current_assets": {
+    "name": "Other Non-Operating Non-Current Assets",
+    "statement": "BS"
+  },
+  "operating_lease_right_of_use_asset": {
+    "name": "Operating Lease Right-of-Use Asset",
+    "statement": "BS"
+  },
+  "retirement_related_non_current_assets": {
+    "name": "Retirement Related Assets, Non-Current",
+    "statement": "BS"
+  },
+  "non_current_assets_total": {
+    "name": "Total Non-Current Assets",
+    "statement": "BS"
+  },
+  "assets": {
+    "name": "Total Assets",
+    "statement": "BS"
+  },
+  "trade_payables": {
+    "name": "Accounts Payable",
+    "statement": "BS"
+  },
+  "short_term_debt": {
+    "name": "Short-Term Debt",
+    "statement": "BS"
+  },
+  "deferred_tax_current_liabilities": {
+    "name": "Deferred Tax Liabilities, Current",
+    "statement": "BS"
+  },
+  "taxes_payable": {
+    "name": "Taxes Payable",
+    "statement": "BS"
+  },
+  "dividends_payable": {
+    "name": "Dividends Payable",
+    "statement": "BS"
+  },
+  "other_operating_current_liabilities": {
+    "name": "Other Current Liabilities",
+    "statement": "BS"
+  },
+  "other_non_operating_current_liabilities": {
+    "name": "Other Non-Operating Current Liabilities",
+    "statement": "BS"
+  },
+  "retirement_related_current_liabilities": {
+    "name": "Retirement Related Liabilities, Current",
+    "statement": "BS"
+  },
+  "operating_lease_current_debt_equivalent": {
+    "name": "Operating Lease Liability, Current",
+    "statement": "BS"
+  },
+  "current_liabilities_total": {
+    "name": "Total Current Liabilities",
+    "statement": "BS"
+  },
+  "long_term_debt": {
+    "name": "Long-Term Debt",
+    "statement": "BS"
+  },
+  "deferred_tax_non_current_liabilities": {
+    "name": "Deferred Tax Liabilities, Non-Current",
+    "statement": "BS"
+  },
+  "other_operating_non_current_liabilities": {
+    "name": "Other Non-Current Liabilities",
+    "statement": "BS"
+  },
+  "other_non_operating_non_current_liabilities": {
+    "name": "Other Non-Operating Non-Current Liabilities",
+    "statement": "BS"
+  },
+  "retirement_related_non_current_liabilities": {
+    "name": "Retirement Related Liabilities, Non-Current",
+    "statement": "BS"
+  },
+  "operating_lease_non_current_debt_equivalent": {
+    "name": "Operating Lease Liability, Non-Current",
+    "statement": "BS"
+  },
+  "ongoing_operating_provisions_warranties_etc": {
+    "name": "Warranty and Other Provisions",
+    "statement": "BS"
+  },
+  "definite_lived_operating_provisions_decommissioning_etc": {
+    "name": "Asset Retirement Obligations",
+    "statement": "BS"
+  },
+  "restructuring_provisions": {
+    "name": "Restructuring Provisions",
+    "statement": "BS"
+  },
+  "non_current_liabilities_total": {
+    "name": "Total Non-Current Liabilities",
+    "statement": "BS"
+  },
+  "liabilities": {
+    "name": "Total Liabilities",
+    "statement": "BS"
+  },
+  "common_equity": {
+    "name": "Total Stockholders' Equity",
+    "statement": "BS"
+  },
+  "preferred_stock": {
+    "name": "Preferred Stock",
+    "statement": "BS"
+  },
+  "treasury_shares": {
+    "name": "Treasury Stock",
+    "statement": "BS"
+  },
+  "minority_interest_balance": {
+    "name": "Noncontrolling Interest",
+    "statement": "BS"
+  },
+  "temporary_and_mezzanine_financing": {
+    "name": "Temporary Equity",
+    "statement": "BS"
+  },
+  "all_equity_balance": {
+    "name": "Total Equity",
+    "statement": "BS"
+  },
+  "all_equity_balance_including_minority_interest": {
+    "name": "Total Equity Including Noncontrolling Interest",
+    "statement": "BS"
+  },
+  "liabilities_and_equity": {
+    "name": "Total Liabilities and Equity",
+    "statement": "BS"
+  },
+  "revenue": {
+    "name": "Revenue",
+    "statement": "IS"
+  },
+  "cost_of_goods_and_services_sold": {
+    "name": "Cost of Revenue",
+    "statement": "IS"
+  },
+  "gross_profit": {
+    "name": "Gross Profit",
+    "statement": "IS"
+  },
+  "research_and_development_expenses": {
+    "name": "Research and Development Expense",
+    "statement": "IS"
+  },
+  "selling_general_and_admin_expenses": {
+    "name": "Selling, General and Administrative Expense",
+    "statement": "IS"
+  },
+  "marketing_expenses": {
+    "name": "Marketing Expense",
+    "statement": "IS"
+  },
+  "depreciation_expense": {
+    "name": "Depreciation Expense",
+    "statement": "IS"
+  },
+  "amortization_of_intangibles": {
+    "name": "Amortization of Intangibles",
+    "statement": "IS"
+  },
+  "other_operating_expense": {
+    "name": "Other Operating Expense",
+    "statement": "IS"
+  },
+  "restructuring_expense_benefit": {
+    "name": "Restructuring Expense",
+    "statement": "IS"
+  },
+  "goodwill_writeoffs": {
+    "name": "Goodwill Impairment",
+    "statement": "IS"
+  },
+  "costs_subtotal": {
+    "name": "Total Costs and Expenses",
+    "statement": "IS"
+  },
+  "operating_income_loss": {
+    "name": "Operating Income",
+    "statement": "IS"
+  },
+  "interest_expense": {
+    "name": "Interest Expense",
+    "statement": "IS"
+  },
+  "interest_income": {
+    "name": "Interest Income",
+    "statement": "IS"
+  },
+  "nonoperating_income_expense": {
+    "name": "Non-Operating Income (Expense)",
+    "statement": "IS"
+  },
+  "special_items_income_expense_pretax": {
+    "name": "Special Items",
+    "statement": "IS"
+  },
+  "pretax_income_loss": {
+    "name": "Income Before Tax",
+    "statement": "IS"
+  },
+  "income_taxes": {
+    "name": "Income Tax Expense",
+    "statement": "IS"
+  },
+  "income_loss_continuing_operations": {
+    "name": "Income from Continuing Operations",
+    "statement": "IS"
+  },
+  "extraordinary_items_income_expense_post_tax": {
+    "name": "Extraordinary Items",
+    "statement": "IS"
+  },
+  "minority_interest_income_expense": {
+    "name": "Net Income Attributable to Noncontrolling Interest",
+    "statement": "IS"
+  },
+  "net_income": {
+    "name": "Net Income",
+    "statement": "IS"
+  },
+  "net_income_to_common_shareholders": {
+    "name": "Net Income to Common Shareholders",
+    "statement": "IS"
+  },
+  "preferred_dividend_expense": {
+    "name": "Preferred Dividends",
+    "statement": "IS"
+  },
+  "profit_loss": {
+    "name": "Profit or Loss",
+    "statement": "IS"
+  },
+  "capital_expenses": {
+    "name": "Capital Expenditures",
+    "statement": "CF"
+  },
+  "common_dividends_paid": {
+    "name": "Dividends Paid",
+    "statement": "CF"
+  },
+  "equity_expense_income_buyback_issued": {
+    "name": "Stock Repurchases (Issuances)",
+    "statement": "CF"
+  },
+  "common_dividends_per_share": {
+    "name": "Dividends Per Share",
+    "statement": "SHARES"
+  },
+  "shares_average": {
+    "name": "Weighted Average Shares Outstanding",
+    "statement": "SHARES"
+  },
+  "shares_dilution_adjustment": {
+    "name": "Dilution Adjustment",
+    "statement": "SHARES"
+  },
+  "shares_fully_diluted_average": {
+    "name": "Weighted Average Shares Outstanding, Diluted",
+    "statement": "SHARES"
+  },
+  "shares_issued": {
+    "name": "Shares Issued",
+    "statement": "SHARES"
+  },
+  "shares_year_end": {
+    "name": "Shares Outstanding",
+    "statement": "SHARES"
+  },
+  "operating_lease_commitment_year1": {
+    "name": "Operating Lease Commitment, Year 1",
+    "statement": "DISCLOSURE"
+  },
+  "operating_lease_commitment_year2": {
+    "name": "Operating Lease Commitment, Year 2",
+    "statement": "DISCLOSURE"
+  },
+  "operating_lease_commitment_year3": {
+    "name": "Operating Lease Commitment, Year 3",
+    "statement": "DISCLOSURE"
+  },
+  "operating_lease_commitment_year4": {
+    "name": "Operating Lease Commitment, Year 4",
+    "statement": "DISCLOSURE"
+  },
+  "operating_lease_commitment_year5": {
+    "name": "Operating Lease Commitment, Year 5",
+    "statement": "DISCLOSURE"
+  },
+  "operating_lease_commitment_after_year5": {
+    "name": "Operating Lease Commitment, Thereafter",
+    "statement": "DISCLOSURE"
+  },
+  "forecasted_intangible_amortization_year1": {
+    "name": "Forecasted Amortization, Year 1",
+    "statement": "DISCLOSURE"
+  },
+  "forecasted_intangible_amortization_year2": {
+    "name": "Forecasted Amortization, Year 2",
+    "statement": "DISCLOSURE"
+  },
+  "forecasted_intangible_amortization_year3": {
+    "name": "Forecasted Amortization, Year 3",
+    "statement": "DISCLOSURE"
+  },
+  "forecasted_intangible_amortization_year4": {
+    "name": "Forecasted Amortization, Year 4",
+    "statement": "DISCLOSURE"
+  },
+  "forecasted_intangible_amortization_year5": {
+    "name": "Forecasted Amortization, Year 5",
+    "statement": "DISCLOSURE"
+  },
+  "forecasted_intangible_amortization_after_year5": {
+    "name": "Forecasted Amortization, Thereafter",
+    "statement": "DISCLOSURE"
+  },
+  "operating_cash_flow": {
+    "name": "Net Cash from Operating Activities",
+    "statement": "CF"
+  },
+  "investing_cash_flow": {
+    "name": "Net Cash from Investing Activities",
+    "statement": "CF"
+  },
+  "financing_cash_flow": {
+    "name": "Net Cash from Financing Activities",
+    "statement": "CF"
+  },
+  "depreciation_amortization_cf": {
+    "name": "Depreciation & Amortization (Cash Flow)",
+    "statement": "CF"
+  },
+  "share_based_compensation": {
+    "name": "Share-Based Compensation",
+    "statement": "CF"
+  },
+  "change_in_working_capital": {
+    "name": "Change in Operating Working Capital",
+    "statement": "CF"
+  },
+  "income_taxes_paid": {
+    "name": "Income Taxes Paid",
+    "statement": "CF"
+  },
+  "interest_paid": {
+    "name": "Interest Paid",
+    "statement": "CF"
+  },
+  "stock_repurchased": {
+    "name": "Repurchase of Common Stock",
+    "statement": "CF"
+  },
+  "eps_basic": {
+    "name": "EPS, Basic",
+    "statement": "IS"
+  },
+  "eps_diluted": {
+    "name": "EPS, Diluted",
+    "statement": "IS"
+  },
+  "retained_earnings": {
+    "name": "Retained Earnings (Accumulated Deficit)",
+    "statement": "BS"
+  },
+  "deferred_revenue_current": {
+    "name": "Deferred Revenue / Contract Liabilities, Current",
+    "statement": "BS"
+  },
+  "allowance_for_doubtful_accounts": {
+    "name": "Allowance for Doubtful Accounts / Credit Losses",
+    "statement": "BS"
+  },
+  "ebitda": {
+    "name": "EBITDA",
+    "statement": "DERIVED"
+  },
+  "free_cash_flow": {
+    "name": "Free Cash Flow (unlevered proxy: CFO - capex)",
+    "statement": "DERIVED"
+  },
+  "total_debt": {
+    "name": "Total Debt",
+    "statement": "DERIVED"
+  },
+  "net_debt": {
+    "name": "Net Debt",
+    "statement": "DERIVED"
+  },
+  "lease_liabilities": {
+    "name": "Operating Lease Liabilities",
+    "statement": "DERIVED"
+  },
+  "effective_tax_rate": {
+    "name": "Effective Tax Rate",
+    "statement": "DERIVED"
+  }
+}

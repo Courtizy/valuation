@@ -1,0 +1,22 @@
+{
+  "generated_at": "2026-10-02T23:19:02+00:00",
+  "companies": [
+    {
+      "ticker": "AAPL",
+      "name": "Apple Inc.",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-10-02",
+          "detail": "AAPL/2026-10-02/company_detail.json",
+          "comparison": null,
+          "models": [],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-06-27"
+          }
+        }
+      ]
+    }
+  ]
+}
