@@ -1,0 +1,8 @@
+{
+  "_comment": "Copy to course_cases.local.json (gitignored) and point each entry at your own workbook, relative to VALUATION_COURSE_DIR.",
+  "projection_bs": "path/to/balance_sheet_projection_solution.xlsx",
+  "ratios_operating_financial": "path/to/operating_and_financial_ratios.xlsx",
+  "mbs_fcf": "path/to/mbs_and_is_fcf.xlsx",
+  "reformulated_ratios": "path/to/reformulated_pro_forma_template.xls",
+  "firm_dcf": {"case_a": "path/to/valuation_model_a.xlsx"}
+}

@@ -1,0 +1,21 @@
+{
+  "forecast": {
+    "years": 5,
+    "frequency": "annual",
+    "revenue_growth": [0.06, 0.06, 0.05, 0.05, 0.04],
+    "ebit_margin": [0.30, 0.30, 0.31, 0.31, 0.31],
+    "capex_pct_revenue": 0.03,
+    "nwc_pct_revenue": -0.05,
+    "tax_rate": 0.16
+  },
+  "cost_of_capital": {
+    "risk_free": 0.042,
+    "equity_risk_premium": 0.05,
+    "beta": 1.1,
+    "pre_tax_cost_of_debt": 0.05,
+    "target_debt_weight": 0.10
+  },
+  "terminal": {"method": "gordon", "growth": 0.025},
+  "simulation": {"trials": 10000, "seed": 42},
+  "sources": {"risk_free": "UST 10Y on as_of date", "beta": "5Y monthly vs S&P 500"}
+}

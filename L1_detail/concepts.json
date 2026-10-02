@@ -1,0 +1,1596 @@
+{
+  "registry_version": "0.3.0",
+  "attribution": "Concept set and display names from edgartools standardization (MIT), based on mpreiss9's taxonomy: https://edgartools.readthedocs.io/en/stable/xbrl/concepts/standardization/",
+  "concepts": [
+    {
+      "id": "cash_and_marketable_securities",
+      "display_name": "Cash and Cash Equivalents",
+      "edgartools_concept": "CashAndMarketableSecurities",
+      "statement": "BS",
+      "section": "current_assets",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:CashCashEquivalentsAndShortTermInvestments"
+      ],
+      "aggregation": "sum",
+      "components": [
+        [
+          "us-gaap:CashAndCashEquivalentsAtCarryingValue"
+        ],
+        [
+          "us-gaap:MarketableSecuritiesCurrent",
+          "us-gaap:ShortTermInvestments",
+          "us-gaap:AvailableForSaleSecuritiesDebtSecuritiesCurrent"
+        ]
+      ]
+    },
+    {
+      "id": "trade_receivables",
+      "display_name": "Accounts Receivable",
+      "edgartools_concept": "TradeReceivables",
+      "statement": "BS",
+      "section": "current_assets",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:AccountsReceivableNetCurrent"
+      ]
+    },
+    {
+      "id": "inventories",
+      "display_name": "Inventory",
+      "edgartools_concept": "Inventories",
+      "statement": "BS",
+      "section": "current_assets",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:InventoryNet"
+      ]
+    },
+    {
+      "id": "deferred_tax_current_assets",
+      "display_name": "Deferred Tax Assets, Current",
+      "edgartools_concept": "DeferredTaxCurrentAssets",
+      "statement": "BS",
+      "section": "current_assets",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": []
+    },
+    {
+      "id": "other_operating_current_assets",
+      "display_name": "Other Current Assets",
+      "edgartools_concept": "OtherOperatingCurrentAssets",
+      "statement": "BS",
+      "section": "current_assets",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": []
+    },
+    {
+      "id": "other_non_operating_current_assets",
+      "display_name": "Other Non-Operating Current Assets",
+      "edgartools_concept": "OtherNonOperatingCurrentAssets",
+      "statement": "BS",
+      "section": "current_assets",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": []
+    },
+    {
+      "id": "retirement_related_current_assets",
+      "display_name": "Retirement Related Assets, Current",
+      "edgartools_concept": "RetirementRelatedCurrentAssets",
+      "statement": "BS",
+      "section": "current_assets",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": []
+    },
+    {
+      "id": "current_assets_total",
+      "display_name": "Total Current Assets",
+      "edgartools_concept": "CurrentAssetsTotal",
+      "statement": "BS",
+      "section": "current_assets",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:AssetsCurrent"
+      ]
+    },
+    {
+      "id": "plant_property_equipment_net",
+      "display_name": "Property, Plant and Equipment",
+      "edgartools_concept": "PlantPropertyEquipmentNet",
+      "statement": "BS",
+      "section": "noncurrent_assets",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:PropertyPlantAndEquipmentNet"
+      ]
+    },
+    {
+      "id": "goodwill",
+      "display_name": "Goodwill",
+      "edgartools_concept": "Goodwill",
+      "statement": "BS",
+      "section": "noncurrent_assets",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:Goodwill"
+      ]
+    },
+    {
+      "id": "intangible_assets",
+      "display_name": "Intangible Assets",
+      "edgartools_concept": "IntangibleAssets",
+      "statement": "BS",
+      "section": "noncurrent_assets",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:IntangibleAssetsNetExcludingGoodwill",
+        "us-gaap:FiniteLivedIntangibleAssetsNet"
+      ]
+    },
+    {
+      "id": "longterm_investments",
+      "display_name": "Long-Term Investments",
+      "edgartools_concept": "LongtermInvestments",
+      "statement": "BS",
+      "section": "noncurrent_assets",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": []
+    },
+    {
+      "id": "deferred_tax_noncurrent_assets",
+      "display_name": "Deferred Tax Assets, Non-Current",
+      "edgartools_concept": "DeferredTaxNoncurrentAssets",
+      "statement": "BS",
+      "section": "noncurrent_assets",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": []
+    },
+    {
+      "id": "other_operating_non_current_assets",
+      "display_name": "Other Non-Current Assets",
+      "edgartools_concept": "OtherOperatingNonCurrentAssets",
+      "statement": "BS",
+      "section": "noncurrent_assets",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": []
+    },
+    {
+      "id": "other_non_operating_non_current_assets",
+      "display_name": "Other Non-Operating Non-Current Assets",
+      "edgartools_concept": "OtherNonOperatingNonCurrentAssets",
+      "statement": "BS",
+      "section": "noncurrent_assets",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": []
+    },
+    {
+      "id": "operating_lease_right_of_use_asset",
+      "display_name": "Operating Lease Right-of-Use Asset",
+      "edgartools_concept": "OperatingLeaseRightOfUseAsset",
+      "statement": "BS",
+      "section": "noncurrent_assets",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:OperatingLeaseRightOfUseAsset"
+      ]
+    },
+    {
+      "id": "retirement_related_non_current_assets",
+      "display_name": "Retirement Related Assets, Non-Current",
+      "edgartools_concept": "RetirementRelatedNonCurrentAssets",
+      "statement": "BS",
+      "section": "noncurrent_assets",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": []
+    },
+    {
+      "id": "non_current_assets_total",
+      "display_name": "Total Non-Current Assets",
+      "edgartools_concept": "NonCurrentAssetsTotal",
+      "statement": "BS",
+      "section": "noncurrent_assets",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:AssetsNoncurrent"
+      ]
+    },
+    {
+      "id": "assets",
+      "display_name": "Total Assets",
+      "edgartools_concept": "Assets",
+      "statement": "BS",
+      "section": "noncurrent_assets",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:Assets"
+      ]
+    },
+    {
+      "id": "trade_payables",
+      "display_name": "Accounts Payable",
+      "edgartools_concept": "TradePayables",
+      "statement": "BS",
+      "section": "current_liabilities",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:AccountsPayableCurrent"
+      ]
+    },
+    {
+      "id": "short_term_debt",
+      "display_name": "Short-Term Debt",
+      "edgartools_concept": "ShortTermDebt",
+      "statement": "BS",
+      "section": "current_liabilities",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:DebtCurrent"
+      ],
+      "aggregation": "sum",
+      "components": [
+        [
+          "us-gaap:ShortTermBorrowings",
+          "us-gaap:CommercialPaper"
+        ],
+        [
+          "us-gaap:LongTermDebtCurrent"
+        ]
+      ]
+    },
+    {
+      "id": "deferred_tax_current_liabilities",
+      "display_name": "Deferred Tax Liabilities, Current",
+      "edgartools_concept": "DeferredTaxCurrentLiabilities",
+      "statement": "BS",
+      "section": "current_liabilities",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": []
+    },
+    {
+      "id": "taxes_payable",
+      "display_name": "Taxes Payable",
+      "edgartools_concept": "TaxesPayable",
+      "statement": "BS",
+      "section": "current_liabilities",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:AccruedIncomeTaxesCurrent"
+      ]
+    },
+    {
+      "id": "dividends_payable",
+      "display_name": "Dividends Payable",
+      "edgartools_concept": "DividendsPayable",
+      "statement": "BS",
+      "section": "current_liabilities",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:DividendsPayableCurrent"
+      ]
+    },
+    {
+      "id": "other_operating_current_liabilities",
+      "display_name": "Other Current Liabilities",
+      "edgartools_concept": "OtherOperatingCurrentLiabilities",
+      "statement": "BS",
+      "section": "current_liabilities",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": []
+    },
+    {
+      "id": "other_non_operating_current_liabilities",
+      "display_name": "Other Non-Operating Current Liabilities",
+      "edgartools_concept": "OtherNonOperatingCurrentLiabilities",
+      "statement": "BS",
+      "section": "current_liabilities",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": []
+    },
+    {
+      "id": "retirement_related_current_liabilities",
+      "display_name": "Retirement Related Liabilities, Current",
+      "edgartools_concept": "RetirementRelatedCurrentLiabilities",
+      "statement": "BS",
+      "section": "current_liabilities",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": []
+    },
+    {
+      "id": "operating_lease_current_debt_equivalent",
+      "display_name": "Operating Lease Liability, Current",
+      "edgartools_concept": "OperatingLeaseCurrentDebtEquivalent",
+      "statement": "BS",
+      "section": "current_liabilities",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:OperatingLeaseLiabilityCurrent"
+      ]
+    },
+    {
+      "id": "current_liabilities_total",
+      "display_name": "Total Current Liabilities",
+      "edgartools_concept": "CurrentLiabilitiesTotal",
+      "statement": "BS",
+      "section": "current_liabilities",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:LiabilitiesCurrent"
+      ]
+    },
+    {
+      "id": "long_term_debt",
+      "display_name": "Long-Term Debt",
+      "edgartools_concept": "LongTermDebt",
+      "statement": "BS",
+      "section": "noncurrent_liabilities",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:LongTermDebtNoncurrent"
+      ]
+    },
+    {
+      "id": "deferred_tax_non_current_liabilities",
+      "display_name": "Deferred Tax Liabilities, Non-Current",
+      "edgartools_concept": "DeferredTaxNonCurrentLiabilities",
+      "statement": "BS",
+      "section": "noncurrent_liabilities",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": []
+    },
+    {
+      "id": "other_operating_non_current_liabilities",
+      "display_name": "Other Non-Current Liabilities",
+      "edgartools_concept": "OtherOperatingNonCurrentLiabilities",
+      "statement": "BS",
+      "section": "noncurrent_liabilities",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": []
+    },
+    {
+      "id": "other_non_operating_non_current_liabilities",
+      "display_name": "Other Non-Operating Non-Current Liabilities",
+      "edgartools_concept": "OtherNonOperatingNonCurrentLiabilities",
+      "statement": "BS",
+      "section": "noncurrent_liabilities",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": []
+    },
+    {
+      "id": "retirement_related_non_current_liabilities",
+      "display_name": "Retirement Related Liabilities, Non-Current",
+      "edgartools_concept": "RetirementRelatedNonCurrentLiabilities",
+      "statement": "BS",
+      "section": "noncurrent_liabilities",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": []
+    },
+    {
+      "id": "operating_lease_non_current_debt_equivalent",
+      "display_name": "Operating Lease Liability, Non-Current",
+      "edgartools_concept": "OperatingLeaseNonCurrentDebtEquivalent",
+      "statement": "BS",
+      "section": "noncurrent_liabilities",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:OperatingLeaseLiabilityNoncurrent"
+      ]
+    },
+    {
+      "id": "ongoing_operating_provisions_warranties_etc",
+      "display_name": "Warranty and Other Provisions",
+      "edgartools_concept": "OngoingOperatingProvisions(WarrantiesEtc)",
+      "statement": "BS",
+      "section": "noncurrent_liabilities",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": []
+    },
+    {
+      "id": "definite_lived_operating_provisions_decommissioning_etc",
+      "display_name": "Asset Retirement Obligations",
+      "edgartools_concept": "DefiniteLivedOperatingProvisions(DecommissioningEtc)",
+      "statement": "BS",
+      "section": "noncurrent_liabilities",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": []
+    },
+    {
+      "id": "restructuring_provisions",
+      "display_name": "Restructuring Provisions",
+      "edgartools_concept": "RestructuringProvisions",
+      "statement": "BS",
+      "section": "noncurrent_liabilities",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:RestructuringReserve"
+      ]
+    },
+    {
+      "id": "non_current_liabilities_total",
+      "display_name": "Total Non-Current Liabilities",
+      "edgartools_concept": "NonCurrentLiabilitiesTotal",
+      "statement": "BS",
+      "section": "noncurrent_liabilities",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:LiabilitiesNoncurrent"
+      ]
+    },
+    {
+      "id": "liabilities",
+      "display_name": "Total Liabilities",
+      "edgartools_concept": "Liabilities",
+      "statement": "BS",
+      "section": "noncurrent_liabilities",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:Liabilities"
+      ]
+    },
+    {
+      "id": "common_equity",
+      "display_name": "Total Stockholders' Equity",
+      "edgartools_concept": "CommonEquity",
+      "statement": "BS",
+      "section": "equity",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": []
+    },
+    {
+      "id": "preferred_stock",
+      "display_name": "Preferred Stock",
+      "edgartools_concept": "PreferredStock",
+      "statement": "BS",
+      "section": "equity",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:PreferredStockValue"
+      ]
+    },
+    {
+      "id": "treasury_shares",
+      "display_name": "Treasury Stock",
+      "edgartools_concept": "TreasuryShares",
+      "statement": "BS",
+      "section": "equity",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": []
+    },
+    {
+      "id": "minority_interest_balance",
+      "display_name": "Noncontrolling Interest",
+      "edgartools_concept": "MinorityInterestBalance",
+      "statement": "BS",
+      "section": "equity",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:MinorityInterest"
+      ]
+    },
+    {
+      "id": "temporary_and_mezzanine_financing",
+      "display_name": "Temporary Equity",
+      "edgartools_concept": "TemporaryAndMezzanineFinancing",
+      "statement": "BS",
+      "section": "equity",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": []
+    },
+    {
+      "id": "all_equity_balance",
+      "display_name": "Total Equity",
+      "edgartools_concept": "AllEquityBalance",
+      "statement": "BS",
+      "section": "equity",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:StockholdersEquity"
+      ]
+    },
+    {
+      "id": "all_equity_balance_including_minority_interest",
+      "display_name": "Total Equity Including Noncontrolling Interest",
+      "edgartools_concept": "AllEquityBalanceIncludingMinorityInterest",
+      "statement": "BS",
+      "section": "equity",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"
+      ]
+    },
+    {
+      "id": "liabilities_and_equity",
+      "display_name": "Total Liabilities and Equity",
+      "edgartools_concept": "LiabilitiesAndEquity",
+      "statement": "BS",
+      "section": "equity",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:LiabilitiesAndStockholdersEquity"
+      ]
+    },
+    {
+      "id": "revenue",
+      "display_name": "Revenue",
+      "edgartools_concept": "Revenue",
+      "statement": "IS",
+      "section": "revenue_gross_profit",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+        "us-gaap:Revenues",
+        "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax",
+        "us-gaap:SalesRevenueNet"
+      ]
+    },
+    {
+      "id": "cost_of_goods_and_services_sold",
+      "display_name": "Cost of Revenue",
+      "edgartools_concept": "CostOfGoodsAndServicesSold",
+      "statement": "IS",
+      "section": "revenue_gross_profit",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:CostOfGoodsAndServicesSold",
+        "us-gaap:CostOfRevenue",
+        "us-gaap:CostOfGoodsSold"
+      ]
+    },
+    {
+      "id": "gross_profit",
+      "display_name": "Gross Profit",
+      "edgartools_concept": "GrossProfit",
+      "statement": "IS",
+      "section": "revenue_gross_profit",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:GrossProfit"
+      ]
+    },
+    {
+      "id": "research_and_development_expenses",
+      "display_name": "Research and Development Expense",
+      "edgartools_concept": "ResearchAndDevelopmentExpenses",
+      "statement": "IS",
+      "section": "operating_expenses",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:ResearchAndDevelopmentExpense"
+      ]
+    },
+    {
+      "id": "selling_general_and_admin_expenses",
+      "display_name": "Selling, General and Administrative Expense",
+      "edgartools_concept": "SellingGeneralAndAdminExpenses",
+      "statement": "IS",
+      "section": "operating_expenses",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:SellingGeneralAndAdministrativeExpense"
+      ]
+    },
+    {
+      "id": "marketing_expenses",
+      "display_name": "Marketing Expense",
+      "edgartools_concept": "MarketingExpenses",
+      "statement": "IS",
+      "section": "operating_expenses",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:AdvertisingExpense"
+      ]
+    },
+    {
+      "id": "depreciation_expense",
+      "display_name": "Depreciation Expense",
+      "edgartools_concept": "DepreciationExpense",
+      "statement": "IS",
+      "section": "operating_expenses",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": []
+    },
+    {
+      "id": "amortization_of_intangibles",
+      "display_name": "Amortization of Intangibles",
+      "edgartools_concept": "AmortizationOfIntangibles",
+      "statement": "IS",
+      "section": "operating_expenses",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:AmortizationOfIntangibleAssets"
+      ]
+    },
+    {
+      "id": "other_operating_expense",
+      "display_name": "Other Operating Expense",
+      "edgartools_concept": "OtherOperatingExpense",
+      "statement": "IS",
+      "section": "operating_expenses",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": []
+    },
+    {
+      "id": "restructuring_expense_benefit",
+      "display_name": "Restructuring Expense",
+      "edgartools_concept": "RestructuringExpenseBenefit",
+      "statement": "IS",
+      "section": "operating_expenses",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:RestructuringCharges"
+      ]
+    },
+    {
+      "id": "goodwill_writeoffs",
+      "display_name": "Goodwill Impairment",
+      "edgartools_concept": "GoodwillWriteoffs",
+      "statement": "IS",
+      "section": "operating_expenses",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:GoodwillImpairmentLoss"
+      ]
+    },
+    {
+      "id": "costs_subtotal",
+      "display_name": "Total Costs and Expenses",
+      "edgartools_concept": "CostsSubtotal",
+      "statement": "IS",
+      "section": "operating_expenses",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:CostsAndExpenses"
+      ]
+    },
+    {
+      "id": "operating_income_loss",
+      "display_name": "Operating Income",
+      "edgartools_concept": "OperatingIncomeLoss",
+      "statement": "IS",
+      "section": "operating_expenses",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:OperatingIncomeLoss"
+      ]
+    },
+    {
+      "id": "interest_expense",
+      "display_name": "Interest Expense",
+      "edgartools_concept": "InterestExpense",
+      "statement": "IS",
+      "section": "nonoperating_tax",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:InterestExpense"
+      ]
+    },
+    {
+      "id": "interest_income",
+      "display_name": "Interest Income",
+      "edgartools_concept": "InterestIncome",
+      "statement": "IS",
+      "section": "nonoperating_tax",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": []
+    },
+    {
+      "id": "nonoperating_income_expense",
+      "display_name": "Non-Operating Income (Expense)",
+      "edgartools_concept": "NonoperatingIncomeExpense",
+      "statement": "IS",
+      "section": "nonoperating_tax",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:NonoperatingIncomeExpense"
+      ]
+    },
+    {
+      "id": "special_items_income_expense_pretax",
+      "display_name": "Special Items",
+      "edgartools_concept": "SpecialItemsIncomeExpense(Pretax)",
+      "statement": "IS",
+      "section": "nonoperating_tax",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": []
+    },
+    {
+      "id": "pretax_income_loss",
+      "display_name": "Income Before Tax",
+      "edgartools_concept": "PretaxIncomeLoss",
+      "statement": "IS",
+      "section": "nonoperating_tax",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
+        "us-gaap:IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments"
+      ]
+    },
+    {
+      "id": "income_taxes",
+      "display_name": "Income Tax Expense",
+      "edgartools_concept": "IncomeTaxes",
+      "statement": "IS",
+      "section": "nonoperating_tax",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:IncomeTaxExpenseBenefit"
+      ]
+    },
+    {
+      "id": "income_loss_continuing_operations",
+      "display_name": "Income from Continuing Operations",
+      "edgartools_concept": "IncomeLossContinuingOperations",
+      "statement": "IS",
+      "section": "nonoperating_tax",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:IncomeLossFromContinuingOperations"
+      ]
+    },
+    {
+      "id": "extraordinary_items_income_expense_post_tax",
+      "display_name": "Extraordinary Items",
+      "edgartools_concept": "ExtraordinaryItemsIncomeExpense(PostTax)",
+      "statement": "IS",
+      "section": "nonoperating_tax",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": []
+    },
+    {
+      "id": "minority_interest_income_expense",
+      "display_name": "Net Income Attributable to Noncontrolling Interest",
+      "edgartools_concept": "MinorityInterestIncomeExpense",
+      "statement": "IS",
+      "section": "nonoperating_tax",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:NetIncomeLossAttributableToNoncontrollingInterest"
+      ]
+    },
+    {
+      "id": "net_income",
+      "display_name": "Net Income",
+      "edgartools_concept": "NetIncome",
+      "statement": "IS",
+      "section": "nonoperating_tax",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:NetIncomeLoss"
+      ]
+    },
+    {
+      "id": "net_income_to_common_shareholders",
+      "display_name": "Net Income to Common Shareholders",
+      "edgartools_concept": "NetIncomeToCommonShareholders",
+      "statement": "IS",
+      "section": "nonoperating_tax",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:NetIncomeLossAvailableToCommonStockholdersBasic"
+      ]
+    },
+    {
+      "id": "preferred_dividend_expense",
+      "display_name": "Preferred Dividends",
+      "edgartools_concept": "PreferredDividendExpense",
+      "statement": "IS",
+      "section": "nonoperating_tax",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:DividendsPreferredStock"
+      ]
+    },
+    {
+      "id": "profit_loss",
+      "display_name": "Profit or Loss",
+      "edgartools_concept": "ProfitLoss",
+      "statement": "IS",
+      "section": "nonoperating_tax",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:ProfitLoss"
+      ]
+    },
+    {
+      "id": "capital_expenses",
+      "display_name": "Capital Expenditures",
+      "edgartools_concept": "CapitalExpenses",
+      "statement": "CF",
+      "section": "cash_flow_capital",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:PaymentsToAcquirePropertyPlantAndEquipment",
+        "us-gaap:PaymentsToAcquireProductiveAssets"
+      ]
+    },
+    {
+      "id": "common_dividends_paid",
+      "display_name": "Dividends Paid",
+      "edgartools_concept": "CommonDividendsPaid",
+      "statement": "CF",
+      "section": "cash_flow_capital",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:PaymentsOfDividendsCommonStock",
+        "us-gaap:PaymentsOfDividends"
+      ]
+    },
+    {
+      "id": "equity_expense_income_buyback_issued",
+      "display_name": "Stock Repurchases (Issuances)",
+      "edgartools_concept": "EquityExpenseIncome(BuybackIssued)",
+      "statement": "CF",
+      "section": "cash_flow_capital",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": []
+    },
+    {
+      "id": "common_dividends_per_share",
+      "display_name": "Dividends Per Share",
+      "edgartools_concept": "CommonDividendsPerShare",
+      "statement": "SHARES",
+      "section": "per_share",
+      "period_type": "duration",
+      "unit_type": "per_share",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:CommonStockDividendsPerShareDeclared"
+      ]
+    },
+    {
+      "id": "shares_average",
+      "display_name": "Weighted Average Shares Outstanding",
+      "edgartools_concept": "SharesAverage",
+      "statement": "SHARES",
+      "section": "per_share",
+      "period_type": "duration",
+      "unit_type": "shares",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:WeightedAverageNumberOfSharesOutstandingBasic"
+      ]
+    },
+    {
+      "id": "shares_dilution_adjustment",
+      "display_name": "Dilution Adjustment",
+      "edgartools_concept": "SharesDilutionAdjustment",
+      "statement": "SHARES",
+      "section": "per_share",
+      "period_type": "duration",
+      "unit_type": "shares",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:WeightedAverageNumberDilutedSharesOutstandingAdjustment"
+      ]
+    },
+    {
+      "id": "shares_fully_diluted_average",
+      "display_name": "Weighted Average Shares Outstanding, Diluted",
+      "edgartools_concept": "SharesFullyDilutedAverage",
+      "statement": "SHARES",
+      "section": "per_share",
+      "period_type": "duration",
+      "unit_type": "shares",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:WeightedAverageNumberOfDilutedSharesOutstanding"
+      ]
+    },
+    {
+      "id": "shares_issued",
+      "display_name": "Shares Issued",
+      "edgartools_concept": "SharesIssued",
+      "statement": "SHARES",
+      "section": "per_share",
+      "period_type": "instant",
+      "unit_type": "shares",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:CommonStockSharesIssued"
+      ]
+    },
+    {
+      "id": "shares_year_end",
+      "display_name": "Shares Outstanding",
+      "edgartools_concept": "SharesYearEnd",
+      "statement": "SHARES",
+      "section": "per_share",
+      "period_type": "instant",
+      "unit_type": "shares",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:CommonStockSharesOutstanding",
+        "dei:EntityCommonStockSharesOutstanding"
+      ]
+    },
+    {
+      "id": "operating_lease_commitment_year1",
+      "display_name": "Operating Lease Commitment, Year 1",
+      "edgartools_concept": "OperatingLeaseCommitmentYear1",
+      "statement": "DISCLOSURE",
+      "section": "operating_lease_commitments",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:LesseeOperatingLeaseLiabilityPaymentsDueNextTwelveMonths",
+        "us-gaap:OperatingLeasesFutureMinimumPaymentsDueCurrent"
+      ]
+    },
+    {
+      "id": "operating_lease_commitment_year2",
+      "display_name": "Operating Lease Commitment, Year 2",
+      "edgartools_concept": "OperatingLeaseCommitmentYear2",
+      "statement": "DISCLOSURE",
+      "section": "operating_lease_commitments",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:LesseeOperatingLeaseLiabilityPaymentsDueYearTwo",
+        "us-gaap:OperatingLeasesFutureMinimumPaymentsDueInTwoYears"
+      ]
+    },
+    {
+      "id": "operating_lease_commitment_year3",
+      "display_name": "Operating Lease Commitment, Year 3",
+      "edgartools_concept": "OperatingLeaseCommitmentYear3",
+      "statement": "DISCLOSURE",
+      "section": "operating_lease_commitments",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:LesseeOperatingLeaseLiabilityPaymentsDueYearThree",
+        "us-gaap:OperatingLeasesFutureMinimumPaymentsDueInThreeYears"
+      ]
+    },
+    {
+      "id": "operating_lease_commitment_year4",
+      "display_name": "Operating Lease Commitment, Year 4",
+      "edgartools_concept": "OperatingLeaseCommitmentYear4",
+      "statement": "DISCLOSURE",
+      "section": "operating_lease_commitments",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:LesseeOperatingLeaseLiabilityPaymentsDueYearFour",
+        "us-gaap:OperatingLeasesFutureMinimumPaymentsDueInFourYears"
+      ]
+    },
+    {
+      "id": "operating_lease_commitment_year5",
+      "display_name": "Operating Lease Commitment, Year 5",
+      "edgartools_concept": "OperatingLeaseCommitmentYear5",
+      "statement": "DISCLOSURE",
+      "section": "operating_lease_commitments",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:LesseeOperatingLeaseLiabilityPaymentsDueYearFive",
+        "us-gaap:OperatingLeasesFutureMinimumPaymentsDueInFiveYears"
+      ]
+    },
+    {
+      "id": "operating_lease_commitment_after_year5",
+      "display_name": "Operating Lease Commitment, Thereafter",
+      "edgartools_concept": "OperatingLeaseCommitmentAfterYear5",
+      "statement": "DISCLOSURE",
+      "section": "operating_lease_commitments",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:LesseeOperatingLeaseLiabilityPaymentsDueAfterYearFive",
+        "us-gaap:OperatingLeasesFutureMinimumPaymentsDueThereafter"
+      ]
+    },
+    {
+      "id": "forecasted_intangible_amortization_year1",
+      "display_name": "Forecasted Amortization, Year 1",
+      "edgartools_concept": "ForecastedIntangibleAmortizationYear1",
+      "statement": "DISCLOSURE",
+      "section": "intangible_amortization_forecast",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:FiniteLivedIntangibleAssetsAmortizationExpenseNextTwelveMonths"
+      ]
+    },
+    {
+      "id": "forecasted_intangible_amortization_year2",
+      "display_name": "Forecasted Amortization, Year 2",
+      "edgartools_concept": "ForecastedIntangibleAmortizationYear2",
+      "statement": "DISCLOSURE",
+      "section": "intangible_amortization_forecast",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:FiniteLivedIntangibleAssetsAmortizationExpenseYearTwo"
+      ]
+    },
+    {
+      "id": "forecasted_intangible_amortization_year3",
+      "display_name": "Forecasted Amortization, Year 3",
+      "edgartools_concept": "ForecastedIntangibleAmortizationYear3",
+      "statement": "DISCLOSURE",
+      "section": "intangible_amortization_forecast",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:FiniteLivedIntangibleAssetsAmortizationExpenseYearThree"
+      ]
+    },
+    {
+      "id": "forecasted_intangible_amortization_year4",
+      "display_name": "Forecasted Amortization, Year 4",
+      "edgartools_concept": "ForecastedIntangibleAmortizationYear4",
+      "statement": "DISCLOSURE",
+      "section": "intangible_amortization_forecast",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:FiniteLivedIntangibleAssetsAmortizationExpenseYearFour"
+      ]
+    },
+    {
+      "id": "forecasted_intangible_amortization_year5",
+      "display_name": "Forecasted Amortization, Year 5",
+      "edgartools_concept": "ForecastedIntangibleAmortizationYear5",
+      "statement": "DISCLOSURE",
+      "section": "intangible_amortization_forecast",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:FiniteLivedIntangibleAssetsAmortizationExpenseYearFive"
+      ]
+    },
+    {
+      "id": "forecasted_intangible_amortization_after_year5",
+      "display_name": "Forecasted Amortization, Thereafter",
+      "edgartools_concept": "ForecastedIntangibleAmortizationAfterYear5",
+      "statement": "DISCLOSURE",
+      "section": "intangible_amortization_forecast",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "reported",
+      "source": "edgartools",
+      "primary_tags": [
+        "us-gaap:FiniteLivedIntangibleAssetsAmortizationExpenseAfterYearFive"
+      ]
+    },
+    {
+      "id": "operating_cash_flow",
+      "display_name": "Net Cash from Operating Activities",
+      "edgartools_concept": null,
+      "statement": "CF",
+      "section": "cash_flow_totals",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "memo",
+      "source": "valuation_addition",
+      "primary_tags": [
+        "us-gaap:NetCashProvidedByUsedInOperatingActivities"
+      ]
+    },
+    {
+      "id": "investing_cash_flow",
+      "display_name": "Net Cash from Investing Activities",
+      "edgartools_concept": null,
+      "statement": "CF",
+      "section": "cash_flow_totals",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "memo",
+      "source": "valuation_addition",
+      "primary_tags": [
+        "us-gaap:NetCashProvidedByUsedInInvestingActivities"
+      ]
+    },
+    {
+      "id": "financing_cash_flow",
+      "display_name": "Net Cash from Financing Activities",
+      "edgartools_concept": null,
+      "statement": "CF",
+      "section": "cash_flow_totals",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "memo",
+      "source": "valuation_addition",
+      "primary_tags": [
+        "us-gaap:NetCashProvidedByUsedInFinancingActivities"
+      ]
+    },
+    {
+      "id": "depreciation_amortization_cf",
+      "display_name": "Depreciation & Amortization (Cash Flow)",
+      "edgartools_concept": null,
+      "statement": "CF",
+      "section": "cash_flow_adjustments",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "memo",
+      "source": "valuation_addition",
+      "primary_tags": [
+        "us-gaap:DepreciationDepletionAndAmortization",
+        "us-gaap:DepreciationAmortizationAndAccretionNet",
+        "us-gaap:DepreciationAndAmortization"
+      ]
+    },
+    {
+      "id": "share_based_compensation",
+      "display_name": "Share-Based Compensation",
+      "edgartools_concept": null,
+      "statement": "CF",
+      "section": "cash_flow_adjustments",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "memo",
+      "source": "valuation_addition",
+      "primary_tags": [
+        "us-gaap:ShareBasedCompensation",
+        "us-gaap:AllocatedShareBasedCompensationExpense"
+      ]
+    },
+    {
+      "id": "change_in_working_capital",
+      "display_name": "Change in Operating Working Capital",
+      "edgartools_concept": null,
+      "statement": "CF",
+      "section": "cash_flow_adjustments",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "memo",
+      "source": "valuation_addition",
+      "primary_tags": [
+        "us-gaap:IncreaseDecreaseInOperatingCapital"
+      ]
+    },
+    {
+      "id": "income_taxes_paid",
+      "display_name": "Income Taxes Paid",
+      "edgartools_concept": null,
+      "statement": "CF",
+      "section": "supplemental_cash",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "memo",
+      "source": "valuation_addition",
+      "primary_tags": [
+        "us-gaap:IncomeTaxesPaidNet"
+      ]
+    },
+    {
+      "id": "interest_paid",
+      "display_name": "Interest Paid",
+      "edgartools_concept": null,
+      "statement": "CF",
+      "section": "supplemental_cash",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "memo",
+      "source": "valuation_addition",
+      "primary_tags": [
+        "us-gaap:InterestPaidNet"
+      ]
+    },
+    {
+      "id": "stock_repurchased",
+      "display_name": "Repurchase of Common Stock",
+      "edgartools_concept": null,
+      "statement": "CF",
+      "section": "cash_flow_capital",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "memo",
+      "source": "valuation_addition",
+      "primary_tags": [
+        "us-gaap:PaymentsForRepurchaseOfCommonStock"
+      ]
+    },
+    {
+      "id": "eps_basic",
+      "display_name": "EPS, Basic",
+      "edgartools_concept": null,
+      "statement": "IS",
+      "section": "per_share",
+      "period_type": "duration",
+      "unit_type": "per_share",
+      "kind": "memo",
+      "source": "valuation_addition",
+      "primary_tags": [
+        "us-gaap:EarningsPerShareBasic"
+      ]
+    },
+    {
+      "id": "eps_diluted",
+      "display_name": "EPS, Diluted",
+      "edgartools_concept": null,
+      "statement": "IS",
+      "section": "per_share",
+      "period_type": "duration",
+      "unit_type": "per_share",
+      "kind": "memo",
+      "source": "valuation_addition",
+      "primary_tags": [
+        "us-gaap:EarningsPerShareDiluted"
+      ]
+    },
+    {
+      "id": "retained_earnings",
+      "display_name": "Retained Earnings (Accumulated Deficit)",
+      "edgartools_concept": null,
+      "statement": "BS",
+      "section": "equity",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "memo",
+      "source": "valuation_addition",
+      "primary_tags": [
+        "us-gaap:RetainedEarningsAccumulatedDeficit"
+      ]
+    },
+    {
+      "id": "deferred_revenue_current",
+      "display_name": "Deferred Revenue / Contract Liabilities, Current",
+      "edgartools_concept": null,
+      "statement": "BS",
+      "section": "current_liabilities",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "memo",
+      "source": "valuation_addition",
+      "primary_tags": [
+        "us-gaap:ContractWithCustomerLiabilityCurrent",
+        "us-gaap:DeferredRevenueCurrent"
+      ]
+    },
+    {
+      "id": "allowance_for_doubtful_accounts",
+      "display_name": "Allowance for Doubtful Accounts / Credit Losses",
+      "edgartools_concept": null,
+      "statement": "BS",
+      "section": "current_assets",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "memo",
+      "source": "valuation_addition",
+      "primary_tags": [
+        "us-gaap:AccountsReceivableAllowanceForCreditLossCurrent",
+        "us-gaap:AllowanceForDoubtfulAccountsReceivableCurrent"
+      ]
+    },
+    {
+      "id": "ebitda",
+      "display_name": "EBITDA",
+      "edgartools_concept": null,
+      "statement": "DERIVED",
+      "section": "derived",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "derived",
+      "source": "valuation_addition",
+      "primary_tags": [],
+      "formula": "operating_income_loss + depreciation_amortization_cf"
+    },
+    {
+      "id": "free_cash_flow",
+      "display_name": "Free Cash Flow (unlevered proxy: CFO - capex)",
+      "edgartools_concept": null,
+      "statement": "DERIVED",
+      "section": "derived",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "derived",
+      "source": "valuation_addition",
+      "primary_tags": [],
+      "formula": "operating_cash_flow - capital_expenses"
+    },
+    {
+      "id": "total_debt",
+      "display_name": "Total Debt",
+      "edgartools_concept": null,
+      "statement": "DERIVED",
+      "section": "derived",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "derived",
+      "source": "valuation_addition",
+      "primary_tags": [],
+      "formula": "short_term_debt + long_term_debt"
+    },
+    {
+      "id": "net_debt",
+      "display_name": "Net Debt",
+      "edgartools_concept": null,
+      "statement": "DERIVED",
+      "section": "derived",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "derived",
+      "source": "valuation_addition",
+      "primary_tags": [],
+      "formula": "total_debt - cash_and_marketable_securities"
+    },
+    {
+      "id": "lease_liabilities",
+      "display_name": "Operating Lease Liabilities",
+      "edgartools_concept": null,
+      "statement": "DERIVED",
+      "section": "derived",
+      "period_type": "instant",
+      "unit_type": "monetary",
+      "kind": "derived",
+      "source": "valuation_addition",
+      "primary_tags": [],
+      "formula": "operating_lease_current_debt_equivalent + operating_lease_non_current_debt_equivalent"
+    },
+    {
+      "id": "effective_tax_rate",
+      "display_name": "Effective Tax Rate",
+      "edgartools_concept": null,
+      "statement": "DERIVED",
+      "section": "derived",
+      "period_type": "duration",
+      "unit_type": "ratio",
+      "kind": "derived",
+      "source": "valuation_addition",
+      "primary_tags": [],
+      "formula": "income_taxes / pretax_income_loss"
+    }
+  ]
+}

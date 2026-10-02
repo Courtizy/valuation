@@ -1,0 +1,6 @@
+{
+  "peers": ["MSFT", "GOOGL", "META"],
+  "multiples": ["ev_ebitda", "ev_revenue", "pe"],
+  "period": "ntm",
+  "statistic": "median"
+}

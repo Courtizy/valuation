@@ -1,0 +1,12 @@
+# pipeline outputs (published copies live in site/data)
+data/
+.cache/
+# local-only course material references
+notes_local/
+tests/course_cases.local.json
+# python
+__pycache__/
+*.egg-info/
+build/
+.pytest_cache/
+.venv/

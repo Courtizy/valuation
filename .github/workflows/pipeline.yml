@@ -1,0 +1,88 @@
+# Runs the valuation pipeline for one ticker and publishes the results to site/data.
+# Start it from the Actions tab, with `gh workflow run pipeline.yml -f ticker=AAPL`,
+# or from the site's "Run pipeline" tab.
+#
+# Needs the repository secret SEC_USER_AGENT ("Your Name you@example.com"); the
+# SEC requires contact details in the User-Agent of every request.
+name: Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      ticker:
+        description: "Ticker (e.g. AAPL)"
+        required: true
+        type: string
+      as_of:
+        description: "As-of date YYYY-MM-DD (blank = today)"
+        required: false
+        type: string
+      models:
+        description: "Comma list of models"
+        required: false
+        default: "dcf"
+        type: string
+      stop_after:
+        description: "Last layer to run (L1 = company detail only)"
+        required: false
+        default: "L1"
+        type: choice
+        options: ["L1", "L2"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pipeline-publish
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    env:
+      TICKER: ${{ inputs.ticker }}
+      AS_OF: ${{ inputs.as_of }}
+      MODELS: ${{ inputs.models }}
+      STOP_AFTER: ${{ inputs.stop_after }}
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate inputs
+        run: |
+          [[ "$TICKER" =~ ^[A-Za-z][A-Za-z0-9.\-]{0,9}$ ]] || { echo "bad ticker: $TICKER"; exit 1; }
+          [[ -z "$AS_OF" || "$AS_OF" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || { echo "bad as_of: $AS_OF"; exit 1; }
+          [[ "$MODELS" =~ ^[a-z_,]+$ ]] || { echo "bad models: $MODELS"; exit 1; }
+          [[ -n "$SEC_USER_AGENT" ]] || { echo "set the SEC_USER_AGENT repository secret"; exit 1; }
+          echo "AS_OF=${AS_OF:-$(date -u +%F)}" >> "$GITHUB_ENV"
+
+      - name: Restore SEC cache
+        uses: actions/cache@v4
+        with:
+          path: .cache/sec
+          key: sec-${{ inputs.ticker }}-${{ github.run_id }}
+          restore-keys: sec-${{ inputs.ticker }}-
+
+      - name: Run pipeline
+        # Models aren't built yet, so an L2 run ends early; publish what finished.
+        continue-on-error: ${{ inputs.stop_after == 'L2' }}
+        run: python pipeline.py run "$TICKER" --as-of "$AS_OF" --models "$MODELS" --stop-after "$STOP_AFTER"
+
+      - name: Publish to site/data
+        run: python -m L3_app.publish --data-dir data --site-dir site
+
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add site/data
+          if git diff --cached --quiet; then
+            echo "nothing new to publish"
+          else
+            git commit -m "data: ${TICKER^^} as of ${AS_OF}"
+            git push
+          fi

@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "valuation"
+version = "0.0.2"
+requires-python = ">=3.10"
+dependencies = []  # core pipeline is stdlib-only; extras below
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+export = ["openpyxl"]   # per-model Excel templates, memo; course parity tests
+# The app is a static site (site/) deployed to GitHub Pages; it needs no Python extra.
+
+[tool.setuptools]
+py-modules = ["pipeline", "lineage"]
+
+[tool.setuptools.packages.find]
+include = ["L0_ingest*", "L1_detail*", "L2_models*", "L3_app*", "core*"]
+
+[tool.setuptools.package-data]
+L1_detail = ["*.json"]
+
+[tool.pytest.ini_options]
+pythonpath = [".", "tests"]
+testpaths = ["tests"]

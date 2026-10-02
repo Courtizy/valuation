@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Valuation Model</title>
+  <meta name="description" content="Company detail, projections and valuation ranges built from SEC filings.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='2' y='8' width='3' height='6' rx='1' fill='%232a78d6'/%3E%3Crect x='6.5' y='5' width='3' height='9' rx='1' fill='%232a78d6'/%3E%3Crect x='11' y='2' width='3' height='12' rx='1' fill='%232a78d6'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/styles.css">
+  <script>
+    try { const t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <h1>Valuation Model</h1>
+        <span id="demo-badge" class="badge" hidden>Synthetic demo data</span>
+      </div>
+      <div class="picker">
+        <label class="small muted" for="company">Company</label>
+        <select id="company" aria-label="Company"></select>
+        <label class="small muted" for="asof">As of</label>
+        <select id="asof" aria-label="As-of date"></select>
+        <button id="theme" type="button" aria-label="Toggle theme" title="Theme">Theme: auto</button>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab" role="tab" id="tab-company" aria-controls="panel-company" data-tab="company">Company detail</button>
+      <button class="tab" role="tab" id="tab-projection" aria-controls="panel-projection" data-tab="projection">Projection</button>
+      <button class="tab" role="tab" id="tab-valuation" aria-controls="panel-valuation" data-tab="valuation">Valuation</button>
+      <button class="tab" role="tab" id="tab-run" aria-controls="panel-run" data-tab="run">Run pipeline</button>
+    </nav>
+  </header>
+
+  <main>
+    <div id="banner" class="banner" hidden></div>
+
+    <!-- Company detail -->
+    <section id="panel-company" class="panel" role="tabpanel" aria-labelledby="tab-company" hidden>
+      <div id="tiles" class="tiles"></div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head"><h2 id="rev-title">Revenue</h2><span class="muted small" id="rev-sub"></span></div>
+          <div id="rev-chart"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>Returns</h2><span class="muted small">Average balances, annual</span></div>
+          <div class="legend" id="ret-legend"></div>
+          <div id="ret-chart"></div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <div class="card-head">
+          <h2>Statements</h2>
+          <div class="seg spacer" id="view-seg" role="group" aria-label="Period view">
+            <button type="button" data-view="annual" aria-pressed="true">Annual</button>
+            <button type="button" data-view="quarterly" aria-pressed="false">Quarterly</button>
+            <button type="button" data-view="ttm" aria-pressed="false">TTM</button>
+          </div>
+        </div>
+        <div class="table-wrap"><table id="stmt-table"></table></div>
+        <p class="legend-note"><span class="mark">d</span> derived: Q4 = full year − 9-month YTD, or a quarter from YTD differences. Values in millions unless noted.</p>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h2>Ratios</h2>
+          <div class="seg spacer" id="ratio-seg" role="group" aria-label="Ratio framework">
+            <button type="button" data-fw="reformulated" aria-pressed="true">Reformulated</button>
+            <button type="button" data-fw="managerial" aria-pressed="false">Managerial</button>
+            <button type="button" data-fw="traditional" aria-pressed="false">Traditional</button>
+            <button type="button" data-fw="risk" aria-pressed="false">Risk</button>
+            <button type="button" data-fw="signals" aria-pressed="false">Signals</button>
+          </div>
+        </div>
+        <div class="table-wrap"><table id="ratio-table"></table></div>
+        <p class="legend-note" id="ratio-note"></p>
+      </div>
+    </section>
+
+    <!-- Projection -->
+    <section id="panel-projection" class="panel" role="tabpanel" aria-labelledby="tab-projection" hidden>
+      <div class="card">
+        <div class="card-head">
+          <h2>Drivers</h2>
+          <span class="muted small" id="proj-base-note"></span>
+          <div class="spacer actions" style="margin:0">
+            <button type="button" id="proj-reset">Reset to base ratios</button>
+            <button type="button" id="proj-download">Download drivers JSON</button>
+          </div>
+        </div>
+        <form id="proj-form" autocomplete="off">
+          <fieldset>
+            <legend>Base and horizon</legend>
+            <div class="form-grid">
+              <div class="field"><label for="p-base">Base period</label><select id="p-base"></select></div>
+              <div class="field"><label for="p-years">Years</label><input type="number" id="p-years" min="1" max="20" step="1"></div>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Revenue</legend>
+            <div class="form-grid">
+              <div class="field"><label for="p-g0">First-year growth %</label><input type="number" id="p-g0" step="0.1"></div>
+              <div class="field"><label for="p-gt">Terminal growth %</label><input type="number" id="p-gt" step="0.1"></div>
+              <div class="field"><label for="p-fade">Fade over (years)</label><input type="number" id="p-fade" min="1" step="1"><span class="hint">Growth falls linearly to terminal</span></div>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Costs and investment (% of sales)</legend>
+            <div class="form-grid">
+              <div class="field"><label for="p-cogs">COGS</label><input type="number" id="p-cogs" step="0.1"></div>
+              <div class="field"><label for="p-sga">SG&amp;A</label><input type="number" id="p-sga" step="0.1"></div>
+              <div class="field"><label for="p-rnd">R&amp;D</label><input type="number" id="p-rnd" step="0.1"></div>
+              <div class="field"><label for="p-other">Other operating</label><input type="number" id="p-other" step="0.1"></div>
+              <div class="field"><label for="p-dep">Depreciation &amp; amortization</label><input type="number" id="p-dep" step="0.1"></div>
+              <div class="field"><label for="p-capex">Capex</label><input type="number" id="p-capex" step="0.1"></div>
+              <div class="field"><label for="p-nwc">ΔNWC / ΔSales</label><input type="number" id="p-nwc" step="0.1"><span class="hint">Working capital added per $ of new sales</span></div>
+              <div class="field"><label for="p-tax">Tax rate %</label><input type="number" id="p-tax" step="0.1"></div>
+            </div>
+            <div class="checks" style="margin-top:10px">
+              <label><input type="checkbox" id="p-cida"> Cost lines include D&amp;A (EBITDA adds it back)</label>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Financing</legend>
+            <div class="form-grid">
+              <div class="field"><label for="p-plug">Balancing item</label>
+                <select id="p-plug"><option value="cash">Cash</option><option value="revolver">Revolver</option><option value="equity">Equity</option></select></div>
+              <div class="field"><label for="p-rate">Interest rate on debt %</label><input type="number" id="p-rate" step="0.1"></div>
+              <div class="field"><label for="p-payout">Dividend payout %</label><input type="number" id="p-payout" step="1"></div>
+            </div>
+          </fieldset>
+        </form>
+      </div>
+      <div class="tiles" id="proj-tiles"></div>
+      <div class="card">
+        <div class="card-head"><h2>Unlevered free cash flow</h2><span class="muted small">EBITDA(1−t) + D·t − capex − ΔNWC</span></div>
+        <div id="proj-chart"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>Projected statements</h2><span class="muted small" id="proj-checks"></span></div>
+        <div class="table-wrap"><table id="proj-table"></table></div>
+      </div>
+    </section>
+
+    <!-- Valuation -->
+    <section id="panel-valuation" class="panel" role="tabpanel" aria-labelledby="tab-valuation" hidden>
+      <div id="val-body"></div>
+    </section>
+
+    <!-- Run pipeline -->
+    <section id="panel-run" class="panel" role="tabpanel" aria-labelledby="tab-run" hidden>
+      <div class="card">
+        <div class="card-head"><h2>Run the pipeline</h2></div>
+        <p class="muted">Starts the <code>Pipeline</code> GitHub Action. It fetches SEC filings, builds company detail, publishes the results here and redeploys the site. That usually takes a few minutes.</p>
+        <form id="run-form" autocomplete="off">
+          <div class="form-grid">
+            <div class="field"><label for="r-ticker">Ticker</label><input type="text" id="r-ticker" required pattern="[A-Za-z][A-Za-z0-9.\-]{0,9}" placeholder="AAPL"></div>
+            <div class="field"><label for="r-asof">As of</label><input type="date" id="r-asof"></div>
+            <div class="field"><label for="r-stop">Run through</label>
+              <select id="r-stop"><option value="L1">Company detail (L1)</option><option value="L2">Models and reconcile (L2)</option></select></div>
+          </div>
+          <fieldset style="margin-top:12px">
+            <legend>Models (L2 only)</legend>
+            <div class="checks" id="r-models">
+              <label><input type="checkbox" value="dcf" checked> DCF</label>
+              <label><input type="checkbox" value="comps"> Comps</label>
+              <label><input type="checkbox" value="lbo"> LBO</label>
+              <label><input type="checkbox" value="precedents"> Precedents</label>
+              <label><input type="checkbox" value="ipo"> IPO</label>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>GitHub</legend>
+            <div class="form-grid">
+              <div class="field"><label for="r-owner">Owner</label><input type="text" id="r-owner"></div>
+              <div class="field"><label for="r-repo">Repository</label><input type="text" id="r-repo"></div>
+              <div class="field" style="grid-column: 1 / -1"><label for="r-token">Token (fine-grained, Actions: read and write on this repo)</label>
+                <input type="password" id="r-token" placeholder="github_pat_…">
+                <span class="hint">Sent only to api.github.com from your browser. Leave blank to use the Actions page or the CLI instead.</span></div>
+            </div>
+            <div class="checks" style="margin-top:8px"><label><input type="checkbox" id="r-remember"> Remember token on this device</label></div>
+          </fieldset>
+          <div class="actions">
+            <button type="submit" class="primary">Start run</button>
+            <a id="r-actions-link" target="_blank" rel="noopener">Open the Actions page</a>
+            <span id="r-status" class="status" role="status"></span>
+          </div>
+        </form>
+        <h3 style="margin-top:16px">Same run from a terminal</h3>
+        <pre id="r-cli"></pre>
+      </div>
+    </section>
+  </main>
+  <footer>
+    Built from SEC companyfacts. Not investment advice. <span id="generated"></span>
+  </footer>
+  <script type="module" src="assets/app.js"></script>
+</body>
+</html>

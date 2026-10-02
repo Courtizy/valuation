@@ -1,0 +1,33 @@
+{
+  "pack": "default",
+  "description": "Non-financial operating companies. Copy and edit for a sector.",
+  "l1": {
+    "tag_overrides": {},
+    "concept_overrides": {},
+    "classification": {}
+  },
+  "l2": {
+    "applicable_models": [
+      "dcf",
+      "comps",
+      "lbo",
+      "ipo",
+      "precedents"
+    ],
+    "defaults": {
+      "dcf": {
+        "terminal": {
+          "method": "gordon",
+          "growth": 0.025
+        }
+      },
+      "comps": {
+        "multiples": [
+          "ev_ebitda",
+          "ev_revenue",
+          "pe"
+        ]
+      }
+    }
+  }
+}

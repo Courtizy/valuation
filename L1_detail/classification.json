@@ -1,0 +1,17 @@
+{
+  "version": "0.1.0",
+  "description": "Operating vs financial classification for reformulated statements and the managerial balance sheet. Packs override any key under l1.classification.",
+  "marginal_tax_rate": 0.21,
+  "implicit_borrowing_rate_after_tax": 0.015,
+  "days_in_year": 365,
+  "financial_assets": ["cash_and_marketable_securities", "longterm_investments"],
+  "financial_obligations": ["short_term_debt", "long_term_debt", "dividends_payable"],
+  "lease_liabilities": ["operating_lease_current_debt_equivalent", "operating_lease_non_current_debt_equivalent"],
+  "leases_are_financial": false,
+  "preferred_claims": ["preferred_stock", "temporary_and_mezzanine_financing"],
+  "notes": {
+    "longterm_investments": "Treated as financial (debt and marketable securities). Equity-method stakes are operating; a pack should move them when material.",
+    "leases": "Operating by default so NOA and enterprise value match the DCF bridge (net debt = debt - cash). Set leases_are_financial to treat lease liabilities as debt.",
+    "implicit_borrowing_rate_after_tax": "Rate charged on operating liabilities in ROOA and OLSPREAD."
+  }
+}
