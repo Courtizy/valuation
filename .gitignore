@@ -1,6 +1,6 @@
 # pipeline outputs (published copies live in site/data)
-data/
-.cache/
+/data/
+/.cache/
 # local-only course material references
 notes_local/
 tests/course_cases.local.json
