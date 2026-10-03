@@ -29008,5 +29008,55 @@
   },
   "warnings": [
     "interest not tagged in the latest year; NFE treated as zero in reformulation"
-  ]
+  ],
+  "profile": {
+    "as_of_period": "TTM 2026-06-27",
+    "history_years": 5,
+    "traits": {
+      "stage": {
+        "label": "mature grower",
+        "rule": "CAGR 3%\u201315% and profitable",
+        "measures": {
+          "revenue_cagr": 0.03275991627577457,
+          "operating_margin": 0.3317295848747812
+        }
+      },
+      "predictability": {
+        "label": "high",
+        "rule": "FCF > 0 in \u2265 80% of years and margin stdev \u2264 3 pts",
+        "measures": {
+          "fcf_positive_share": 1.0,
+          "fcf_margin_stdev": 0.016517646085819168,
+          "years": 5
+        }
+      },
+      "asset_intensity": {
+        "label": "light",
+        "rule": "capex/sales < 3% and NOAT > 3x",
+        "measures": {
+          "capex_to_sales": 0.021509222981729692,
+          "noa_turnover": 3.8640929389415657
+        }
+      },
+      "capital_structure": {
+        "label": "low leverage",
+        "rule": "debt/EBITDA < 2x",
+        "measures": {
+          "debt_to_ebitda": 0.5021701724825701,
+          "net_debt_to_equity": 0.2041015625,
+          "liabilities_to_assets": 0.7194637666790167
+        }
+      }
+    },
+    "vector": {
+      "revenue_cagr": 0.03275991627577457,
+      "operating_margin": 0.3317295848747812,
+      "fcf_margin_stdev": 0.016517646085819168,
+      "capex_to_sales": 0.021509222981729692,
+      "noa_turnover": 3.8640929389415657,
+      "debt_to_ebitda": 0.5021701724825701,
+      "revenue": 466823000000,
+      "rnoa": 1.067208562169679
+    }
+  }
 }

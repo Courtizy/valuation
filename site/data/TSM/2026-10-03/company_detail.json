@@ -1,0 +1,119 @@
+{
+  "schema_version": "0.1.0",
+  "stage": "L1.build",
+  "as_of": "2026-10-03",
+  "entity": {
+    "cik": "0001046179",
+    "name": "Taiwan Semiconductor Manufacturing Company Limited",
+    "ticker": "TSM"
+  },
+  "registry_version": "0.3.0",
+  "lineage": {
+    "as_of": "2026-10-03",
+    "inputs": [
+      {
+        "file": "canonical_statements.json",
+        "sha256": "4a5dc6d40c28c829c4f12bd230ac18353d664899edcdf551d3a448b6b7a1633b"
+      }
+    ]
+  },
+  "statement_date": null,
+  "market": null,
+  "classification": {
+    "version": "0.1.0",
+    "description": "Operating vs financial classification for reformulated statements and the managerial balance sheet. Packs override any key under l1.classification.",
+    "marginal_tax_rate": 0.21,
+    "implicit_borrowing_rate_after_tax": 0.015,
+    "days_in_year": 365,
+    "financial_assets": [
+      "cash_and_marketable_securities",
+      "longterm_investments"
+    ],
+    "financial_obligations": [
+      "short_term_debt",
+      "long_term_debt",
+      "dividends_payable"
+    ],
+    "lease_liabilities": [
+      "operating_lease_current_debt_equivalent",
+      "operating_lease_non_current_debt_equivalent"
+    ],
+    "leases_are_financial": false,
+    "preferred_claims": [
+      "preferred_stock",
+      "temporary_and_mezzanine_financing"
+    ],
+    "notes": {
+      "longterm_investments": "Treated as financial (debt and marketable securities). Equity-method stakes are operating; a pack should move them when material.",
+      "leases": "Operating by default so NOA and enterprise value match the DCF bridge (net debt = debt - cash). Set leases_are_financial to treat lease liabilities as debt.",
+      "implicit_borrowing_rate_after_tax": "Rate charged on operating liabilities in ROOA and OLSPREAD."
+    }
+  },
+  "views": {
+    "annual": [],
+    "quarterly": [],
+    "ttm": []
+  },
+  "analysis": {
+    "annual": [],
+    "ttm": []
+  },
+  "latest": {
+    "annual": null,
+    "ttm": null
+  },
+  "warnings": [
+    "no 12-month periods found; annual analysis is empty",
+    "no four contiguous quarters; TTM view is empty"
+  ],
+  "profile": {
+    "as_of_period": null,
+    "history_years": 0,
+    "traits": {
+      "stage": {
+        "label": "unknown",
+        "rule": "needs two fiscal years of revenue and an operating margin",
+        "measures": {
+          "revenue_cagr": null,
+          "operating_margin": null
+        }
+      },
+      "predictability": {
+        "label": "unknown",
+        "rule": "needs three fiscal years of free cash flow",
+        "measures": {
+          "fcf_positive_share": null,
+          "fcf_margin_stdev": null,
+          "years": 0
+        }
+      },
+      "asset_intensity": {
+        "label": "unknown",
+        "rule": "needs capex or NOA turnover",
+        "measures": {
+          "capex_to_sales": null,
+          "noa_turnover": null
+        }
+      },
+      "capital_structure": {
+        "label": "unknown",
+        "rule": "needs a balance sheet",
+        "measures": {
+          "debt_to_ebitda": null,
+          "net_debt_to_equity": null,
+          "liabilities_to_assets": null
+        }
+      }
+    },
+    "vector": {
+      "revenue_cagr": null,
+      "operating_margin": null,
+      "fcf_margin_stdev": null,
+      "capex_to_sales": null,
+      "noa_turnover": null,
+      "debt_to_ebitda": null,
+      "revenue": null,
+      "rnoa": null
+    }
+  }
+}
