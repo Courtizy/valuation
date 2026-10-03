@@ -1202,7 +1202,135 @@
           "traits_shared": 0
         }
       ],
-      "peers": {}
+      "peers": {
+        "sector-consumer-staples": [
+          {
+            "ticker": "MDLZ",
+            "score": 0.8937852825180576,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "TSN",
+            "score": 0.8572624175712594,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "KVUE",
+            "score": 0.8498122130118113,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "ECL",
+            "score": 0.8449989252208706,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "USFD",
+            "score": 0.8441551036666537,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "LW",
+            "score": 0.8335558516138813,
+            "traits_shared": 4
+          },
+          {
+            "ticker": "PG",
+            "score": 0.8323145099272442,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "KHC",
+            "score": 0.8260083889299145,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "PPC",
+            "score": 0.8193270261128996,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "CPB",
+            "score": 0.8154997940458273,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "CTVA",
+            "score": 0.7988319487707191,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "BG",
+            "score": 0.7962921080140137,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "EL",
+            "score": 0.7957548887119364,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "INGR",
+            "score": 0.7934560491086408,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "SYY",
+            "score": 0.7843153655024286,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "PM",
+            "score": 0.784094860907742,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "CHSCP",
+            "score": 0.7745533593455227,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "GIS",
+            "score": 0.7676411170416674,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "HSY",
+            "score": 0.7674369744477589,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "SEB",
+            "score": 0.7634712075741921,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "SFM",
+            "score": 0.7628037215735585,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "CL",
+            "score": 0.7603138016761918,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "MNST",
+            "score": 0.7600934013637016,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "PFGC",
+            "score": 0.7579302178870843,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "SFD",
+            "score": 0.7508658784698922,
+            "traits_shared": 1
+          }
+        ]
+      }
     },
     {
       "ticker": "SNX",
