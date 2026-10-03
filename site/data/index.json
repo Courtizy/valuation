@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-03T07:45:28+00:00",
+  "generated_at": "2026-10-03T07:56:17+00:00",
   "companies": [
     {
       "ticker": "AAPL",
@@ -89,6 +89,24 @@
           "latest": {
             "annual": "FY2025",
             "ttm": "TTM 2026-06-27"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "KO",
+      "name": "COCA COLA CO",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-10-03",
+          "detail": "KO/2026-10-03/company_detail.json",
+          "full": "KO/2026-10-03/company_detail_full.json",
+          "comparison": null,
+          "models": [],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-04-03"
           }
         }
       ]

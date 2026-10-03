@@ -58,32 +58,37 @@
       "similar": [
         {
           "ticker": "IBM",
-          "score": 0.45129496448557826,
+          "score": 0.44470736516696785,
           "traits_shared": 1
         },
         {
           "ticker": "DELL",
-          "score": 0.4045113824363229,
+          "score": 0.4139731907417151,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "KO",
+          "score": 0.36020047289193535,
           "traits_shared": 2
         },
         {
           "ticker": "SNX",
-          "score": 0.3584046285145202,
+          "score": 0.35362241526863364,
           "traits_shared": 3
         },
         {
           "ticker": "HPQ",
-          "score": 0.3500762908823546,
+          "score": 0.3526805068682757,
           "traits_shared": 2
         },
         {
           "ticker": "INGM",
-          "score": 0.343332760316696,
+          "score": 0.3382109926684921,
           "traits_shared": 1
         },
         {
           "ticker": "STX",
-          "score": 0.2881087877943294,
+          "score": 0.30280621813757014,
           "traits_shared": 1
         }
       ],
@@ -274,34 +279,39 @@
       },
       "similar": [
         {
-          "ticker": "HPQ",
-          "score": 0.5315914248982866,
-          "traits_shared": 3
-        },
-        {
           "ticker": "IBM",
-          "score": 0.5283761823760401,
+          "score": 0.540067516998292,
           "traits_shared": 1
         },
         {
+          "ticker": "HPQ",
+          "score": 0.5398604221857313,
+          "traits_shared": 3
+        },
+        {
           "ticker": "INGM",
-          "score": 0.48316192811354064,
+          "score": 0.504986669946115,
           "traits_shared": 2
         },
         {
           "ticker": "AAPL",
-          "score": 0.39222143061660986,
+          "score": 0.40921537907439753,
           "traits_shared": 2
         },
         {
           "ticker": "SNX",
-          "score": 0.3488215303983418,
+          "score": 0.3559827906412226,
           "traits_shared": 2
         },
         {
           "ticker": "STX",
-          "score": 0.2977666031907352,
+          "score": 0.31022580384640414,
           "traits_shared": 1
+        },
+        {
+          "ticker": "KO",
+          "score": 0.30597717049209283,
+          "traits_shared": 0
         }
       ],
       "peers": {
@@ -492,32 +502,37 @@
       "similar": [
         {
           "ticker": "INGM",
-          "score": 0.6020542879123534,
+          "score": 0.601670812233246,
           "traits_shared": 1
         },
         {
           "ticker": "DELL",
-          "score": 0.5365968227156371,
+          "score": 0.5462550052533823,
           "traits_shared": 3
         },
         {
           "ticker": "IBM",
-          "score": 0.526739942616576,
+          "score": 0.5194280048755748,
           "traits_shared": 1
         },
         {
           "ticker": "AAPL",
-          "score": 0.3408450201866633,
+          "score": 0.34748010981076205,
           "traits_shared": 2
         },
         {
           "ticker": "SNX",
-          "score": 0.3395679506836896,
+          "score": 0.3384580984600066,
           "traits_shared": 2
         },
         {
           "ticker": "STX",
-          "score": 0.25670131334472496,
+          "score": 0.2774933156528399,
+          "traits_shared": 0
+        },
+        {
+          "ticker": "KO",
+          "score": 0.27022113952045484,
           "traits_shared": 0
         }
       ],
@@ -709,32 +724,37 @@
       "similar": [
         {
           "ticker": "INGM",
-          "score": 0.5788350159441117,
+          "score": 0.5962536954421721,
           "traits_shared": 1
         },
         {
           "ticker": "DELL",
-          "score": 0.5260125827849015,
+          "score": 0.5379324259078674,
           "traits_shared": 1
         },
         {
           "ticker": "HPQ",
-          "score": 0.5123784344987427,
+          "score": 0.5037436654918476,
           "traits_shared": 1
         },
         {
           "ticker": "AAPL",
-          "score": 0.41856998610493806,
+          "score": 0.40987430821711424,
           "traits_shared": 1
         },
         {
           "ticker": "SNX",
-          "score": 0.36211797735881185,
+          "score": 0.35723024341647397,
           "traits_shared": 1
         },
         {
+          "ticker": "KO",
+          "score": 0.3146213481097118,
+          "traits_shared": 0
+        },
+        {
           "ticker": "STX",
-          "score": 0.26253932837793315,
+          "score": 0.28559326811107505,
           "traits_shared": 0
         }
       ],
@@ -925,34 +945,39 @@
       },
       "similar": [
         {
-          "ticker": "HPQ",
-          "score": 0.5947837796388878,
+          "ticker": "IBM",
+          "score": 0.5995602149513621,
           "traits_shared": 1
         },
         {
-          "ticker": "IBM",
-          "score": 0.5831048013814457,
+          "ticker": "HPQ",
+          "score": 0.5928465235881308,
           "traits_shared": 1
         },
         {
           "ticker": "DELL",
-          "score": 0.48601004853645774,
+          "score": 0.5068180468918715,
           "traits_shared": 2
         },
         {
           "ticker": "SNX",
-          "score": 0.34657214645419215,
+          "score": 0.33569704327887484,
           "traits_shared": 1
         },
         {
           "ticker": "AAPL",
-          "score": 0.32261811009674335,
+          "score": 0.32077044534631927,
           "traits_shared": 1
         },
         {
           "ticker": "STX",
-          "score": 0.27133203790276567,
+          "score": 0.2965286057094806,
           "traits_shared": 1
+        },
+        {
+          "ticker": "KO",
+          "score": 0.2904908968041097,
+          "traits_shared": 0
         }
       ],
       "peers": {
@@ -1086,6 +1111,100 @@
       }
     },
     {
+      "ticker": "KO",
+      "name": "COCA COLA CO",
+      "demo": false,
+      "sic": "2080",
+      "sic_description": "Beverages",
+      "classification": {
+        "sector": "consumer_staples",
+        "group": "food_beverage_tobacco",
+        "industry": "beverages"
+      },
+      "as_of": "2026-10-03",
+      "period": "TTM 2026-04-03",
+      "traits": {
+        "stage": "mature grower",
+        "predictability": "medium",
+        "asset_intensity": "moderate",
+        "capital_structure": "low leverage"
+      },
+      "vector": {
+        "revenue_cagr": 0.05529857762651691,
+        "operating_margin": 0.29344209073938804,
+        "fcf_margin_stdev": 0.07217319245432302,
+        "capex_to_sales": 0.041981170359548736,
+        "noa_turnover": 2.156660248555925,
+        "debt_to_ebitda": 0.01611967244825585,
+        "revenue": 49284000000,
+        "rnoa": 0.659249956240154
+      },
+      "rates": {
+        "revenue_cagr": 0.05529857762651691,
+        "operating_margin": 0.29344209073938804,
+        "rnoa": 0.659249956240154,
+        "capex_to_sales": 0.041981170359548736,
+        "debt_to_ebitda": 0.01611967244825585,
+        "wacc": null,
+        "wacc_basis": null,
+        "beta": null
+      },
+      "market": {
+        "price": null,
+        "price_date": null,
+        "market_cap": null,
+        "enterprise_value": null,
+        "source": null,
+        "fallback": null,
+        "check": null
+      },
+      "multiples": {
+        "pe": null,
+        "ev_ebitda": null,
+        "ev_sales": null,
+        "pb": null,
+        "fcf_yield": null
+      },
+      "similar": [
+        {
+          "ticker": "STX",
+          "score": 0.5176506065328411,
+          "traits_shared": 3
+        },
+        {
+          "ticker": "AAPL",
+          "score": 0.36259042684969595,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "IBM",
+          "score": 0.33708213305852985,
+          "traits_shared": 0
+        },
+        {
+          "ticker": "DELL",
+          "score": 0.31648628976491516,
+          "traits_shared": 0
+        },
+        {
+          "ticker": "INGM",
+          "score": 0.3025729453364834,
+          "traits_shared": 0
+        },
+        {
+          "ticker": "SNX",
+          "score": 0.2864904669508538,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "HPQ",
+          "score": 0.2761309577742128,
+          "traits_shared": 0
+        }
+      ],
+      "peers": {}
+    },
+    {
       "ticker": "SNX",
       "name": "TD SYNNEX CORPORATION",
       "demo": false,
@@ -1143,32 +1262,37 @@
       "similar": [
         {
           "ticker": "IBM",
-          "score": 0.4072232784889785,
+          "score": 0.4035796093798364,
           "traits_shared": 1
         },
         {
           "ticker": "INGM",
-          "score": 0.39574860021948977,
+          "score": 0.383403212638529,
           "traits_shared": 1
         },
         {
           "ticker": "DELL",
-          "score": 0.373230653018782,
+          "score": 0.3831621385615302,
           "traits_shared": 2
         },
         {
           "ticker": "AAPL",
-          "score": 0.3678742273571596,
+          "score": 0.366223086772639,
           "traits_shared": 3
         },
         {
           "ticker": "HPQ",
-          "score": 0.35915606447496634,
+          "score": 0.35910451683160444,
           "traits_shared": 2
         },
         {
+          "ticker": "KO",
+          "score": 0.2891070628998228,
+          "traits_shared": 1
+        },
+        {
           "ticker": "STX",
-          "score": 0.25126655577648555,
+          "score": 0.26579505926175745,
           "traits_shared": 1
         }
       ],
@@ -1359,33 +1483,38 @@
       },
       "similar": [
         {
+          "ticker": "KO",
+          "score": 0.5294637557584769,
+          "traits_shared": 3
+        },
+        {
           "ticker": "DELL",
-          "score": 0.32383749667446493,
+          "score": 0.32716973313601067,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "INGM",
+          "score": 0.30938810364828995,
           "traits_shared": 1
         },
         {
           "ticker": "AAPL",
-          "score": 0.3094574065887465,
+          "score": 0.3092563403063632,
           "traits_shared": 1
         },
         {
           "ticker": "IBM",
-          "score": 0.30115123918834175,
+          "score": 0.3081211499702543,
           "traits_shared": 0
         },
         {
-          "ticker": "INGM",
-          "score": 0.3011371784708699,
-          "traits_shared": 1
-        },
-        {
           "ticker": "HPQ",
-          "score": 0.27962943944382296,
+          "score": 0.2874851256317744,
           "traits_shared": 0
         },
         {
           "ticker": "SNX",
-          "score": 0.26220160654015334,
+          "score": 0.26271578468768375,
           "traits_shared": 1
         }
       ],
