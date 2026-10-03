@@ -31,6 +31,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: main
+      - name: Stamp asset versions
+        # Browsers cache Pages files; a per-commit query string makes them fetch new CSS/JS after each deploy.
+        run: |
+          v="$(git rev-parse --short=8 HEAD)"
+          sed -i "s#assets/styles.css\"#assets/styles.css?v=$v\"#; s#assets/app.js\"#assets/app.js?v=$v\"#" site/index.html
+          sed -i "s#from \"./charts.js\"#from \"./charts.js?v=$v\"#" site/assets/app.js
+          grep -n "?v=" site/index.html site/assets/app.js
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
