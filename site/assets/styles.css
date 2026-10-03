@@ -298,3 +298,13 @@ th.est { color: var(--ink-2); font-style: italic; }
 
 /* number columns hug their figures; the label column takes the slack (statement look) */
 table:not(.list) td:not(:first-child), table:not(.list) th:not(:first-child) { width: 1%; padding-left: 22px; }
+
+/* area chart (revenue) */
+.chart .area-fill { fill: var(--series-1); fill-opacity: 0.22; }
+.chart .area-line { fill: none; stroke: var(--series-1); stroke-width: 2; stroke-linejoin: round; }
+.chart .area-line.projected { stroke-dasharray: 6 5; }
+.chart .area-dot { fill: var(--series-1); stroke: var(--surface); stroke-width: 1.5; }
+.chart .area-dot.projected { fill: var(--surface); stroke: var(--series-1); }
+.chart .range-band { fill: var(--series-1); fill-opacity: 0.12; stroke: var(--series-1); stroke-opacity: 0.4; stroke-dasharray: 4 3; }
+.chart .divider { stroke: var(--muted); stroke-dasharray: 3 4; }
+.chart .tick.est { font-style: italic; }

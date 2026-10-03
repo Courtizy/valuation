@@ -2,7 +2,7 @@
 // No valuation math runs here: projections are calculated in Python (L1 trend
 // case, or the DCF's projection) and only displayed.
 
-import { columnChart, lineChart, rangeChart } from "./charts.js";
+import { areaChart, lineChart, rangeChart } from "./charts.js";
 
 const $ = (id) => document.getElementById(id);
 const state = { index: null, concepts: {}, company: null, run: null, detail: null, comparison: null, scn: "p50", companies: null,
@@ -306,18 +306,32 @@ function renderTiles() {
     <div class="value">${t.value}</div>${t.delta ? `<div class="delta ${t.neutral ? "" : t.dir >= 0 ? "up" : "down"}">${t.delta}</div>` : ""}</div>`).join("");
 }
 
+// Revenue: area for reported periods, dashed line for the projection, and a
+// Bear–Bull band = projected growth ± the DCF's growth step (1 pt by default).
 function renderRevenueChart() {
   const view = state.view;
-  const ps = (state.detail.views[view] || []).slice(view === "annual" ? -7 : -12);
+  const ps = (state.detail.views[view] || []).slice(view === "annual" ? -6 : -12);
   const proj = view === "annual" ? projection() : null;
+  const ttm = state.detail.views.ttm.at(-1);
+  // the projection starts from the latest TTM; include it when it's newer than the last fiscal year
+  const cols = ps.map((p) => ({ p, view })).concat(proj && ttm && ttm.end > (ps.at(-1)?.end || "") ? [{ p: ttm, view: "ttm" }] : []);
   const est = proj ? proj.rows : [];
+  const step = (proj?.kind === "dcf" && state.dcf?.details?.scenarios?.steps?.growth) || 0.01;
+  const growth = cols.map(({ p, view: vw }) => { const pr = priorFor(p, vw); return pr?.revenue && fin(p.values.revenue) ? p.values.revenue / pr.revenue - 1 : null; });
+  const low = cols.map(() => null), high = cols.map(() => null);
+  let prev = cols.at(-1)?.p.values.revenue, l = prev, h = prev;
+  for (const r of est) {
+    const g = prev ? r.revenue / prev - 1 : null;
+    growth.push(g); l *= 1 + g - step; h *= 1 + g + step; low.push(l); high.push(h); prev = r.revenue;
+  }
+  const cats = cols.map(({ p, view: vw }) => (vw !== view ? `TTM ${shortLabel(p)}` : shortLabel(p))).concat(est.map((_, i) => estLabel(proj.baseEnd, i + 1)));
   $("rev-title").textContent = view === "ttm" ? "Revenue, trailing twelve months" : view === "quarterly" ? "Revenue by quarter" : "Revenue: reported and projected";
-  $("rev-sub").textContent = ps.length ? `${ps[0].label} to ${est.length ? estLabel(proj.baseEnd, est.length) : ps.at(-1).label}${est.length ? ` · lighter bars = ${proj.kind === "dcf" ? "DCF case" : "trend case"}` : ""}` : "";
-  columnChart($("rev-chart"), {
-    categories: ps.map(shortLabel).concat(est.map((_, i) => estLabel(proj.baseEnd, i + 1))),
-    values: ps.map((p) => p.values.revenue).concat(est.map((r) => r.revenue)),
-    estimate: ps.map(() => false).concat(est.map(() => true)),
-    format: money, label: "Revenue" });
+  $("rev-sub").textContent = cats.length ? `${cats[0]} to ${cats.at(-1)}${est.length ? ` · dashed = ${proj.kind === "dcf" ? "DCF case" : "trend case"}, band = growth ±${(step * 100).toFixed(0)} pt` : ""}` : "";
+  areaChart($("rev-chart"), {
+    categories: cats,
+    values: cols.map(({ p }) => p.values.revenue).concat(est.map((r) => r.revenue)),
+    estimate: cols.map(() => false).concat(est.map(() => true)),
+    low, high, growth, format: money, pctFormat: (v) => pct(v), label: "Revenue", bandLabel: "Bear – Bull" });
 }
 
 function renderReturnsChart() {

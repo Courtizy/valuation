@@ -213,3 +213,79 @@ export function rangeChart(container, { rows, format, reference, label = "" }) {
     }
   });
 }
+
+// Area for reported values, dashed line for projected ones, with an optional
+// shaded low-high band over the projection. Points sit at the centre of each
+// period's slot so labels line up with the other charts.
+//   estimate[i] true = projected; low[i] / high[i] = band (projected points only)
+//   growth[i] (optional) shown in the tooltip
+export function areaChart(container, { categories, values, estimate = [], low = [], high = [], growth = [],
+  format, pctFormat = (v) => `${(v * 100).toFixed(1)}%`, label = "", bandLabel = "Range", height = 220 }) {
+  observe(container, () => {
+    const { svg, tip, width } = setup(container, height);
+    svg.setAttribute("aria-label", label);
+    const m = { t: 18, r: 12, b: 26, l: 56 };
+    const finite = values.concat(low, high).filter((v) => Number.isFinite(v));
+    if (!finite.length) { container.innerHTML = '<p class="muted small">No data for this view.</p>'; return; }
+    const ticks = niceTicks(Math.min(0, ...finite), Math.max(0, ...finite));
+    const lo = ticks[0], hi = ticks[ticks.length - 1];
+    const ih = height - m.t - m.b, iw = width - m.l - m.r;
+    const band = iw / categories.length;
+    const x = (i) => m.l + band * i + band / 2;
+    const y = (v) => m.t + ih - ((v - lo) / (hi - lo)) * ih;
+    for (const t of ticks) {
+      el("line", { x1: m.l, x2: width - m.r, y1: y(t), y2: y(t), class: t === 0 ? "baseline" : "gridline" }, svg);
+      el("text", { x: m.l - 8, y: y(t) + 4, "text-anchor": "end", class: "tick" }, svg).textContent = format(t, true);
+    }
+    const act = values.map((v, i) => (!estimate[i] && Number.isFinite(v) ? i : -1)).filter((i) => i >= 0);
+    const est = values.map((v, i) => (estimate[i] && Number.isFinite(v) ? i : -1)).filter((i) => i >= 0);
+    const last = act.at(-1);
+    const pts = (ix, f = (i) => values[i]) => ix.map((i) => `${x(i)},${y(f(i))}`).join("L");
+
+    if (est.length && last != null) {
+      const sx = (x(last) + x(est[0])) / 2;
+      el("line", { x1: sx, x2: sx, y1: m.t - 6, y2: m.t + ih, class: "divider" }, svg);
+      el("text", { x: sx + 6, y: m.t + 4, class: "tick" }, svg).textContent = "projected →";
+      const bi = est.filter((i) => Number.isFinite(low[i]) && Number.isFinite(high[i]));
+      if (bi.length) {
+        const top = [`${x(last)},${y(values[last])}`, ...bi.map((i) => `${x(i)},${y(high[i])}`)];
+        const bot = [...bi.map((i) => `${x(i)},${y(low[i])}`).reverse(), `${x(last)},${y(values[last])}`];
+        el("path", { d: `M${top.join("L")}L${bot.join("L")}Z`, class: "range-band" }, svg);
+      }
+    }
+    if (act.length) {
+      el("path", { d: `M${x(act[0])},${y(Math.max(lo, 0))}L${pts(act)}L${x(last)},${y(Math.max(lo, 0))}Z`, class: "area-fill" }, svg);
+      el("path", { d: `M${pts(act)}`, class: "area-line" }, svg);
+    }
+    if (est.length) {
+      const ix = last != null ? [last, ...est] : est;
+      el("path", { d: `M${pts(ix)}`, class: "area-line projected" }, svg);
+    }
+    const every = Math.ceil(categories.length / Math.floor(iw / 64));
+    const dots = [];
+    categories.forEach((c, i) => {
+      const v = values[i];
+      if ((categories.length - 1 - i) % every === 0) {
+        el("text", { x: x(i), y: height - 8, "text-anchor": "middle", class: "tick" + (estimate[i] ? " est" : "") }, svg).textContent = c;
+      }
+      if (Number.isFinite(v)) dots[i] = el("circle", { cx: x(i), cy: y(v), r: 3, class: "area-dot" + (estimate[i] ? " projected" : "") }, svg);
+      if (i === categories.length - 1 && Number.isFinite(v)) {
+        el("text", { x: x(i), y: y(Number.isFinite(high[i]) ? high[i] : v) - 7, "text-anchor": "end", class: "dlabel" }, svg).textContent = format(v);
+      }
+    });
+    const cross = el("line", { y1: m.t, y2: m.t + ih, class: "baseline", opacity: 0 }, svg);
+    categories.forEach((c, i) => {
+      const hit = el("rect", { x: m.l + band * i, y: m.t, width: band, height: ih, class: "hit" }, svg);
+      hit.addEventListener("mousemove", (e) => {
+        cross.setAttribute("x1", x(i)); cross.setAttribute("x2", x(i)); cross.setAttribute("opacity", 1);
+        dots.forEach((d, k) => d && d.setAttribute("r", k === i ? 5 : 3));
+        const r = container.getBoundingClientRect();
+        const rows = [{ label: estimate[i] ? `${label} (projected)` : label, value: Number.isFinite(values[i]) ? format(values[i]) : "n/a", color: "var(--series-1)" }];
+        if (Number.isFinite(growth[i])) rows.push({ label: "Growth", value: pctFormat(growth[i]) });
+        if (Number.isFinite(low[i]) && Number.isFinite(high[i])) rows.push({ label: bandLabel, value: `${format(low[i])} – ${format(high[i])}` });
+        showTip(tip, container, e.clientX - r.left, e.clientY - r.top, c, rows);
+      });
+      hit.addEventListener("mouseleave", () => { cross.setAttribute("opacity", 0); dots.forEach((d) => d && d.setAttribute("r", 3)); hideTip(tip); });
+    });
+  });
+}

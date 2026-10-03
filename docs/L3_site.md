@@ -42,7 +42,7 @@ Amounts: negatives in parentheses (positives reserve the ")" so digits align); c
 
 | Tab | Shows |
 |---|---|
-| Company detail | KPI tiles incl. projected revenue CAGR; revenue chart with projected years as lighter bars; statements with derived quarters marked and, in the Annual view, a TTM base column plus five shaded estimate columns (DCF case, else trend case); a Growth and margins block (revenue growth, gross, EBITDA, operating, net margin) across history and estimates; projected unlevered FCF; ratios in five framework views |
+| Company detail | KPI tiles incl. projected revenue CAGR; revenue area chart (reported area from the TTM base, projection as a dashed line, Bear–Bull band = projected growth ± the DCF growth step, 1 pt for the trend case; tooltip shows growth); statements with derived quarters marked and, in the Annual view, a TTM base column plus five shaded estimate columns (DCF case, else trend case); a Growth and margins block (revenue growth, gross, EBITDA, operating, net margin) across history and estimates; projected unlevered FCF; ratios in five framework views |
 | Valuation | Value vs price headline; football field with each method's range, selected value, upside, weight and reason, plus a Bear / Base / Bull toggle; company profile card; DCF detail; similar companies ranked by profile with multiples and rates (`docs/L2_reconcile.md`) |
 | Run pipeline | Starts the Pipeline action. With a token it calls the GitHub API directly; without one it links to the Actions page and prints the `gh` command |
 
