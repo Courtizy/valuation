@@ -1,69 +1,6 @@
 {
-  "generated_at": "2026-10-03T04:10:57+00:00",
+  "generated_at": "2026-10-03T04:07:35+00:00",
   "companies": [
-    {
-      "ticker": "AAPL",
-      "name": "Apple Inc.",
-      "demo": false,
-      "runs": [
-        {
-          "as_of": "2026-10-03",
-          "detail": "AAPL/2026-10-03/company_detail.json",
-          "comparison": "AAPL/2026-10-03/comparison.json",
-          "models": [
-            "dcf"
-          ],
-          "latest": {
-            "annual": "FY2025",
-            "ttm": "TTM 2026-06-27"
-          }
-        },
-        {
-          "as_of": "2026-10-02",
-          "detail": "AAPL/2026-10-02/company_detail.json",
-          "comparison": null,
-          "models": [],
-          "latest": {
-            "annual": "FY2025",
-            "ttm": "TTM 2026-06-27"
-          }
-        }
-      ]
-    },
-    {
-      "ticker": "TSM",
-      "name": "Taiwan Semiconductor Manufacturing Company Limited",
-      "demo": false,
-      "runs": [
-        {
-          "as_of": "2026-10-03",
-          "detail": "TSM/2026-10-03/company_detail.json",
-          "comparison": null,
-          "models": [],
-          "latest": {
-            "annual": null,
-            "ttm": null
-          }
-        }
-      ]
-    },
-    {
-      "ticker": "VZ",
-      "name": "VERIZON COMMUNICATIONS INC",
-      "demo": false,
-      "runs": [
-        {
-          "as_of": "2026-10-02",
-          "detail": "VZ/2026-10-02/company_detail.json",
-          "comparison": null,
-          "models": [],
-          "latest": {
-            "annual": "FY2025",
-            "ttm": "TTM 2026-06-30"
-          }
-        }
-      ]
-    },
     {
       "ticker": "DEMO",
       "name": "Demo Manufacturing Co. (synthetic)",
@@ -125,6 +62,36 @@
             "ttm": "TTM 2026-06-30"
           }
         }
+      ]
+    }
+  ],
+  "sectors": [
+    {
+      "id": "list-demo",
+      "label": "Demo sector (synthetic)",
+      "kind": "list",
+      "as_of": "2026-09-30",
+      "year": 2025,
+      "demo": true,
+      "path": "sectors/list-demo/2026-09-30/sector.json",
+      "count": 13,
+      "members": [
+        "ZZA",
+        "ZZB",
+        "DEMOU",
+        "ZZC",
+        "DEMO",
+        "ZZD",
+        "ZZE",
+        "ZZF",
+        "DEMOG",
+        "ZZG",
+        "ZZH",
+        "ZZI",
+        "ZZJ"
+      ],
+      "as_of_all": [
+        "2026-09-30"
       ]
     }
   ]
