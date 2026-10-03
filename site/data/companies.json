@@ -45,6 +45,50 @@
       }
     },
     {
+      "ticker": "TSM",
+      "name": "Taiwan Semiconductor Manufacturing Company Limited",
+      "demo": false,
+      "as_of": "2026-10-03",
+      "period": null,
+      "traits": {
+        "stage": "unknown",
+        "predictability": "unknown",
+        "asset_intensity": "unknown",
+        "capital_structure": "unknown"
+      },
+      "vector": {
+        "revenue_cagr": null,
+        "operating_margin": null,
+        "fcf_margin_stdev": null,
+        "capex_to_sales": null,
+        "noa_turnover": null,
+        "debt_to_ebitda": null,
+        "revenue": null,
+        "rnoa": null
+      },
+      "rates": {
+        "revenue_cagr": null,
+        "operating_margin": null,
+        "rnoa": null,
+        "capex_to_sales": null,
+        "debt_to_ebitda": null,
+        "wacc": null,
+        "beta": null
+      },
+      "market": {
+        "price": null,
+        "market_cap": null,
+        "enterprise_value": null
+      },
+      "multiples": {
+        "pe": null,
+        "ev_ebitda": null,
+        "ev_sales": null,
+        "pb": null,
+        "fcf_yield": null
+      }
+    },
+    {
       "ticker": "DEMO",
       "name": "Demo Manufacturing Co. (synthetic)",
       "demo": true,
