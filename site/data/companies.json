@@ -1,0 +1,78 @@
+{
+  "companies": [
+    {
+      "ticker": "AAPL",
+      "name": "Apple Inc.",
+      "demo": false,
+      "as_of": "2026-10-03",
+      "period": "TTM 2026-06-27",
+      "traits": {
+        "stage": "mature grower",
+        "predictability": "high",
+        "asset_intensity": "light",
+        "capital_structure": "low leverage"
+      },
+      "vector": {
+        "revenue_cagr": 0.03275991627577457,
+        "operating_margin": 0.3317295848747812,
+        "fcf_margin_stdev": 0.016517646085819168,
+        "capex_to_sales": 0.021509222981729692,
+        "noa_turnover": 3.8640929389415657,
+        "debt_to_ebitda": 0.5021701724825701,
+        "revenue": 466823000000,
+        "rnoa": 1.067208562169679
+      },
+      "rates": {
+        "revenue_cagr": 0.03275991627577457,
+        "operating_margin": 0.3317295848747812,
+        "rnoa": 1.067208562169679,
+        "capex_to_sales": 0.021509222981729692,
+        "debt_to_ebitda": 0.5021701724825701,
+        "wacc": 0.10589764999537835,
+        "beta": 1.09
+      },
+      "market": {
+        "price": 333.69,
+        "market_cap": 4874864863470.0,
+        "enterprise_value": 4896809863470.0
+      },
+      "multiples": {
+        "pe": 37.81016724943768,
+        "ev_ebitda": 29.15479291654511,
+        "ev_sales": 10.489649960413262,
+        "pb": 45.33914493554688,
+        "fcf_yield": 0.028038315692449172
+      }
+    },
+    {
+      "ticker": "DEMO",
+      "name": "Demo Manufacturing Co. (synthetic)",
+      "demo": true,
+      "as_of": "2026-09-30",
+      "period": null,
+      "traits": {},
+      "vector": {},
+      "rates": {
+        "revenue_cagr": null,
+        "operating_margin": null,
+        "rnoa": null,
+        "capex_to_sales": null,
+        "debt_to_ebitda": null,
+        "wacc": null,
+        "beta": null
+      },
+      "market": {
+        "price": null,
+        "market_cap": null,
+        "enterprise_value": null
+      },
+      "multiples": {
+        "pe": null,
+        "ev_ebitda": null,
+        "ev_sales": null,
+        "pb": null,
+        "fcf_yield": null
+      }
+    }
+  ]
+}
