@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-03T05:49:11+00:00",
+  "generated_at": "2026-10-03T06:35:25+00:00",
   "companies": [
     {
       "ticker": "AAPL",
@@ -107,6 +107,24 @@
           "latest": {
             "annual": "FY2025",
             "ttm": "TTM 2026-08-31"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "STX",
+      "name": "Seagate Technology Holdings plc",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-10-03",
+          "detail": "STX/2026-10-03/company_detail.json",
+          "full": "STX/2026-10-03/company_detail_full.json",
+          "comparison": null,
+          "models": [],
+          "latest": {
+            "annual": "FY2026",
+            "ttm": "TTM 2026-07-03"
           }
         }
       ]

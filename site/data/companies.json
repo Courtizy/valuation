@@ -53,27 +53,32 @@
       "similar": [
         {
           "ticker": "IBM",
-          "score": 0.38934446981285015,
+          "score": 0.45129496448557826,
           "traits_shared": 1
         },
         {
           "ticker": "DELL",
-          "score": 0.3634759466203076,
-          "traits_shared": 2
-        },
-        {
-          "ticker": "HPQ",
-          "score": 0.3322661204312385,
+          "score": 0.4045113824363229,
           "traits_shared": 2
         },
         {
           "ticker": "SNX",
-          "score": 0.31834299912948394,
+          "score": 0.3584046285145202,
           "traits_shared": 3
         },
         {
+          "ticker": "HPQ",
+          "score": 0.3500762908823546,
+          "traits_shared": 2
+        },
+        {
           "ticker": "INGM",
-          "score": 0.3053204056097515,
+          "score": 0.343332760316696,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "STX",
+          "score": 0.2881087877943294,
           "traits_shared": 1
         }
       ],
@@ -260,28 +265,33 @@
       "similar": [
         {
           "ticker": "HPQ",
-          "score": 0.43249523236158594,
+          "score": 0.5315914248982866,
           "traits_shared": 3
         },
         {
           "ticker": "IBM",
-          "score": 0.41940790636162467,
+          "score": 0.5283761823760401,
           "traits_shared": 1
         },
         {
           "ticker": "INGM",
-          "score": 0.3557598827629123,
+          "score": 0.48316192811354064,
           "traits_shared": 2
         },
         {
           "ticker": "AAPL",
-          "score": 0.349666377021509,
+          "score": 0.39222143061660986,
           "traits_shared": 2
         },
         {
           "ticker": "SNX",
-          "score": 0.2958777134018061,
+          "score": 0.3488215303983418,
           "traits_shared": 2
+        },
+        {
+          "ticker": "STX",
+          "score": 0.2977666031907352,
+          "traits_shared": 1
         }
       ],
       "peers": {
@@ -467,28 +477,33 @@
       "similar": [
         {
           "ticker": "INGM",
-          "score": 0.5416935644989689,
-          "traits_shared": 1
-        },
-        {
-          "ticker": "IBM",
-          "score": 0.5050829984406069,
+          "score": 0.6020542879123534,
           "traits_shared": 1
         },
         {
           "ticker": "DELL",
-          "score": 0.40789253110542034,
+          "score": 0.5365968227156371,
           "traits_shared": 3
         },
         {
-          "ticker": "SNX",
-          "score": 0.33389934283049605,
-          "traits_shared": 2
+          "ticker": "IBM",
+          "score": 0.526739942616576,
+          "traits_shared": 1
         },
         {
           "ticker": "AAPL",
-          "score": 0.30612058070360176,
+          "score": 0.3408450201866633,
           "traits_shared": 2
+        },
+        {
+          "ticker": "SNX",
+          "score": 0.3395679506836896,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "STX",
+          "score": 0.25670131334472496,
+          "traits_shared": 0
         }
       ],
       "peers": {
@@ -673,29 +688,34 @@
       },
       "similar": [
         {
-          "ticker": "HPQ",
-          "score": 0.4930879920730311,
-          "traits_shared": 1
-        },
-        {
           "ticker": "INGM",
-          "score": 0.4375728962888761,
+          "score": 0.5788350159441117,
           "traits_shared": 1
         },
         {
           "ticker": "DELL",
-          "score": 0.39401461212565037,
+          "score": 0.5260125827849015,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "HPQ",
+          "score": 0.5123784344987427,
           "traits_shared": 1
         },
         {
           "ticker": "AAPL",
-          "score": 0.35020054837287157,
+          "score": 0.41856998610493806,
           "traits_shared": 1
         },
         {
           "ticker": "SNX",
-          "score": 0.3175011009225353,
+          "score": 0.36211797735881185,
           "traits_shared": 1
+        },
+        {
+          "ticker": "STX",
+          "score": 0.26253932837793315,
+          "traits_shared": 0
         }
       ],
       "peers": {
@@ -881,27 +901,32 @@
       "similar": [
         {
           "ticker": "HPQ",
-          "score": 0.5445645495709549,
+          "score": 0.5947837796388878,
           "traits_shared": 1
         },
         {
           "ticker": "IBM",
-          "score": 0.45000337164966503,
-          "traits_shared": 1
-        },
-        {
-          "ticker": "SNX",
-          "score": 0.35657950784940845,
+          "score": 0.5831048013814457,
           "traits_shared": 1
         },
         {
           "ticker": "DELL",
-          "score": 0.3351834894713069,
+          "score": 0.48601004853645774,
           "traits_shared": 2
         },
         {
+          "ticker": "SNX",
+          "score": 0.34657214645419215,
+          "traits_shared": 1
+        },
+        {
           "ticker": "AAPL",
-          "score": 0.2734264892139689,
+          "score": 0.32261811009674335,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "STX",
+          "score": 0.27133203790276567,
           "traits_shared": 1
         }
       ],
@@ -1087,29 +1112,34 @@
       },
       "similar": [
         {
-          "ticker": "INGM",
-          "score": 0.40200644032503885,
-          "traits_shared": 1
-        },
-        {
           "ticker": "IBM",
-          "score": 0.35550524095263625,
+          "score": 0.4072232784889785,
           "traits_shared": 1
         },
         {
-          "ticker": "HPQ",
-          "score": 0.3554833700976435,
+          "ticker": "INGM",
+          "score": 0.39574860021948977,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "DELL",
+          "score": 0.373230653018782,
           "traits_shared": 2
         },
         {
           "ticker": "AAPL",
-          "score": 0.31483855757635104,
+          "score": 0.3678742273571596,
           "traits_shared": 3
         },
         {
-          "ticker": "DELL",
-          "score": 0.30270267018963204,
+          "ticker": "HPQ",
+          "score": 0.35915606447496634,
           "traits_shared": 2
+        },
+        {
+          "ticker": "STX",
+          "score": 0.25126655577648555,
+          "traits_shared": 1
         }
       ],
       "peers": {
@@ -1237,6 +1267,218 @@
           {
             "ticker": "VRT",
             "score": 0.5632771821967795,
+            "traits_shared": 3
+          }
+        ]
+      }
+    },
+    {
+      "ticker": "STX",
+      "name": "Seagate Technology Holdings plc",
+      "demo": false,
+      "sic": "3572",
+      "sic_description": "Computer Storage Devices",
+      "classification": {
+        "sector": "technology",
+        "group": "hardware_equipment",
+        "industry": "hardware_peripherals"
+      },
+      "as_of": "2026-10-03",
+      "period": "TTM 2026-07-03",
+      "traits": {
+        "stage": "mature",
+        "predictability": "medium",
+        "asset_intensity": "moderate",
+        "capital_structure": "low leverage"
+      },
+      "vector": {
+        "revenue_cagr": 0.01125691029112641,
+        "operating_margin": 0.33571135711357114,
+        "fcf_margin_stdev": 0.063880830266896,
+        "capex_to_sales": 0.046658466584665846,
+        "noa_turnover": 3.04875,
+        "debt_to_ebitda": 0.8157894736842105,
+        "revenue": 12195000000,
+        "rnoa": 0.796
+      },
+      "rates": {
+        "revenue_cagr": 0.01125691029112641,
+        "operating_margin": 0.33571135711357114,
+        "rnoa": 0.796,
+        "capex_to_sales": 0.046658466584665846,
+        "debt_to_ebitda": 0.8157894736842105,
+        "wacc": null,
+        "beta": null
+      },
+      "market": {
+        "price": null,
+        "market_cap": null,
+        "enterprise_value": null
+      },
+      "multiples": {
+        "pe": null,
+        "ev_ebitda": null,
+        "ev_sales": null,
+        "pb": null,
+        "fcf_yield": null
+      },
+      "similar": [
+        {
+          "ticker": "DELL",
+          "score": 0.32383749667446493,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "AAPL",
+          "score": 0.3094574065887465,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "IBM",
+          "score": 0.30115123918834175,
+          "traits_shared": 0
+        },
+        {
+          "ticker": "INGM",
+          "score": 0.3011371784708699,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "HPQ",
+          "score": 0.27962943944382296,
+          "traits_shared": 0
+        },
+        {
+          "ticker": "SNX",
+          "score": 0.26220160654015334,
+          "traits_shared": 1
+        }
+      ],
+      "peers": {
+        "sector-technology": [
+          {
+            "ticker": "XRX",
+            "score": 0.7781759256195584,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "NXPI",
+            "score": 0.7686615014476007,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "KEYS",
+            "score": 0.7648108980633528,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "NTAP",
+            "score": 0.752606037501194,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "MSI",
+            "score": 0.7358457393212199,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "SAIC",
+            "score": 0.7084956088503984,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "TRMB",
+            "score": 0.7070997888147107,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "VLTO",
+            "score": 0.7068887331426718,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "FTV",
+            "score": 0.7059705120968335,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "NATL",
+            "score": 0.7050355350953929,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "SSNC",
+            "score": 0.7042899171850662,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "ADI",
+            "score": 0.6984945488713077,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "HUBB",
+            "score": 0.6949121812178892,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "ROK",
+            "score": 0.6927844745628737,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "VNT",
+            "score": 0.6923225457315452,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "KD",
+            "score": 0.6913222779934296,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "DXC",
+            "score": 0.6849406404026268,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "AME",
+            "score": 0.6844264470450057,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "GDDY",
+            "score": 0.6829288233911665,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "DHR",
+            "score": 0.6769757769198607,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "JBL",
+            "score": 0.6703163436911005,
+            "traits_shared": 4
+          },
+          {
+            "ticker": "AMKR",
+            "score": 0.6634734331909802,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "KLAC",
+            "score": 0.6610936524110562,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "CACI",
+            "score": 0.6507268281055638,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "FLEX",
+            "score": 0.6484367074275487,
             "traits_shared": 3
           }
         ]
