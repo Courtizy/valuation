@@ -1,4 +1,5 @@
-"""Minimal stdlib HTTP client: SEC User-Agent, rate limiting, retries."""
+"""Minimal stdlib HTTP client: User-Agent, rate limiting, retries. SEC needs a contact User-Agent;
+other sources (market data) pass contact_required=False and their own headers."""
 from __future__ import annotations
 
 import time
@@ -28,8 +29,10 @@ class HttpClient:
         opener: Callable = urllib.request.urlopen,
         sleep: Callable[[float], None] = time.sleep,
         clock: Callable[[], float] = time.monotonic,
+        headers: dict | None = None,
+        contact_required: bool = True,
     ):
-        if not user_agent or "@" not in user_agent:
+        if contact_required and (not user_agent or "@" not in user_agent):
             raise ValueError(
                 "SEC requires a User-Agent with contact info, "
                 "e.g. 'Jane Doe jane@example.com' (or set $SEC_USER_AGENT)"
@@ -41,6 +44,7 @@ class HttpClient:
         self.timeout = timeout
         self._open, self._sleep, self._clock = opener, sleep, clock
         self._last = float("-inf")
+        self.headers = dict(headers or {})
 
     def _throttle(self) -> None:
         wait = self.min_interval - (self._clock() - self._last)
@@ -50,7 +54,7 @@ class HttpClient:
 
     def get_bytes(self, url: str) -> bytes:
         req = urllib.request.Request(
-            url, headers={"User-Agent": self.user_agent, "Accept": "application/json, text/html;q=0.9, */*;q=0.5"}
+            url, headers={"User-Agent": self.user_agent, "Accept": "application/json, text/html;q=0.9, */*;q=0.5", **self.headers}
         )
         for attempt in range(self.max_retries + 1):
             self._throttle()

@@ -2,8 +2,8 @@
   "mode": "implied",
   "base_period": "annual",
   "market": {
-    "price": 333.69,
-    "price_date": "2026-10-02",
+    "price": null,
+    "price_date": null,
     "basic_shares": null,
     "options": []
   },
@@ -18,10 +18,10 @@
     "tax_rate": null
   },
   "cost_of_capital": {
-    "risk_free": 0.0524,
+    "risk_free": null,
     "risk_free_terminal": 0.06,
     "equity_risk_premium": 0.05,
-    "beta": 1.09,
+    "beta": null,
     "pre_tax_cost_of_debt": null,
     "pre_tax_cost_of_debt_fallback": 0.058,
     "current_debt_to_equity": null,
@@ -32,11 +32,11 @@
   "discounting": {"convention": "closing_year_zero"},
   "sensitivity": {"growth_step": 0.01, "wacc_step": 0.01, "terminal_growth_step": 0.005, "terminal_wacc_step": 0.005},
   "sources": {
-    "price": "AAPL close 2026-10-02, $333.69 (stockanalysis.com price history)",
-    "risk_free": "10-year Treasury constant maturity 5.24% on 2026-10-01 (Federal Reserve H.15)",
+    "price": "market data: the last close on or before as_of (Yahoo, checked against Alpha Vantage)",
+    "risk_free": "market data: 10-year Treasury (FRED DGS10) on or before as_of",
     "risk_free_terminal": "normalized long-run Treasury rate, 6% (course convention)",
     "equity_risk_premium": "5% (course convention)",
-    "beta": "1.09, 5Y monthly vs S&P 500 (Yahoo Finance key statistics, as of 2026-09-15)",
+    "beta": "market data: 60 monthly returns vs the S&P 500 (1.08 on 2026-10-02; Yahoo shows 1.09)",
     "pre_tax_cost_of_debt": "interest expense / total debt from the latest TTM filings",
     "pre_tax_cost_of_debt_fallback": "5.8% marginal pre-tax cost of debt (Finbox, yield-based), Oct 2026",
     "shares": "latest shares outstanding from the 10-Q (filings), no options (Apple pays stock compensation in RSUs)",

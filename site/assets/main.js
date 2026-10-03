@@ -20,6 +20,8 @@ async function init() {
     state.index = { companies: [] };
   }
   fillSectorList();
+  $("footer-market").textContent = state.index.market_data === "real" ? "Market prices: Yahoo, checked against Alpha Vantage."
+    : "Market prices aren't published here; the example companies use synthetic market figures.";
   $("generated").textContent = state.index.generated_at ? `Data index updated ${state.index.generated_at.replace("T", " ").replace("+00:00", " UTC")}.` : "";
   const sel = $("company");
   sel.innerHTML = state.index.companies.map((c) =>

@@ -64,11 +64,12 @@ export function renderHeadline() {
     <div class="card-head"><h2>Value vs. Price</h2><span class="muted small">Scenario set on the football field below</span></div>
     <div class="headline">
       <div><div class="label">Share Price</div><div class="big num">${price(c.price)}</div>
-        <div class="muted small">${c.price_source ? `From ${esc(c.price_source.replace(/\bdcf\b/i, "DCF"))}` : "No price yet: add one to the DCF assumptions"}</div></div>
+        <div class="muted small">${c.price_source === "market data" ? marketLine(state.detail.market)
+          : c.price_source ? `From ${esc(c.price_source.replace(/\bdcf\b/i, "DCF"))}` : showcase() ? SHOWCASE_NOTE : "No price yet: run the pipeline for market data"}</div></div>
       <div><div class="label">Blended Value · ${SCENARIOS[k]}</div><div class="big num">${blend ? price(blend[k]) : NA}</div>
         <div class="muted small">${blend ? `Bear ${price(blend.p10)} – Bull ${price(blend.p90)}` : "No weighted method has run"}</div></div>
       <div><div class="label">Upside / Downside</div><div class="big num ${upClass(up, 0.05)}">${signed(up)}</div>
-        <div class="muted small">${!fin(up) ? "" : Math.abs(up) < 0.05 ? "Within 5% of price: fairly valued" : up > 0 ? "Undervalued on this blend" : "Overvalued on this blend"}</div></div>
+        <div class="muted small">${!fin(up) ? (showcase() ? "Needs a market price" : "") : Math.abs(up) < 0.05 ? "Within 5% of price: fairly valued" : up > 0 ? "Undervalued on this blend" : "Overvalued on this blend"}</div></div>
     </div>
     <p class="small" style="margin:12px 0 0">${primary.map((m) => `${m.role === "primary" ? "Primary" : "Cross-Check"} <b>${esc(titleCase(m.name))}</b> ${pct(m.weight, true)}`).join(" · ") || "No weighted methods yet"}.
       <span class="muted">${esc(c.plan?.summary || "")}</span></p>
@@ -175,6 +176,28 @@ export function renderProfileCard(root) {
 }
 
 // Similar companies: nearest by profile measures (z-scored), not by sector.
+/** Matches below this score are too far apart to be useful comparisons. */
+export const MIN_SIMILARITY = 0.35;
+
+/** Public showcase: real market prices aren't published (data terms); synthetic examples keep theirs. */
+export const showcase = () => state.index?.market_data !== "real" && !state.company?.demo;
+export const SHOWCASE_NOTE = "Market prices aren't published on this site; values are intrinsic only";
+
+const SOURCE_NAMES = { yahoo: "Yahoo", alphavantage: "Alpha Vantage", synthetic: "Synthetic Example" };
+/** "Close Oct 2, 2026 · Yahoo · Checked against Alpha Vantage": where the price came from and whether it was confirmed. */
+export function marketLine(m) {
+  if (!m?.price) return showcase() ? SHOWCASE_NOTE : "No market data";
+  const d = m.price_date ? new Date(`${m.price_date}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
+  const src = SOURCE_NAMES[m.source] || m.source || "";
+  const ck = m.check || {};
+  const check = m.fallback ? `<span class="warn">Yahoo unavailable; backup source</span>`
+    : ck.status === "ok" ? "Checked against Alpha Vantage"
+    : ck.status === "mismatch" ? `<span class="warn">Alpha Vantage differs by ${pct(Math.abs(ck.diff_pct ?? 0))}${ck.price_date !== m.price_date ? ` (its close is ${esc(ck.price_date)})` : ""}</span>`
+    : ck.status === "skipped" ? "Not cross-checked (no Alpha Vantage key)"
+    : ck.status === "unavailable" ? "Alpha Vantage check unavailable" : "";
+  return [`Close ${esc(d)}`, esc(src), check].filter(Boolean).join(" · ");
+}
+
 export async function renderSimilar(root) {
   let data;
   data = state.companies || { companies: [] };
@@ -183,18 +206,25 @@ export async function renderSimilar(root) {
   if (!me) return;
   // ranking computed at publish (L3_app/similar.py), the same one the peer picker uses
   const byTicker = new Map(all.map((c) => [c.ticker, c]));
-  const ranked = (me.similar || []).map((r) => ({ c: byTicker.get(r.ticker), score: r.score, traitsMatch: r.traits_shared }))
+  const candidates = (me.similar || []).map((r) => ({ c: byTicker.get(r.ticker), score: r.score, traitsMatch: r.traits_shared }))
     .filter((r) => r.c && r.c.demo === me.demo);
-  const med = (k, grp) => { const xs = ranked.map((r) => r.c[grp][k]).filter(fin).sort((a, b) => a - b);
+  const ranked = candidates.filter((r) => fin(r.score) && r.score >= MIN_SIMILARITY);
+  const weak = candidates.length - ranked.length;
+  const med = (k, grp) => { const xs = ranked.map((r) => (r.c[grp] || {})[k]).filter(fin).sort((a, b) => a - b);
     return xs.length ? (xs.length % 2 ? xs[(xs.length - 1) / 2] : (xs[xs.length / 2 - 1] + xs[xs.length / 2]) / 2) : null; };
-  const cols = [["P/E", "multiples", "pe", mult], ["EV/EBITDA", "multiples", "ev_ebitda", mult], ["EV/Sales", "multiples", "ev_sales", mult],
-    ["P/B", "multiples", "pb", mult], ["FCF Yield", "multiples", "fcf_yield", pct], ["Revenue CAGR", "rates", "revenue_cagr", pct],
-    ["Op. Margin", "rates", "operating_margin", pct], ["RNOA", "rates", "rnoa", pct], ["Debt/EBITDA", "rates", "debt_to_ebitda", mult],
-    ["WACC", "rates", "wacc", pct]];
-  const cells = (c) => cols.map(([, g, k, f]) => `<td class="${fin(c[g][k]) ? "" : "na"}">${f(c[g][k])}</td>`).join("");
+  // market columns first; any column with no figure for any company shown is dropped
+  // (on the public showcase that removes the price-based ones for real companies)
+  const allCols = [["P/E", "multiples", "pe", mult], ["EV/EBITDA", "multiples", "ev_ebitda", mult], ["EV/Sales", "multiples", "ev_sales", mult],
+    ["P/B", "multiples", "pb", mult], ["FCF Yield", "multiples", "fcf_yield", pct], ["Revenue", "vector", "revenue", money],
+    ["Revenue CAGR", "rates", "revenue_cagr", pct], ["Op. Margin", "rates", "operating_margin", pct], ["RNOA", "rates", "rnoa", pct],
+    ["Capex / Sales", "rates", "capex_to_sales", pct], ["Debt/EBITDA", "rates", "debt_to_ebitda", mult], ["WACC", "rates", "wacc", pct]];
+  const cols = allCols.filter(([, g, k]) => [me, ...ranked.map((r) => r.c)].some((c) => fin((c[g] || {})[k])));
+  const cells = (c) => cols.map(([, g, k, f]) => `<td class="${fin((c[g] || {})[k]) ? "" : "na"}">${f((c[g] || {})[k])}</td>`).join("");
   const html = `<div class="card">
     <div class="card-head"><h2>Similar Companies</h2><span class="muted small">ranked by closeness of growth, margins, cash-flow stability, capital intensity, leverage and size, across every company published here</span></div>
-    ${ranked.length ? "" : `<p class="muted">No other ${me.demo ? "demo " : ""}companies published yet. Run the pipeline for more tickers; they're ranked here by profile, not sector.</p>`}
+    ${ranked.length ? "" : candidates.length
+      ? `<p class="muted">No published company is at least ${pct(MIN_SIMILARITY, true)} similar. Pick peers from the sector below, or build company detail for more of them.</p>`
+      : `<p class="muted">No other ${me.demo ? "demo " : ""}companies published yet. Run the pipeline for more tickers; they're ranked here by profile, not sector.</p>`}
     <div class="table-wrap"><table class="list">
       <thead><tr><th>Company</th><th>Similarity</th><th>Traits Shared</th>${cols.map(([n]) => `<th>${n}</th>`).join("")}</tr></thead>
       <tbody>
@@ -203,7 +233,8 @@ export async function renderSimilar(root) {
           <td title="${Object.entries(r.c.traits).map(([k, v]) => `${TRAIT_NAMES[k]}: ${titleCase(v)}`).join("\n")}">${r.traitsMatch} of 4</td>${cells(r.c)}</tr>`).join("")}
         ${ranked.length > 1 ? `<tr class="sub"><td>Peer Median</td><td></td><td></td>${cols.map(([, g, k, f]) => `<td>${f(med(k, g))}</td>`).join("")}</tr>` : ""}
       </tbody></table></div>
-    <p class="legend-note">Multiples need a share price, which currently comes from each company's DCF assumptions; "–" means no price yet. Hover "Traits Shared" for each company's profile.</p>
+    <p class="legend-note">${showcase() ? `${SHOWCASE_NOTE}, so price-based columns appear only where a price was entered in the assumptions. WACC is the DCF's rate where a DCF has run.`
+      : `Prices from market data (Yahoo, checked against Alpha Vantage for valued companies and their peers); WACC is the DCF's rate where a DCF has run, else a market estimate (risk-free + beta × 5%). "–" = no market data yet: rerun that company.`} Hover "Traits Shared" for each company's profile.${weak ? ` ${weak} weaker match${weak > 1 ? "es" : ""} (below ${pct(MIN_SIMILARITY, true)}) hidden.` : ""}</p>
   </div>`;
   if (root.id === "val-similar") root.innerHTML = html; else root.insertAdjacentHTML("beforeend", html);
 }
@@ -293,37 +324,37 @@ export function renderPeerPicker() {
         <td><b>${esc(c.ticker)}</b> <span class="muted small">${esc(c.name || "")}</span></td>
         <td>${fin(r.score) ? pct(r.score, true) : NA}</td><td title="${Object.entries(c.traits).map(([k, x]) => `${TRAIT_NAMES[k] || k}: ${titleCase(x)}`).join("\n")}">${r.traits} of 4</td>
         <td>${money(c.revenue)}</td><td>${pct(c.revenue_cagr)}</td><td>${pct(c.operating_margin)}</td><td>${mult(c.debt_to_ebitda)}</td>
-        <td><input type="number" class="pp-price" data-t="${esc(c.ticker)}" min="0" step="0.01" placeholder="$" value="${cur?.price ?? ""}" aria-label="${esc(c.ticker)} price"></td></tr>`; }).join("")}
+        <td><input type="number" class="pp-price" data-t="${esc(c.ticker)}" min="0" step="0.01" placeholder="Market" value="${cur?.price ?? ""}" aria-label="${esc(c.ticker)} price"></td></tr>`; }).join("")}
     </tbody></table></div>
     <div class="actions">
       <button type="button" class="primary" id="pp-save" ${demo ? "disabled" : ""}>Save Peers</button>
-      <button type="button" id="pp-run" ${demo ? "disabled" : ""}>Save Peers & Run Comps</button>
+      <button type="button" id="pp-run" ${demo ? "disabled" : ""}>Run Comps</button>
       <span class="status" role="status" id="pp-status">${demo ? "Demo data: saving is off." : ""}</span>
     </div>
     <p class="legend-note">Writes <code>inputs/assumptions/${esc(state.company.ticker)}/comps.json</code> in your repo with the token from the Run Pipeline tab
-      (it needs Contents: read and write). Peers not listed here (entered by hand, or from outside this sector) are kept.</p></div>`;
+      (it needs Contents: read and write). Run Comps fetches each peer's price from market data; type a price only to override it.
+      Peers not listed here (entered by hand, or from outside this sector) are kept.</p></div>`;
   wireSectorPicker(root);
   wireLevelBar(root, renderPeerPicker);
   const count = () => { $("pp-count").textContent = `${root.querySelectorAll("#pp-table input[type=checkbox]:checked").length} ticked`; };
   root.querySelectorAll("#pp-table input[type=checkbox]").forEach((x) => x.onchange = count);
   count();
-  $("pp-save").onclick = () => savePeers(false);
-  $("pp-run").onclick = () => savePeers(true);
+  $("pp-save").onclick = () => savePeers();
+  $("pp-run").onclick = () => runComps();
 }
 
-export async function savePeers(andRun) {
+export async function savePeers() {
   const st = $("pp-status"), t = state.company.ticker, path = `inputs/assumptions/${t}/comps.json`;
   const picks = [...document.querySelectorAll("#pp-table input[type=checkbox]:checked")].map((x) => x.value);
   const prices = Object.fromEntries([...document.querySelectorAll(".pp-price")].filter((x) => x.value !== "").map((x) => [x.dataset.t, Number(x.value)]));
   if (!picks.length) { setStatus(st, { ok: false, msg: "Tick at least one peer." }); return; }
   if (!gh().token) { setStatus(st, { ok: false, noToken: true, msg: "Add a token on the Run Pipeline tab (Contents: read and write) to save from here." }); return; }
   st.className = "status"; st.textContent = "Saving…";
-  try {
-    const { sha, doc } = await readRepoJSON(path);
-    const d = doc || { multiples: ["ev_ebitda", "ev_sales"], range: "min_max", peers: [] };
+  // keep what this picker didn't show: hand-entered peers and peers outside the level in view
+  const shown = new Set([...document.querySelectorAll("#pp-table input[type=checkbox]")].map((x) => x.value.toUpperCase()));
+  const merge = (doc) => {
+    const d = doc || { multiples: ["ev_ebitda", "ev_sales"], range: "auto", peers: [] };
     const old = new Map((d.peers || []).map((e) => (typeof e === "string" ? [e.toUpperCase(), { ticker: e.toUpperCase() }] : [String(e.ticker || "").toUpperCase(), e])));
-    // keep what this picker didn't show: hand-entered peers and peers outside the level in view
-    const shown = new Set([...document.querySelectorAll("#pp-table input[type=checkbox]")].map((x) => x.value.toUpperCase()));
     const kept = [...old.values()].filter((e) => e.sec === false || !shown.has(String(e.ticker || "").toUpperCase()));
     d.peers = [...kept, ...picks.map((p) => {
       const e = { ...(old.get(p) || { ticker: p }) };
@@ -331,11 +362,26 @@ export async function savePeers(andRun) {
       return e;
     })];
     d.sources = { ...(d.sources || {}), peers: `picked from ${state.sector.label} (screened ${state.sectorMeta.as_of}) on ${new Date().toISOString().slice(0, 10)}` };
-    await writeRepoJSON(path, d, sha, `assumptions: ${t} comps peers from ${state.sector.label}`);
-    if (!andRun) { setStatus(st, { ok: true, msg: `Saved ${picks.length} peers to ${path}. Run comps to use them.` }); return; }
+    return d;
+  };
+  try {
+    // read, merge, write; if the file changed in between (409), read the new version and merge again once
+    for (let attempt = 0; ; attempt++) {
+      const { sha, doc } = await readRepoJSON(path);
+      try { await writeRepoJSON(path, merge(doc), sha, `assumptions: ${t} comps peers from ${state.sector.label}`); break; }
+      catch (err) { if (err.status !== 409 || attempt) throw err; }
+    }
+    setStatus(st, { ok: true, msg: `Saved ${picks.length} peers to ${path}. Run Comps to value against them.` });
+  } catch (err) { setStatus(st, { ok: false, msg: err.message }); }
+}
+
+/** Run comps (and the DCF, if it has run) on the peers saved in comps.json. */
+export async function runComps() {
+  const st = $("pp-status"), t = state.company.ticker;
+  st.className = "status"; st.textContent = "Starting…";
+  try {
     const models = [...new Set([...(state.run.models || []).filter((m) => m === "dcf" || m === "comps"), "comps"])];
-    const r = await dispatchPipeline({ ticker: t, as_of: new Date().toISOString().slice(0, 10), models: models.join(","), stop_after: "L2" });
-    setStatus(st, r.ok ? { ok: true, html: `Saved ${picks.length} peers. ${r.html}` } : r);
+    setStatus(st, await dispatchPipeline({ ticker: t, as_of: new Date().toISOString().slice(0, 10), models: models.join(","), stop_after: "L2" }));
   } catch (err) { setStatus(st, { ok: false, msg: err.message }); }
 }
 
@@ -400,7 +446,7 @@ export function renderDcfCard() {
       <span class="muted small">${esc(d.mode === "implied" ? "Implied Mode: growth solved to match the price" : "Forecast Mode")} · Base ${esc(d.base_period.kind === "fiscal" ? String(d.base_period.fiscal_year) : d.base_period.label)}</span></div>
     <div class="tiles">
       ${tile("Value per Share", price(b.value_per_share), `Bear ${price(sc.conservative)} – Bull ${price(sc.aggressive)}`)}
-      ${d.implied_growth != null ? tile("Implied Near-Term Growth", pct(d.implied_growth), `At price ${price(d.market_price)}`) : tile("Share Price (Assumptions)", price(d.market_price))}
+      ${d.implied_growth != null ? tile("Implied Near-Term Growth", pct(d.implied_growth), `At price ${price(d.market_price)}`) : tile("Share Price", price(d.market_price), state.detail.market?.price === d.market_price ? marketLine(state.detail.market).replace(/<[^>]+>/g, "") : "From the DCF assumptions")}
       ${tile("WACC", pct(rt.wacc), `Terminal year ${pct(rt.wacc_terminal)}`)}
       ${tile("Terminal Value Share", pct(d.terminal_value_share), `Terminal EV/EBITDA ${mult(t.ev_to_ebitda)}`)}
     </div>

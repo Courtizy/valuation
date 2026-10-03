@@ -16,6 +16,12 @@ class Paths:
     def asof_dir(self, t: str, as_of: str) -> Path:
         return self.data / t / as_of
 
+    def raw_market(self, t: str, as_of: str) -> Path:
+        return self.asof_dir(t, as_of) / "raw_market.json"
+
+    def risk_free(self, as_of: str) -> Path:
+        return self.data / "_market" / as_of / "risk_free.json"
+
     def canonical(self, t: str, as_of: str) -> Path:
         return self.asof_dir(t, as_of) / "canonical_statements.json"
 

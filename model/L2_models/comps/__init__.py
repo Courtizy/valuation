@@ -67,9 +67,16 @@ def company_figures(detail: dict | None, manual: dict | None = None) -> dict:
         "shares": v.get("shares_year_end") or v.get("shares_fully_diluted_average"),
         "revenue_growth": ((detail or {}).get("profile") or {}).get("vector", {}).get("revenue_cagr"),
     }
+    mkt = (detail or {}).get("market") or {}
+    if mkt.get("price") is not None:            # market data from L1; a price typed in comps.json still wins
+        f["price"], f["price_source"] = mkt["price"], f"market data ({mkt.get('source')}, {mkt.get('price_date')})"
+        if mkt.get("shares_outstanding"):
+            f["shares"] = mkt["shares_outstanding"]
     for k, val in (manual or {}).items():
         if k in f or k in ("price", "beta", "name"):
             f[k] = val
+            if k == "price":
+                f["price_source"] = "comps.json"
     return f
 
 

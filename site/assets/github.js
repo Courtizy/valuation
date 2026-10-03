@@ -27,7 +27,8 @@ export const b64decode = (b64) => new TextDecoder().decode(Uint8Array.from(atob(
 
 export async function readRepoJSON(path) {
   const g = gh();
-  const res = await fetch(`${g.base}/contents/${path}?ref=main`, { headers: GH_HEADERS(g.token) });
+  // no-store: GitHub lets browsers cache this for 60 s, and a stale sha makes the next write fail with 409
+  const res = await fetch(`${g.base}/contents/${path}?ref=main`, { headers: GH_HEADERS(g.token), cache: "no-store" });
   if (res.status === 404) return { sha: null, doc: null };
   if (!res.ok) throw new Error(`GitHub said ${res.status} reading ${path}`);
   const j = await res.json();
@@ -41,9 +42,11 @@ export async function writeRepoJSON(path, doc, sha, message) {
     body: JSON.stringify({ message, content: b64encode(JSON.stringify(doc, null, 2) + "\n"), branch: "main", ...(sha ? { sha } : {}) }) });
   if (!res.ok) {
     const msg = await res.json().catch(() => ({}));
-    throw new Error(res.status === 403
+    const err = new Error(res.status === 403
       ? "GitHub said 403: the token needs Contents: read and write on this repository"
       : `GitHub said ${res.status}: ${msg.message || "write failed"}`);
+    err.status = res.status;
+    throw err;
   }
 }
 

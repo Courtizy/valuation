@@ -35,7 +35,7 @@ jobs:
         # Browsers cache Pages files; a per-commit query string makes them fetch new CSS/JS after each deploy.
         run: |
           v="$(git rev-parse --short=8 HEAD)"
-          sed -i "s#assets/styles.css\"#assets/styles.css?v=$v\"#; s#assets/main.js\"#assets/main.js?v=$v\"#" site/index.html
+          sed -i "s#assets/styles.css\"#assets/styles.css?v=$v\"#; s#assets/main.js\"#assets/main.js?v=$v\"#; s#brand/css/brand.css\"#brand/css/brand.css?v=$v\"#" site/index.html
           sed -i -E "s#from \"\./([a-z]+)\.js\"#from \"./\1.js?v=$v\"#g" site/assets/*.js
           grep -c "?v=" site/index.html site/assets/*.js
       - uses: actions/configure-pages@v5

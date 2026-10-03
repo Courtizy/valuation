@@ -67,5 +67,6 @@ def test_comps_quartiles_weights_and_drops(details):
 def test_comps_errors(details):
     with pytest.raises(CompsError, match="no peers"):
         get_model("comps").run(details["DEMO"], {}, [])
+    no_market = {**details["DEMOG"], "market": None}       # showcase mode: no peer prices
     with pytest.raises(CompsError, match="price and a share count"):
-        get_model("comps").run(details["DEMO"], {"target": {"shares": 1e8}, "peers": ["DEMOG"]}, [details["DEMOG"]])
+        get_model("comps").run(details["DEMO"], {"target": {"shares": 1e8}, "peers": ["DEMOG"]}, [no_market])

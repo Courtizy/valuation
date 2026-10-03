@@ -146,9 +146,34 @@ class DCF:
             "plug": "cash",
         }
 
+        # market data (L1 detail["market"]) fills price, beta and the risk-free rate when the
+        # assumptions file leaves them blank; a value in the file always wins
+        live = detail.get("market") or {}
+        sources = dict(a.get("sources") or {})
+        if mkt.get("price") is None and live.get("price") is not None:
+            mkt["price"] = live["price"]
+            sources["price"] = f"close {live.get('price_date')} from market data ({live.get('source')})"
+        if cc.get("beta") is None and (live.get("beta") or {}).get("value") is not None:
+            b = live["beta"]
+            cc["beta"] = b["value"]
+            sources["beta"] = (f"{b['value']:.2f}, {b['basis']}" if b.get("basis")
+                               else f"{b['value']:.2f}, {b['months']} monthly returns vs {b.get('index')} ({live.get('source')})")
+        if cc.get("risk_free") is None and (live.get("wacc") or {}).get("risk_free") is not None:
+            cc["risk_free"] = live["wacc"]["risk_free"]
+            sources["risk_free"] = f"{live['wacc'].get('risk_free_series', 'DGS10')} on {live['wacc'].get('risk_free_date')} (FRED)"
+        if cc.get("beta") is None:
+            # no beta in the file and none from market data (showcase mode): the sector's typical beta,
+            # which L1 puts in company detail (inputs/sectors/taxonomy.json "typical_beta")
+            tb = detail.get("sector_beta") or {"value": 1.0, "basis": "market beta of 1.0 (no sector beta in company detail)"}
+            cc["beta"] = tb["value"]
+            sources["beta"] = f"{tb['value']:.2f}, {tb['basis']}"
+            warnings.append(f"beta not given and no market beta: using the {tb['basis']}, {tb['value']:.2f}")
+        a["sources"] = sources
+
         # shares and bridge
         price = mkt.get("price")
-        basic = mkt.get("basic_shares") or v.get("shares_year_end") or v.get("shares_fully_diluted_average")
+        basic = (mkt.get("basic_shares") or live.get("shares_outstanding")
+                 or v.get("shares_year_end") or v.get("shares_fully_diluted_average"))
         if not basic:
             raise AssumptionError("no share count: set market.basic_shares")
         options = mkt.get("options") or []
@@ -166,9 +191,17 @@ class DCF:
         # discount rates
         current_de = cc.get("current_debt_to_equity")
         if current_de is None:
-            if not price:
-                raise AssumptionError("set market.price (or cost_of_capital.current_debt_to_equity) for market D/E")
-            current_de = debt / (price * shares)
+            if price:
+                current_de = debt / (price * shares)
+            elif cc.get("target_debt_to_equity") is not None:
+                current_de = cc["target_debt_to_equity"]
+                warnings.append("no market price: today's D/E taken as the target D/E")
+            else:
+                equity = v.get("all_equity_balance")
+                if not equity or equity <= 0:
+                    raise AssumptionError("no market price and no positive book equity: set cost_of_capital.current_debt_to_equity")
+                current_de = debt / equity
+                warnings.append(f"no market price: D/E at book value ({current_de:.2f}), which overstates leverage for most companies")
         rf = _need(cc, "risk_free", "cost_of_capital")
         rd, rd_method = self.cost_of_debt(cc, v, debt, rf, warnings)
         rates = discount_rates(
@@ -190,7 +223,7 @@ class DCF:
             "convention": a.get("discounting", {}).get("convention", "closing_year_zero"),
             "ic_to_sales": (invested - cash) / rev if invested else None,
             "mode": a.get("mode", "forecast"), "sensitivity": a.get("sensitivity", {}),
-            "sources": a.get("sources", {}), "warnings": warnings,
+            "sources": a["sources"], "warnings": warnings,
         }
 
     @staticmethod
@@ -243,9 +276,10 @@ class DCF:
         p = self.prepare(detail, assumptions)
         notes = list(p["warnings"])
         implied = None
+        if p["mode"] == "implied" and not p["price"]:
+            p["mode"] = "forecast"
+            notes.append("no market price (showcase mode or no market data): implied mode needs one, so forecast mode is used")
         if p["mode"] == "implied":
-            if not p["price"]:
-                raise AssumptionError("implied mode needs market.price")
             implied = solve(lambda g: self.value(p, g0=g)["value_per_share"], p["price"], -0.5, 1.0)
             p["drivers"]["revenue"]["g0"] = implied
             notes.append(f"implied near-term growth {implied:.4%} makes the DCF equal the price {p['price']}")

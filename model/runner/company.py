@@ -23,7 +23,8 @@ class Step:
     ticker: str
     outputs: list[Path]
     fn: Callable[[], None] = field(repr=False)
-    soft: bool = False   # a failure here is reported but doesn't stop later steps (each model)
+    soft: bool = False      # a failure here is reported but doesn't stop later steps (each model)
+    optional: bool = False  # a failure is only a warning (market data): it never fails the run
 
 
 def load_peers(paths: Paths, ticker: str) -> list[str]:
@@ -51,9 +52,18 @@ def plan(
     paths: Paths,
     adapter_factory: Callable[[], SecCompanyFactsAdapter],
     stop_after: str | None = None,
+    market_factory: Callable[[], object] | None = None,
+    market_prices: bool = True,
 ) -> list[Step]:
     """Build the step list. `stop_after` ("L0", "L1" or "L2") drops later layers,
-    e.g. "L1" refreshes company detail without running models."""
+    e.g. "L1" refreshes company detail without running models.
+
+    `market_factory` (L0_ingest.market.MarketAdapter) adds the market steps: the
+    risk-free rate once per as-of date, then each company's prices, cross-checked
+    against the backup source for the company and its comps peers. Market steps
+    are optional: if both sources fail the run continues without market figures.
+    `market_prices=False` (showcase mode) keeps only the risk-free rate: no prices,
+    so nothing price-derived can reach the public site."""
     if stop_after not in (None, "L0", "L1", "L2"):
         raise KeyError(f"stop_after must be L0, L1 or L2, not {stop_after!r}")
     ticker = ticker.upper()
@@ -63,6 +73,13 @@ def plan(
     peers = load_peers(paths, ticker) if any(get_model(m).needs_peers for m in models) else []
     companies = [ticker] + [p for p in peers if p != ticker]
     steps: list[Step] = []
+
+    if market_factory and not paths.risk_free(as_of).exists():
+        def risk_free():
+            out = paths.risk_free(as_of)
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_text(json.dumps(market_factory().risk_free(as_of), indent=2))
+        steps.append(Step("risk-free rate", "L0", ticker, [paths.risk_free(as_of)], risk_free, soft=True, optional=True))
 
     for c in companies:
         peer = c != ticker   # a peer that fails is reported but doesn't stop the target's run
@@ -79,11 +96,19 @@ def plan(
             out.write_text(json.dumps(doc, indent=2))
 
         steps.append(Step(f"ingest {c}", "L0", c, [paths.raw_filing(c)], ingest, soft=peer))
+        if market_factory and market_prices:
+            def market(c=c):
+                doc = market_factory().fetch(c, as_of, cross_check=True)
+                out = paths.raw_market(c, as_of)
+                out.parent.mkdir(parents=True, exist_ok=True)
+                out.write_text(json.dumps(doc, indent=2))
+            steps.append(Step(f"market {c}", "L0", c, [paths.raw_market(c, as_of)], market, soft=True, optional=True))
         steps.append(Step(f"normalize {c}", "L1", c, [paths.canonical(c, as_of)],
                           lambda c=c: l1_normalize.run(paths.raw_filing(c), as_of, paths.canonical(c, as_of)),
                           soft=peer))
         steps.append(Step(f"build detail {c}", "L1", c, [paths.detail(c, as_of)],
-                          lambda c=c: l1_build.run(paths.canonical(c, as_of), None, as_of, paths.detail(c, as_of)),
+                          lambda c=c: l1_build.run(paths.canonical(c, as_of), paths.raw_market(c, as_of), as_of,
+                                                   paths.detail(c, as_of), risk_free=paths.risk_free(as_of)),
                           soft=peer))
 
     for m in models:
@@ -123,7 +148,7 @@ def execute(steps: list[Step]) -> list[tuple[str, str, str]]:
     reconcile, which blends whatever finished.
 
     Returns (step name, status, message) for every step, with status
-    done | not_implemented | failed | skipped.
+    done | not_implemented | failed | warning (optional step failed) | skipped.
     """
     report: list[tuple[str, str, str]] = []
     halted = False
@@ -138,6 +163,6 @@ def execute(steps: list[Step]) -> list[tuple[str, str, str]]:
             report.append((s.name, "not_implemented", str(e)))
             halted = not s.soft
         except Exception as e:  # noqa: BLE001 - surface any failure in the report
-            report.append((s.name, "failed", f"{type(e).__name__}: {e}"))
+            report.append((s.name, "warning" if s.optional else "failed", f"{type(e).__name__}: {e}"))
             halted = not s.soft
     return report

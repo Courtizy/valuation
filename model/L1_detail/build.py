@@ -6,9 +6,11 @@
      managerial balance sheet, reformulated statements, ratios in both
      frameworks, risk metrics and signals. Average-based ratios use the period
      one year earlier; the first year has none.
-  3. Market join: price-based items use raw_market.json when given. The
-     statement date and the price date are recorded separately, so prices can
-     refresh without rerunning stage 1.
+  3. Market join (raw_market.json from L0_ingest/market.py, when given): price,
+     market cap (price x latest SEC share count), 5-year monthly beta and a
+     market WACC estimate (core/market.py) with the risk-free rate. The statement
+     date and the price date are recorded separately. The price history itself
+     stays in raw_market.json; only derived figures go into company detail.
 
 Classification (operating vs financial) comes from classification.json,
 overridden by a sector pack's l1.classification block.
@@ -19,6 +21,7 @@ import json
 from datetime import date
 from pathlib import Path
 
+from core.market import beta as _beta, wacc_estimate
 from lineage import lineage_block
 
 from .analysis import _one_year_apart, analyze_view, load_classification
@@ -30,18 +33,45 @@ from .registry import load_registry
 DETAIL_SCHEMA_VERSION = "0.1.0"
 
 
-def _market_block(raw_market: dict | None, as_of: str) -> dict | None:
-    """Accepts {"price", "price_date", "shares_outstanding"[, "source"]}; the
-    market adapter (not built yet) will write this shape."""
+def _latest(views: dict, key: str):
+    for view in ("quarterly", "ttm", "annual"):
+        for p in reversed(views.get(view) or []):
+            if p["values"].get(key) is not None:
+                return p["values"][key]
+    return None
+
+
+def _latest_share_count(records: list[dict], as_of: str):
+    """Most recent shares-outstanding fact on or before as_of. The cover-page count (dei) is
+    dated after the period end, so it never lands in a statement view, but it is the newest."""
+    rows = [r for r in records or [] if r.get("concept") == "shares_year_end" and r.get("value") and (r.get("end") or "") <= as_of]
+    return max(rows, key=lambda r: r["end"])["value"] if rows else None
+
+
+def _market_block(raw_market: dict | None, as_of: str, views: dict, risk_free: dict | None = None,
+                  records: list[dict] | None = None) -> dict | None:
+    """Price, market cap, beta and a WACC estimate. Share count: raw_market's, else the newest filed count."""
     if not raw_market:
         return None
-    price, shares = raw_market.get("price"), raw_market.get("shares_outstanding")
-    price_date = raw_market.get("price_date")
+    price, price_date = raw_market.get("price"), raw_market.get("price_date")
     if price_date and price_date > as_of:
         raise ValueError(f"market price date {price_date} is after as_of {as_of}")
-    return {"price": price, "price_date": price_date, "shares_outstanding": shares,
-            "market_cap": price * shares if price is not None and shares is not None else None,
-            "source": raw_market.get("source")}
+    shares = (raw_market.get("shares_outstanding") or _latest_share_count(records, as_of)
+              or _latest(views, "shares_year_end") or _latest(views, "shares_fully_diluted_average"))
+    mcap = price * shares if price is not None and shares else None
+    b = _beta(raw_market.get("monthly") or [], (raw_market.get("index") or {}).get("monthly") or [])
+    block = {"price": price, "price_date": price_date, "currency": raw_market.get("currency"),
+             "shares_outstanding": shares, "market_cap": mcap,
+             "beta": b and {**b, "index": (raw_market.get("index") or {}).get("symbol")},
+             "source": raw_market.get("source"), "fallback": bool(raw_market.get("fallback")),
+             "check": raw_market.get("check"), "wacc": None}
+    if b and mcap and risk_free and risk_free.get("value") is not None:
+        ttm = (views.get("ttm") or views.get("annual") or [{}])[-1].get("values", {})
+        debt = (ttm.get("short_term_debt") or 0) + (ttm.get("long_term_debt") or 0)
+        block["wacc"] = {**wacc_estimate(beta_value=b["value"], risk_free=risk_free["value"], market_cap=mcap, debt=debt,
+                                         interest_expense=ttm.get("interest_expense"), tax_rate=ttm.get("effective_tax_rate")),
+                         "risk_free_date": risk_free.get("date"), "risk_free_series": risk_free.get("series")}
+    return block
 
 
 def _ttm_priors(ttm: list[dict], annual: list[dict]) -> dict:
@@ -58,7 +88,7 @@ def _ttm_priors(ttm: list[dict], annual: list[dict]) -> dict:
 
 
 def build_detail(canonical: dict, as_of: str, raw_market: dict | None = None, pack: dict | None = None,
-                 lineage: dict | None = None) -> dict:
+                 lineage: dict | None = None, risk_free: dict | None = None) -> dict:
     date.fromisoformat(as_of)
     if canonical.get("as_of") and canonical["as_of"] != as_of:
         raise ValueError(f"canonical as_of {canonical['as_of']} != {as_of}")
@@ -72,7 +102,7 @@ def build_detail(canonical: dict, as_of: str, raw_market: dict | None = None, pa
                 f"no usable statements: this company reports under {basis['taxonomy']} in {basis['currency']} "
                 "(typical of a 20-F foreign filer). Only us-gaap in USD is supported so far.")
         raise ValueError("no usable statements: no 12-month revenue found in the filings")
-    market = _market_block(raw_market, as_of)
+    market = _market_block(raw_market, as_of, views, risk_free, canonical.get("records"))
 
     statement_date = max((p["end"] for p in views["quarterly"] + views["annual"]), default=None)
     market_cap_at = {statement_date: market["market_cap"]} if market and market["market_cap"] else None
@@ -109,19 +139,24 @@ def build_detail(canonical: dict, as_of: str, raw_market: dict | None = None, pa
         },
         "warnings": warnings,
     }
+    from .taxonomy import load as load_taxonomy
+    doc["sector_beta"] = load_taxonomy().typical_beta((canonical.get("entity") or {}).get("sic"))
     doc["profile"] = build_profile(doc, load_rules(((pack or {}).get("l1") or {}).get("profile_rules")))
     doc["projection"] = trend_case(doc)
     return doc
 
 
 def run(canonical: Path, raw_market: Path | None, as_of: str, out_path: Path,
-        pack: dict | None = None) -> Path:
+        pack: dict | None = None, risk_free: Path | None = None) -> Path:
     doc = json.loads(Path(canonical).read_text())
     if doc.get("stage") != "L1.normalize":
         raise ValueError(f"{canonical} is not a canonical_statements.json")
-    inputs = [canonical] + ([raw_market] if raw_market else [])
+    raw_market = raw_market if raw_market and Path(raw_market).exists() else None
+    risk_free = risk_free if risk_free and Path(risk_free).exists() else None
+    inputs = [canonical] + ([raw_market] if raw_market else []) + ([risk_free] if risk_free else [])
     market = json.loads(Path(raw_market).read_text()) if raw_market else None
-    detail = build_detail(doc, as_of, market, pack, lineage_block(as_of, inputs))
+    rf = json.loads(Path(risk_free).read_text()) if risk_free else None
+    detail = build_detail(doc, as_of, market, pack, lineage_block(as_of, inputs), rf)
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(detail, indent=2))

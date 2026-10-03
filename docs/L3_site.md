@@ -40,6 +40,10 @@ Plain ES modules, no build step. `main.js` loads `index.json`, concepts, compani
 
 The Pages workflow stamps every stylesheet and module import with `?v=<commit>`, so a deploy is never hidden by the browser cache.
 
+## Brand
+
+The site uses the Decision Models brand kit in `site/brand/` (the same folder as the other portfolio apps; edit colors only in `brand/palette.py`, then run `python brand/build.py`). `data-app="valuation"` on `<html>` picks the indigo brand fill and the series order (indigo, teal, orange, sky, plum). `brand/css/brand.css` owns colors, Space Grotesk / JetBrains Mono, square corners and light/dark (dark by default, light follows the OS, the Theme button forces one); `assets/styles.css` maps the site's own token names onto it and hard-codes no colors. Header: brand tile, name, the app's question and byline; footer: the brand disclaimer plus the FRED notice.
+
 ## Presentation standard
 
 - Titles, headers, line items and buttons in Title Case (small words lower case, acronyms kept); notes in sentence case.
@@ -86,6 +90,7 @@ Light and dark themes follow the OS, with a manual toggle. The layout works down
 2. **Settings → Pages → Source: GitHub Actions.**
 3. **Settings → Secrets and variables → Actions → New repository secret:** `SEC_USER_AGENT` = `Your Name you@example.com`.
 4. **Settings → Actions → General → Workflow permissions:** read and write (the Pipeline job commits `site/data`).
+   Optional: secret `ALPHAVANTAGE_API_KEY` (free key) for backup prices and the price cross-check (`docs/L0_market.md`).
 5. Run a ticker from the **Run Pipeline** tab, or run:
 
    ```bash
@@ -121,7 +126,7 @@ python -m http.server -d site 8000  # open http://localhost:8000
 
 ## What's public
 
-The site shows SEC-derived figures only. Market prices are left out until a licensed source is chosen; the public Altman Z and the market reference line on the football field appear once `raw_market.json` exists.
+The public site shows SEC-derived figures and the FRED risk-free rate only (showcase mode); real market prices and anything derived from them are not published. The example companies use synthetic market figures. The repository variable `SITE_MARKET_DATA=real` switches this off for a private site or licensed data (`docs/L0_market.md`).
 
 Course workbooks and notes never enter the repo:
 

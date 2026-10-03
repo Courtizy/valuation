@@ -52,7 +52,10 @@ jobs:
       MODELS: ${{ inputs.models }}
       STOP_AFTER: ${{ inputs.stop_after }}
       SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+      ALPHAVANTAGE_API_KEY: ${{ secrets.ALPHAVANTAGE_API_KEY }}   # optional: backup prices and the cross-check
       PYTHONPATH: model          # code lives in model/
+      SITE_MARKET_DATA: ${{ vars.SITE_MARKET_DATA || 'showcase' }}
+      MARKET: ${{ vars.SITE_MARKET_DATA == 'real' && 'all' || 'risk-free' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -87,14 +90,16 @@ jobs:
         if: env.MODE == 'ticker'
         # A model that fails is reported; publish whatever finished.
         continue-on-error: ${{ inputs.stop_after == 'L2' }}
-        run: python pipeline.py run "$TICKER" --as-of "$AS_OF" --models "$MODELS" --stop-after "$STOP_AFTER"
+        # Showcase mode (default): no price data, so nothing price-derived is published (data terms).
+        # Set the repository variable SITE_MARKET_DATA=real only for a private site or licensed data.
+        run: python pipeline.py run "$TICKER" --as-of "$AS_OF" --models "$MODELS" --stop-after "$STOP_AFTER" --market "$MARKET"
 
       - name: Screen sector
         if: env.MODE == 'sector'
         run: python pipeline.py sector "$SECTOR" --as-of "$AS_OF"
 
       - name: Publish to site/data
-        run: python -m L3_app.publish --data-dir data --site-dir site
+        run: python -m L3_app.publish --data-dir data --site-dir site --market-data "$SITE_MARKET_DATA"
 
       - name: Commit results
         run: |

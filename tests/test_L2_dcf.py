@@ -136,11 +136,17 @@ def test_options_dilute_through_tsm(detail):
     assert diluted.value_per_share["p50"] < plain.value_per_share["p50"]
 
 
-def test_missing_inputs_are_named(detail):
-    with pytest.raises(AssumptionError, match="cost_of_capital.beta"):
-        get_model("dcf").run(detail, assumptions(cost_of_capital={"beta": None}))
-    with pytest.raises(AssumptionError, match="price"):
-        get_model("dcf").run(detail, {**assumptions(), "market": {"basic_shares": 1e8}})
+def test_missing_inputs_fall_back_or_are_named(detail):
+    detail = {**detail, "market": None}                    # showcase mode: no market block
+    # no beta anywhere: the sector's illustrative beta from company detail, said so in the sources
+    r = get_model("dcf").run(detail, assumptions(cost_of_capital={"beta": None})).to_dict()
+    assert r["details"]["rates"]["beta_levered_observed"] == detail["sector_beta"]["value"]
+    assert "illustrative" in r["assumptions_used"]["sources"]["beta"]
+    # no price (showcase mode): book D/E, and implied mode falls back to forecast
+    r = get_model("dcf").run(detail, {**assumptions(), "mode": "implied", "market": {"basic_shares": 1e8}}).to_dict()
+    assert r["details"]["implied_growth"] is None and any("book value" in n for n in r["notes"])
+    with pytest.raises(AssumptionError, match="risk_free"):
+        get_model("dcf").run(detail, assumptions(cost_of_capital={"risk_free": None}))
     with pytest.raises(AssumptionError):
         get_model("dcf").run({}, assumptions())
 

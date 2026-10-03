@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Callable
 
 from L0_ingest.cache import FileCache
+from L0_ingest.market import MarketAdapter
 from L0_ingest.sec_companyfacts import SecCompanyFactsAdapter
 from L0_ingest.sec_sector import SecSectorAdapter
 from L2_models.base import MODEL_NAMES
@@ -18,7 +19,8 @@ from runner.sector import run_sector
 
 
 def main(argv: list[str] | None = None,
-         adapter_factory: Callable[..., SecCompanyFactsAdapter] | None = None) -> int:
+         adapter_factory: Callable[..., SecCompanyFactsAdapter] | None = None,
+         market_factory: Callable[[], MarketAdapter] | None = None) -> int:
     p = argparse.ArgumentParser(prog="pipeline")
     sub = p.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("run", help="run L0 -> L2 for a ticker")
@@ -31,6 +33,9 @@ def main(argv: list[str] | None = None,
     r.add_argument("--user-agent", help="defaults to $SEC_USER_AGENT")
     r.add_argument("--dry-run", action="store_true", help="print the plan without running")
     r.add_argument("--stop-after", choices=["L0", "L1", "L2"], help="skip layers after this one")
+    r.add_argument("--market", choices=["all", "risk-free", "none"], default="all",
+                   help="all = prices + risk-free rate; risk-free = showcase mode (no prices); none = no market data")
+    r.add_argument("--no-market", action="store_true", help="same as --market none")
     sc = sub.add_parser("sector", help="screen a sector: sic-of:AAPL | sector:technology | sic:3674 | traits:k=v;... | list:name")
     sc.add_argument("spec")
     sc.add_argument("--as-of", default=date.today().isoformat())
@@ -55,13 +60,19 @@ def main(argv: list[str] | None = None,
         return 0
 
     paths = Paths(args.data_dir, args.assumptions_dir)
+    adapter_factory_was_default = adapter_factory is None   # tests inject SEC fakes and get no network market steps
     if adapter_factory is None:
         def adapter_factory():
             return SecSectorAdapter(cache=FileCache(args.cache_dir), user_agent=args.user_agent)
 
     models = [m.strip() for m in args.models.split(",") if m.strip()]
     try:
-        steps = plan(args.ticker, models, args.as_of, paths, adapter_factory, args.stop_after)
+        scope = "none" if args.no_market else args.market
+        if market_factory is None and scope != "none" and adapter_factory_was_default:
+            market_cache = FileCache(args.cache_dir.parent / "market", ttl_seconds=6 * 3600)
+            market_factory = lambda: MarketAdapter(cache=market_cache)  # noqa: E731
+        steps = plan(args.ticker, models, args.as_of, paths, adapter_factory, args.stop_after,
+                     None if scope == "none" else market_factory, market_prices=scope == "all")
     except KeyError as e:
         print(f"error: {e.args[0]}", file=sys.stderr)
         return 2
@@ -74,4 +85,4 @@ def main(argv: list[str] | None = None,
     report = execute(steps)
     for name, status, msg in report:
         print(f"{status:<16} {name}" + (f"  ({msg})" if msg else ""))
-    return 0 if all(st == "done" for _, st, _ in report) else 1
+    return 0 if all(st in ("done", "warning") for _, st, _ in report) else 1

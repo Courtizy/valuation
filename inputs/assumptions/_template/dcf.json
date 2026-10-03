@@ -18,10 +18,10 @@
     "tax_rate": null
   },
   "cost_of_capital": {
-    "risk_free": 0.042,
+    "risk_free": null,
     "risk_free_terminal": null,
     "equity_risk_premium": 0.05,
-    "beta": 1.1,
+    "beta": null,
     "pre_tax_cost_of_debt": null,
     "pre_tax_cost_of_debt_fallback": null,
     "current_debt_to_equity": null,

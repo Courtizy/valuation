@@ -144,6 +144,26 @@ def _model_result(model, ticker, p10, p50, p90, assumptions):
             "samples_ref": None, "notes": ["synthetic demo result, not a valuation"], "demo": True}
 
 
+SYNTHETIC_RISK_FREE = 0.045   # fixed so the examples are reproducible
+
+
+def synthetic_market(detail: dict, ticker: str) -> dict:
+    """Made-up but plausible market figures for a synthetic example: its demo price, the
+    sector's illustrative beta and a WACC from them. Labelled source "synthetic" everywhere."""
+    from core.market import wacc_estimate
+    price, shares = DEMO_PRICES[ticker]
+    ttm = (detail["views"].get("ttm") or detail["views"]["annual"])[-1]["values"]
+    debt = (ttm.get("short_term_debt") or 0) + (ttm.get("long_term_debt") or 0)
+    sb = detail.get("sector_beta") or {"value": 1.0}
+    mcap = price * shares
+    return {"price": price, "price_date": AS_OF, "currency": "USD", "shares_outstanding": shares, "market_cap": mcap,
+            "beta": {"value": sb["value"], "months": None, "index": None, "basis": sb.get("basis")},
+            "source": "synthetic", "fallback": False, "check": None,
+            "wacc": {**wacc_estimate(beta_value=sb["value"], risk_free=SYNTHETIC_RISK_FREE, market_cap=mcap, debt=debt,
+                                     interest_expense=ttm.get("interest_expense"), tax_rate=ttm.get("effective_tax_rate")),
+                     "risk_free_date": AS_OF, "risk_free_series": "synthetic"}}
+
+
 def write_company(site_dir: Path, ticker: str) -> Path:
     from L2_models.base import get_model
     spec = SPECS[ticker]
@@ -154,6 +174,7 @@ def write_company(site_dir: Path, ticker: str) -> Path:
                  "records": synthetic_records(spec)}
     detail = build_detail(canonical, AS_OF)
     detail["demo"] = True
+    detail["market"] = synthetic_market(detail, ticker)
     (out / "company_detail.json").write_text(json.dumps(detail, indent=2))
     dcf = get_model("dcf").run(detail, _assumptions(ticker)).to_dict()
     dcf["lineage"] = {"as_of": AS_OF, "inputs": []}

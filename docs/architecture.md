@@ -44,12 +44,12 @@
 ```
 valuation/
   model/                         all Python (on the path via pip install -e . or PYTHONPATH=model)
-    L0_ingest/                   adapters (companyfacts, sector frames), cache, raw schema, CLI
+    L0_ingest/                   adapters (companyfacts, sector frames, market data), cache, raw schema, CLI
     L1_detail/                   registry, normalize, periods, analysis, build, profile, forecast,
                                  sector screen, taxonomy
     L2_models/                   base, dcf, comps, reconcile; lbo/ ipo/ precedents scaffolded
     L3_app/                      publish (outputs -> site/data), similar, demo/
-    core/                        projection, cost_of_capital, dcf, shares, num
+    core/                        projection, cost_of_capital, dcf, shares, num, market (beta, WACC estimate)
     runner/                      paths, company plan/execute, sector, cli
     lineage.py                   lineage block helper
   inputs/                        everything edited by hand
@@ -65,6 +65,8 @@ valuation/
 
 ```
 data/{TICKER}/raw/raw_filing.json                     L0, refreshed via cache
+data/{TICKER}/{as_of}/raw_market.json                L0 market data (docs/L0_market.md)
+data/_market/{as_of}/risk_free.json                   L0 10-year Treasury (FRED)
 data/{TICKER}/{as_of}/canonical_statements.json       L1 stage 1
 data/{TICKER}/{as_of}/company_detail.json             L1 stage 2
 data/{TICKER}/{as_of}/model_results/{model}.json      L2 models

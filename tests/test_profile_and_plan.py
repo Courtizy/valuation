@@ -83,7 +83,7 @@ def test_comparison_blend_and_upside(tmp_path):
     for k in ("p10", "p50", "p90"):
         assert c["blend"][k] == A(0.6 * vps["dcf"][k] + 0.4 * vps["comps"][k])
         assert c["upside"][k] == A(c["blend"][k] / c["price"] - 1)
-    assert c["price_source"] == "dcf assumptions"
+    assert c["price_source"] == "market data"          # the example's synthetic market block
     assert c["profile"]["traits"]["stage"]["label"] == "mature grower"
 
 

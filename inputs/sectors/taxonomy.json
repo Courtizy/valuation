@@ -8,6 +8,21 @@
   "9721": "international affairs",
   "9995": "non-operating establishments"
  },
+ "typical_beta": {
+  "_about": "Illustrative, round levered betas by sector, used when no price-based beta may be published (showcase mode) and for the synthetic examples. Edit freely; they are not market estimates.",
+  "energy": 1.1,
+  "materials": 1.05,
+  "industrials": 1.05,
+  "consumer_discretionary": 1.15,
+  "consumer_staples": 0.7,
+  "health_care": 0.9,
+  "financials": 1.0,
+  "technology": 1.2,
+  "communication_services": 1.0,
+  "utilities": 0.6,
+  "real_estate": 0.85,
+  "_default": 1.0
+ },
  "sectors": [
   {
    "id": "energy",

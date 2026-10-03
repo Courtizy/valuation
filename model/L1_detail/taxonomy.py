@@ -43,6 +43,16 @@ class Taxonomy:
     def name(self, sector_id: str) -> str:
         return self.sectors[sector_id]["name"]
 
+    def typical_beta(self, sic: str | int | None) -> dict:
+        """Illustrative sector beta (taxonomy.json "typical_beta") for when no price-based beta
+        may be shown: {value, sector, basis}."""
+        betas = self.doc.get("typical_beta") or {}
+        c = self.classify(sic)
+        sid = c["sector"] if c else None
+        value = betas.get(sid, betas.get("_default", 1.0))
+        return {"value": value, "sector": c["sector_name"] if c else None,
+                "basis": f"industry-typical beta for {c['sector_name'] if c else 'an unclassified company'} (illustrative)"}
+
 
 @lru_cache(maxsize=4)
 def load(path: str | Path = DEFAULT_PATH) -> Taxonomy:

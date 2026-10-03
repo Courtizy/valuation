@@ -29,6 +29,7 @@ python -m L3_app.publish && python -m http.server -d site 8000
 |---|---|
 | `docs/architecture.md` | layers, data layout, cross-cutting rules |
 | `docs/L0_ingestor_design.md` | SEC ingest |
+| `docs/L0_market.md` | market data: prices, beta, risk-free rate, cross-check |
 | `docs/L1_concepts.md`, `docs/L1_normalize.md` | concept registry, normalizer |
 | `docs/L1_build.md` | frequency views and ratio analysis |
 | `docs/L1_sector.md` | sector screens: sources, figures, benchmarks, site |

@@ -78,7 +78,31 @@ def build_sector_index(site_data: Path) -> list[dict]:
     return out
 
 
-def copy_outputs(data_dir: Path, site_data: Path) -> list[str]:
+MARKET_MODES = ("showcase", "real")
+
+
+def showcase_filter(name: str, doc: dict) -> dict | None:
+    """Showcase mode: nothing derived from licensed-for-personal-use price data reaches the site.
+    Synthetic examples (demo) keep their made-up market figures. Returns None to skip the file."""
+    if doc.get("demo"):
+        return doc
+    if name.startswith("company_detail"):
+        m = doc.get("market") or {}
+        if m and m.get("source") not in (None, "synthetic"):
+            doc = {**doc, "market": None, "market_hidden": "showcase mode: market prices are not published"}
+    elif name == "comparison.json" and doc.get("price_source") == "market data":
+        doc = {**doc, "price": None, "price_source": None, "upside": None, "market_hidden": True}
+    elif name == "comps.json":
+        peers = ((doc.get("details") or {}).get("peers")) or []
+        if any(str(p.get("price_source", "")).startswith("market data") for p in peers):
+            return None                      # every implied value rests on market prices
+    elif name == "dcf.json" and "market data" in str(((doc.get("assumptions_used") or {}).get("sources") or {}).get("price", "")):
+        doc = {**doc, "details": {**(doc.get("details") or {}), "market_price": None, "implied_growth": None},
+               "market_hidden": True}
+    return doc
+
+
+def copy_outputs(data_dir: Path, site_data: Path, market_data: str = "showcase") -> list[str]:
     copied = []
     for tdir in _ticker_dirs(data_dir):
         for adir in sorted(p for p in tdir.iterdir() if p.is_dir() and AS_OF.match(p.name)):
@@ -90,6 +114,10 @@ def copy_outputs(data_dir: Path, site_data: Path) -> list[str]:
             for f in files:
                 target = dest / f.relative_to(adir)
                 doc = json.loads(f.read_text())
+                if market_data == "showcase":
+                    doc = showcase_filter(f.name, doc)
+                    if doc is None:
+                        continue
                 if f.name == "company_detail.json":
                     write_json(dest / "company_detail_full.json", doc)
                     copied.append(str((dest / "company_detail_full.json").relative_to(site_data)))
@@ -167,8 +195,9 @@ def company_card(site_data: Path, ticker: str, run: dict) -> dict:
     dcf_path = site_data / ticker / run["as_of"] / "model_results" / "dcf.json"
     dcf = json.loads(dcf_path.read_text()) if dcf_path.exists() else {}
     d = dcf.get("details") or {}
-    price = ((detail.get("market") or {}).get("price")) or d.get("market_price")
-    shares = (d.get("bridge") or {}).get("shares") or ttm.get("shares_year_end")
+    live = detail.get("market") or {}
+    price = live.get("price") or d.get("market_price")
+    shares = live.get("shares_outstanding") or (d.get("bridge") or {}).get("shares") or ttm.get("shares_year_end")
     debt = (ttm.get("short_term_debt") or 0) + (ttm.get("long_term_debt") or 0)
     cash = ttm.get("cash_and_marketable_securities") or 0
     mcap = price * shares if price and shares else None
@@ -184,8 +213,13 @@ def company_card(site_data: Path, ticker: str, run: dict) -> dict:
         "rates": {"revenue_cagr": vec.get("revenue_cagr"), "operating_margin": vec.get("operating_margin"),
                   "rnoa": vec.get("rnoa"), "capex_to_sales": vec.get("capex_to_sales"),
                   "debt_to_ebitda": vec.get("debt_to_ebitda"),
-                  "wacc": (d.get("rates") or {}).get("wacc"), "beta": (d.get("rates") or {}).get("beta_levered_observed")},
-        "market": {"price": price, "market_cap": mcap, "enterprise_value": ev},
+                  # the DCF's own rate when a DCF has run, else the market estimate (core/market.py)
+                  "wacc": (d.get("rates") or {}).get("wacc") or (live.get("wacc") or {}).get("value"),
+                  "wacc_basis": "dcf" if (d.get("rates") or {}).get("wacc") else ("market" if live.get("wacc") else None),
+                  "beta": (d.get("rates") or {}).get("beta_levered_observed") or (live.get("beta") or {}).get("value")},
+        "market": {"price": price, "price_date": live.get("price_date"), "market_cap": mcap, "enterprise_value": ev,
+                   "source": live.get("source"), "fallback": live.get("fallback"),
+                   "check": (live.get("check") or {}).get("status")},
         "multiples": {"pe": _ratio(mcap, ttm.get("net_income")), "ev_ebitda": _ratio(ev, ttm.get("ebitda")),
                       "ev_sales": _ratio(ev, ttm.get("revenue")), "pb": _ratio(mcap, equity),
                       "fcf_yield": _ratio(ttm.get("free_cash_flow"), mcap)},
@@ -211,12 +245,15 @@ def add_rankings(site_data: Path, cards: list[dict], sectors: list[dict]) -> Non
             c["peers"][sec["id"]] = rank(own, rows, 25)
 
 
-def publish(data_dir: Path, site_dir: Path) -> dict:
+def publish(data_dir: Path, site_dir: Path, market_data: str = "showcase") -> dict:
+    if market_data not in MARKET_MODES:
+        raise ValueError(f"market_data must be one of {MARKET_MODES}")
     site_data = site_dir / "data"
     site_data.mkdir(parents=True, exist_ok=True)
-    copied = (copy_outputs(data_dir, site_data) + copy_sectors(data_dir, site_data)) if data_dir.exists() else []
+    copied = (copy_outputs(data_dir, site_data, market_data) + copy_sectors(data_dir, site_data)) if data_dir.exists() else []
     removed = prune(site_data)
     index = build_index(site_data)
+    index["market_data"] = market_data
     (site_data / "index.json").write_text(json.dumps(index, indent=2))
     (site_data / "concepts.json").write_text(json.dumps(concept_labels(), indent=2))
     from L1_detail.taxonomy import DEFAULT_PATH
@@ -231,8 +268,10 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="L3_app.publish")
     p.add_argument("--data-dir", type=Path, default=Path("data"))
     p.add_argument("--site-dir", type=Path, default=Path("site"))
+    p.add_argument("--market-data", choices=MARKET_MODES, default="showcase",
+                   help="showcase (default) = no real market figures on the site; real = publish them")
     args = p.parse_args(argv)
-    out = publish(args.data_dir, args.site_dir)
+    out = publish(args.data_dir, args.site_dir, args.market_data)
     print(f"copied {len(out['copied'])} file(s); index lists {', '.join(out['companies']) or 'nothing'}")
     return 0
 
