@@ -381,3 +381,15 @@ th.est.milestone, td.est.milestone { border-left: 1px solid var(--grid); }
 table.sens td, table.sens th { text-align: center; }
 table.sens td:first-child, table.sens th:first-child { text-align: left; }
 table.sens td.base { outline: 2px solid var(--ink); outline-offset: -2px; font-weight: 700; }
+
+/* ---- collapsible sections */
+.collapse-btn { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font: inherit; color: inherit; }
+.collapse-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+.chev { width: 7px; height: 7px; border-right: 2px solid var(--ink-2); border-bottom: 2px solid var(--ink-2); transform: rotate(45deg); transition: transform .15s; margin: 0 2px 3px; }
+.collapsed .chev { transform: rotate(-45deg); margin-bottom: 0; }
+.card.collapsed .card-head { margin-bottom: 0; }
+.card.collapsed .card-head > :not(h2) { display: none; }
+.subsection + .subsection { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+.subsection h3 { margin: 0 0 8px; }
+.subsection h4 { margin: 0 0 6px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+#ret-legend .swatch { margin-right: 4px; }

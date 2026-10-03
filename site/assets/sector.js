@@ -133,7 +133,7 @@ export function wireSectorPicker(root) {
   root.querySelectorAll(".sector-pick").forEach((sel) => sel.onchange = async () => {
     store.set(`sector:${state.company.ticker}`, sel.value);
     await loadSector();
-    renderBenchmarks(); renderSectorCard();
+    renderSector();
     if (state.tab === "valuation") renderValuation();
   });
 }
@@ -167,12 +167,24 @@ export function wireScreenButtons(root) {
   });
 }
 
+/** The merged Sector section: one picker and one level switch drive Relative Performance and the sector view. */
+export function renderSector() {
+  const pick = $("sector-pick-slot"), lv = $("sector-levels");
+  if (!pick || !lv) return;
+  const ready = !!(state.sector && sectorMe());
+  pick.innerHTML = ready ? sectorPicker() : "";
+  lv.innerHTML = ready ? levelBar("secLevel") : "";
+  if (ready) { wireSectorPicker(pick); wireLevelBar(lv, renderSector); }
+  renderBenchmarks();
+  renderSectorCard();
+}
+
 export function renderBenchmarks() {
   const card = $("bench-card");
   if (!card) return;
   const me = sectorMe();
   if (!state.sector || !me) {
-    card.innerHTML = `<div class="card-head"><h2>Versus Sector</h2></div>
+    card.innerHTML = `<h3>Relative Performance</h3>
       <p class="muted">No sector screen includes ${esc(state.company.ticker)} yet. Screening its sector pulls a few figures for every company
       in it from SEC data, so each ratio here can be read against the sector's quartiles.</p>${state.company.demo ? "" : screenButtons()}`;
     wireScreenButtons(card);
@@ -195,16 +207,13 @@ export function renderBenchmarks() {
         <span class="rng" style="left:${at(b.q1)};width:calc(${at(b.q3)} - ${at(b.q1)})"></span><span class="med" style="left:${at(b.median)}"></span>
         ${fin(v) ? `<span class="me" style="left:${at(v)}"></span>` : ""}</div></td></tr>`;
   }).join("");
-  card.innerHTML = `<div class="card-head"><h2>Versus Sector</h2>${sectorPicker()}</div>
-    ${levelBar("secLevel")}
+  card.innerHTML = `<h3>Relative Performance</h3>
     <div class="table-wrap"><table class="list bench"><thead><tr><th>Metric</th><th>Q1</th><th>Median</th><th>Q3</th>
       <th>${esc(state.company.ticker)} <span class="th-sub">${esc(own.period ? periodLabel(own.period) : "")}</span></th><th>vs. Median</th><th class="posbar-cell">Position <span class="muted small">bar = Q1–Q3 · line = median · dot = ${esc(state.company.ticker)}</span></th></tr></thead>
       <tbody>${body}</tbody></table></div>
     <p class="legend-note">${rows.length} companies (${esc(lv.label)}) · calendar ${state.sector.year} · screened ${esc(state.sectorMeta.as_of)}.
       ${esc(state.company.ticker)}'s figures come from its own filings; the sector's from SEC frames by calendar year. Green and red mark favourable and unfavourable gaps; capex intensity is neither.</p>
-    ${sourceLine("sector figures from SEC XBRL frames")}`;
-  wireSectorPicker(card);
-  wireLevelBar(card, () => { renderBenchmarks(); renderSectorCard(); });
+`;
 }
 
 export const SEC_COLS = [
@@ -218,23 +227,20 @@ export function inIndex(t) { return state.index.companies.some((c) => c.ticker =
 export function renderSectorCard() {
   const card = $("sector-card");
   if (!card) return;
-  if (!state.sector) { card.hidden = true; return; }
+  if (!state.sector || !sectorMe()) { card.hidden = true; return; }
   card.hidden = false;
   const S = state.sector, me = state.company.ticker, demo = !!S.demo;
   const lv = levelRows("secLevel"), rows = lv.rows;
   const medX = quartiles(rows.map((c) => c.revenue_cagr)).median, medY = quartiles(rows.map((c) => c.operating_margin)).median;
-  card.innerHTML = `<div class="card-head"><h2>Sector</h2>${sectorPicker()}</div>
-    ${levelBar("secLevel")}
+  card.innerHTML = `<h3>Companies</h3>
     <div class="grid-2">
-      <div><h3>Growth & Profitability</h3><div id="sec-scatter"></div></div>
-      <div><h3>Revenue, Latest Year</h3><div id="sec-bars"></div></div>
+      <div><h4>Growth & Profitability</h4><div id="sec-scatter"></div></div>
+      <div><h4>Revenue, Latest Year</h4><div id="sec-bars"></div></div>
     </div>
     <div class="sector-action" id="sec-action" hidden></div>
     <div class="table-wrap" style="margin-top:12px"><table class="list sortable" id="sec-table"></table></div>
     <p class="legend-note">Click a column to sort; click a company to open it. Dashed lines on the chart are the medians; dot size is revenue. ${S.notes.map((n) => esc(sentence(n))).join(" · ")}</p>
     ${sourceLine(`SEC XBRL frames, calendar ${S.year}`)}`;
-  wireSectorPicker(card);
-  wireLevelBar(card, () => { renderBenchmarks(); renderSectorCard(); });
   const open = (t) => sectorOpen(t);
   scatterChart($("sec-scatter"), {
     points: rows.map((c) => ({ x: c.revenue_cagr, y: c.operating_margin, label: c.ticker, sub: c.name, highlight: c.ticker === me, t: c.ticker, size: c.revenue })),

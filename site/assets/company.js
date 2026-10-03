@@ -1,6 +1,6 @@
 import { areaChart, groupedBarChart, lineChart, spreadChart } from "./charts.js";
 import { NA, days, esc, estLabel, fin, label, millions, money, monthYear, num, pct, periodLabel, price, times, titleCase } from "./format.js";
-import { renderBenchmarks, renderSectorCard } from "./sector.js";
+import { renderSector } from "./sector.js";
 import { $, state } from "./state.js";
 import { acct, cellOf, finRow } from "./tables.js";
 
@@ -76,8 +76,7 @@ export function renderCompany() {
   renderCashChart();
   renderStatements();
   renderRatios();
-  renderBenchmarks();
-  renderSectorCard();
+  renderSector();
 }
 
 export function latestAnalysis() {
@@ -185,7 +184,8 @@ export function renderReturnsChart() {
   const b = { name: "ROCE", color: "var(--series-2)", values: an.map((x) => x.ratios.reformulated.avg.roce) };
   const wacc = state.dcf?.details?.rates?.wacc;
   $("ret-legend").innerHTML = [a, b].map((x) => `<span><span class="key" style="background:${x.color}"></span>${x.name}</span>`).join("")
-    + (fin(wacc) ? `<span><span class="key" style="background:var(--ink-2)"></span>WACC (DCF)</span>` : "");
+    + (fin(wacc) ? `<span><span class="key" style="background:var(--ink-2)"></span>WACC (DCF)</span>` : "")
+    + `<span><span class="swatch pos"></span>Leverage Adds</span><span><span class="swatch neg"></span>Leverage Subtracts</span>`;
   spreadChart($("ret-chart"), { categories: an.map(analysisLabel), a, b, format: pct, label: "RNOA and ROCE with the financing spread",
     ref: fin(wacc) ? { value: wacc, label: "WACC" } : null, spreadLabel: "Financing effect (ROCE − RNOA)" });
 }

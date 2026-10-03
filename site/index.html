@@ -45,9 +45,7 @@
           <div id="rev-chart"></div>
         </div>
         <div class="card">
-          <div class="card-head"><h2>Returns</h2><span class="muted small">Average balances, annual</span></div>
-          <p class="chart-note">RNOA isolates operating performance: NOPAT on net operating assets. ROCE is the return on common equity after financing. The shaded gap is the financing effect, FLEV × (RNOA − net borrowing cost):
-            <span class="swatch pos"></span>leverage adds to shareholder returns <span class="swatch neg"></span>leverage subtracts.</p>
+          <div class="card-head"><h2>Returns</h2><span class="muted small">Average Balances, Annual</span></div>
           <div class="legend" id="ret-legend"></div>
           <div id="ret-chart"></div>
         </div>
@@ -64,7 +62,7 @@
           <div id="cash-chart"></div>
         </div>
       </div>
-      <div class="card" style="margin-top:16px">
+      <div class="card collapsible" data-collapse="statements" style="margin-top:16px">
         <div class="card-head">
           <h2>Statements</h2>
           <div class="seg spacer" id="view-seg" role="group" aria-label="Period view">
@@ -73,12 +71,14 @@
             <button type="button" data-view="ttm" aria-pressed="false">LTM</button>
           </div>
         </div>
+        <div class="card-body">
         <div class="table-wrap"><table id="stmt-table"></table></div>
         <p class="legend-note"><span class="mark">d</span> derived: Q4 = full year − 9-month YTD, or a quarter from YTD differences. Shaded columns are estimates. Values in millions unless noted.</p>
         <p class="legend-note" id="stmt-note"></p>
         <p class="legend-note" id="stmt-full"></p>
+        </div>
       </div>
-      <div class="card">
+      <div class="card collapsible" data-collapse="ratios">
         <div class="card-head">
           <h2>Ratios</h2>
           <div class="seg spacer" id="ratio-seg" role="group" aria-label="Ratio framework">
@@ -89,11 +89,19 @@
             <button type="button" data-fw="signals" aria-pressed="false">Signals</button>
           </div>
         </div>
+        <div class="card-body">
         <div class="table-wrap"><table id="ratio-table"></table></div>
         <p class="legend-note" id="ratio-note"></p>
+        </div>
       </div>
-      <div class="card" id="bench-card"></div>
-      <div class="card" id="sector-card"></div>
+      <div class="card collapsible" data-collapse="sector" id="sector-section">
+        <div class="card-head"><h2>Sector</h2><span id="sector-pick-slot"></span></div>
+        <div class="card-body">
+          <div id="sector-levels"></div>
+          <div id="bench-card" class="subsection"></div>
+          <div id="sector-card" class="subsection"></div>
+        </div>
+      </div>
     </section>
 
     <!-- Valuation -->

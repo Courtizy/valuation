@@ -72,7 +72,7 @@ Checked against real frames for NVDA, AMD, INTC, TXN, MU, QCOM, ADI and AAPL (`t
 
 | Where | What |
 |---|---|
-| Company Detail → **Versus Sector** | breadcrumb Sector › Group › Industry (with member counts) to switch level; each figure's Q1 / median / Q3, this company's value, gap to median (green favourable, red unfavourable, tiny gaps neutral) and a position bar; "Screen {Sector}" when no screen covers the company |
-| Company Detail → **Sector** | same level switch; growth vs operating margin scatter (median crosshairs, dot size = revenue), revenue ranking, sortable table with an Industry column. Clicking a company opens it, or offers **Build Company Detail** (a Pipeline run through company details) |
+| Company Detail → **Sector** (collapsible; one breadcrumb Sector › Group › Industry with member counts drives both parts) | **Relative Performance:** each figure's Q1 / median / Q3, this company's value, gap to median (green favourable, red unfavourable, tiny gaps neutral) and a position bar; "Screen {Sector}" when no screen covers the company |
+| | **Companies:** growth vs operating margin scatter (median crosshairs, dot size = revenue), revenue ranking, sortable table with an Industry column. Clicking a company opens it, or offers **Build Company Detail** (a Pipeline run through company details) |
 | Valuation → **Comps Peers from …** | ranked by the one similarity score (`L3_app/similar.py`, computed at publish). Opens at the company's industry if it has 6+ members, else widens. Tick peers, type prices, **Save Peers** or **Save Peers & Run Comps** (GitHub contents API; token needs Contents: Read and write). Peers the picker didn't show (hand-entered, or outside the level in view) are kept |
 | Run Pipeline → **Sector** | a company's sector (default), a taxonomy sector, a SIC code, a trait group, or a list |

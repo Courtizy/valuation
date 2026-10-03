@@ -9,6 +9,7 @@ async function init() {
   setupTheme();
   setupTabs();
   setupSegments();
+  setupCollapsibles();
   setupRunForm();
   try {
     [state.index, state.concepts, state.companies, state.taxonomy] = await Promise.all([getJSON("data/index.json"),
@@ -124,6 +125,29 @@ function setupTheme() {
     apply(next);
     if (state.detail) { renderCompany(); renderValuation(); }
   };
+}
+
+// Collapsible sections: the heading toggles the body. First visit: Statements open, Ratios and
+// Sector closed; after that each viewer's choice is remembered in this browser.
+const COLLAPSE_DEFAULT = { statements: true, ratios: false, sector: false };
+
+function setupCollapsibles() {
+  document.querySelectorAll(".card[data-collapse]").forEach((card) => {
+    const key = card.dataset.collapse, h = card.querySelector(".card-head h2"), body = card.querySelector(".card-body");
+    const id = `sec-body-${key}`;
+    body.id = id;
+    h.innerHTML = `<button type="button" class="collapse-btn" aria-controls="${id}"><span class="chev" aria-hidden="true"></span>${esc(h.textContent)}</button>`;
+    const btn = h.firstChild;
+    const set = (open, save) => {
+      card.classList.toggle("collapsed", !open);
+      btn.setAttribute("aria-expanded", String(open));
+      body.hidden = !open;
+      if (save) store.set(`open:${key}`, open ? "1" : "0");
+    };
+    const saved = store.get(`open:${key}`);
+    set(saved === null ? COLLAPSE_DEFAULT[key] ?? true : saved === "1", false);
+    btn.onclick = () => set(card.classList.contains("collapsed"), true);
+  });
 }
 
 function setupSegments() {
