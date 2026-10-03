@@ -228,3 +228,109 @@ def test_789_firm_dcf_projection_rows(case):
             assert y[item] == pytest.approx(_num(dcf[f"{col}{row}"].value), rel=1e-9, abs=1e-6), (case, col, item)
         assert y["free_cash_flow"]["change_in_nwc"] == pytest.approx(_num(dcf[f"{col}57"].value), rel=1e-9, abs=1e-6)
         assert y["free_cash_flow"]["fcf"] == pytest.approx(_num(dcf[f"{col}61"].value), rel=1e-9, abs=1e-6), (case, col)
+
+
+# ------------------------------------------- 789: discount rates and DCF value
+
+from core.cost_of_capital import discount_rates  # noqa: E402
+from core.dcf import scenario_range, solve, value_firm  # noqa: E402
+
+
+def _rates(wb):
+    ir = wb["Inputs_Results"]
+    c = lambda a: _num(ir[a].value)  # noqa: E731
+    current_de = c("B22") / (c("B9") * c("F24"))
+    return discount_rates(risk_free=c("B18"), pre_tax_cost_of_debt=c("B19"), beta=c("F7"),
+                          equity_risk_premium=c("F8"), tax_rate=c("F4"), current_debt_to_equity=current_de,
+                          target_debt_to_equity=c("V7"), risk_free_terminal=c("B20"))
+
+
+@pytest.mark.parametrize("case", sorted(FIRM_DCF_CASES))
+def test_789_discount_rates(case):
+    wb = _book(FIRM_DCF_CASES[case])
+    r, dr = _rates(wb), wb["Discount Rate"]
+    e = lambda a: _num(dr[a].value)  # noqa: E731
+    assert r["beta_unlevered"] == pytest.approx(e("C17"), rel=1e-12)
+    assert r["beta_relevered"] == pytest.approx(e("C19"), rel=1e-12)
+    assert r["cost_of_equity"] == pytest.approx(e("H4"), rel=1e-12)
+    assert r["equity_weight"] == pytest.approx(e("H5"), rel=1e-12)
+    assert r["wacc"] == pytest.approx(e("H7"), rel=1e-12)
+    assert r["cost_of_equity_terminal"] == pytest.approx(e("H9"), rel=1e-12)
+    assert r["wacc_terminal"] == pytest.approx(e("H12"), rel=1e-12)
+
+
+def _value(wb, base, drivers, cols, rates=None, **override):
+    ir = wb["Inputs_Results"]
+    c = lambda a: _num(ir[a].value)  # noqa: E731
+    rates = rates or _rates(wb)
+    tv_weight = ir["V12"].value
+    years = project(base, drivers, len(cols))
+    return value_firm(
+        years, wacc=override.get("wacc", rates["wacc"]), wacc_terminal=override.get("wacc_terminal", rates["wacc_terminal"]),
+        terminal_growth=drivers["revenue"]["g_terminal"], tax_rate=c("F4"), capex_to_sales_terminal=c("V8"),
+        nwc_to_sales_change=c("V4"), net_debt=c("B24"), shares=c("F24"),
+        tv_weight=1.0 if tv_weight is None else float(tv_weight),
+        invested_capital_to_sales=(c("F23") - c("B23")) / c("M3"))
+
+
+@pytest.mark.parametrize("case", sorted(FIRM_DCF_CASES))
+def test_789_firm_dcf_value_and_bridge(case):
+    wb = _book(FIRM_DCF_CASES[case])
+    base, drivers, cols, dcf = _firm_dcf_inputs(wb)
+    v = _value(wb, base, drivers, cols)
+    e = lambda a: _num(dcf[a].value)  # noqa: E731
+    assert v["enterprise_value"] == pytest.approx(e("C74"), rel=1e-9)
+    assert v["equity_value"] == pytest.approx(e("C76"), rel=1e-9)
+    assert v["value_per_share"] == pytest.approx(e("C78"), rel=1e-9)
+    assert v["terminal_value_share"] == pytest.approx(e("C79"), rel=1e-9)
+    assert v["terminal"]["terminal_value"] == pytest.approx(e("D85"), rel=1e-9)
+    assert v["terminal"]["ev_to_ebitda"] == pytest.approx(e("K4"), rel=1e-9)
+    assert v["terminal"]["roic"] == pytest.approx(e("G4"), rel=1e-9)
+    assert v["terminal"]["ebitda_margin"] == pytest.approx(e("G3"), rel=1e-9)
+
+
+def _price_fn(wb, base, drivers, cols, rates):
+    def price_at(g0, g_terminal, wacc, wacc_terminal):
+        d = {**drivers, "revenue": {**drivers["revenue"], "g0": g0, "g_terminal": g_terminal}}
+        return _value(wb, base, d, cols, rates, wacc=wacc, wacc_terminal=wacc_terminal)["value_per_share"]
+    return price_at
+
+
+@pytest.mark.parametrize("case", sorted(FIRM_DCF_CASES))
+def test_789_scenario_range(case):
+    """Conservative / expected / aggressive. The sensitivity grids are Excel data
+    tables, which only refresh on demand, so a workbook whose cached grid no
+    longer matches its own base value is stale and skipped."""
+    wb = _book(FIRM_DCF_CASES[case])
+    ir = wb["Inputs_Results"]
+    c = lambda a: _num(ir[a].value)  # noqa: E731
+    if abs(c("E41") - c("J4")) > 1e-6 * abs(c("J4")) or abs(c("L41") - c("J4")) > 1e-6 * abs(c("J4")):
+        pytest.skip("cached sensitivity tables are stale in this workbook")
+    base, drivers, cols, _ = _firm_dcf_inputs(wb)
+    rates = _rates(wb)
+    r = scenario_range(_price_fn(wb, base, drivers, cols, rates), g0=c("F10"), g_terminal=c("F11"),
+                       wacc=rates["wacc"], wacc_terminal=rates["wacc_terminal"], tv_share=c("J13"),
+                       growth_step=c("I46"), wacc_step=c("I47"), terminal_growth_step=c("M46"),
+                       terminal_wacc_step=c("M47"))
+    assert r["components"]["near_term_low"] == pytest.approx(c("F40"), rel=1e-9)
+    assert r["components"]["terminal_low"] == pytest.approx(c("M40"), rel=1e-9)
+    assert r["components"]["near_term_high"] == pytest.approx(c("D42"), rel=1e-9)
+    assert r["components"]["terminal_high"] == pytest.approx(c("K42"), rel=1e-9)
+    assert r["conservative"] == pytest.approx(c("B47"), rel=1e-9)
+    assert r["expected"] == pytest.approx(c("C47"), rel=1e-9)
+    assert r["aggressive"] == pytest.approx(c("D47"), rel=1e-9)
+
+
+@pytest.mark.parametrize("case", sorted(FIRM_DCF_CASES))
+def test_789_implied_growth_recovers_market_price(case):
+    """Solving near-term growth for the pre-announcement price lands on the
+    growth the workbook uses (its standalone value equals that price)."""
+    wb = _book(FIRM_DCF_CASES[case])
+    ir = wb["Inputs_Results"]
+    c = lambda a: _num(ir[a].value)  # noqa: E731
+    base, drivers, cols, _ = _firm_dcf_inputs(wb)
+    rates = _rates(wb)
+    price_at = _price_fn(wb, base, drivers, cols, rates)
+    g = solve(lambda g0: price_at(g0, c("F11"), rates["wacc"], rates["wacc_terminal"]), c("B9"), -0.3, 0.6)
+    assert price_at(g, c("F11"), rates["wacc"], rates["wacc_terminal"]) == pytest.approx(c("B9"), rel=1e-8)
+    assert g == pytest.approx(c("F10"), abs=1e-4)

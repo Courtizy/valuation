@@ -19,6 +19,7 @@ class ModelResult:
     lineage: dict                  # from lineage.lineage_block()
     samples_ref: str | None = None
     notes: list[str] = field(default_factory=list)
+    details: dict = field(default_factory=dict)   # model-specific workings, for display and audit
 
     def to_dict(self) -> dict:
         return {"schema_version": RESULT_SCHEMA_VERSION, **asdict(self)}

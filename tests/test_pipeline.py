@@ -63,7 +63,7 @@ def test_paths_are_point_in_time(tmp_path):
     assert paths.raw_filing("AAPL").parent.name == "raw"
 
 
-def test_execute_runs_l0_and_l1_then_halts_at_unbuilt_model(tmp_path):
+def test_execute_runs_l0_and_l1_then_stops_at_model_without_assumptions(tmp_path):
     paths = make_paths(tmp_path)
     report = execute(plan("AAPL", ["dcf"], "2026-09-30", paths, factory))
     status = {name: st for name, st, _ in report}
@@ -73,7 +73,8 @@ def test_execute_runs_l0_and_l1_then_halts_at_unbuilt_model(tmp_path):
     assert paths.canonical("AAPL", "2026-09-30").exists()
     assert status["build detail AAPL"] == "done"
     assert paths.detail("AAPL", "2026-09-30").exists()
-    assert status["model dcf"] == "not_implemented"
+    assert status["model dcf"] == "failed"
+    assert "assumptions" in {name: msg for name, _, msg in report}["model dcf"]
     assert status["reconcile"] == "skipped"
 
 

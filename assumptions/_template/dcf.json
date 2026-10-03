@@ -1,21 +1,40 @@
 {
+  "mode": "forecast",
+  "base_period": "ttm",
+  "market": {
+    "price": null,
+    "price_date": null,
+    "basic_shares": null,
+    "options": []
+  },
   "forecast": {
-    "years": 5,
-    "frequency": "annual",
-    "revenue_growth": [0.06, 0.06, 0.05, 0.05, 0.04],
-    "ebit_margin": [0.30, 0.30, 0.31, 0.31, 0.31],
-    "capex_pct_revenue": 0.03,
-    "nwc_pct_revenue": -0.05,
-    "tax_rate": 0.16
+    "years_to_terminal": 10,
+    "revenue_growth": 0.06,
+    "terminal_growth": 0.025,
+    "growth_adjust": null,
+    "cost_pct_revenue": {},
+    "capex_pct_revenue": null,
+    "nwc_to_sales_change": null,
+    "tax_rate": null
   },
   "cost_of_capital": {
     "risk_free": 0.042,
+    "risk_free_terminal": null,
     "equity_risk_premium": 0.05,
     "beta": 1.1,
-    "pre_tax_cost_of_debt": 0.05,
-    "target_debt_weight": 0.10
+    "pre_tax_cost_of_debt": 0.055,
+    "current_debt_to_equity": null,
+    "target_debt_to_equity": null
   },
-  "terminal": {"method": "gordon", "growth": 0.025},
-  "simulation": {"trials": 10000, "seed": 42},
-  "sources": {"risk_free": "UST 10Y on as_of date", "beta": "5Y monthly vs S&P 500"}
+  "bridge": {"operating_cash_pct": 0.5, "include_longterm_investments": false},
+  "terminal": {"method": "gordon", "weight": 1.0},
+  "discounting": {"convention": "closing_year_zero"},
+  "sensitivity": {"growth_step": 0.01, "wacc_step": 0.01, "terminal_growth_step": 0.005, "terminal_wacc_step": 0.005},
+  "sources": {
+    "price": "close on the as-of date",
+    "risk_free": "10-30Y Treasury on the as-of date",
+    "risk_free_terminal": "normalized long-run Treasury rate",
+    "beta": "5Y monthly vs S&P 500",
+    "pre_tax_cost_of_debt": "yield on the company's long-term bonds"
+  }
 }

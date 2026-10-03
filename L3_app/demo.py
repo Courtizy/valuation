@@ -4,8 +4,8 @@
 
 Writes site/data/DEMO/{as_of}/company_detail.json (built by the real L1 build
 from synthetic canonical records, in the usual 10-Q/10-K pattern: income
-statement by quarter and full year, cash flow year-to-date only) plus two
-synthetic model results and their comparison, so every tab has something to
+statement by quarter and full year, cash flow year-to-date only) plus a real DCF run on made-up
+market inputs and two synthetic model results and their comparison, so every tab has something to
 show before the first real pipeline run. Every file is flagged demo: true.
 """
 from __future__ import annotations
@@ -94,6 +94,17 @@ def synthetic_records() -> list[dict]:
     return recs
 
 
+# Made-up market inputs for the synthetic company (the real DCF model runs on them).
+DEMO_DCF_ASSUMPTIONS = {
+    "mode": "forecast",
+    "market": {"price": 45.0, "price_date": AS_OF, "basic_shares": 330e6},
+    "forecast": {"years_to_terminal": 10, "revenue_growth": 0.08, "terminal_growth": 0.03, "tax_rate": 0.21},
+    "cost_of_capital": {"risk_free": 0.042, "risk_free_terminal": 0.05, "equity_risk_premium": 0.05,
+                        "beta": 1.1, "pre_tax_cost_of_debt": 0.06},
+    "sources": {"all": "synthetic demo values"},
+}
+
+
 def _model_result(model, p10, p50, p90, assumptions):
     return {"schema_version": "0.1.0", "model": model, "ticker": "DEMO", "as_of": AS_OF,
             "value_per_share": {"p10": p10, "p50": p50, "p90": p90, "mean": (p10 + p50 + p90) / 3},
@@ -110,9 +121,13 @@ def write_demo(site_dir: Path) -> Path:
     detail = build_detail(canonical, AS_OF)
     detail["demo"] = True
     (out / "company_detail.json").write_text(json.dumps(detail, indent=2))
+    from L2_models.base import get_model
+    dcf = get_model("dcf").run(detail, DEMO_DCF_ASSUMPTIONS).to_dict()
+    dcf["lineage"] = {"as_of": AS_OF, "inputs": []}
+    dcf["demo"] = True
+    dcf["notes"].insert(0, "synthetic demo company; market inputs are made up")
     results = {
-        "dcf": _model_result("dcf", 41.0, 48.5, 57.0, {"forecast": {"tax_rate": 0.21},
-                                                       "terminal": {"method": "gordon", "growth": 0.03}}),
+        "dcf": dcf,
         "comps": _model_result("comps", 38.0, 45.0, 52.5, {"forecast": {"tax_rate": 0.21}}),
         "precedents": _model_result("precedents", 46.0, 55.0, 63.0, {}),
     }

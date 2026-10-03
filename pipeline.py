@@ -120,7 +120,10 @@ def plan(
         def run_model(m=m):
             model = get_model(m)
             detail = _read_json(paths.detail(ticker, as_of))
-            assumptions = _read_json(paths.model_assumptions(ticker, m), {})
+            a_path = paths.model_assumptions(ticker, m)
+            if not a_path.exists():
+                raise FileNotFoundError(f"{a_path} not found; copy assumptions/_template/{m}.json and fill it in")
+            assumptions = _read_json(a_path, {})
             peer_details = [_read_json(paths.detail(p, as_of)) for p in peers] if model.needs_peers else None
             result = model.run(detail, assumptions, peer_details)
             result.lineage = lineage_block(as_of, [paths.detail(ticker, as_of)])

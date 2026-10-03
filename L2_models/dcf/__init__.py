@@ -1,15 +1,296 @@
-"""DCF model (forecast, WACC, terminal value, own Monte Carlo). Scaffold only."""
+"""Standalone DCF.
+
+Inputs: company_detail.json (L1) and assumptions/{TICKER}/dcf.json. Market
+inputs (price, rates, beta) come from the assumptions file until a market-data
+adapter exists.
+
+Steps
+-----
+1. Base period: the latest TTM (or latest fiscal year) from company detail.
+   Cost lines are kept as percentages of sales; "other operating" is the
+   residual, so base-year EBIT equals reported operating income.
+2. Projection (core.projection): revenue grows at g0 and fades linearly to
+   terminal growth over the years to terminal (or follows explicit per-year
+   adjustments); costs, D&A and capex stay at their ratios to sales;
+   working capital grows by (dNWC/dSales) x dSales. Year 1 is the closing
+   year, and the projection runs years_to_terminal + 1 years.
+3. Discount rates (core.cost_of_capital): beta unlevered at today's market
+   D/E and relevered at the target; a pre-terminal WACC and a terminal-year
+   WACC on the normalized long-run rate.
+4. Value (core.dcf): discounted FCF plus a Gordon terminal value, less net
+   debt (debt - cash not needed for operations), over diluted shares (TSM).
+5. Range: conservative / expected / aggressive from the two sensitivity
+   moves, blended by the terminal value's share.
+
+Modes
+-----
+forecast  your growth assumption gives a value per share.
+implied   solves near-term growth so the value equals the market price; the
+          answer is what the price implies, and the range is built around it.
+"""
 from __future__ import annotations
 
+from copy import deepcopy
+
+from core.cost_of_capital import discount_rates
+from core.dcf import scenario_range, solve, value_firm
+from core.projection import base_from_detail, project
+from core.shares import treasury_stock_method
 from L2_models.base import ModelResult
+
+DEFAULT_NWC_RATIO = 0.20          # used when history can't give dNWC/dSales
+NWC_HISTORY_YEARS = 4
+
+
+class AssumptionError(ValueError):
+    pass
+
+
+def _need(d: dict, key: str, where: str):
+    v = d.get(key)
+    if v is None:
+        raise AssumptionError(f"dcf assumptions: {where}.{key} is required")
+    return v
+
+
+def _base_period(detail: dict, which: str) -> dict:
+    views = detail["views"]
+    if which == "ttm" and views.get("ttm"):
+        return views["ttm"][-1]
+    if views.get("annual"):
+        return views["annual"][-1]
+    if views.get("ttm"):
+        return views["ttm"][-1]
+    raise AssumptionError("company detail has no 12-month period to start from")
+
+
+def _nwc_ratio(detail: dict, warnings: list[str]) -> float:
+    """dNWC/dSales over recent fiscal years, from the managerial WCR (excludes cash)."""
+    an = [a for a in detail["analysis"]["annual"] if a["managerial_balance_sheet"]["wcr"] is not None]
+    periods = {p["end"]: p["values"].get("revenue") for p in detail["views"]["annual"]}
+    an = [a for a in an if periods.get(a["end"]) is not None][-NWC_HISTORY_YEARS:]
+    if len(an) >= 2:
+        d_wcr = an[-1]["managerial_balance_sheet"]["wcr"] - an[0]["managerial_balance_sheet"]["wcr"]
+        d_s = periods[an[-1]["end"]] - periods[an[0]["end"]]
+        if d_s > 0:
+            k = d_wcr / d_s
+            if -1 <= k <= 1:
+                return k
+    warnings.append(f"dNWC/dSales not measurable from history; using {DEFAULT_NWC_RATIO}")
+    return DEFAULT_NWC_RATIO
 
 
 class DCF:
     name = "dcf"
     needs_peers = False
 
+    # ------------------------------------------------------------- inputs
+    def prepare(self, detail: dict, assumptions: dict) -> dict:
+        if not detail or "views" not in detail:
+            raise AssumptionError("dcf needs company_detail.json")
+        a = deepcopy(assumptions or {})
+        fc, cc = a.get("forecast", {}), a.get("cost_of_capital", {})
+        mkt, br = a.get("market", {}), a.get("bridge", {})
+        warnings: list[str] = []
+        period = _base_period(detail, a.get("base_period", "ttm"))
+        v = period["values"]
+        base = base_from_detail(v)
+        rev = base["revenue"]
+        if not rev:
+            raise AssumptionError(f"no revenue in {period['label']}")
+
+        # D&A as one line; residual "other operating" ties EBIT to operating income
+        base["depreciation"] = (base["depreciation"] or 0) + (base["amortization"] or 0)
+        base["amortization"] = 0.0
+        if v.get("operating_income_loss") is not None:
+            named = sum(base.get(k) or 0 for k in ("cogs", "sga", "rnd"))
+            base["other_opex"] = rev - named - v["operating_income_loss"]
+        else:
+            warnings.append("operating income missing; EBIT built from the cost lines present")
+
+        tax = fc.get("tax_rate")
+        if tax is None:
+            etr = v.get("effective_tax_rate")
+            tax = etr if etr is not None and 0 <= etr <= 0.5 else 0.21
+            warnings.append(f"tax rate not given; using {tax:.3f} ({'effective' if etr is not None and 0 <= etr <= 0.5 else 'statutory default'})")
+        nwc = fc.get("nwc_to_sales_change")
+        if nwc is None:
+            nwc = _nwc_ratio(detail, warnings)
+        capex = fc.get("capex_pct_revenue")
+        if capex is None:
+            capex = (base.get("capex") or base["depreciation"]) / rev
+        cost_pct = fc.get("cost_pct_revenue") or {}
+        ratio = lambda k: cost_pct.get(k, (base.get(k) or 0) / rev)  # noqa: E731
+
+        n = int(fc.get("years_to_terminal", 10))
+        if n < 1:
+            raise AssumptionError("forecast.years_to_terminal must be at least 1")
+        revenue_driver = {"method": "fade", "g0": fc.get("revenue_growth", 0.0),
+                          "g_terminal": _need(fc, "terminal_growth", "forecast"), "fade_years": n}
+        if fc.get("growth_adjust") is not None:
+            revenue_driver["adjust"] = fc["growth_adjust"]
+        drivers = {
+            "revenue": revenue_driver,
+            "cogs": {"method": "pct_of_sales", "value": ratio("cogs")},
+            "sga": {"method": "pct_of_sales", "value": ratio("sga")},
+            "rnd": {"method": "pct_of_sales", "value": ratio("rnd")},
+            "other_opex": {"method": "pct_of_sales", "value": ratio("other_opex")},
+            "depreciation": {"method": "pct_of_sales", "value": base["depreciation"] / rev},
+            "amortization": {"method": "values", "values": [0]},
+            "capex": {"method": "pct_of_sales", "value": capex},
+            "nwc": {"method": "incremental", "ratio": nwc},
+            "interest": {"method": "same_as_base"},
+            "tax_rate": tax,
+            "costs_include_da": True,
+            "plug": "cash",
+        }
+
+        # shares and bridge
+        price = mkt.get("price")
+        basic = mkt.get("basic_shares") or v.get("shares_year_end") or v.get("shares_fully_diluted_average")
+        if not basic:
+            raise AssumptionError("no share count: set market.basic_shares")
+        options = mkt.get("options") or []
+        if options and not price:
+            raise AssumptionError("market.price is needed to apply the treasury stock method")
+        tsm = treasury_stock_method(basic, price, options) if price else None
+        shares = tsm["diluted"] if tsm else basic
+        debt = (v.get("short_term_debt") or 0) + (v.get("long_term_debt") or 0)
+        cash = v.get("cash_and_marketable_securities") or 0
+        if br.get("include_longterm_investments"):
+            cash += v.get("longterm_investments") or 0    # e.g. non-current marketable securities
+        op_cash = br.get("operating_cash_pct", 0.5)
+        net_debt = debt - cash * (1 - op_cash)
+
+        # discount rates
+        current_de = cc.get("current_debt_to_equity")
+        if current_de is None:
+            if not price:
+                raise AssumptionError("set market.price (or cost_of_capital.current_debt_to_equity) for market D/E")
+            current_de = debt / (price * shares)
+        rates = discount_rates(
+            risk_free=_need(cc, "risk_free", "cost_of_capital"),
+            pre_tax_cost_of_debt=_need(cc, "pre_tax_cost_of_debt", "cost_of_capital"),
+            beta=_need(cc, "beta", "cost_of_capital"),
+            equity_risk_premium=_need(cc, "equity_risk_premium", "cost_of_capital"),
+            tax_rate=tax, current_debt_to_equity=current_de,
+            target_debt_to_equity=cc.get("target_debt_to_equity"),
+            risk_free_terminal=cc.get("risk_free_terminal"))
+
+        invested = (v.get("assets") or 0) - ((v.get("current_liabilities_total") or 0) - (v.get("short_term_debt") or 0))
+        return {
+            "period": period, "base": base, "drivers": drivers, "years": n + 1, "tax": tax, "nwc": nwc,
+            "capex": capex, "rates": rates, "price": price, "shares": shares, "tsm": tsm,
+            "net_debt": net_debt, "debt": debt, "cash": cash, "operating_cash_pct": op_cash,
+            "tv_weight": a.get("terminal", {}).get("weight", 1.0),
+            "convention": a.get("discounting", {}).get("convention", "closing_year_zero"),
+            "ic_to_sales": (invested - cash) / rev if invested else None,
+            "mode": a.get("mode", "forecast"), "sensitivity": a.get("sensitivity", {}),
+            "sources": a.get("sources", {}), "warnings": warnings,
+        }
+
+    def value(self, p: dict, g0: float | None = None, g_terminal: float | None = None,
+              wacc: float | None = None, wacc_terminal: float | None = None) -> dict:
+        d = deepcopy(p["drivers"])
+        if g0 is not None:
+            d["revenue"]["g0"] = g0
+        if g_terminal is not None:
+            d["revenue"]["g_terminal"] = g_terminal
+        proj = project(p["base"], d, p["years"])
+        out = value_firm(
+            proj, wacc=p["rates"]["wacc"] if wacc is None else wacc,
+            wacc_terminal=p["rates"]["wacc_terminal"] if wacc_terminal is None else wacc_terminal,
+            terminal_growth=d["revenue"]["g_terminal"], tax_rate=p["tax"],
+            capex_to_sales_terminal=p["capex"], nwc_to_sales_change=p["nwc"], net_debt=p["net_debt"],
+            shares=p["shares"], tv_weight=p["tv_weight"], convention=p["convention"],
+            invested_capital_to_sales=p["ic_to_sales"])
+        out["projection"] = proj
+        return out
+
+    # --------------------------------------------------------------- run
     def run(self, detail: dict, assumptions: dict, peers: list[dict] | None = None) -> ModelResult:
-        raise NotImplementedError("dcf: not built yet")
+        p = self.prepare(detail, assumptions)
+        notes = list(p["warnings"])
+        implied = None
+        if p["mode"] == "implied":
+            if not p["price"]:
+                raise AssumptionError("implied mode needs market.price")
+            implied = solve(lambda g: self.value(p, g0=g)["value_per_share"], p["price"], -0.5, 1.0)
+            p["drivers"]["revenue"]["g0"] = implied
+            notes.append(f"implied near-term growth {implied:.4%} makes the DCF equal the price {p['price']}")
+        elif p["mode"] != "forecast":
+            raise AssumptionError("mode must be 'forecast' or 'implied'")
+
+        base_val = self.value(p)
+        r = p["rates"]
+        rev = p["drivers"]["revenue"]
+        s = p["sensitivity"]
+        scen = scenario_range(
+            lambda g0, g_terminal, wacc, wacc_terminal: self.value(
+                p, g0=g0, g_terminal=g_terminal, wacc=wacc, wacc_terminal=wacc_terminal)["value_per_share"],
+            g0=rev["g0"], g_terminal=rev["g_terminal"], wacc=r["wacc"], wacc_terminal=r["wacc_terminal"],
+            tv_share=base_val["terminal_value_share"], growth_step=s.get("growth_step", 0.01),
+            wacc_step=s.get("wacc_step", 0.01), terminal_growth_step=s.get("terminal_growth_step", 0.005),
+            terminal_wacc_step=s.get("terminal_wacc_step", 0.005))
+        notes.append("range = course scenario method (conservative / expected / aggressive), not simulated percentiles")
+
+        years = base_val["projection"]["years"]
+        growth_path = [y["revenue"] / (years[i - 1]["revenue"] if i else p["base"]["revenue"]) - 1
+                       for i, y in enumerate(years)]
+        assumptions_used = {
+            "forecast": {
+                "years": len(years), "frequency": "annual",
+                "revenue_growth": growth_path,
+                "ebitda_margin": [y["ebitda"] / y["revenue"] for y in years],
+                "capex_pct_revenue": p["capex"],
+                "nwc_to_sales_change": p["nwc"],
+                "tax_rate": p["tax"],
+            },
+            "cost_of_capital": {
+                "risk_free": (assumptions.get("cost_of_capital") or {}).get("risk_free"),
+                "risk_free_terminal": r["risk_free_terminal"],
+                "equity_risk_premium": (assumptions.get("cost_of_capital") or {}).get("equity_risk_premium"),
+                "beta": r["beta_levered_observed"],
+                "beta_relevered": r["beta_relevered"],
+                "pre_tax_cost_of_debt": (assumptions.get("cost_of_capital") or {}).get("pre_tax_cost_of_debt"),
+                "target_debt_weight": r["debt_weight"],
+                "wacc": r["wacc"],
+                "wacc_terminal": r["wacc_terminal"],
+            },
+            "terminal": {"method": "gordon", "growth": rev["g_terminal"], "weight": p["tv_weight"]},
+            "sources": p["sources"],
+        }
+        details = {
+            "mode": p["mode"],
+            "implied_growth": implied,
+            "base_period": {"label": p["period"]["label"], "end": p["period"]["end"]},
+            "market_price": p["price"],
+            "rates": r,
+            "bridge": {"enterprise_value": base_val["enterprise_value"], "pv_fcf": base_val["pv_fcf"],
+                       "pv_terminal_value": base_val["pv_terminal_value"], "debt": p["debt"], "cash": p["cash"],
+                       "operating_cash_pct": p["operating_cash_pct"], "net_debt": p["net_debt"],
+                       "equity_value": base_val["equity_value"], "shares": p["shares"], "tsm": p["tsm"],
+                       "value_per_share": base_val["value_per_share"]},
+            "terminal": base_val["terminal"],
+            "terminal_value_share": base_val["terminal_value_share"],
+            "scenarios": scen,
+            "projection": [{"year": y["year"], "revenue": y["revenue"], "ebitda": y["ebitda"], "ebit": y["ebit"],
+                            "capex": y["capex"], "change_in_nwc": y["free_cash_flow"]["change_in_nwc"],
+                            "fcf": y["free_cash_flow"]["fcf"], "pv": cf["pv"]}
+                           for y, cf in zip(years, base_val["cash_flows"])],
+            "drivers": p["drivers"],
+        }
+        return ModelResult(
+            model=self.name,
+            ticker=(detail.get("entity") or {}).get("ticker") or "",
+            as_of=detail.get("as_of", ""),
+            value_per_share={"p10": scen["conservative"], "p50": scen["expected"],
+                             "p90": scen["aggressive"], "mean": scen["expected"]},
+            assumptions_used=assumptions_used,
+            lineage={},
+            notes=notes,
+            details=details,
+        )
 
 
 MODEL = DCF()

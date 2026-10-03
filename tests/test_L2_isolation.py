@@ -37,12 +37,25 @@ def test_reconcile_imports_no_model():
     assert not bad, f"reconcile imports {bad}"
 
 
+BUILT = {"dcf"}
+
+
 def test_all_models_registered_and_scaffolded():
     for m in MODEL_NAMES:
         model = get_model(m)
         assert model.name == m
-        with pytest.raises(NotImplementedError):
+        with pytest.raises(ValueError if m in BUILT else NotImplementedError):
             model.run({}, {})
+
+
+@pytest.mark.parametrize("model", MODEL_NAMES)
+def test_models_import_only_base_and_core(model):
+    allowed = ("L2_models.base", "core")
+    layers = ("L0_ingest", "L1_detail", "L2_models", "L3_app", "pipeline")
+    for name in _imports(L2 / model):
+        if name.split(".")[0] in layers or name.startswith("L2_models"):
+            assert any(name == a or name.startswith(a + ".") for a in allowed) or name == f"L2_models.{model}", \
+                f"{model} imports {name}"
 
 
 def test_peer_flags():

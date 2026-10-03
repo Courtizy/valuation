@@ -45,10 +45,11 @@
 valuation/
   L0_ingest/          adapters, cache, raw schema, CLI                built
   L1_detail/          registry, normalize, periods, analysis, build    built
-  core/               projection.py (three statements, MBS, FCF)      built
+  core/               projection, cost_of_capital, dcf, shares         built
   L2_models/
     base.py           ModelResult, Model protocol, get_model()        built
-    dcf/ comps/ lbo/ ipo/ precedents/                                 scaffolded
+    dcf/              standalone DCF, forecast + implied modes        built
+    comps/ lbo/ ipo/ precedents/                                      scaffolded
     reconcile/        football field, assumption diffs, warnings      built
   L3_app/             publish.py (outputs -> site/data), demo.py       built
   site/               GitHub Pages app: index.html, assets/, data/    built
@@ -161,6 +162,6 @@ Fields a model doesn't use are omitted, not zeroed. Reconcile flags fields prese
 1. ~~L1 stage 1 normalizer~~ (done, see `L1_normalize.md`).
 2. ~~L1 stage 2: frequency views, analysis in both frameworks, market join~~ (done, see `L1_build.md`).
 3. ~~Three-statement projection in `core/`~~ (done, see `core_projection.md`).
-4. `core/` cost of capital (relevered beta, pre-terminal and terminal WACC) and diluted shares (treasury stock method).
-5. L2 `dcf` (forecast and implied-growth modes), then `dcf_synergy` and `just_synergy`.
+4. ~~`core/` cost of capital and treasury stock method; L2 `dcf` (forecast and implied modes)~~ (done, see `L2_dcf.md`).
+5. `dcf_synergy` and `just_synergy`, then reconcile weights and the bargaining-power offer price.
 6. Market-data adapter and Treasury yields.

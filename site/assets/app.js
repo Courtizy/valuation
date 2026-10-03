@@ -97,6 +97,8 @@ async function selectRun(asOf) {
   try {
     state.detail = await getJSON(`data/${state.run.detail}`);
     state.comparison = state.run.comparison ? await getJSON(`data/${state.run.comparison}`) : null;
+    state.dcf = state.run.models?.includes("dcf")
+      ? await getJSON(`data/${state.company.ticker}/${state.run.as_of}/model_results/dcf.json`).catch(() => null) : null;
   } catch (e) {
     banner(`Couldn't load results for ${state.company.ticker} as of ${asOf}: ${e.message}`);
     return;
@@ -572,9 +574,9 @@ function renderValuation() {
     return;
   }
   const rows = c.football_field.map((r) => ({ label: MODEL_NAMES[r.model] || r.model, lo: r.p10, mid: r.p50, hi: r.p90 }));
-  const mkt = state.detail.market?.price;
+  const mkt = state.detail.market?.price ?? state.dcf?.details?.market_price;
   body.innerHTML = `
-    <div class="card"><div class="card-head"><h2>Football field</h2><span class="muted small">Value per share, P10 to P90, with the P50 marked</span></div>
+    <div class="card"><div class="card-head"><h2>Football field</h2><span class="muted small">Value per share, low to high, best estimate marked</span></div>
       <div id="ff-chart"></div></div>
     <div class="grid-2">
       <div class="card"><div class="card-head"><h2>Ranges</h2></div><div class="table-wrap"><table id="ff-table"></table></div></div>
@@ -582,7 +584,8 @@ function renderValuation() {
     </div>
     ${c.warnings?.length ? `<div class="card"><h2>Warnings</h2><ul>${c.warnings.map((w) => `<li>${esc(w)}</li>`).join("")}</ul></div>` : ""}`;
   rangeChart($("ff-chart"), { rows, format: price, label: "Football field",
-    reference: fin(mkt) ? { value: mkt, label: "Market" } : null });
+    reference: fin(mkt) ? { value: mkt, label: "Price" } : null });
+  renderDcfCard();
   $("ff-table").innerHTML = `<thead><tr><th>Model</th><th>P10</th><th>P50</th><th>P90</th><th>Mean</th></tr></thead><tbody>${
     c.football_field.map((r) => `<tr><td>${esc(MODEL_NAMES[r.model] || r.model)}</td><td>${price(r.p10)}</td><td>${price(r.p50)}</td><td>${price(r.p90)}</td><td>${price(r.mean)}</td></tr>`).join("")}</tbody>`;
   const diffs = c.assumption_differences || [];
@@ -590,6 +593,57 @@ function renderValuation() {
     ? `<div class="table-wrap"><table><thead><tr><th>Field</th>${Object.keys(diffs[0].values).map((m) => `<th>${esc(m)}</th>`).join("")}</tr></thead><tbody>${
       diffs.map((d) => `<tr><td>${esc(d.field)}</td>${Object.values(d.values).map((v) => `<td>${esc(JSON.stringify(v))}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`
     : `<p class="muted">Every shared assumption matches, so gaps between models come from method, not inputs.</p>`;
+}
+
+function renderDcfCard() {
+  const r = state.dcf, d = r?.details;
+  if (!d?.bridge) return;
+  const b = d.bridge, rt = d.rates, t = d.terminal, sc = d.scenarios;
+  const card = document.createElement("div");
+  card.className = "card";
+  const tile = (l, v, sub = "") => `<div class="tile"><div class="label">${esc(l)}</div><div class="value">${v}</div>${sub ? `<div class="delta">${esc(sub)}</div>` : ""}</div>`;
+  card.innerHTML = `
+    <div class="card-head"><h2>DCF (standalone)</h2>
+      <span class="muted small">${esc(d.mode === "implied" ? "Implied mode: growth solved to match the price" : "Forecast mode")} · base ${esc(d.base_period.label)}</span></div>
+    <div class="tiles">
+      ${tile("Value per share", price(b.value_per_share), `range ${price(sc.conservative)} – ${price(sc.aggressive)}`)}
+      ${d.implied_growth != null ? tile("Implied near-term growth", pct(d.implied_growth), `price ${price(d.market_price)}`) : tile("Price (assumptions)", price(d.market_price))}
+      ${tile("WACC", pct(rt.wacc), `terminal year ${pct(rt.wacc_terminal)}`)}
+      ${tile("Terminal value share", pct(d.terminal_value_share), `terminal EV/EBITDA ${times(t.ev_to_ebitda)}`)}
+    </div>
+    <div class="grid-2">
+      <div><h3>Bridge ($M)</h3><div class="table-wrap"><table><tbody>
+        <tr><td>PV of free cash flow</td><td>${millions(b.pv_fcf)}</td></tr>
+        <tr><td>PV of terminal value</td><td>${millions(b.pv_terminal_value)}</td></tr>
+        <tr class="total"><td>Enterprise value</td><td>${millions(b.enterprise_value)}</td></tr>
+        <tr><td>Debt</td><td>${millions(b.debt)}</td></tr>
+        <tr><td>Cash beyond operating needs (${pct(1 - b.operating_cash_pct, true)} of ${millions(b.cash)})</td><td>${millions(b.cash * (1 - b.operating_cash_pct))}</td></tr>
+        <tr><td>Net debt</td><td>${millions(b.net_debt)}</td></tr>
+        <tr class="total"><td>Equity value</td><td>${millions(b.equity_value)}</td></tr>
+        <tr><td>Diluted shares (M)</td><td>${millions(b.shares)}</td></tr>
+        <tr class="total"><td>Value per share</td><td>${price(b.value_per_share)}</td></tr>
+      </tbody></table></div></div>
+      <div><h3>Discount rates</h3><div class="table-wrap"><table><tbody>
+        <tr><td>Beta observed → unlevered → relevered</td><td>${num(rt.beta_levered_observed)} → ${num(rt.beta_unlevered)} → ${num(rt.beta_relevered)}</td></tr>
+        <tr><td>Target debt / equity</td><td>${num(rt.target_debt_to_equity)}</td></tr>
+        <tr><td>Cost of equity</td><td>${pct(rt.cost_of_equity)}</td></tr>
+        <tr class="total"><td>WACC (pre-terminal)</td><td>${pct(rt.wacc)}</td></tr>
+        <tr><td>Terminal risk-free rate</td><td>${pct(rt.risk_free_terminal)}</td></tr>
+        <tr><td>Terminal cost of equity</td><td>${pct(rt.cost_of_equity_terminal)}</td></tr>
+        <tr class="total"><td>WACC (terminal year)</td><td>${pct(rt.wacc_terminal)}</td></tr>
+        <tr><td>Terminal growth</td><td>${pct(t.growth)}</td></tr>
+        <tr><td>Terminal ROIC</td><td>${pct(t.roic)}</td></tr>
+      </tbody></table></div></div>
+    </div>
+    <h3 style="margin-top:16px">Projection ($M)</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Year</th>${d.projection.map((y) => `<th>Y${y.year}</th>`).join("")}</tr></thead>
+      <tbody>
+        ${[["Revenue", "revenue"], ["EBITDA", "ebitda"], ["Capex", "capex"], ["ΔNWC", "change_in_nwc"], ["Free cash flow", "fcf"], ["Present value", "pv"]]
+          .map(([l, k]) => `<tr class="${k === "fcf" ? "total" : ""}"><td>${l}</td>${d.projection.map((y) => `<td>${millions(y[k])}</td>`).join("")}</tr>`).join("")}
+      </tbody></table></div>
+    <p class="legend-note">Year 1 is the closing year (not discounted). Range: conservative and aggressive move near-term growth with WACC and terminal growth with terminal WACC, blended by the terminal value's share.${r.notes?.length ? " " + esc(r.notes.filter((n) => !n.startsWith("range =")).join(" ")) : ""}</p>`;
+  $("val-body").insertBefore(card, $("val-body").children[1] || null);
 }
 
 // ---------------------------------------------------------------- run pipeline
