@@ -8,7 +8,7 @@ import pytest
 
 from fakes import FakeSecClient
 from L0_ingest.sec_companyfacts import SecCompanyFactsAdapter
-from pipeline import Paths, execute, main, plan
+from runner import Paths, execute, main, plan
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -80,7 +80,7 @@ def test_execute_runs_l0_and_l1_then_the_dcf_default_case(tmp_path):
 
 
 def test_execute_reports_failures_without_raising(tmp_path):
-    from pipeline import Step
+    from runner import Step
 
     def boom():
         raise RuntimeError("bad data")

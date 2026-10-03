@@ -17,7 +17,7 @@ from L0_ingest.sec_companyfacts import TICKERS_URL
 from L0_ingest.sec_sector import FRAMES_URL, SecSectorAdapter, frame_plan, parse_sic_page, screen_year
 from L1_detail.profile import classify_stage, load_rules
 from L1_detail.sector import build_sector, parse_traits, quartiles
-from pipeline import Paths, main, parse_sector_spec, run_sector
+from runner import Paths, main, parse_sector_spec, run_sector
 
 FIXTURES = Path(__file__).parent / "fixtures"
 FX = json.loads((FIXTURES / "sec_frames_semis.json").read_text())

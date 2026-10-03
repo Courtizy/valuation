@@ -10,7 +10,7 @@ import pytest
 from L1_detail.build import validate_detail
 from L3_app.demo import write_demo
 from L3_app.publish import publish
-from pipeline import Paths, plan
+from runner import Paths, plan
 
 ROOT = Path(__file__).resolve().parent.parent
 
