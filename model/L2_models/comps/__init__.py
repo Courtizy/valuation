@@ -46,6 +46,12 @@ class CompsError(ValueError):
     pass
 
 
+class NoPeerPrices(CompsError):
+    """No peer has a price: expected in showcase mode (no market data) until prices are typed in comps.json.
+    The runner reports it as a warning, not a failure."""
+    is_warning = True
+
+
 def _latest_values(detail: dict | None) -> dict:
     if not detail:
         return {}
@@ -64,7 +70,9 @@ def company_figures(detail: dict | None, manual: dict | None = None) -> dict:
         "debt": ((v.get("short_term_debt") or 0) + (v.get("long_term_debt") or 0))
         if v.get("long_term_debt") is not None or v.get("short_term_debt") is not None else None,
         "cash": v.get("cash_and_marketable_securities"),
-        "shares": v.get("shares_year_end") or v.get("shares_fully_diluted_average"),
+        # newest filed count (10-K/10-Q cover page, carried in company detail), else the statements'
+        "shares": ((detail or {}).get("shares_outstanding") or v.get("shares_year_end")
+                   or v.get("shares_fully_diluted_average")),
         "revenue_growth": ((detail or {}).get("profile") or {}).get("vector", {}).get("revenue_cagr"),
     }
     mkt = (detail or {}).get("market") or {}
@@ -161,7 +169,8 @@ class Comps:
             rows.append(row)
         live = [r for r in rows if not r.get("excluded")]
         if not live:
-            raise CompsError("no peer has both a price and a share count")
+            raise NoPeerPrices("no peer has a price: type peer prices in comps.json (the public site's showcase mode "
+                               "fetches no market prices), or run with market data")
 
         wanted = a.get("multiples") or DEFAULT_MULTIPLES
         weights = a.get("weights") or {m: 1.0 for m in wanted}

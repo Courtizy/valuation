@@ -68,5 +68,15 @@ def test_comps_errors(details):
     with pytest.raises(CompsError, match="no peers"):
         get_model("comps").run(details["DEMO"], {}, [])
     no_market = {**details["DEMOG"], "market": None}       # showcase mode: no peer prices
-    with pytest.raises(CompsError, match="price and a share count"):
+    with pytest.raises(CompsError, match="no peer has a price"):
         get_model("comps").run(details["DEMO"], {"target": {"shares": 1e8}, "peers": ["DEMOG"]}, [no_market])
+
+
+def test_target_shares_from_the_filed_count_and_missing_prices_are_a_warning(details):
+    from L2_models.comps import NoPeerPrices, company_figures
+    d = {**details["DEMO"], "market": None, "shares_outstanding": 123e6}   # showcase: no market block
+    assert company_figures(d)["shares"] == 123e6               # cover-page count wins over the statements
+    no_market = {**details["DEMOG"], "market": None}
+    with pytest.raises(NoPeerPrices) as e:
+        get_model("comps").run(d, {"peers": ["DEMOG"]}, [no_market])
+    assert e.value.is_warning

@@ -105,3 +105,15 @@ def test_peer_detail_built_for_the_same_date_is_reused(tmp_path):
     d.write_text("{}")
     names = [s.name for s in plan("AAPL", ["comps"], "2026-09-30", paths, factory)]
     assert "ingest MSFT" not in names and "ingest AAPL" in names
+
+
+def test_expected_gaps_are_warnings_not_failures():
+    from runner import Step
+
+    class Gap(ValueError):
+        is_warning = True
+
+    def gap():
+        raise Gap("no peer has a price")
+    report = execute([Step("model comps", "L2", "KO", [], gap, soft=True)])
+    assert report[0][1] == "warning"

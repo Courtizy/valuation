@@ -35,3 +35,5 @@ Checked against the three course workbooks: peer EV, EV/Sales, EV/EBITDA, each p
 ## Choosing peers
 
 Peers should share the target's characteristics (stage, predictability, asset intensity, leverage), not just its sector. The site's "Similar companies" table ranks every published company by those traits as a starting list.
+
+**Share counts and missing prices.** Target and peer share counts come from the newest filed count (the 10-K/10-Q cover page, `shares_outstanding` in company detail), else the statements. If no peer has a price (the public site's showcase mode fetches none), comps raises `NoPeerPrices`, which the runner reports as a warning rather than a failure; type peer prices in `comps.json` to value against them.

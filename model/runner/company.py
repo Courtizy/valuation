@@ -167,6 +167,8 @@ def execute(steps: list[Step]) -> list[tuple[str, str, str]]:
             report.append((s.name, "not_implemented", str(e)))
             halted = not s.soft
         except Exception as e:  # noqa: BLE001 - surface any failure in the report
-            report.append((s.name, "warning" if s.optional else "failed", f"{type(e).__name__}: {e}"))
+            # optional steps (market data) and expected gaps (comps with no peer prices) are warnings
+            warn = s.optional or getattr(e, "is_warning", False)
+            report.append((s.name, "warning" if warn else "failed", f"{type(e).__name__}: {e}"))
             halted = not s.soft
     return report
