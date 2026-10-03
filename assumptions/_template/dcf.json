@@ -22,7 +22,8 @@
     "risk_free_terminal": null,
     "equity_risk_premium": 0.05,
     "beta": 1.1,
-    "pre_tax_cost_of_debt": 0.055,
+    "pre_tax_cost_of_debt": null,
+    "pre_tax_cost_of_debt_fallback": null,
     "current_debt_to_equity": null,
     "target_debt_to_equity": null
   },
@@ -35,6 +36,7 @@
     "risk_free": "10-30Y Treasury on the as-of date",
     "risk_free_terminal": "normalized long-run Treasury rate",
     "beta": "5Y monthly vs S&P 500",
-    "pre_tax_cost_of_debt": "yield on the company's long-term bonds"
+    "pre_tax_cost_of_debt": "null = interest expense / total debt from the filings",
+    "pre_tax_cost_of_debt_fallback": "yield to maturity on the company's bonds, used only if interest / debt can't be measured"
   }
 }

@@ -21,7 +21,9 @@ file is missing and names the file it expected.
 | `forecast.capex_pct_revenue`, `nwc_to_sales_change`, `tax_rate` | null = from the filings |
 | `cost_of_capital.risk_free` | today's long-term government rate |
 | `cost_of_capital.risk_free_terminal` | normalized long-run rate for the terminal-year WACC (null = same) |
-| `cost_of_capital.beta`, `equity_risk_premium`, `pre_tax_cost_of_debt` | CAPM and debt inputs |
+| `cost_of_capital.beta`, `equity_risk_premium` | CAPM inputs |
+| `cost_of_capital.pre_tax_cost_of_debt` | null (default) = interest expense / total debt from the filings; a number overrides it |
+| `cost_of_capital.pre_tax_cost_of_debt_fallback` | used only when interest / debt can't be measured, e.g. bond yield to maturity |
 | `cost_of_capital.target_debt_to_equity` | long-run D/E to relever beta and weight WACC (null = today's) |
 | `bridge.operating_cash_pct` | share of cash needed to run the business, not netted against debt (default 0.5) |
 | `bridge.include_longterm_investments` | count long-term investments (non-current marketable securities) as cash in the bridge (default false) |

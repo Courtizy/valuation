@@ -10,6 +10,7 @@
    - Working capital grows by (ΔNWC/ΔSales) × ΔSales. By default that ratio is measured from up to four years of managerial WCR history, falling back to 0.20.
    - The projection runs N + 1 years, and year 1 is the closing year.
 3. **Discount rates.** The model calls `core.cost_of_capital`:
+   - Pre-tax cost of debt is interest expense ÷ total debt from the base period, unless a number is given. If that can't be measured, a fallback (bond yield to maturity) is required. A rate below the risk-free rate is flagged.
    - Beta is unlevered at today's market D/E and relevered at the target D/E.
    - Cost of equity is r_f + β × MRP.
    - The pre-terminal WACC uses today's r_f.

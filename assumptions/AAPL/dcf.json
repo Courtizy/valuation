@@ -22,7 +22,8 @@
     "risk_free_terminal": 0.06,
     "equity_risk_premium": 0.05,
     "beta": 1.09,
-    "pre_tax_cost_of_debt": 0.059,
+    "pre_tax_cost_of_debt": null,
+    "pre_tax_cost_of_debt_fallback": 0.058,
     "current_debt_to_equity": null,
     "target_debt_to_equity": null
   },
@@ -36,7 +37,8 @@
     "risk_free_terminal": "normalized long-run Treasury rate, 6% (course convention)",
     "equity_risk_premium": "5% (course convention)",
     "beta": "1.09, 5Y monthly vs S&P 500 (Yahoo Finance key statistics, as of 2026-09-15)",
-    "pre_tax_cost_of_debt": "estimate: about 0.3% over the 30-year Treasury (5.61% on 2026-10-01) for a AA+ issuer; check against Apple's long bond yields",
+    "pre_tax_cost_of_debt": "interest expense / total debt from the latest TTM filings",
+    "pre_tax_cost_of_debt_fallback": "5.8% marginal pre-tax cost of debt (Finbox, yield-based), Oct 2026",
     "shares": "latest shares outstanding from the 10-Q (filings), no options (Apple pays stock compensation in RSUs)",
     "revenue_growth": "used only if mode is switched to forecast; implied mode solves for it"
   }

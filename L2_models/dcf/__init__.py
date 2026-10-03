@@ -168,14 +168,17 @@ class DCF:
             if not price:
                 raise AssumptionError("set market.price (or cost_of_capital.current_debt_to_equity) for market D/E")
             current_de = debt / (price * shares)
+        rf = _need(cc, "risk_free", "cost_of_capital")
+        rd, rd_method = self.cost_of_debt(cc, v, debt, rf, warnings)
         rates = discount_rates(
-            risk_free=_need(cc, "risk_free", "cost_of_capital"),
-            pre_tax_cost_of_debt=_need(cc, "pre_tax_cost_of_debt", "cost_of_capital"),
+            risk_free=rf,
+            pre_tax_cost_of_debt=rd,
             beta=_need(cc, "beta", "cost_of_capital"),
             equity_risk_premium=_need(cc, "equity_risk_premium", "cost_of_capital"),
             tax_rate=tax, current_debt_to_equity=current_de,
             target_debt_to_equity=cc.get("target_debt_to_equity"),
             risk_free_terminal=cc.get("risk_free_terminal"))
+        rates.update(pre_tax_cost_of_debt=rd, cost_of_debt_method=rd_method)
 
         invested = (v.get("assets") or 0) - ((v.get("current_liabilities_total") or 0) - (v.get("short_term_debt") or 0))
         return {
@@ -188,6 +191,33 @@ class DCF:
             "mode": a.get("mode", "forecast"), "sensitivity": a.get("sensitivity", {}),
             "sources": a.get("sources", {}), "warnings": warnings,
         }
+
+    @staticmethod
+    def cost_of_debt(cc: dict, v: dict, debt: float, risk_free: float, warnings: list[str]) -> tuple[float, str]:
+        """Pre-tax cost of debt.
+
+        1. An explicit cost_of_capital.pre_tax_cost_of_debt wins.
+        2. Otherwise interest expense / total debt from the base period (the usual method).
+        3. If that can't be measured, cost_of_capital.pre_tax_cost_of_debt_fallback
+           (e.g. yield to maturity on the company's bonds) is required.
+        """
+        if cc.get("pre_tax_cost_of_debt") is not None:
+            return cc["pre_tax_cost_of_debt"], "given"
+        interest = v.get("interest_expense")
+        if interest is None:
+            interest = v.get("interest_paid")
+        if interest and debt > 0:
+            rd = interest / debt
+            if rd < risk_free:
+                warnings.append(f"interest / debt = {rd:.2%} is below the risk-free rate {risk_free:.2%}: "
+                                "older low-coupon debt; the terminal debt rate keeps that negative spread")
+            return rd, "interest_over_debt"
+        fb = cc.get("pre_tax_cost_of_debt_fallback")
+        if fb is None:
+            raise AssumptionError("can't measure interest / debt from the filings: set "
+                                  "cost_of_capital.pre_tax_cost_of_debt_fallback (e.g. bond yield to maturity)")
+        warnings.append("interest / debt not measurable; using the fallback cost of debt")
+        return fb, "fallback"
 
     def value(self, p: dict, g0: float | None = None, g_terminal: float | None = None,
               wacc: float | None = None, wacc_terminal: float | None = None) -> dict:
@@ -252,7 +282,8 @@ class DCF:
                 "equity_risk_premium": (assumptions.get("cost_of_capital") or {}).get("equity_risk_premium"),
                 "beta": r["beta_levered_observed"],
                 "beta_relevered": r["beta_relevered"],
-                "pre_tax_cost_of_debt": (assumptions.get("cost_of_capital") or {}).get("pre_tax_cost_of_debt"),
+                "pre_tax_cost_of_debt": p["rates"]["pre_tax_cost_of_debt"],
+                "cost_of_debt_method": p["rates"]["cost_of_debt_method"],
                 "target_debt_weight": r["debt_weight"],
                 "wacc": r["wacc"],
                 "wacc_terminal": r["wacc_terminal"],

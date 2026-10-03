@@ -159,3 +159,21 @@ def test_longterm_investments_can_count_as_cash(detail):
     incl = get_model("dcf").run(detail, assumptions(bridge={"include_longterm_investments": True}))
     assert incl.details["bridge"]["cash"] == A(base.details["bridge"]["cash"] + 1e9)
     assert incl.details["bridge"]["net_debt"] == A(base.details["bridge"]["net_debt"] - 0.5e9)
+
+
+def test_cost_of_debt_method_order(detail):
+    m = get_model("dcf")
+    v = detail["views"]["ttm"][-1]["values"]
+    a = assumptions(cost_of_capital={"pre_tax_cost_of_debt": None})
+    p = m.prepare(detail, a)
+    debt = v["short_term_debt"] + v["long_term_debt"]
+    assert p["rates"]["cost_of_debt_method"] == "interest_over_debt"
+    assert p["rates"]["pre_tax_cost_of_debt"] == A(v["interest_expense"] / debt)
+    assert m.prepare(detail, assumptions())["rates"]["cost_of_debt_method"] == "given"
+    no_int = json.loads(json.dumps(detail))
+    no_int["views"]["ttm"][-1]["values"].pop("interest_expense")
+    with pytest.raises(AssumptionError, match="fallback"):
+        m.prepare(no_int, a)
+    fb = m.prepare(no_int, assumptions(cost_of_capital={"pre_tax_cost_of_debt": None,
+                                                        "pre_tax_cost_of_debt_fallback": 0.058}))
+    assert fb["rates"]["pre_tax_cost_of_debt"] == 0.058 and fb["rates"]["cost_of_debt_method"] == "fallback"

@@ -627,6 +627,7 @@ function renderDcfCard() {
         <tr><td>Beta observed → unlevered → relevered</td><td>${num(rt.beta_levered_observed)} → ${num(rt.beta_unlevered)} → ${num(rt.beta_relevered)}</td></tr>
         <tr><td>Target debt / equity</td><td>${num(rt.target_debt_to_equity)}</td></tr>
         <tr><td>Cost of equity</td><td>${pct(rt.cost_of_equity)}</td></tr>
+        <tr><td>Pre-tax cost of debt (${esc({ interest_over_debt: "interest ÷ debt", given: "given", fallback: "fallback yield" }[rt.cost_of_debt_method] || "given")})</td><td>${pct(rt.pre_tax_cost_of_debt)}</td></tr>
         <tr class="total"><td>WACC (pre-terminal)</td><td>${pct(rt.wacc)}</td></tr>
         <tr><td>Terminal risk-free rate</td><td>${pct(rt.risk_free_terminal)}</td></tr>
         <tr><td>Terminal cost of equity</td><td>${pct(rt.cost_of_equity_terminal)}</td></tr>
