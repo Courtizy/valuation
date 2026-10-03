@@ -58,38 +58,53 @@
       "similar": [
         {
           "ticker": "IBM",
-          "score": 0.44470736516696785,
+          "score": 0.466552389213131,
           "traits_shared": 1
         },
         {
-          "ticker": "DELL",
-          "score": 0.4139731907417151,
-          "traits_shared": 2
+          "ticker": "TSN",
+          "score": 0.4593942193407231,
+          "traits_shared": 4
         },
         {
-          "ticker": "KO",
-          "score": 0.36020047289193535,
-          "traits_shared": 2
-        },
-        {
-          "ticker": "SNX",
-          "score": 0.35362241526863364,
+          "ticker": "MDLZ",
+          "score": 0.43070569041323803,
           "traits_shared": 3
         },
         {
-          "ticker": "HPQ",
-          "score": 0.3526805068682757,
+          "ticker": "DELL",
+          "score": 0.39907455810756326,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "PPC",
+          "score": 0.38253383245386313,
+          "traits_shared": 3
+        },
+        {
+          "ticker": "CPB",
+          "score": 0.3704616611443119,
+          "traits_shared": 3
+        },
+        {
+          "ticker": "SNX",
+          "score": 0.34880351270964394,
+          "traits_shared": 3
+        },
+        {
+          "ticker": "KO",
+          "score": 0.34760868929600863,
           "traits_shared": 2
         },
         {
           "ticker": "INGM",
-          "score": 0.3382109926684921,
+          "score": 0.34512253387652436,
           "traits_shared": 1
         },
         {
-          "ticker": "STX",
-          "score": 0.30280621813757014,
-          "traits_shared": 1
+          "ticker": "HPQ",
+          "score": 0.34453694736735163,
+          "traits_shared": 2
         }
       ],
       "peers": {
@@ -223,6 +238,243 @@
       }
     },
     {
+      "ticker": "CPB",
+      "name": "CAMPBELL'S Co",
+      "demo": false,
+      "sic": "2000",
+      "sic_description": "Food and Kindred Products",
+      "classification": {
+        "sector": "consumer_staples",
+        "group": "food_beverage_tobacco",
+        "industry": "food_products"
+      },
+      "as_of": "2026-10-03",
+      "period": "TTM 2026-08-02",
+      "traits": {
+        "stage": "mature grower",
+        "predictability": "high",
+        "asset_intensity": "moderate",
+        "capital_structure": "low leverage"
+      },
+      "vector": {
+        "revenue_cagr": 0.03285775089602172,
+        "operating_margin": 0.0874384236453202,
+        "fcf_margin_stdev": 0.015722837107497886,
+        "capex_to_sales": 0.03704844006568145,
+        "noa_turnover": 2.048995899484807,
+        "debt_to_ebitda": 0.7723320158102767,
+        "revenue": 9744000000,
+        "rnoa": 0.14015140363789297
+      },
+      "rates": {
+        "revenue_cagr": 0.03285775089602172,
+        "operating_margin": 0.0874384236453202,
+        "rnoa": 0.14015140363789297,
+        "capex_to_sales": 0.03704844006568145,
+        "debt_to_ebitda": 0.7723320158102767,
+        "wacc": null,
+        "wacc_basis": null,
+        "beta": null
+      },
+      "market": {
+        "price": null,
+        "price_date": null,
+        "market_cap": null,
+        "enterprise_value": null,
+        "source": null,
+        "fallback": null,
+        "check": null
+      },
+      "multiples": {
+        "pe": null,
+        "ev_ebitda": null,
+        "ev_sales": null,
+        "pb": null,
+        "fcf_yield": null
+      },
+      "similar": [
+        {
+          "ticker": "MDLZ",
+          "score": 0.6030644222732127,
+          "traits_shared": 4
+        },
+        {
+          "ticker": "PPC",
+          "score": 0.5076150400836186,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "TSN",
+          "score": 0.4938349591878661,
+          "traits_shared": 3
+        },
+        {
+          "ticker": "LW",
+          "score": 0.4486016842849438,
+          "traits_shared": 3
+        },
+        {
+          "ticker": "INGM",
+          "score": 0.42527778437923697,
+          "traits_shared": 0
+        },
+        {
+          "ticker": "KHC",
+          "score": 0.4080589863746256,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "IBM",
+          "score": 0.3961704344376978,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "STX",
+          "score": 0.38026168527034826,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "KO",
+          "score": 0.36346551571585295,
+          "traits_shared": 3
+        },
+        {
+          "ticker": "DELL",
+          "score": 0.3611237076702636,
+          "traits_shared": 1
+        }
+      ],
+      "peers": {
+        "sector-consumer-staples": [
+          {
+            "ticker": "ECL",
+            "score": 0.9558457416870861,
+            "traits_shared": 4
+          },
+          {
+            "ticker": "SFM",
+            "score": 0.9294319878953018,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "MNST",
+            "score": 0.9272083493224303,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "EL",
+            "score": 0.8992387295181443,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "DAR",
+            "score": 0.8942789569144408,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "LW",
+            "score": 0.89356922579388,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "SEB",
+            "score": 0.8921633393890803,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "CHD",
+            "score": 0.8848560961224142,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "WMK",
+            "score": 0.8841201984371405,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "MDLZ",
+            "score": 0.8815545883485438,
+            "traits_shared": 4
+          },
+          {
+            "ticker": "COKE",
+            "score": 0.876564532133298,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "HSY",
+            "score": 0.872760999186946,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "TAP",
+            "score": 0.8713997951730003,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "CAG",
+            "score": 0.8675210155606368,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "KHC",
+            "score": 0.8615883325393777,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "MZTI",
+            "score": 0.8550724994349411,
+            "traits_shared": 4
+          },
+          {
+            "ticker": "CLX",
+            "score": 0.850680608715321,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "KVUE",
+            "score": 0.850321714106709,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "GIS",
+            "score": 0.8437159746100971,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "JJSF",
+            "score": 0.8417051426667108,
+            "traits_shared": 4
+          },
+          {
+            "ticker": "DIT",
+            "score": 0.8396071195113499,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "INGR",
+            "score": 0.8385756187689252,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "USFD",
+            "score": 0.8364385181608818,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "DMC",
+            "score": 0.8258824020856412,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "VLGEA",
+            "score": 0.8256358531027295,
+            "traits_shared": 3
+          }
+        ]
+      }
+    },
+    {
       "ticker": "DELL",
       "name": "Dell Technologies Inc.",
       "demo": false,
@@ -280,38 +532,53 @@
       "similar": [
         {
           "ticker": "IBM",
-          "score": 0.540067516998292,
+          "score": 0.5495375116601235,
           "traits_shared": 1
         },
         {
           "ticker": "HPQ",
-          "score": 0.5398604221857313,
+          "score": 0.5361707225590212,
           "traits_shared": 3
         },
         {
           "ticker": "INGM",
-          "score": 0.504986669946115,
+          "score": 0.49996147289312104,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "TSN",
+          "score": 0.45546894629032464,
           "traits_shared": 2
         },
         {
           "ticker": "AAPL",
-          "score": 0.40921537907439753,
+          "score": 0.4013938579874746,
           "traits_shared": 2
         },
         {
-          "ticker": "SNX",
-          "score": 0.3559827906412226,
-          "traits_shared": 2
-        },
-        {
-          "ticker": "STX",
-          "score": 0.31022580384640414,
+          "ticker": "MDLZ",
+          "score": 0.39693196750357596,
           "traits_shared": 1
         },
         {
-          "ticker": "KO",
-          "score": 0.30597717049209283,
+          "ticker": "KHC",
+          "score": 0.36686768967289357,
           "traits_shared": 0
+        },
+        {
+          "ticker": "CPB",
+          "score": 0.36657549059167294,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "PPC",
+          "score": 0.35608433209471746,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "SNX",
+          "score": 0.34312766077476853,
+          "traits_shared": 2
         }
       ],
       "peers": {
@@ -502,38 +769,53 @@
       "similar": [
         {
           "ticker": "INGM",
-          "score": 0.601670812233246,
+          "score": 0.5832385914680215,
           "traits_shared": 1
         },
         {
           "ticker": "DELL",
-          "score": 0.5462550052533823,
+          "score": 0.5421265632865718,
           "traits_shared": 3
         },
         {
           "ticker": "IBM",
-          "score": 0.5194280048755748,
+          "score": 0.49969990884743076,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "TSN",
+          "score": 0.4409437781804981,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "KHC",
+          "score": 0.4046901499909245,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "CPB",
+          "score": 0.3664727183000479,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "MDLZ",
+          "score": 0.36460481645946136,
           "traits_shared": 1
         },
         {
           "ticker": "AAPL",
-          "score": 0.34748010981076205,
+          "score": 0.34594059521252896,
           "traits_shared": 2
+        },
+        {
+          "ticker": "PPC",
+          "score": 0.33495130462648626,
+          "traits_shared": 1
         },
         {
           "ticker": "SNX",
-          "score": 0.3384580984600066,
+          "score": 0.3192052047932897,
           "traits_shared": 2
-        },
-        {
-          "ticker": "STX",
-          "score": 0.2774933156528399,
-          "traits_shared": 0
-        },
-        {
-          "ticker": "KO",
-          "score": 0.27022113952045484,
-          "traits_shared": 0
         }
       ],
       "peers": {
@@ -723,39 +1005,54 @@
       },
       "similar": [
         {
+          "ticker": "TSN",
+          "score": 0.7625138815840351,
+          "traits_shared": 1
+        },
+        {
           "ticker": "INGM",
-          "score": 0.5962536954421721,
+          "score": 0.5769707649827728,
           "traits_shared": 1
         },
         {
           "ticker": "DELL",
-          "score": 0.5379324259078674,
+          "score": 0.5475075363625872,
           "traits_shared": 1
         },
         {
           "ticker": "HPQ",
-          "score": 0.5037436654918476,
+          "score": 0.48582555290525814,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "MDLZ",
+          "score": 0.4778523547140875,
           "traits_shared": 1
         },
         {
           "ticker": "AAPL",
-          "score": 0.40987430821711424,
+          "score": 0.43966901427329036,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "PPC",
+          "score": 0.43175152757764,
+          "traits_shared": 0
+        },
+        {
+          "ticker": "KHC",
+          "score": 0.41949767283462835,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "CPB",
+          "score": 0.39079390900761407,
           "traits_shared": 1
         },
         {
           "ticker": "SNX",
-          "score": 0.35723024341647397,
+          "score": 0.3418461964872452,
           "traits_shared": 1
-        },
-        {
-          "ticker": "KO",
-          "score": 0.3146213481097118,
-          "traits_shared": 0
-        },
-        {
-          "ticker": "STX",
-          "score": 0.28559326811107505,
-          "traits_shared": 0
         }
       ],
       "peers": {
@@ -945,39 +1242,54 @@
       },
       "similar": [
         {
+          "ticker": "TSN",
+          "score": 0.6222222142936211,
+          "traits_shared": 1
+        },
+        {
           "ticker": "IBM",
-          "score": 0.5995602149513621,
+          "score": 0.5800805978522225,
           "traits_shared": 1
         },
         {
           "ticker": "HPQ",
-          "score": 0.5928465235881308,
+          "score": 0.5754023078318726,
           "traits_shared": 1
         },
         {
           "ticker": "DELL",
-          "score": 0.5068180468918715,
+          "score": 0.5004316176469974,
           "traits_shared": 2
         },
         {
-          "ticker": "SNX",
-          "score": 0.33569704327887484,
+          "ticker": "MDLZ",
+          "score": 0.468167404753056,
+          "traits_shared": 0
+        },
+        {
+          "ticker": "PPC",
+          "score": 0.4302785255268885,
           "traits_shared": 1
+        },
+        {
+          "ticker": "CPB",
+          "score": 0.41698863172042727,
+          "traits_shared": 0
+        },
+        {
+          "ticker": "KHC",
+          "score": 0.39136980899394375,
+          "traits_shared": 0
         },
         {
           "ticker": "AAPL",
-          "score": 0.32077044534631927,
+          "score": 0.32470036315079637,
           "traits_shared": 1
         },
         {
-          "ticker": "STX",
-          "score": 0.2965286057094806,
+          "ticker": "SNX",
+          "score": 0.31797520347867636,
           "traits_shared": 1
-        },
-        {
-          "ticker": "KO",
-          "score": 0.2904908968041097,
-          "traits_shared": 0
         }
       ],
       "peers": {
@@ -1111,6 +1423,243 @@
       }
     },
     {
+      "ticker": "KHC",
+      "name": "Kraft Heinz Co",
+      "demo": false,
+      "sic": "2030",
+      "sic_description": "Canned, Frozen & Preservd Fruit, Veg & Food Specialties",
+      "classification": {
+        "sector": "consumer_staples",
+        "group": "food_beverage_tobacco",
+        "industry": "food_products"
+      },
+      "as_of": "2026-10-03",
+      "period": "TTM 2026-06-27",
+      "traits": {
+        "stage": "declining",
+        "predictability": "medium",
+        "asset_intensity": "heavy",
+        "capital_structure": "low leverage"
+      },
+      "vector": {
+        "revenue_cagr": -0.010731375942426236,
+        "operating_margin": -0.12759036144578315,
+        "fcf_margin_stdev": 0.037863139845518055,
+        "capex_to_sales": 0.032329317269076306,
+        "noa_turnover": 0.688063887699131,
+        "debt_to_ebitda": null,
+        "revenue": 24900000000,
+        "rnoa": -0.0790425135056717
+      },
+      "rates": {
+        "revenue_cagr": -0.010731375942426236,
+        "operating_margin": -0.12759036144578315,
+        "rnoa": -0.0790425135056717,
+        "capex_to_sales": 0.032329317269076306,
+        "debt_to_ebitda": null,
+        "wacc": null,
+        "wacc_basis": null,
+        "beta": null
+      },
+      "market": {
+        "price": null,
+        "price_date": null,
+        "market_cap": null,
+        "enterprise_value": null,
+        "source": null,
+        "fallback": null,
+        "check": null
+      },
+      "multiples": {
+        "pe": null,
+        "ev_ebitda": null,
+        "ev_sales": null,
+        "pb": null,
+        "fcf_yield": null
+      },
+      "similar": [
+        {
+          "ticker": "PPC",
+          "score": 0.48922800022308266,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "TSN",
+          "score": 0.42680676156189956,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "IBM",
+          "score": 0.42016607836300784,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "CPB",
+          "score": 0.417600709138461,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "HPQ",
+          "score": 0.40896066290917477,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "INGM",
+          "score": 0.3943452529407981,
+          "traits_shared": 0
+        },
+        {
+          "ticker": "MDLZ",
+          "score": 0.37750616464548464,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "DELL",
+          "score": 0.37281851546733613,
+          "traits_shared": 0
+        },
+        {
+          "ticker": "LW",
+          "score": 0.33289988965276995,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "STX",
+          "score": 0.3321712169603137,
+          "traits_shared": 2
+        }
+      ],
+      "peers": {
+        "sector-consumer-staples": [
+          {
+            "ticker": "EL",
+            "score": 0.9398184818127436,
+            "traits_shared": 4
+          },
+          {
+            "ticker": "GIS",
+            "score": 0.9191414675519364,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "SEB",
+            "score": 0.9056871636671825,
+            "traits_shared": 4
+          },
+          {
+            "ticker": "ECL",
+            "score": 0.9007507696133091,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "MDLZ",
+            "score": 0.8979594302574729,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "MO",
+            "score": 0.8924628231348724,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "PM",
+            "score": 0.8761654483447123,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "CAG",
+            "score": 0.873431701585469,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "DAR",
+            "score": 0.8657673282412417,
+            "traits_shared": 4
+          },
+          {
+            "ticker": "CPB",
+            "score": 0.8616711711049482,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "STZ",
+            "score": 0.8608320835087337,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "SFD",
+            "score": 0.8503657245165333,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "USFD",
+            "score": 0.8498060979425762,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "KVUE",
+            "score": 0.8462452568574793,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "TAP",
+            "score": 0.8390857354631451,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "PG",
+            "score": 0.8372438461510642,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "INGR",
+            "score": 0.8337186897221706,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "HRL",
+            "score": 0.8335578449493507,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "HSY",
+            "score": 0.8288267890558847,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "KO",
+            "score": 0.8259691537660798,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "CL",
+            "score": 0.8238826744716907,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "PPC",
+            "score": 0.8146401978904894,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "CHSCP",
+            "score": 0.8100795196246302,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "SJM",
+            "score": 0.8088206848431585,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "KDP",
+            "score": 0.8076865791510185,
+            "traits_shared": 1
+          }
+        ]
+      }
+    },
+    {
       "ticker": "KO",
       "name": "COCA COLA CO",
       "demo": false,
@@ -1168,37 +1717,52 @@
       "similar": [
         {
           "ticker": "STX",
-          "score": 0.5176506065328411,
+          "score": 0.51704462509315,
+          "traits_shared": 3
+        },
+        {
+          "ticker": "PPC",
+          "score": 0.4378526290901132,
+          "traits_shared": 3
+        },
+        {
+          "ticker": "LW",
+          "score": 0.4047082196408004,
+          "traits_shared": 4
+        },
+        {
+          "ticker": "MDLZ",
+          "score": 0.39246618104017644,
+          "traits_shared": 3
+        },
+        {
+          "ticker": "CPB",
+          "score": 0.38329445971854315,
           "traits_shared": 3
         },
         {
           "ticker": "AAPL",
-          "score": 0.36259042684969595,
+          "score": 0.35663264526850513,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "TSN",
+          "score": 0.3562490761554264,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "KHC",
+          "score": 0.3309450214126044,
           "traits_shared": 2
         },
         {
           "ticker": "IBM",
-          "score": 0.33708213305852985,
+          "score": 0.3170087174525288,
           "traits_shared": 0
         },
         {
           "ticker": "DELL",
-          "score": 0.31648628976491516,
-          "traits_shared": 0
-        },
-        {
-          "ticker": "INGM",
-          "score": 0.3025729453364834,
-          "traits_shared": 0
-        },
-        {
-          "ticker": "SNX",
-          "score": 0.2864904669508538,
-          "traits_shared": 1
-        },
-        {
-          "ticker": "HPQ",
-          "score": 0.2761309577742128,
+          "score": 0.29691998694609106,
           "traits_shared": 0
         }
       ],
@@ -1333,6 +1897,717 @@
       }
     },
     {
+      "ticker": "LW",
+      "name": "LAMB WESTON HOLDINGS, INC.",
+      "demo": false,
+      "sic": "2030",
+      "sic_description": "Canned, Frozen & Preservd Fruit, Veg & Food Specialties",
+      "classification": {
+        "sector": "consumer_staples",
+        "group": "food_beverage_tobacco",
+        "industry": "food_products"
+      },
+      "as_of": "2026-10-03",
+      "period": "TTM 2026-05-31",
+      "traits": {
+        "stage": "mature grower",
+        "predictability": "medium",
+        "asset_intensity": "moderate",
+        "capital_structure": "low leverage"
+      },
+      "vector": {
+        "revenue_cagr": 0.12699322836176874,
+        "operating_margin": 0.08939400813635195,
+        "fcf_margin_stdev": 0.03266089155069559,
+        "capex_to_sales": 0.060901652980052325,
+        "noa_turnover": 3.188340807174888,
+        "debt_to_ebitda": 0.25248025916177363,
+        "revenue": 6612300000,
+        "rnoa": 0.1398331645691692
+      },
+      "rates": {
+        "revenue_cagr": 0.12699322836176874,
+        "operating_margin": 0.08939400813635195,
+        "rnoa": 0.1398331645691692,
+        "capex_to_sales": 0.060901652980052325,
+        "debt_to_ebitda": 0.25248025916177363,
+        "wacc": null,
+        "wacc_basis": null,
+        "beta": null
+      },
+      "market": {
+        "price": null,
+        "price_date": null,
+        "market_cap": null,
+        "enterprise_value": null,
+        "source": null,
+        "fallback": null,
+        "check": null
+      },
+      "multiples": {
+        "pe": null,
+        "ev_ebitda": null,
+        "ev_sales": null,
+        "pb": null,
+        "fcf_yield": null
+      },
+      "similar": [
+        {
+          "ticker": "CPB",
+          "score": 0.4662362282241429,
+          "traits_shared": 3
+        },
+        {
+          "ticker": "PPC",
+          "score": 0.46043164385274843,
+          "traits_shared": 3
+        },
+        {
+          "ticker": "MDLZ",
+          "score": 0.44276796395056034,
+          "traits_shared": 3
+        },
+        {
+          "ticker": "KO",
+          "score": 0.4011168775100118,
+          "traits_shared": 4
+        },
+        {
+          "ticker": "STX",
+          "score": 0.3863125604763693,
+          "traits_shared": 3
+        },
+        {
+          "ticker": "TSN",
+          "score": 0.35221923598683924,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "KHC",
+          "score": 0.3406580113978549,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "INGM",
+          "score": 0.3116666391381473,
+          "traits_shared": 0
+        },
+        {
+          "ticker": "SNX",
+          "score": 0.3001835280506492,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "AAPL",
+          "score": 0.2886567577945828,
+          "traits_shared": 2
+        }
+      ],
+      "peers": {
+        "sector-consumer-staples": [
+          {
+            "ticker": "INGR",
+            "score": 0.903336637086358,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "CPB",
+            "score": 0.8935518946125041,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "KVUE",
+            "score": 0.8745032380912099,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "CALM",
+            "score": 0.8703073280676918,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "DAR",
+            "score": 0.8673949638085968,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "ECL",
+            "score": 0.8626228622127712,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "AVO",
+            "score": 0.8620871629118045,
+            "traits_shared": 4
+          },
+          {
+            "ticker": "MNST",
+            "score": 0.8606018089824934,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "GO",
+            "score": 0.8585988058615541,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "SFM",
+            "score": 0.8550446436398791,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "WMK",
+            "score": 0.8535949439502334,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "JBSS",
+            "score": 0.8516125440682195,
+            "traits_shared": 4
+          },
+          {
+            "ticker": "CHD",
+            "score": 0.8511373955996214,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "GTBIF",
+            "score": 0.8477145129396679,
+            "traits_shared": 4
+          },
+          {
+            "ticker": "MZTI",
+            "score": 0.8403546127762552,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "KO",
+            "score": 0.8331996444468125,
+            "traits_shared": 4
+          },
+          {
+            "ticker": "SEB",
+            "score": 0.8307025008607646,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "COKE",
+            "score": 0.8297318208027555,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "JJSF",
+            "score": 0.82580504436825,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "EL",
+            "score": 0.8231655381176354,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "DIT",
+            "score": 0.8198365626452573,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "CLX",
+            "score": 0.8171092738227236,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "PPC",
+            "score": 0.8139410043924035,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "HSY",
+            "score": 0.8137866954651095,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "VLGEA",
+            "score": 0.8073155545048891,
+            "traits_shared": 2
+          }
+        ]
+      }
+    },
+    {
+      "ticker": "MDLZ",
+      "name": "Mondelez International, Inc.",
+      "demo": false,
+      "sic": "2000",
+      "sic_description": "Food and Kindred Products",
+      "classification": {
+        "sector": "consumer_staples",
+        "group": "food_beverage_tobacco",
+        "industry": "food_products"
+      },
+      "as_of": "2026-10-03",
+      "period": "TTM 2026-03-31",
+      "traits": {
+        "stage": "mature grower",
+        "predictability": "high",
+        "asset_intensity": "moderate",
+        "capital_structure": "low leverage"
+      },
+      "vector": {
+        "revenue_cagr": 0.07627528343639312,
+        "operating_margin": 0.09352737634846327,
+        "fcf_margin_stdev": 0.008561796735097197,
+        "capex_to_sales": 0.03343171178506005,
+        "noa_turnover": 1.3932154124277765,
+        "debt_to_ebitda": 0.5701563427666733,
+        "revenue": 39304000000,
+        "rnoa": 0.09297791641558258
+      },
+      "rates": {
+        "revenue_cagr": 0.07627528343639312,
+        "operating_margin": 0.09352737634846327,
+        "rnoa": 0.09297791641558258,
+        "capex_to_sales": 0.03343171178506005,
+        "debt_to_ebitda": 0.5701563427666733,
+        "wacc": null,
+        "wacc_basis": null,
+        "beta": null
+      },
+      "market": {
+        "price": null,
+        "price_date": null,
+        "market_cap": null,
+        "enterprise_value": null,
+        "source": null,
+        "fallback": null,
+        "check": null
+      },
+      "multiples": {
+        "pe": null,
+        "ev_ebitda": null,
+        "ev_sales": null,
+        "pb": null,
+        "fcf_yield": null
+      },
+      "similar": [
+        {
+          "ticker": "CPB",
+          "score": 0.5952538867875437,
+          "traits_shared": 4
+        },
+        {
+          "ticker": "TSN",
+          "score": 0.5614506603049505,
+          "traits_shared": 3
+        },
+        {
+          "ticker": "PPC",
+          "score": 0.5058669604055183,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "IBM",
+          "score": 0.47623896905088364,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "INGM",
+          "score": 0.4669570664697831,
+          "traits_shared": 0
+        },
+        {
+          "ticker": "LW",
+          "score": 0.42434695138868156,
+          "traits_shared": 3
+        },
+        {
+          "ticker": "AAPL",
+          "score": 0.40632174381727065,
+          "traits_shared": 3
+        },
+        {
+          "ticker": "SNX",
+          "score": 0.39726882651390716,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "DELL",
+          "score": 0.3840566888212887,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "KHC",
+          "score": 0.369567261872522,
+          "traits_shared": 1
+        }
+      ],
+      "peers": {
+        "sector-consumer-staples": [
+          {
+            "ticker": "USFD",
+            "score": 0.9315035842966461,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "ECL",
+            "score": 0.9183567906455332,
+            "traits_shared": 4
+          },
+          {
+            "ticker": "KHC",
+            "score": 0.8979805279698899,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "KO",
+            "score": 0.8937918959140734,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "CPB",
+            "score": 0.8817361715061779,
+            "traits_shared": 4
+          },
+          {
+            "ticker": "PG",
+            "score": 0.8775036636286713,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "EL",
+            "score": 0.8547959463230321,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "CL",
+            "score": 0.8342421925554356,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "HSY",
+            "score": 0.8339510185178078,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "SYY",
+            "score": 0.8326171045849363,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "GIS",
+            "score": 0.8311057272938234,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "SEB",
+            "score": 0.8277048081251298,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "SFM",
+            "score": 0.8261735620723357,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "PM",
+            "score": 0.8252588720078697,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "MNST",
+            "score": 0.8221148109910952,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "PFGC",
+            "score": 0.8192541794402596,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "KVUE",
+            "score": 0.8153575908431359,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "TSN",
+            "score": 0.814069136708289,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "COKE",
+            "score": 0.8062991678290509,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "LW",
+            "score": 0.8031802447798367,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "TAP",
+            "score": 0.8026851690182344,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "KDP",
+            "score": 0.801688972116573,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "CHD",
+            "score": 0.8001869413323464,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "DAR",
+            "score": 0.7990697040927088,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "PEP",
+            "score": 0.7960584656564919,
+            "traits_shared": 2
+          }
+        ]
+      }
+    },
+    {
+      "ticker": "PPC",
+      "name": "PILGRIM\u2019S PRIDE CORPORATION",
+      "demo": false,
+      "sic": "2015",
+      "sic_description": "Poultry Slaughtering and Processing",
+      "classification": {
+        "sector": "consumer_staples",
+        "group": "food_beverage_tobacco",
+        "industry": "food_products"
+      },
+      "as_of": "2026-10-03",
+      "period": "TTM 2026-06-28",
+      "traits": {
+        "stage": "mature grower",
+        "predictability": "medium",
+        "asset_intensity": "light",
+        "capital_structure": "low leverage"
+      },
+      "vector": {
+        "revenue_cagr": 0.057739290081532335,
+        "operating_margin": 0.05018560925387347,
+        "fcf_margin_stdev": 0.034801091057959324,
+        "capex_to_sales": 0.02660006958109555,
+        "noa_turnover": 5.871507092624915,
+        "debt_to_ebitda": 0.0006497545450793014,
+        "revenue": 18436042000,
+        "rnoa": 0.2152664824048665
+      },
+      "rates": {
+        "revenue_cagr": 0.057739290081532335,
+        "operating_margin": 0.05018560925387347,
+        "rnoa": 0.2152664824048665,
+        "capex_to_sales": 0.02660006958109555,
+        "debt_to_ebitda": 0.0006497545450793014,
+        "wacc": null,
+        "wacc_basis": null,
+        "beta": null
+      },
+      "market": {
+        "price": null,
+        "price_date": null,
+        "market_cap": null,
+        "enterprise_value": null,
+        "source": null,
+        "fallback": null,
+        "check": null
+      },
+      "multiples": {
+        "pe": null,
+        "ev_ebitda": null,
+        "ev_sales": null,
+        "pb": null,
+        "fcf_yield": null
+      },
+      "similar": [
+        {
+          "ticker": "TSN",
+          "score": 0.5485247064871085,
+          "traits_shared": 3
+        },
+        {
+          "ticker": "CPB",
+          "score": 0.5100993752954714,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "MDLZ",
+          "score": 0.5052465353228414,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "KHC",
+          "score": 0.47533300083801194,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "LW",
+          "score": 0.4341192399228074,
+          "traits_shared": 3
+        },
+        {
+          "ticker": "IBM",
+          "score": 0.4320482911919126,
+          "traits_shared": 0
+        },
+        {
+          "ticker": "INGM",
+          "score": 0.42809630302533697,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "KO",
+          "score": 0.41777068439581766,
+          "traits_shared": 3
+        },
+        {
+          "ticker": "STX",
+          "score": 0.3745577755749023,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "AAPL",
+          "score": 0.36057638052650637,
+          "traits_shared": 3
+        }
+      ],
+      "peers": {
+        "sector-consumer-staples": [
+          {
+            "ticker": "KVUE",
+            "score": 0.9287584498615701,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "TSN",
+            "score": 0.8998019248487465,
+            "traits_shared": 4
+          },
+          {
+            "ticker": "GIS",
+            "score": 0.8776983357812479,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "SFD",
+            "score": 0.859235187269726,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "CTVA",
+            "score": 0.8371648793668212,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "SFM",
+            "score": 0.8289328056439851,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "USFD",
+            "score": 0.8282388219844972,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "MNST",
+            "score": 0.8268732438273113,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "ANDE",
+            "score": 0.8260706473383677,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "KO",
+            "score": 0.8192309666208283,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "ECL",
+            "score": 0.817854391145704,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "EL",
+            "score": 0.8170978019686043,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "KHC",
+            "score": 0.8146311068981844,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "INGR",
+            "score": 0.8140358196471388,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "LW",
+            "score": 0.8140302405781963,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "CHSCP",
+            "score": 0.8126540329366853,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "CHD",
+            "score": 0.8008746844579301,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "CPB",
+            "score": 0.7948283957002577,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "CL",
+            "score": 0.7946395173075297,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "DPZ",
+            "score": 0.7928321015710881,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "WMK",
+            "score": 0.7922840182963165,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "MDLZ",
+            "score": 0.7841045568653213,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "DMC",
+            "score": 0.7823976149303746,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "MO",
+            "score": 0.7818275162445463,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "BF-B",
+            "score": 0.7806389714433607,
+            "traits_shared": 2
+          }
+        ]
+      }
+    },
+    {
       "ticker": "SNX",
       "name": "TD SYNNEX CORPORATION",
       "demo": false,
@@ -1389,38 +2664,53 @@
       },
       "similar": [
         {
-          "ticker": "IBM",
-          "score": 0.4035796093798364,
-          "traits_shared": 1
+          "ticker": "TSN",
+          "score": 0.46012074493884336,
+          "traits_shared": 3
         },
         {
-          "ticker": "INGM",
-          "score": 0.383403212638529,
+          "ticker": "MDLZ",
+          "score": 0.4242361622359905,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "PPC",
+          "score": 0.3776898144690444,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "IBM",
+          "score": 0.37687739075036114,
           "traits_shared": 1
         },
         {
           "ticker": "DELL",
-          "score": 0.3831621385615302,
+          "score": 0.36131169446073796,
           "traits_shared": 2
         },
         {
           "ticker": "AAPL",
-          "score": 0.366223086772639,
+          "score": 0.35769244337061723,
           "traits_shared": 3
         },
         {
-          "ticker": "HPQ",
-          "score": 0.35910451683160444,
-          "traits_shared": 2
-        },
-        {
-          "ticker": "KO",
-          "score": 0.2891070628998228,
+          "ticker": "INGM",
+          "score": 0.35254536400602254,
           "traits_shared": 1
         },
         {
-          "ticker": "STX",
-          "score": 0.26579505926175745,
+          "ticker": "CPB",
+          "score": 0.350518392870856,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "HPQ",
+          "score": 0.3304406599145591,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "LW",
+          "score": 0.2926354723642657,
           "traits_shared": 1
         }
       ],
@@ -1612,38 +2902,53 @@
       "similar": [
         {
           "ticker": "KO",
-          "score": 0.5294637557584769,
+          "score": 0.5175461527384756,
           "traits_shared": 3
         },
         {
-          "ticker": "DELL",
-          "score": 0.32716973313601067,
+          "ticker": "CPB",
+          "score": 0.4009456161322901,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "LW",
+          "score": 0.3911173242905192,
+          "traits_shared": 3
+        },
+        {
+          "ticker": "PPC",
+          "score": 0.38835110639523623,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "MDLZ",
+          "score": 0.35710616344412416,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "KHC",
+          "score": 0.3351775685973062,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "TSN",
+          "score": 0.32056625837463787,
           "traits_shared": 1
         },
         {
-          "ticker": "INGM",
-          "score": 0.30938810364828995,
+          "ticker": "DELL",
+          "score": 0.31850674405887824,
           "traits_shared": 1
         },
         {
           "ticker": "AAPL",
-          "score": 0.3092563403063632,
+          "score": 0.3027381998985688,
           "traits_shared": 1
         },
         {
           "ticker": "IBM",
-          "score": 0.3081211499702543,
+          "score": 0.29540142157214067,
           "traits_shared": 0
-        },
-        {
-          "ticker": "HPQ",
-          "score": 0.2874851256317744,
-          "traits_shared": 0
-        },
-        {
-          "ticker": "SNX",
-          "score": 0.26271578468768375,
-          "traits_shared": 1
         }
       ],
       "peers": {
@@ -1772,6 +3077,243 @@
             "ticker": "FLEX",
             "score": 0.6484367074275487,
             "traits_shared": 3
+          }
+        ]
+      }
+    },
+    {
+      "ticker": "TSN",
+      "name": "TYSON FOODS, INC.",
+      "demo": false,
+      "sic": "2015",
+      "sic_description": "Poultry Slaughtering and Processing",
+      "classification": {
+        "sector": "consumer_staples",
+        "group": "food_beverage_tobacco",
+        "industry": "food_products"
+      },
+      "as_of": "2026-10-03",
+      "period": "TTM 2026-06-27",
+      "traits": {
+        "stage": "mature grower",
+        "predictability": "high",
+        "asset_intensity": "light",
+        "capital_structure": "low leverage"
+      },
+      "vector": {
+        "revenue_cagr": 0.037155618101331056,
+        "operating_margin": 0.022569756167630264,
+        "fcf_margin_stdev": 0.01935018530946721,
+        "capex_to_sales": 0.01513628038926994,
+        "noa_turnover": 3.0368330652416913,
+        "debt_to_ebitda": 0.5419673376376757,
+        "revenue": 55694000000,
+        "rnoa": 0.03260721393713024
+      },
+      "rates": {
+        "revenue_cagr": 0.037155618101331056,
+        "operating_margin": 0.022569756167630264,
+        "rnoa": 0.03260721393713024,
+        "capex_to_sales": 0.01513628038926994,
+        "debt_to_ebitda": 0.5419673376376757,
+        "wacc": null,
+        "wacc_basis": null,
+        "beta": null
+      },
+      "market": {
+        "price": null,
+        "price_date": null,
+        "market_cap": null,
+        "enterprise_value": null,
+        "source": null,
+        "fallback": null,
+        "check": null
+      },
+      "multiples": {
+        "pe": null,
+        "ev_ebitda": null,
+        "ev_sales": null,
+        "pb": null,
+        "fcf_yield": null
+      },
+      "similar": [
+        {
+          "ticker": "IBM",
+          "score": 0.7622296824227733,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "INGM",
+          "score": 0.6190397382176764,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "MDLZ",
+          "score": 0.5636103338656315,
+          "traits_shared": 3
+        },
+        {
+          "ticker": "PPC",
+          "score": 0.5463679970127101,
+          "traits_shared": 3
+        },
+        {
+          "ticker": "CPB",
+          "score": 0.48910729285196825,
+          "traits_shared": 3
+        },
+        {
+          "ticker": "DELL",
+          "score": 0.43674168907893834,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "AAPL",
+          "score": 0.4338392207116522,
+          "traits_shared": 4
+        },
+        {
+          "ticker": "KHC",
+          "score": 0.4219165852409839,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "SNX",
+          "score": 0.42110840211250894,
+          "traits_shared": 3
+        },
+        {
+          "ticker": "HPQ",
+          "score": 0.41190933859181245,
+          "traits_shared": 2
+        }
+      ],
+      "peers": {
+        "sector-consumer-staples": [
+          {
+            "ticker": "PPC",
+            "score": 0.8999390584573159,
+            "traits_shared": 4
+          },
+          {
+            "ticker": "BG",
+            "score": 0.8709997608984675,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "USFD",
+            "score": 0.8666786681724714,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "ACI",
+            "score": 0.8608053977102476,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "KO",
+            "score": 0.8572697578799139,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "PG",
+            "score": 0.8524392390145499,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "KVUE",
+            "score": 0.8390547926206103,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "CHSCP",
+            "score": 0.8216871948584675,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "MDLZ",
+            "score": 0.8140815499020552,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "GIS",
+            "score": 0.8112299730399135,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "SYY",
+            "score": 0.8092302550963042,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "ADM",
+            "score": 0.8038431924875364,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "SFD",
+            "score": 0.7864816246206797,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "KHC",
+            "score": 0.7824184868739505,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "PFGC",
+            "score": 0.7695830103988891,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "MO",
+            "score": 0.7611738438477342,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "CL",
+            "score": 0.7608058131042625,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "SFM",
+            "score": 0.7589041764303232,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "ECL",
+            "score": 0.7564999788116178,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "PEP",
+            "score": 0.755713872022722,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "MNST",
+            "score": 0.75570701010932,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "UNFI",
+            "score": 0.7546110431076943,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "CVS",
+            "score": 0.7486398925660777,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "EL",
+            "score": 0.7478811154714625,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "ANDE",
+            "score": 0.7467298137292175,
+            "traits_shared": 2
           }
         ]
       }

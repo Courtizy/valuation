@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-03T07:57:52+00:00",
+  "generated_at": "2026-10-03T08:06:20+00:00",
   "companies": [
     {
       "ticker": "AAPL",
@@ -17,6 +17,24 @@
           "latest": {
             "annual": "FY2025",
             "ttm": "TTM 2026-06-27"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "CPB",
+      "name": "CAMPBELL'S Co",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-10-03",
+          "detail": "CPB/2026-10-03/company_detail.json",
+          "full": "CPB/2026-10-03/company_detail_full.json",
+          "comparison": null,
+          "models": [],
+          "latest": {
+            "annual": "FY2026",
+            "ttm": "TTM 2026-08-02"
           }
         }
       ]
@@ -94,6 +112,24 @@
       ]
     },
     {
+      "ticker": "KHC",
+      "name": "Kraft Heinz Co",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-10-03",
+          "detail": "KHC/2026-10-03/company_detail.json",
+          "full": "KHC/2026-10-03/company_detail_full.json",
+          "comparison": null,
+          "models": [],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-06-27"
+          }
+        }
+      ]
+    },
+    {
       "ticker": "KO",
       "name": "COCA COLA CO",
       "demo": false,
@@ -107,6 +143,60 @@
           "latest": {
             "annual": "FY2025",
             "ttm": "TTM 2026-04-03"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "LW",
+      "name": "LAMB WESTON HOLDINGS, INC.",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-10-03",
+          "detail": "LW/2026-10-03/company_detail.json",
+          "full": "LW/2026-10-03/company_detail_full.json",
+          "comparison": null,
+          "models": [],
+          "latest": {
+            "annual": "FY2026",
+            "ttm": "TTM 2026-05-31"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "MDLZ",
+      "name": "Mondelez International, Inc.",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-10-03",
+          "detail": "MDLZ/2026-10-03/company_detail.json",
+          "full": "MDLZ/2026-10-03/company_detail_full.json",
+          "comparison": null,
+          "models": [],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-03-31"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "PPC",
+      "name": "PILGRIM\u2019S PRIDE CORPORATION",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-10-03",
+          "detail": "PPC/2026-10-03/company_detail.json",
+          "full": "PPC/2026-10-03/company_detail_full.json",
+          "comparison": null,
+          "models": [],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-06-28"
           }
         }
       ]
@@ -143,6 +233,24 @@
           "latest": {
             "annual": "FY2026",
             "ttm": "TTM 2026-07-03"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "TSN",
+      "name": "TYSON FOODS, INC.",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-10-03",
+          "detail": "TSN/2026-10-03/company_detail.json",
+          "full": "TSN/2026-10-03/company_detail_full.json",
+          "comparison": null,
+          "models": [],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-06-27"
           }
         }
       ]
