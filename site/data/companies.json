@@ -6,6 +6,11 @@
       "demo": false,
       "sic": "3571",
       "sic_description": "Electronic Computers",
+      "classification": {
+        "sector": "technology",
+        "group": "hardware_equipment",
+        "industry": "hardware_peripherals"
+      },
       "as_of": "2026-10-03",
       "period": "TTM 2026-06-27",
       "traits": {
@@ -44,6 +49,167 @@
         "ev_sales": 10.489649960413262,
         "pb": 45.33914493554688,
         "fcf_yield": 0.028038315692449172
+      },
+      "similar": [
+        {
+          "ticker": "DELL",
+          "score": 0.46088015759069756,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "OMCL",
+          "score": 0.4267134314085878,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "SMCI",
+          "score": 0.3303439511233088,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "SCKT",
+          "score": 0.29926032891789456,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "ZEPP",
+          "score": 0.294782679988844,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "OSS",
+          "score": 0.29073688920052904,
+          "traits_shared": 1
+        }
+      ],
+      "peers": {
+        "sector-technology": [
+          {
+            "ticker": "MSFT",
+            "score": 0.6455859932998361,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "QCOM",
+            "score": 0.5657510588950447,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "SNX",
+            "score": 0.5369015299866146,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "DELL",
+            "score": 0.5229015642412705,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "CSCO",
+            "score": 0.5126516167488122,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "IBM",
+            "score": 0.508928898369114,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "AVGO",
+            "score": 0.5083596425481856,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "TMO",
+            "score": 0.5031609551785743,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "AMAT",
+            "score": 0.4964153806746848,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "APH",
+            "score": 0.4951239458547155,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "CTSH",
+            "score": 0.4900985191165476,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "CRM",
+            "score": 0.48921914885323203,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "ADBE",
+            "score": 0.4808179933640241,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "TYGO",
+            "score": 0.48068113331007406,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "HPQ",
+            "score": 0.47635012894805634,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "DHR",
+            "score": 0.4724738590191563,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "INTU",
+            "score": 0.4613852602557621,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "INGM",
+            "score": 0.4590587560425568,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "LRCX",
+            "score": 0.45885953646880395,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "AMD",
+            "score": 0.45786495092052226,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "TXN",
+            "score": 0.44914484475277866,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "NOW",
+            "score": 0.44900405116716413,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "LDOS",
+            "score": 0.4455162809224933,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "JBL",
+            "score": 0.4388190882374298,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "FLEX",
+            "score": 0.4346283640023564,
+            "traits_shared": 1
+          }
+        ]
       }
     },
     {
@@ -52,6 +218,11 @@
       "demo": false,
       "sic": "3571",
       "sic_description": "Electronic Computers",
+      "classification": {
+        "sector": "technology",
+        "group": "hardware_equipment",
+        "industry": "hardware_peripherals"
+      },
       "as_of": "2026-10-03",
       "period": "TTM 2026-07-31",
       "traits": {
@@ -90,6 +261,167 @@
         "ev_sales": null,
         "pb": null,
         "fcf_yield": null
+      },
+      "similar": [
+        {
+          "ticker": "AAPL",
+          "score": 0.4874515058110493,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "OMCL",
+          "score": 0.40511164148375284,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "SCKT",
+          "score": 0.32008153397567396,
+          "traits_shared": 0
+        },
+        {
+          "ticker": "OSS",
+          "score": 0.3037981009973332,
+          "traits_shared": 0
+        },
+        {
+          "ticker": "ZEPP",
+          "score": 0.3013409162534466,
+          "traits_shared": 0
+        },
+        {
+          "ticker": "SMCI",
+          "score": 0.3010085906446261,
+          "traits_shared": 1
+        }
+      ],
+      "peers": {
+        "sector-technology": [
+          {
+            "ticker": "HPQ",
+            "score": 0.757301816104538,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "IBM",
+            "score": 0.7504818392271076,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "TYGO",
+            "score": 0.7221798615323717,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "SNX",
+            "score": 0.6807831762292443,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "INGM",
+            "score": 0.6740381272286404,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "CSCO",
+            "score": 0.6696363720728539,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "JBL",
+            "score": 0.6578712936146139,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "CRM",
+            "score": 0.6376549958002082,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "TMO",
+            "score": 0.6280221041916063,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "FLEX",
+            "score": 0.6259880993912155,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "AMD",
+            "score": 0.6118842233657485,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "XYZ",
+            "score": 0.6045058922704868,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "QCOM",
+            "score": 0.6000907779490352,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "LDOS",
+            "score": 0.5745626573523382,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "MSI",
+            "score": 0.5670226305864309,
+            "traits_shared": 4
+          },
+          {
+            "ticker": "INTU",
+            "score": 0.5667289157184723,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "CTSH",
+            "score": 0.5610738454604935,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "DHR",
+            "score": 0.5600906459618181,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "ADBE",
+            "score": 0.5461527056304447,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "CACI",
+            "score": 0.5289806980358254,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "AMAT",
+            "score": 0.5265705608704482,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "AAPL",
+            "score": 0.521892236986432,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "STX",
+            "score": 0.5198760999691759,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "INTC",
+            "score": 0.5183803826924116,
+            "traits_shared": 0
+          },
+          {
+            "ticker": "DXC",
+            "score": 0.5175258994952409,
+            "traits_shared": 2
+          }
+        ]
       }
     },
     {
@@ -98,6 +430,11 @@
       "demo": false,
       "sic": "3571",
       "sic_description": "Electronic Computers",
+      "classification": {
+        "sector": "technology",
+        "group": "hardware_equipment",
+        "industry": "hardware_peripherals"
+      },
       "as_of": "2026-10-03",
       "period": "TTM 2026-06-30",
       "traits": {
@@ -136,6 +473,167 @@
         "ev_sales": null,
         "pb": null,
         "fcf_yield": null
+      },
+      "similar": [
+        {
+          "ticker": "SCKT",
+          "score": 0.4653460787743105,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "AAPL",
+          "score": 0.40806694457189824,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "OSS",
+          "score": 0.38351246441818815,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "DELL",
+          "score": 0.3777502893746928,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "ZEPP",
+          "score": 0.3691445883751225,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "SMCI",
+          "score": 0.3255563891041621,
+          "traits_shared": 1
+        }
+      ],
+      "peers": {
+        "sector-technology": [
+          {
+            "ticker": "DIOD",
+            "score": 0.893463759439056,
+            "traits_shared": 4
+          },
+          {
+            "ticker": "SONO",
+            "score": 0.8613526399435462,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "JOYY",
+            "score": 0.8372181632459238,
+            "traits_shared": 4
+          },
+          {
+            "ticker": "IPGP",
+            "score": 0.8019059131555193,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "SYNA",
+            "score": 0.7965448409950515,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "LZ",
+            "score": 0.7947161894818274,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "AOSL",
+            "score": 0.7913999360144782,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "ICHR",
+            "score": 0.7829783770075722,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "SIMO",
+            "score": 0.7755125066528207,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "MRCY",
+            "score": 0.7748393392601596,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "ARRY",
+            "score": 0.7694038977111011,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "MOMO",
+            "score": 0.768089095188584,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "CLVT",
+            "score": 0.7619523937250328,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "SLAB",
+            "score": 0.7478517669993584,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "ACLS",
+            "score": 0.7472073105364475,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "TASK",
+            "score": 0.7471758087405125,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "LSCC",
+            "score": 0.7470546511575605,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "VREX",
+            "score": 0.7448640721620692,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "CNXN",
+            "score": 0.7418144241385826,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "ADTN",
+            "score": 0.7393887134153252,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "UCTT",
+            "score": 0.7380713524296826,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "IBEX",
+            "score": 0.7350404603309093,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "TENB",
+            "score": 0.7341157448835525,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "RPD",
+            "score": 0.7222646675279486,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "AZTA",
+            "score": 0.7192472943014205,
+            "traits_shared": 2
+          }
+        ]
       }
     },
     {
@@ -144,6 +642,11 @@
       "demo": false,
       "sic": "3571",
       "sic_description": "Electronic Computers",
+      "classification": {
+        "sector": "technology",
+        "group": "hardware_equipment",
+        "industry": "hardware_peripherals"
+      },
       "as_of": "2026-10-03",
       "period": "TTM 2026-06-30",
       "traits": {
@@ -182,7 +685,40 @@
         "ev_sales": null,
         "pb": null,
         "fcf_yield": null
-      }
+      },
+      "similar": [
+        {
+          "ticker": "ZEPP",
+          "score": 0.5546441450480142,
+          "traits_shared": 4
+        },
+        {
+          "ticker": "SCKT",
+          "score": 0.4892464524913362,
+          "traits_shared": 4
+        },
+        {
+          "ticker": "OMCL",
+          "score": 0.3932597830988287,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "DELL",
+          "score": 0.310317386321443,
+          "traits_shared": 0
+        },
+        {
+          "ticker": "SMCI",
+          "score": 0.30914865122778046,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "AAPL",
+          "score": 0.2844674943551982,
+          "traits_shared": 1
+        }
+      ],
+      "peers": {}
     },
     {
       "ticker": "SCKT",
@@ -190,6 +726,11 @@
       "demo": false,
       "sic": "3571",
       "sic_description": "Electronic Computers",
+      "classification": {
+        "sector": "technology",
+        "group": "hardware_equipment",
+        "industry": "hardware_peripherals"
+      },
       "as_of": "2026-10-03",
       "period": "TTM 2026-06-30",
       "traits": {
@@ -228,7 +769,40 @@
         "ev_sales": null,
         "pb": null,
         "fcf_yield": null
-      }
+      },
+      "similar": [
+        {
+          "ticker": "OSS",
+          "score": 0.5063312032342733,
+          "traits_shared": 4
+        },
+        {
+          "ticker": "OMCL",
+          "score": 0.48076337689215237,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "ZEPP",
+          "score": 0.4179846984567605,
+          "traits_shared": 4
+        },
+        {
+          "ticker": "DELL",
+          "score": 0.32567435027687175,
+          "traits_shared": 0
+        },
+        {
+          "ticker": "AAPL",
+          "score": 0.29128306682473176,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "SMCI",
+          "score": 0.287052053585862,
+          "traits_shared": 2
+        }
+      ],
+      "peers": {}
     },
     {
       "ticker": "SMCI",
@@ -236,6 +810,11 @@
       "demo": false,
       "sic": "3571",
       "sic_description": "Electronic Computers",
+      "classification": {
+        "sector": "technology",
+        "group": "hardware_equipment",
+        "industry": "hardware_peripherals"
+      },
       "as_of": "2026-10-03",
       "period": "TTM 2026-06-30",
       "traits": {
@@ -274,98 +853,167 @@
         "ev_sales": null,
         "pb": null,
         "fcf_yield": null
-      }
-    },
-    {
-      "ticker": "TSM",
-      "name": "Taiwan Semiconductor Manufacturing Company Limited",
-      "demo": false,
-      "sic": null,
-      "sic_description": null,
-      "as_of": "2026-10-03",
-      "period": null,
-      "traits": {
-        "stage": "unknown",
-        "predictability": "unknown",
-        "asset_intensity": "unknown",
-        "capital_structure": "unknown"
       },
-      "vector": {
-        "revenue_cagr": null,
-        "operating_margin": null,
-        "fcf_margin_stdev": null,
-        "capex_to_sales": null,
-        "noa_turnover": null,
-        "debt_to_ebitda": null,
-        "revenue": null,
-        "rnoa": null
-      },
-      "rates": {
-        "revenue_cagr": null,
-        "operating_margin": null,
-        "rnoa": null,
-        "capex_to_sales": null,
-        "debt_to_ebitda": null,
-        "wacc": null,
-        "beta": null
-      },
-      "market": {
-        "price": null,
-        "market_cap": null,
-        "enterprise_value": null
-      },
-      "multiples": {
-        "pe": null,
-        "ev_ebitda": null,
-        "ev_sales": null,
-        "pb": null,
-        "fcf_yield": null
-      }
-    },
-    {
-      "ticker": "VZ",
-      "name": "VERIZON COMMUNICATIONS INC",
-      "demo": false,
-      "sic": null,
-      "sic_description": null,
-      "as_of": "2026-10-02",
-      "period": "TTM 2026-06-30",
-      "traits": {
-        "stage": "mature",
-        "predictability": "unknown",
-        "asset_intensity": "moderate",
-        "capital_structure": "low leverage"
-      },
-      "vector": {
-        "revenue_cagr": 0.008457873514414072,
-        "operating_margin": 0.20540696209366788,
-        "fcf_margin_stdev": null,
-        "capex_to_sales": null,
-        "noa_turnover": 1.1191281927322536,
-        "debt_to_ebitda": 0.4579435322807829,
-        "revenue": 138895000000,
-        "rnoa": 0.1337442591249698
-      },
-      "rates": {
-        "revenue_cagr": 0.008457873514414072,
-        "operating_margin": 0.20540696209366788,
-        "rnoa": 0.1337442591249698,
-        "capex_to_sales": null,
-        "debt_to_ebitda": 0.4579435322807829,
-        "wacc": null,
-        "beta": null
-      },
-      "market": {
-        "price": null,
-        "market_cap": null,
-        "enterprise_value": null
-      },
-      "multiples": {
-        "pe": null,
-        "ev_ebitda": null,
-        "ev_sales": null,
-        "pb": null,
-        "fcf_yield": null
+      "similar": [
+        {
+          "ticker": "ZEPP",
+          "score": 0.36576636878399293,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "OMCL",
+          "score": 0.3496396675875407,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "AAPL",
+          "score": 0.34412554092154407,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "OSS",
+          "score": 0.3247733213690307,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "DELL",
+          "score": 0.30784565451677787,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "SCKT",
+          "score": 0.2974024619146194,
+          "traits_shared": 2
+        }
+      ],
+      "peers": {
+        "sector-technology": [
+          {
+            "ticker": "SHOP",
+            "score": 0.6024804511800098,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "TOST",
+            "score": 0.588364002525119,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "CLS",
+            "score": 0.5696513583543129,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "VRT",
+            "score": 0.5653835223736201,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "RDDT",
+            "score": 0.5617135380322207,
+            "traits_shared": 4
+          },
+          {
+            "ticker": "PANW",
+            "score": 0.5531307984907187,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "NOW",
+            "score": 0.5508363034126564,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "ARM",
+            "score": 0.5473342096743821,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "AMD",
+            "score": 0.5373558024814468,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "APH",
+            "score": 0.5346565529991196,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "PLTR",
+            "score": 0.5340620999220708,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "FN",
+            "score": 0.5311691617021088,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "DDOG",
+            "score": 0.5264878963252765,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "FSLR",
+            "score": 0.5194911310186636,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "NXT",
+            "score": 0.5184959248297617,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "HUBS",
+            "score": 0.5178854210313483,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "ANET",
+            "score": 0.5158044187617703,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "BILI",
+            "score": 0.5140767955022892,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "SNDK",
+            "score": 0.5100037546384342,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "INTU",
+            "score": 0.5047891304024423,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "AVGO",
+            "score": 0.5042872310083263,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "NTNX",
+            "score": 0.5028900889079962,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "OKTA",
+            "score": 0.5018191008217634,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "WDAY",
+            "score": 0.5010910345437343,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "TEAM",
+            "score": 0.5008928929587653,
+            "traits_shared": 2
+          }
+        ]
       }
     },
     {
@@ -374,6 +1022,11 @@
       "demo": false,
       "sic": "3571",
       "sic_description": "Electronic Computers",
+      "classification": {
+        "sector": "technology",
+        "group": "hardware_equipment",
+        "industry": "hardware_peripherals"
+      },
       "as_of": "2026-10-03",
       "period": "FY2025",
       "traits": {
@@ -412,145 +1065,40 @@
         "ev_sales": null,
         "pb": null,
         "fcf_yield": null
-      }
-    },
-    {
-      "ticker": "DEMO",
-      "name": "Demo Manufacturing Co. (synthetic)",
-      "demo": true,
-      "sic": null,
-      "sic_description": null,
-      "as_of": "2026-09-30",
-      "period": "TTM 2026-06-30",
-      "traits": {
-        "stage": "mature grower",
-        "predictability": "high",
-        "asset_intensity": "moderate",
-        "capital_structure": "low leverage"
       },
-      "vector": {
-        "revenue_cagr": 0.08000000000000007,
-        "operating_margin": 0.17999999999996527,
-        "fcf_margin_stdev": 0.0008329594065971234,
-        "capex_to_sales": 0.05000000000008688,
-        "noa_turnover": 1.5771139530471032,
-        "debt_to_ebitda": 0.8292589411627865,
-        "revenue": 5755412496.389999,
-        "rnoa": 0.22426560412421387
-      },
-      "rates": {
-        "revenue_cagr": 0.08000000000000007,
-        "operating_margin": 0.17999999999996527,
-        "rnoa": 0.22426560412421387,
-        "capex_to_sales": 0.05000000000008688,
-        "debt_to_ebitda": 0.8292589411627865,
-        "wacc": 0.0937245283018868,
-        "beta": 1.1
-      },
-      "market": {
-        "price": 45.0,
-        "market_cap": 14850000000.0,
-        "enterprise_value": 15288759520.05
-      },
-      "multiples": {
-        "pe": 18.968674884010337,
-        "ev_ebitda": 12.074610029799176,
-        "ev_sales": 2.6564142065646306,
-        "pb": 4.431603629208849,
-        "fcf_yield": 0.04109139946734006
-      }
-    },
-    {
-      "ticker": "DEMOG",
-      "name": "Demo Cloud Software (synthetic)",
-      "demo": true,
-      "sic": null,
-      "sic_description": null,
-      "as_of": "2026-09-30",
-      "period": "TTM 2026-06-30",
-      "traits": {
-        "stage": "high growth",
-        "predictability": "low",
-        "asset_intensity": "light",
-        "capital_structure": "low leverage"
-      },
-      "vector": {
-        "revenue_cagr": 0.32000000000000006,
-        "operating_margin": 0.03000000000013385,
-        "fcf_margin_stdev": 0.05878775382676938,
-        "capex_to_sales": 0.01999999999785835,
-        "noa_turnover": 3.1871684349792027,
-        "debt_to_ebitda": 0.0,
-        "revenue": 2988353942.32,
-        "rnoa": 0.07553589190582458
-      },
-      "rates": {
-        "revenue_cagr": 0.32000000000000006,
-        "operating_margin": 0.03000000000013385,
-        "rnoa": 0.07553589190582458,
-        "capex_to_sales": 0.01999999999785835,
-        "debt_to_ebitda": 0.0,
-        "wacc": 0.11199999999999999,
-        "beta": 1.4
-      },
-      "market": {
-        "price": 18.0,
-        "market_cap": 1800000000.0,
-        "enterprise_value": 1466578974.97
-      },
-      "multiples": {
-        "pe": 25.415117672722683,
-        "ev_ebitda": 9.815296335950872,
-        "ev_sales": 0.4907648167778364,
-        "pb": 1.2853761352589648,
-        "fcf_yield": 0.14342738814444445
-      }
-    },
-    {
-      "ticker": "DEMOU",
-      "name": "Demo Regional Utility (synthetic)",
-      "demo": true,
-      "sic": null,
-      "sic_description": null,
-      "as_of": "2026-09-30",
-      "period": "TTM 2026-06-30",
-      "traits": {
-        "stage": "mature",
-        "predictability": "high",
-        "asset_intensity": "heavy",
-        "capital_structure": "high leverage"
-      },
-      "vector": {
-        "revenue_cagr": 0.020000000000000018,
-        "operating_margin": 0.3799999999985732,
-        "fcf_margin_stdev": 0.010121090400670262,
-        "capex_to_sales": 0.1700000000004402,
-        "noa_turnover": 0.3145691667641172,
-        "debt_to_ebitda": 4.743390109656854,
-        "revenue": 6588115098.63,
-        "rnoa": 0.09443366386217134
-      },
-      "rates": {
-        "revenue_cagr": 0.020000000000000018,
-        "operating_margin": 0.3799999999985732,
-        "rnoa": 0.09443366386217134,
-        "capex_to_sales": 0.1700000000004402,
-        "debt_to_ebitda": 4.743390109656854,
-        "wacc": 0.06265822784810127,
-        "beta": 0.6
-      },
-      "market": {
-        "price": 98.0,
-        "market_cap": 24500000000.0,
-        "enterprise_value": 38811053578.8
-      },
-      "multiples": {
-        "pe": 17.195973317387498,
-        "ev_ebitda": 12.273064512736147,
-        "ev_sales": 5.8910709660902505,
-        "pb": 3.5820800106478083,
-        "fcf_yield": 0.037845484698775515
-      }
+      "similar": [
+        {
+          "ticker": "OSS",
+          "score": 0.5525804622117306,
+          "traits_shared": 4
+        },
+        {
+          "ticker": "SCKT",
+          "score": 0.41661242236790474,
+          "traits_shared": 4
+        },
+        {
+          "ticker": "OMCL",
+          "score": 0.3788245667529054,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "SMCI",
+          "score": 0.33629257593266476,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "DELL",
+          "score": 0.3054957054239566,
+          "traits_shared": 0
+        },
+        {
+          "ticker": "AAPL",
+          "score": 0.2865149994881793,
+          "traits_shared": 1
+        }
+      ],
+      "peers": {}
     }
   ]
 }
