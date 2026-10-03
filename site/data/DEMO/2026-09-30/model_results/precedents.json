@@ -1,0 +1,22 @@
+{
+  "schema_version": "0.1.0",
+  "model": "precedents",
+  "ticker": "DEMO",
+  "as_of": "2026-09-30",
+  "value_per_share": {
+    "p10": 46.0,
+    "p50": 55.0,
+    "p90": 63.0,
+    "mean": 54.666666666666664
+  },
+  "assumptions_used": {},
+  "lineage": {
+    "as_of": "2026-09-30",
+    "inputs": []
+  },
+  "samples_ref": null,
+  "notes": [
+    "synthetic demo result, not a valuation"
+  ],
+  "demo": true
+}

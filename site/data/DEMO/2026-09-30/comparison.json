@@ -1,0 +1,31 @@
+{
+  "schema_version": "0.1.0",
+  "ticker": "DEMO",
+  "as_of": "2026-09-30",
+  "football_field": [
+    {
+      "model": "comps",
+      "p10": 38.0,
+      "p50": 45.0,
+      "p90": 52.5,
+      "mean": 45.166666666666664
+    },
+    {
+      "model": "dcf",
+      "p10": 41.0,
+      "p50": 48.5,
+      "p90": 57.0,
+      "mean": 48.833333333333336
+    },
+    {
+      "model": "precedents",
+      "p10": 46.0,
+      "p50": 55.0,
+      "p90": 63.0,
+      "mean": 54.666666666666664
+    }
+  ],
+  "assumption_differences": [],
+  "warnings": [],
+  "demo": true
+}

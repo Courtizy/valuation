@@ -1,0 +1,26 @@
+{
+  "schema_version": "0.1.0",
+  "model": "comps",
+  "ticker": "DEMO",
+  "as_of": "2026-09-30",
+  "value_per_share": {
+    "p10": 38.0,
+    "p50": 45.0,
+    "p90": 52.5,
+    "mean": 45.166666666666664
+  },
+  "assumptions_used": {
+    "forecast": {
+      "tax_rate": 0.21
+    }
+  },
+  "lineage": {
+    "as_of": "2026-09-30",
+    "inputs": []
+  },
+  "samples_ref": null,
+  "notes": [
+    "synthetic demo result, not a valuation"
+  ],
+  "demo": true
+}

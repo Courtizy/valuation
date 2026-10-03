@@ -1,0 +1,30 @@
+{
+  "schema_version": "0.1.0",
+  "model": "dcf",
+  "ticker": "DEMO",
+  "as_of": "2026-09-30",
+  "value_per_share": {
+    "p10": 41.0,
+    "p50": 48.5,
+    "p90": 57.0,
+    "mean": 48.833333333333336
+  },
+  "assumptions_used": {
+    "forecast": {
+      "tax_rate": 0.21
+    },
+    "terminal": {
+      "method": "gordon",
+      "growth": 0.03
+    }
+  },
+  "lineage": {
+    "as_of": "2026-09-30",
+    "inputs": []
+  },
+  "samples_ref": null,
+  "notes": [
+    "synthetic demo result, not a valuation"
+  ],
+  "demo": true
+}
