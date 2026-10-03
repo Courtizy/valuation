@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-03T04:22:30+00:00",
+  "generated_at": "2026-10-03T04:25:17+00:00",
   "companies": [
     {
       "ticker": "AAPL",
@@ -146,6 +146,38 @@
         "ZEPP",
         "OSS",
         "SCKT"
+      ],
+      "as_of_all": [
+        "2026-10-03"
+      ]
+    },
+    {
+      "id": "sic-4813",
+      "label": "SIC 4813 \u00b7 Telephone Communications (No Radio Telephone)",
+      "kind": "sic",
+      "as_of": "2026-10-03",
+      "year": 2025,
+      "demo": false,
+      "path": "sectors/sic-4813/2026-10-03/sector.json",
+      "count": 17,
+      "members": [
+        "VZ",
+        "T",
+        "LUMN",
+        "CTGG",
+        "UNIT",
+        "IDT",
+        "TDS",
+        "ATNI",
+        "SHEN",
+        "IQST",
+        "NUVR",
+        "CXDO",
+        "SURG",
+        "NXPL",
+        "GLTK",
+        "HWNI",
+        "ATEX"
       ],
       "as_of_all": [
         "2026-10-03"
