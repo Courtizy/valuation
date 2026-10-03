@@ -30,3 +30,11 @@ file is missing and names the file it expected.
 | `terminal.weight` | share of the terminal value to count (default 1) |
 | `discounting.convention` | `closing_year_zero` (default), `end_of_year`, `mid_year` |
 | `sensitivity.*` | step sizes for the conservative / aggressive range |
+
+## reconcile.json (optional)
+
+```json
+{"context": "standalone", "weights": {"dcf": 0.7, "comps": 0.3}}
+```
+
+Without it, the company profile sets the primary method, cross-check and weights (`docs/L2_reconcile.md`). `context` is `standalone` (default) or `acquisition` (offer-price view: synergy methods and precedents).

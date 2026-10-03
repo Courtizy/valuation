@@ -67,6 +67,7 @@ class Step:
     ticker: str
     outputs: list[Path]
     fn: Callable[[], None] = field(repr=False)
+    soft: bool = False   # a failure here is reported but doesn't stop later steps (each model)
 
 
 def load_peers(paths: Paths, ticker: str) -> list[str]:
@@ -131,10 +132,14 @@ def plan(
             out.parent.mkdir(parents=True, exist_ok=True)
             out.write_text(json.dumps(result.to_dict(), indent=2))
 
-        steps.append(Step(f"model {m}", "L2", ticker, [paths.result(ticker, as_of, m)], run_model))
+        steps.append(Step(f"model {m}", "L2", ticker, [paths.result(ticker, as_of, m)], run_model, soft=True))
 
     def reconcile():
-        comp = build_comparison([paths.result(ticker, as_of, m) for m in models])
+        if not any(paths.result(ticker, as_of, m).exists() for m in models):
+            raise RuntimeError("no model produced a result to reconcile")
+        done = [paths.result(ticker, as_of, m) for m in models if paths.result(ticker, as_of, m).exists()]
+        overrides = _read_json(paths.model_assumptions(ticker, "reconcile"), None)
+        comp = build_comparison(done, _read_json(paths.detail(ticker, as_of)), overrides)
         paths.comparison(ticker, as_of).write_text(json.dumps(comp, indent=2))
 
     steps.append(Step("reconcile", "L2", ticker, [paths.comparison(ticker, as_of)], reconcile))
@@ -145,6 +150,8 @@ def plan(
 
 def execute(steps: list[Step]) -> list[tuple[str, str, str]]:
     """Run steps in order; stop at the first one that isn't built or fails.
+    Models are soft steps: one model failing doesn't stop the other models or
+    reconcile, which blends whatever finished.
 
     Returns (step name, status, message) for every step, with status
     done | not_implemented | failed | skipped.
@@ -160,10 +167,10 @@ def execute(steps: list[Step]) -> list[tuple[str, str, str]]:
             report.append((s.name, "done", ""))
         except NotImplementedError as e:
             report.append((s.name, "not_implemented", str(e)))
-            halted = True
+            halted = not s.soft
         except Exception as e:  # noqa: BLE001 - surface any failure in the report
             report.append((s.name, "failed", f"{type(e).__name__}: {e}"))
-            halted = True
+            halted = not s.soft
     return report
 
 

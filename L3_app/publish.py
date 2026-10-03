@@ -71,6 +71,43 @@ def concept_labels() -> dict:
             for c in load_registry().concepts.values()}
 
 
+def _ratio(a, b):
+    return a / b if a is not None and b not in (None, 0) else None
+
+
+def company_card(site_data: Path, ticker: str, run: dict) -> dict:
+    """Traits, rates and (when a price is known) multiples for the similar-companies table."""
+    detail = json.loads((site_data / run["detail"]).read_text())
+    prof = detail.get("profile") or {}
+    vec = prof.get("vector") or {}
+    views = detail.get("views") or {}
+    ttm = (views.get("ttm") or views.get("annual") or [{}])[-1].get("values", {})
+    dcf_path = site_data / ticker / run["as_of"] / "model_results" / "dcf.json"
+    dcf = json.loads(dcf_path.read_text()) if dcf_path.exists() else {}
+    d = dcf.get("details") or {}
+    price = ((detail.get("market") or {}).get("price")) or d.get("market_price")
+    shares = (d.get("bridge") or {}).get("shares") or ttm.get("shares_year_end")
+    debt = (ttm.get("short_term_debt") or 0) + (ttm.get("long_term_debt") or 0)
+    cash = ttm.get("cash_and_marketable_securities") or 0
+    mcap = price * shares if price and shares else None
+    ev = mcap + debt - cash if mcap is not None else None
+    equity = ttm.get("all_equity_balance")
+    return {
+        "ticker": ticker, "name": detail.get("entity", {}).get("name", ticker), "demo": bool(detail.get("demo")),
+        "as_of": run["as_of"], "period": prof.get("as_of_period"),
+        "traits": {k: v["label"] for k, v in (prof.get("traits") or {}).items()},
+        "vector": vec,
+        "rates": {"revenue_cagr": vec.get("revenue_cagr"), "operating_margin": vec.get("operating_margin"),
+                  "rnoa": vec.get("rnoa"), "capex_to_sales": vec.get("capex_to_sales"),
+                  "debt_to_ebitda": vec.get("debt_to_ebitda"),
+                  "wacc": (d.get("rates") or {}).get("wacc"), "beta": (d.get("rates") or {}).get("beta_levered_observed")},
+        "market": {"price": price, "market_cap": mcap, "enterprise_value": ev},
+        "multiples": {"pe": _ratio(mcap, ttm.get("net_income")), "ev_ebitda": _ratio(ev, ttm.get("ebitda")),
+                      "ev_sales": _ratio(ev, ttm.get("revenue")), "pb": _ratio(mcap, equity),
+                      "fcf_yield": _ratio(ttm.get("free_cash_flow"), mcap)},
+    }
+
+
 def publish(data_dir: Path, site_dir: Path) -> dict:
     site_data = site_dir / "data"
     site_data.mkdir(parents=True, exist_ok=True)
@@ -78,6 +115,8 @@ def publish(data_dir: Path, site_dir: Path) -> dict:
     index = build_index(site_data)
     (site_data / "index.json").write_text(json.dumps(index, indent=2))
     (site_data / "concepts.json").write_text(json.dumps(concept_labels(), indent=2))
+    cards = [company_card(site_data, c["ticker"], c["runs"][0]) for c in index["companies"]]
+    (site_data / "companies.json").write_text(json.dumps({"companies": cards}, indent=2))
     return {"copied": copied, "companies": [c["ticker"] for c in index["companies"]]}
 
 

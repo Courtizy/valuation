@@ -23,6 +23,7 @@ from lineage import lineage_block
 
 from .analysis import _one_year_apart, analyze_view, load_classification
 from .periods import build_views
+from .profile import build_profile, load_rules
 from .registry import load_registry
 
 DETAIL_SCHEMA_VERSION = "0.1.0"
@@ -78,7 +79,7 @@ def build_detail(canonical: dict, as_of: str, raw_market: dict | None = None, pa
                                  for k in ("interest_expense", "interest_income")):
         warnings.append("interest not tagged in the latest year; NFE treated as zero in reformulation")
 
-    return {
+    doc = {
         "schema_version": DETAIL_SCHEMA_VERSION,
         "stage": "L1.build",
         "as_of": as_of,
@@ -100,6 +101,8 @@ def build_detail(canonical: dict, as_of: str, raw_market: dict | None = None, pa
         },
         "warnings": warnings,
     }
+    doc["profile"] = build_profile(doc, load_rules(((pack or {}).get("l1") or {}).get("profile_rules")))
+    return doc
 
 
 def run(canonical: Path, raw_market: Path | None, as_of: str, out_path: Path,

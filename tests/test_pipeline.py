@@ -75,7 +75,7 @@ def test_execute_runs_l0_and_l1_then_stops_at_model_without_assumptions(tmp_path
     assert paths.detail("AAPL", "2026-09-30").exists()
     assert status["model dcf"] == "failed"
     assert "assumptions" in {name: msg for name, _, msg in report}["model dcf"]
-    assert status["reconcile"] == "skipped"
+    assert status["reconcile"] == "failed"          # models are soft; reconcile reports nothing to blend
 
 
 def test_execute_reports_failures_without_raising(tmp_path):

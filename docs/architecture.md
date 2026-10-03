@@ -50,7 +50,7 @@ valuation/
     base.py           ModelResult, Model protocol, get_model()        built
     dcf/              standalone DCF, forecast + implied modes        built
     comps/ lbo/ ipo/ precedents/                                      scaffolded
-    reconcile/        football field, assumption diffs, warnings      built
+    reconcile/        profile-driven plan, weights, blend, warnings   built
   L3_app/             publish.py (outputs -> site/data), demo.py       built
   site/               GitHub Pages app: index.html, assets/, data/    built
   .github/workflows/  pipeline (dispatch), pages (deploy), tests       built
@@ -85,7 +85,9 @@ python pipeline.py run AAPL --models dcf,comps --as-of 2026-09-30 --dry-run
 
 **Point-in-time.** L1 normalize keeps only facts with `filed <= as_of`. Without this, back-testing a past forecast silently uses later restatements. L0 already stores `filed` on every fact.
 
-**Sector packs.** Data files in `packs/`. In L1 they override tag priorities and concepts (banks have no gross profit). In L2 they set default assumptions and which models apply.
+**Sector packs.** Data files in `packs/`. In L1 they override tag priorities, concepts and profile thresholds (banks have no gross profit). In L2 they set default assumptions. They do **not** decide which models apply: that comes from the company profile.
+
+**Triangulation by company profile.** L1 measures four traits (stage, cash-flow predictability, asset intensity, capital structure). Reconcile turns them into a primary method, a cross-check and default weights, each with a reason (`docs/L2_reconcile.md`). `assumptions/{TICKER}/reconcile.json` can override the weights or switch to the acquisition context.
 
 **Peers.** `assumptions/{TICKER}/comps.json` lists peers. The runner adds L0 and L1 steps for each peer only when a selected model has `needs_peers` (comps, ipo). All L1 work finishes before any model runs.
 

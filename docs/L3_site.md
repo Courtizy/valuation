@@ -28,7 +28,7 @@ The one exception is the **projection what-if**. `site/assets/projection.js` is 
 |---|---|
 | Company detail | KPI tiles; revenue (annual, quarterly or TTM) and RNOA/ROCE charts; statements with derived quarters marked; ratios in five framework views |
 | Projection | Driver form (growth fade, % of sales, ΔNWC/ΔSales, tax, financing); FCF chart; projected IS, MBS, CF and FCF with balance checks; drivers download as JSON |
-| Valuation | Football field (P10–P90, P50 marked), ranges table, assumption differences, warnings. Shows an empty state until L2 models exist |
+| Valuation | Value vs price headline; football field with each method's range, selected value, upside, weight and reason, plus a Bear / Base / Bull toggle; company profile card; DCF detail; similar companies ranked by profile with multiples and rates (`docs/L2_reconcile.md`) |
 | Run pipeline | Starts the Pipeline action. With a token it calls the GitHub API directly; without one it links to the Actions page and prints the `gh` command |
 
 Light and dark themes follow the OS, with a manual toggle. The layout works down to phone width.
@@ -61,12 +61,12 @@ For the Run tab's direct start button, create a **fine-grained personal access t
 python -m L3_app.demo
 ```
 
-This writes a synthetic company, `DEMO`, built by the real L1 build from made-up records. It also writes three synthetic model results so every tab renders. Everything is flagged `demo: true`, and the site shows a banner. Delete `site/data/DEMO` once real tickers are published, then run `python -m L3_app.publish`.
+This writes three synthetic companies (`DEMO` manufacturing, `DEMOG` high-growth software, `DEMOU` leveraged utility), built by the real L1 build from made-up records, so the profile, method plan and similar-companies table have contrasting cases. Each gets a real DCF on made-up market inputs plus synthetic comps and precedents. Everything is flagged `demo: true`, and the site shows a banner. Delete `site/data/DEMO*` once real tickers are published, then run `python -m L3_app.publish`.
 
 ## Local preview
 
 ```bash
-python -m L3_app.publish            # data/ → site/data, rebuild index.json and concepts.json
+python -m L3_app.publish            # data/ → site/data, rebuild index.json, concepts.json and companies.json
 python -m http.server -d site 8000  # open http://localhost:8000
 ```
 

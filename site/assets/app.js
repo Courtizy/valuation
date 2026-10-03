@@ -6,7 +6,7 @@ import { project, baseFromDetail, ProjectionError } from "./projection.js";
 import { columnChart, lineChart, rangeChart } from "./charts.js";
 
 const $ = (id) => document.getElementById(id);
-const state = { index: null, concepts: {}, company: null, run: null, detail: null, comparison: null,
+const state = { index: null, concepts: {}, company: null, run: null, detail: null, comparison: null, scn: "p50", companies: null,
                 view: "annual", fw: "reformulated", tab: "company" };
 
 // ---------------------------------------------------------------- storage
@@ -565,34 +565,216 @@ function downloadDrivers() {
 const MODEL_NAMES = { dcf: "DCF (standalone)", dcf_synergy: "DCF with synergies", just_synergy: "Just synergies",
   comps: "Public comps", precedents: "Precedent transactions", lbo: "LBO", ipo: "IPO" };
 
+const SCENARIOS = { p10: "Bear", p50: "Base", p90: "Bull" };
+const TRAIT_NAMES = { stage: "Stage", predictability: "Cash-flow predictability", asset_intensity: "Asset intensity",
+  capital_structure: "Capital structure" };
+
+function signed(v) { return fin(v) ? `${v >= 0 ? "+" : "−"}${Math.abs(v * 100).toFixed(1)}%` : NA; }
+function upClass(v, band = 0.005) { return !fin(v) || Math.abs(v) < band ? "" : v > 0 ? "up" : "down"; }
+
 function renderValuation() {
   if (!state.detail || state.tab !== "valuation") return;
   const c = state.comparison, body = $("val-body");
   if (!c || !c.football_field?.length) {
     body.innerHTML = `<div class="card empty"><h2>No model results for this run</h2>
-      <p>The valuation models (L2) aren't built yet. Once they are, run the pipeline through <b>Models and reconcile</b> and the football field appears here.</p></div>`;
+      <p>Run the pipeline through <b>Models and reconcile</b> (with an assumptions file for each model) and the valuation appears here.</p></div>`;
+    renderProfileCard(body);
+    renderSimilar(body);
     return;
   }
-  const rows = c.football_field.map((r) => ({ label: MODEL_NAMES[r.model] || r.model, lo: r.p10, mid: r.p50, hi: r.p90 }));
-  const mkt = state.detail.market?.price ?? state.dcf?.details?.market_price;
-  body.innerHTML = `
-    <div class="card"><div class="card-head"><h2>Football field</h2><span class="muted small">Value per share, low to high, best estimate marked</span></div>
-      <div id="ff-chart"></div></div>
-    <div class="grid-2">
-      <div class="card"><div class="card-head"><h2>Ranges</h2></div><div class="table-wrap"><table id="ff-table"></table></div></div>
-      <div class="card"><div class="card-head"><h2>Where models disagree on inputs</h2></div><div id="ff-diffs"></div></div>
-    </div>
-    ${c.warnings?.length ? `<div class="card"><h2>Warnings</h2><ul>${c.warnings.map((w) => `<li>${esc(w)}</li>`).join("")}</ul></div>` : ""}`;
-  rangeChart($("ff-chart"), { rows, format: price, label: "Football field",
-    reference: fin(mkt) ? { value: mkt, label: "Price" } : null });
+  state.scn = state.scn || "p50";
+  body.innerHTML = `<div id="val-head"></div><div id="val-ff"></div><div id="val-profile"></div><div id="val-dcf"></div>
+    <div id="val-similar"></div><div id="val-diffs"></div>`;
+  renderHeadline();
+  renderField();
+  renderProfileCard($("val-profile"));
   renderDcfCard();
-  $("ff-table").innerHTML = `<thead><tr><th>Model</th><th>P10</th><th>P50</th><th>P90</th><th>Mean</th></tr></thead><tbody>${
-    c.football_field.map((r) => `<tr><td>${esc(MODEL_NAMES[r.model] || r.model)}</td><td>${price(r.p10)}</td><td>${price(r.p50)}</td><td>${price(r.p90)}</td><td>${price(r.mean)}</td></tr>`).join("")}</tbody>`;
+  renderSimilar($("val-similar"));
   const diffs = c.assumption_differences || [];
-  $("ff-diffs").innerHTML = diffs.length
-    ? `<div class="table-wrap"><table><thead><tr><th>Field</th>${Object.keys(diffs[0].values).map((m) => `<th>${esc(m)}</th>`).join("")}</tr></thead><tbody>${
-      diffs.map((d) => `<tr><td>${esc(d.field)}</td>${Object.values(d.values).map((v) => `<td>${esc(JSON.stringify(v))}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`
-    : `<p class="muted">Every shared assumption matches, so gaps between models come from method, not inputs.</p>`;
+  $("val-diffs").innerHTML = `<div class="card"><div class="card-head"><h2>Where models disagree on inputs</h2></div>${diffs.length
+    ? `<div class="table-wrap"><table><thead><tr><th>Field</th>${Object.keys(diffs[0].values).map((m) => `<th>${esc(MODEL_NAMES[m] || m)}</th>`).join("")}</tr></thead><tbody>${
+      diffs.map((d) => `<tr><td>${esc(d.field)}</td>${Object.values(d.values).map((v) => `<td>${esc(typeof v === "number" ? num(v) : JSON.stringify(v))}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`
+    : `<p class="muted">Every shared assumption matches, so gaps between models come from method, not inputs.</p>`}
+    ${c.warnings?.length ? `<h3 style="margin-top:12px">Warnings</h3><ul>${c.warnings.map((w) => `<li>${esc(w)}</li>`).join("")}</ul>` : ""}</div>`;
+}
+
+function scenarioToggle() {
+  return `<div class="seg" role="group" aria-label="Scenario">${Object.entries(SCENARIOS).map(([k, n]) =>
+    `<button type="button" data-scn="${k}" aria-pressed="${state.scn === k}">${n}</button>`).join("")}</div>`;
+}
+
+function wireToggle(root) {
+  root.querySelectorAll("[data-scn]").forEach((b) => { b.onclick = () => { state.scn = b.dataset.scn; renderHeadline(); renderField(); }; });
+}
+
+function renderHeadline() {
+  const c = state.comparison, k = state.scn, blend = c.blend;
+  const primary = (c.plan?.methods || []).filter((m) => m.weight > 0);
+  const up = c.upside?.[k];
+  $("val-head").innerHTML = `<div class="card">
+    <div class="card-head"><h2>Value vs price</h2><span class="muted small">scenario set on the football field below</span></div>
+    <div class="headline">
+      <div><div class="label">Share price</div><div class="big num">${price(c.price)}</div>
+        <div class="muted small">${c.price_source ? `from ${esc(c.price_source)}` : "no price yet: add one to the DCF assumptions"}</div></div>
+      <div><div class="label">Blended value · ${SCENARIOS[k]}</div><div class="big num">${blend ? price(blend[k]) : NA}</div>
+        <div class="muted small">${blend ? `bear ${price(blend.p10)} – bull ${price(blend.p90)}` : "no weighted method has run"}</div></div>
+      <div><div class="label">Upside / downside</div><div class="big num ${upClass(up, 0.05)}">${signed(up)}</div>
+        <div class="muted small">${!fin(up) ? "" : Math.abs(up) < 0.05 ? "within 5% of price: fairly valued" : up > 0 ? "undervalued on this blend" : "overvalued on this blend"}</div></div>
+    </div>
+    <p class="small" style="margin:12px 0 0">${primary.map((m) => `${m.role === "primary" ? "Primary" : "Cross-check"} <b>${esc(m.name)}</b> ${pct(m.weight, true)}`).join(" · ") || "No weighted methods yet"}.
+      <span class="muted">${esc(c.plan?.summary || "")}</span></p>
+  </div>`;
+}
+
+function renderField() {
+  const c = state.comparison, k = state.scn, methods = (c.plan?.methods || []).filter((m) => m.value_per_share);
+  const vals = methods.flatMap((m) => [m.value_per_share.p10, m.value_per_share.p90]).concat(fin(c.price) ? [c.price] : []);
+  const vmin = Math.min(...vals), vmax = Math.max(...vals);
+  const raw = (vmax - vmin) / 4 || 1, mag = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((st) => st >= raw);
+  const lo = Math.floor(vmin * 0.97 / step) * step, hi = Math.ceil(vmax * 1.03 / step) * step;
+  const x = (v) => `${((v - lo) / (hi - lo)) * 100}%`;
+  const ticks = []; for (let t = lo; t <= hi + step / 2; t += step) ticks.push(t);
+  const bar = (v, cls) => `<div class="ff-bar ${cls}">
+      <span class="rng" style="left:${x(v.p10)};width:calc(${x(v.p90)} - ${x(v.p10)})"></span>
+      <span class="tick" style="left:${x(v[k])}"></span>
+</div>`;
+  const row = (m) => {
+    const v = m.value_per_share, u = fin(c.price) ? v[k] / c.price - 1 : null;
+    return `<div class="ff-row ${m.weight > 0 ? "" : "ref"}">
+      <div class="ff-name"><b>${esc(m.name)}</b><div class="muted small">${esc(m.role)}${m.weight > 0 ? ` · ${pct(m.weight, true)}` : ""}</div></div>
+      ${bar(v, "")}
+      <div class="ff-num">${price(v.p10)} – ${price(v.p90)}</div>
+      <div class="ff-num"><b>${price(v[k])}</b></div>
+      <div class="ff-num ${upClass(u)}">${signed(u)}</div>
+      <div class="ff-why small muted" title="${esc(m.reason)}">${esc(m.reason)}</div></div>`;
+  };
+  const b = c.blend;
+  $("val-ff").innerHTML = `<div class="card">
+    <div class="card-head"><h2>Football field</h2><span class="muted small">Value per share: bar = bear to bull, tick = ${SCENARIOS[k].toLowerCase()}, line = share price</span>
+      <div class="spacer">${scenarioToggle()}</div></div>
+    <div class="ff">
+      <div class="ff-row ff-head"><div></div>
+        <div class="ff-axis">${ticks.map((t) => `<span style="left:${x(t)}">$${Math.abs(t - Math.round(t)) < 1e-9 ? Math.round(t) : t.toFixed(1)}</span>`).join("")}</div>
+        <div class="ff-num">Bear – bull</div><div class="ff-num">${SCENARIOS[k]}</div><div class="ff-num">vs price</div><div class="ff-why small">Why this role</div></div>
+      ${methods.map(row).join("")}
+      ${b ? `<div class="ff-row total"><div class="ff-name"><b>Blended</b><div class="muted small">weights above</div></div>${bar(b, "blend")}
+        <div class="ff-num">${price(b.p10)} – ${price(b.p90)}</div><div class="ff-num"><b>${price(b[k])}</b></div>
+        <div class="ff-num ${upClass(c.upside?.[k])}">${signed(c.upside?.[k])}</div><div class="ff-why"></div></div>` : ""}
+    </div>
+    ${c.plan?.notes?.length ? `<p class="legend-note">${c.plan.notes.map(esc).join(" ")}</p>` : ""}
+    <p class="legend-note">Weights: assumptions/${esc(state.company.ticker)}/reconcile.json can override them (<code>{"weights": {"dcf": 0.7, "comps": 0.3}}</code>) or switch to <code>"context": "acquisition"</code> for an offer-price view.</p>
+  </div>`;
+  wireToggle($("val-ff"));
+  drawPriceLine(fin(c.price) ? (c.price - lo) / (hi - lo) : null, c.price);
+}
+
+// One price line running through every row of the football field, so each
+// method's range reads against the same reference.
+function drawPriceLine(frac, value) {
+  const ff = document.querySelector("#val-ff .ff");
+  if (!ff || frac === null) return;
+  const place = () => {
+    ff.querySelectorAll(".ff-price").forEach((n) => n.remove());
+    const bars = ff.querySelectorAll(".ff-bar");
+    if (!bars.length) return;
+    const box = ff.getBoundingClientRect();
+    const first = bars[0].getBoundingClientRect(), last = bars[bars.length - 1].getBoundingClientRect();
+    const left = first.left - box.left + frac * first.width;
+    const add = (top, bottom, label) => {
+      const line = Object.assign(document.createElement("div"), { className: "ff-price" });
+      line.style.cssText = `left:${left}px;top:${top}px;height:${bottom - top}px`;
+      if (label) line.innerHTML = `<span>Price ${price(value)}</span>`;
+      ff.appendChild(line);
+    };
+    // bars stacked in one column (desktop): one line through all rows;
+    // bars on their own lines (phone): a segment through each bar, same x
+    const stacked = [...bars].every((b) => Math.abs(b.getBoundingClientRect().left - first.left) < 1)
+      && !window.matchMedia("(max-width: 900px)").matches;
+    if (stacked) add(first.top - box.top - 8, last.bottom - box.top + 8, true);
+    else bars.forEach((b, i) => { const r = b.getBoundingClientRect(); add(r.top - box.top - 4, r.bottom - box.top + 4, i === 0); });
+  };
+  place();
+  if (ff._ro) ff._ro.disconnect();
+  ff._ro = new ResizeObserver(place);
+  ff._ro.observe(ff);
+}
+
+function renderProfileCard(root) {
+  const p = state.detail.profile;
+  if (!p?.traits) return;
+  const m = (k, v) => {
+    const fmt = { revenue_cagr: ["Revenue CAGR", pct], operating_margin: ["Operating margin", pct],
+      fcf_positive_share: ["FCF positive in", (x) => pct(x, true) + " of years"], fcf_margin_stdev: ["FCF margin stdev", (x) => fin(x) ? `${(x * 100).toFixed(1)} pts` : NA],
+      capex_to_sales: ["Capex / sales", pct], noa_turnover: ["NOA turnover", times], debt_to_ebitda: ["Debt / EBITDA", times],
+      net_debt_to_equity: ["Net debt / equity", num], liabilities_to_assets: ["Liabilities / assets", pct] }[k];
+    return fmt ? `${fmt[0]} ${fmt[1](v)}` : null;
+  };
+  const plan = state.comparison?.plan;
+  const html = `<div class="card">
+    <div class="card-head"><h2>Company profile</h2><span class="muted small">${esc(p.as_of_period || "")} and ${p.history_years} fiscal years · methods follow these traits, not the sector label</span></div>
+    <div class="traits">${Object.entries(p.traits).map(([k, t]) => `<div class="trait">
+      <div class="label">${TRAIT_NAMES[k] || k}</div><div class="tval">${esc(t.label[0].toUpperCase() + t.label.slice(1))}</div>
+      <div class="small">${Object.entries(t.measures).map(([mk, mv]) => m(mk, mv)).filter(Boolean).join("; ")}</div>
+      <div class="rule">Rule: ${esc(t.rule)}</div></div>`).join("")}</div>
+    ${plan ? `<p style="margin:14px 0 0"><b>So:</b> ${esc(plan.summary)}</p>
+      <ul class="small" style="margin:6px 0 0 18px; padding:0">${plan.methods.filter((x) => x.role !== "reference" || x.ran).map((x) =>
+        `<li><b>${esc(x.name)}</b> (${esc(x.role)}${x.weight > 0 ? `, ${pct(x.weight, true)}` : ""}): ${esc(x.reason)}${x.ran ? "" : " <span class='muted'>(not run)</span>"}</li>`).join("")}</ul>` : ""}
+  </div>`;
+  if (root.id === "val-profile") root.innerHTML = html; else root.insertAdjacentHTML("beforeend", html);
+}
+
+// Similar companies: nearest by profile measures (z-scored), not by sector.
+const SIM_KEYS = ["revenue_cagr", "operating_margin", "fcf_margin_stdev", "capex_to_sales", "noa_turnover", "debt_to_ebitda", "log_revenue"];
+
+function similarity(all, me) {
+  const vec = (c) => ({ ...c.vector, log_revenue: c.vector.revenue > 0 ? Math.log10(c.vector.revenue) : null });
+  const vs = all.map(vec), mine = vec(me);
+  const stats = Object.fromEntries(SIM_KEYS.map((k) => {
+    const xs = vs.map((v) => v[k]).filter(fin);
+    const mu = xs.reduce((a, b) => a + b, 0) / (xs.length || 1);
+    const sd = Math.sqrt(xs.reduce((a, b) => a + (b - mu) ** 2, 0) / (xs.length || 1)) || 1;
+    return [k, { mu, sd }];
+  }));
+  return all.map((c, i) => {
+    let d = 0, n = 0;
+    for (const k of SIM_KEYS) {
+      if (fin(vs[i][k]) && fin(mine[k])) { d += ((vs[i][k] - mine[k]) / stats[k].sd) ** 2; n++; }
+    }
+    const traitsMatch = Object.keys(me.traits).filter((t) => c.traits[t] === me.traits[t]).length;
+    return { c, score: n ? 1 / (1 + Math.sqrt(d / n)) : null, traitsMatch };
+  });
+}
+
+async function renderSimilar(root) {
+  let data;
+  try { data = state.companies || (state.companies = await getJSON("data/companies.json")); } catch { return; }
+  const all = data.companies || [];
+  const me = all.find((c) => c.ticker === state.company.ticker);
+  if (!me) return;
+  const ranked = similarity(all, me).filter((r) => r.c.ticker !== me.ticker && r.c.demo === me.demo)
+    .sort((a, b) => (b.score ?? -1) - (a.score ?? -1)).slice(0, 10);
+  const med = (k, grp) => { const xs = ranked.map((r) => r.c[grp][k]).filter(fin).sort((a, b) => a - b);
+    return xs.length ? (xs.length % 2 ? xs[(xs.length - 1) / 2] : (xs[xs.length / 2 - 1] + xs[xs.length / 2]) / 2) : null; };
+  const cols = [["P/E", "multiples", "pe", times], ["EV/EBITDA", "multiples", "ev_ebitda", times], ["EV/Sales", "multiples", "ev_sales", times],
+    ["P/B", "multiples", "pb", times], ["FCF yield", "multiples", "fcf_yield", pct], ["Rev. CAGR", "rates", "revenue_cagr", pct],
+    ["Op. margin", "rates", "operating_margin", pct], ["RNOA", "rates", "rnoa", pct], ["Debt/EBITDA", "rates", "debt_to_ebitda", times],
+    ["WACC", "rates", "wacc", pct]];
+  const cells = (c) => cols.map(([, g, k, f]) => `<td class="${fin(c[g][k]) ? "" : "na"}">${f(c[g][k])}</td>`).join("");
+  const html = `<div class="card">
+    <div class="card-head"><h2>Similar companies</h2><span class="muted small">ranked by closeness of growth, margins, cash-flow stability, capital intensity, leverage and size, across every company published here</span></div>
+    ${ranked.length ? "" : `<p class="muted">No other ${me.demo ? "demo " : ""}companies published yet. Run the pipeline for more tickers; they're ranked here by profile, not sector.</p>`}
+    <div class="table-wrap"><table>
+      <thead><tr><th>Company</th><th>Similarity</th><th>Traits shared</th>${cols.map(([n]) => `<th>${n}</th>`).join("")}</tr></thead>
+      <tbody>
+        <tr class="total"><td>${esc(me.ticker)} <span class="muted small">this company</span></td><td>–</td><td>–</td>${cells(me)}</tr>
+        ${ranked.map((r) => `<tr><td>${esc(r.c.ticker)} <span class="muted small">${esc(r.c.name)}</span></td><td>${fin(r.score) ? pct(r.score, true) : NA}</td>
+          <td title="${Object.entries(r.c.traits).map(([k, v]) => `${TRAIT_NAMES[k]}: ${v}`).join("\n")}">${r.traitsMatch} of 4</td>${cells(r.c)}</tr>`).join("")}
+        ${ranked.length > 1 ? `<tr class="total"><td>Peer median</td><td></td><td></td>${cols.map(([, g, k, f]) => `<td>${f(med(k, g))}</td>`).join("")}</tr>` : ""}
+      </tbody></table></div>
+    <p class="legend-note">Multiples need a share price, which currently comes from each company's DCF assumptions; "–" means no price yet. Hover "Traits shared" for each company's profile.</p>
+  </div>`;
+  if (root.id === "val-similar") root.innerHTML = html; else root.insertAdjacentHTML("beforeend", html);
 }
 
 function renderDcfCard() {
@@ -644,7 +826,7 @@ function renderDcfCard() {
           .map(([l, k]) => `<tr class="${k === "fcf" ? "total" : ""}"><td>${l}</td>${d.projection.map((y) => `<td>${millions(y[k])}</td>`).join("")}</tr>`).join("")}
       </tbody></table></div>
     <p class="legend-note">Year 1 is the closing year (not discounted). Range: conservative and aggressive move near-term growth with WACC and terminal growth with terminal WACC, blended by the terminal value's share.${r.notes?.length ? " " + esc(r.notes.filter((n) => !n.startsWith("range =")).join(" ")) : ""}</p>`;
-  $("val-body").insertBefore(card, $("val-body").children[1] || null);
+  ($("val-dcf") || $("val-body")).appendChild(card);
 }
 
 // ---------------------------------------------------------------- run pipeline

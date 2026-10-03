@@ -1,0 +1,26 @@
+{
+  "version": "0.1.0",
+  "description": "Thresholds for the company profile. Packs override any key under l1.profile_rules.",
+  "history_years": 5,
+  "stage": {
+    "high_growth_cagr": 0.15,
+    "mature_growth_cagr": 0.03
+  },
+  "predictability": {
+    "high_max_fcf_margin_stdev": 0.03,
+    "low_min_fcf_margin_stdev": 0.08,
+    "high_min_positive_share": 0.8,
+    "low_max_positive_share": 0.5
+  },
+  "asset_intensity": {
+    "light_max_capex_to_sales": 0.03,
+    "light_min_noat": 3.0,
+    "heavy_min_capex_to_sales": 0.10,
+    "heavy_max_noat": 1.0
+  },
+  "capital_structure": {
+    "low_max_debt_to_ebitda": 2.0,
+    "high_min_debt_to_ebitda": 4.0,
+    "financial_min_liabilities_to_assets": 0.85
+  }
+}
