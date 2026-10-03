@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-03T05:46:06+00:00",
+  "generated_at": "2026-10-03T05:49:11+00:00",
   "companies": [
     {
       "ticker": "AAPL",
@@ -17,6 +17,96 @@
           "latest": {
             "annual": "FY2025",
             "ttm": "TTM 2026-06-27"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "DELL",
+      "name": "Dell Technologies Inc.",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-10-03",
+          "detail": "DELL/2026-10-03/company_detail.json",
+          "full": "DELL/2026-10-03/company_detail_full.json",
+          "comparison": null,
+          "models": [],
+          "latest": {
+            "annual": "FY2026",
+            "ttm": "TTM 2026-07-31"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "HPQ",
+      "name": "HP INC.",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-10-03",
+          "detail": "HPQ/2026-10-03/company_detail.json",
+          "full": "HPQ/2026-10-03/company_detail_full.json",
+          "comparison": null,
+          "models": [],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-07-31"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "IBM",
+      "name": "INTERNATIONAL BUSINESS MACHINES CORP",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-10-03",
+          "detail": "IBM/2026-10-03/company_detail.json",
+          "full": "IBM/2026-10-03/company_detail_full.json",
+          "comparison": null,
+          "models": [],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-06-30"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "INGM",
+      "name": "Ingram Micro Holding Corp",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-10-03",
+          "detail": "INGM/2026-10-03/company_detail.json",
+          "full": "INGM/2026-10-03/company_detail_full.json",
+          "comparison": null,
+          "models": [],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-06-27"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "SNX",
+      "name": "TD SYNNEX CORPORATION",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-10-03",
+          "detail": "SNX/2026-10-03/company_detail.json",
+          "full": "SNX/2026-10-03/company_detail_full.json",
+          "comparison": null,
+          "models": [],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-08-31"
           }
         }
       ]
