@@ -1,11 +1,23 @@
 {
-  "generated_at": "2026-10-02T23:25:02+00:00",
+  "generated_at": "2026-10-03T02:16:46+00:00",
   "companies": [
     {
       "ticker": "AAPL",
       "name": "Apple Inc.",
       "demo": false,
       "runs": [
+        {
+          "as_of": "2026-10-03",
+          "detail": "AAPL/2026-10-03/company_detail.json",
+          "comparison": "AAPL/2026-10-03/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-06-27"
+          }
+        },
         {
           "as_of": "2026-10-02",
           "detail": "AAPL/2026-10-02/company_detail.json",
@@ -14,6 +26,27 @@
           "latest": {
             "annual": "FY2025",
             "ttm": "TTM 2026-06-27"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "DEMO",
+      "name": "Demo Manufacturing Co. (synthetic)",
+      "demo": true,
+      "runs": [
+        {
+          "as_of": "2026-09-30",
+          "detail": "DEMO/2026-09-30/company_detail.json",
+          "comparison": "DEMO/2026-09-30/comparison.json",
+          "models": [
+            "comps",
+            "dcf",
+            "precedents"
+          ],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-06-30"
           }
         }
       ]
