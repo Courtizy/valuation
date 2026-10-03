@@ -89,6 +89,50 @@
       }
     },
     {
+      "ticker": "VZ",
+      "name": "VERIZON COMMUNICATIONS INC",
+      "demo": false,
+      "as_of": "2026-10-02",
+      "period": "TTM 2026-06-30",
+      "traits": {
+        "stage": "mature",
+        "predictability": "unknown",
+        "asset_intensity": "moderate",
+        "capital_structure": "low leverage"
+      },
+      "vector": {
+        "revenue_cagr": 0.008457873514414072,
+        "operating_margin": 0.20540696209366788,
+        "fcf_margin_stdev": null,
+        "capex_to_sales": null,
+        "noa_turnover": 1.1191281927322536,
+        "debt_to_ebitda": 0.4579435322807829,
+        "revenue": 138895000000,
+        "rnoa": 0.1337442591249698
+      },
+      "rates": {
+        "revenue_cagr": 0.008457873514414072,
+        "operating_margin": 0.20540696209366788,
+        "rnoa": 0.1337442591249698,
+        "capex_to_sales": null,
+        "debt_to_ebitda": 0.4579435322807829,
+        "wacc": null,
+        "beta": null
+      },
+      "market": {
+        "price": null,
+        "market_cap": null,
+        "enterprise_value": null
+      },
+      "multiples": {
+        "pe": null,
+        "ev_ebitda": null,
+        "ev_sales": null,
+        "pb": null,
+        "fcf_yield": null
+      }
+    },
+    {
       "ticker": "DEMO",
       "name": "Demo Manufacturing Co. (synthetic)",
       "demo": true,

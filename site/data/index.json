@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-03T03:56:30+00:00",
+  "generated_at": "2026-10-03T04:10:57+00:00",
   "companies": [
     {
       "ticker": "AAPL",
@@ -43,6 +43,23 @@
           "latest": {
             "annual": null,
             "ttm": null
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "VZ",
+      "name": "VERIZON COMMUNICATIONS INC",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-10-02",
+          "detail": "VZ/2026-10-02/company_detail.json",
+          "comparison": null,
+          "models": [],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-06-30"
           }
         }
       ]
