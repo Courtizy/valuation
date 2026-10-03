@@ -15,7 +15,7 @@
     "inputs": [
       {
         "file": "canonical_statements.json",
-        "sha256": "60bf9a4f649c645d5d16497050725a8cfc2099887847c735c7dc2ad2ac0bb2b5"
+        "sha256": "04d666752cb7dfc745b8c617aa504cdf59b7d6c616e87f31460669e5545a7954"
       }
     ]
   },
