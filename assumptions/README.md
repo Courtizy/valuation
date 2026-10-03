@@ -9,7 +9,7 @@ file is missing and names the file it expected.
 | Key | Meaning |
 |---|---|
 | `mode` | `forecast` (your growth gives a value) or `implied` (solve growth so value = price) |
-| `base_period` | `ttm` (default) or `annual`: which latest 12 months the projection starts from |
+| `base_period` | `annual` (default: the last reported fiscal year, so Year 1 = the fiscal year in progress, the closing year) or `ttm` (latest twelve months) |
 | `market.price`, `price_date` | share price used for market D/E, the TSM and implied mode |
 | `market.basic_shares` | overrides the share count from filings |
 | `market.options` | `[[options_outstanding, weighted_avg_strike], ...]` for the treasury stock method |

@@ -8,7 +8,8 @@ L1  Company detail  normalize → canonical_statements.json; build → company_d
                     (annual / quarterly / TTM, ratios in two frameworks)
 L2  Models          dcf, comps, lbo, ipo, precedents → model_results/; reconcile → comparison.json
 L3  App             site/ on GitHub Pages; Actions run the pipeline and publish JSON
-core/               shared math: three-statement projection (more to come)
+core/               shared math: projection, cost of capital, DCF, shares
+runner/             sequencing for companies and sector screens (pipeline.py is the entry)
 ```
 
 ## Quick start
@@ -18,7 +19,7 @@ pip install -e ".[dev]"
 pytest
 export SEC_USER_AGENT="Your Name you@example.com"
 python pipeline.py run AAPL --stop-after L1          # data/AAPL/<today>/company_detail.json
-python pipeline.py sector sic-of:AAPL                # data/sectors/sic-3571/<today>/sector.json
+python pipeline.py sector sic-of:AAPL                # data/sectors/sector-technology/<today>/sector.json
 python -m L3_app.publish && python -m http.server -d site 8000
 ```
 

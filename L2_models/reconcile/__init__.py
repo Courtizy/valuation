@@ -69,6 +69,7 @@ def build_comparison(result_paths: list[str | Path], detail: dict | None = None,
     for m in plan["methods"]:
         vps = by_model.get(m["model"], {}).get("value_per_share")
         m["value_per_share"] = vps
+        m["illustrative"] = bool(by_model.get(m["model"], {}).get("illustrative"))
     blend = {k: sum(m["weight"] * m["value_per_share"][k] for m in plan["methods"] if m["weight"] > 0)
              for k in ("p10", "p50", "p90")} if any(m["weight"] > 0 for m in plan["methods"]) else None
     price = ((detail or {}).get("market") or {}).get("price")

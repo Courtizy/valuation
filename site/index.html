@@ -16,20 +16,20 @@
     <div class="topbar-inner">
       <div class="brand">
         <h1>Valuation Model</h1>
-        <span id="demo-badge" class="badge" hidden>Synthetic demo data</span>
+        <span id="demo-badge" class="badge" hidden>Synthetic Demo Data</span>
       </div>
       <div class="picker">
         <label class="small muted" for="company">Company</label>
         <select id="company" aria-label="Company"></select>
-        <label class="small muted" for="asof">As of</label>
+        <label class="small muted" for="asof">As Of</label>
         <select id="asof" aria-label="As-of date"></select>
         <button id="theme" type="button" aria-label="Toggle theme" title="Theme">Theme: auto</button>
       </div>
     </div>
     <nav class="tabs" role="tablist" aria-label="Sections">
-      <button class="tab" role="tab" id="tab-company" aria-controls="panel-company" data-tab="company">Company detail</button>
+      <button class="tab" role="tab" id="tab-company" aria-controls="panel-company" data-tab="company">Company Detail</button>
       <button class="tab" role="tab" id="tab-valuation" aria-controls="panel-valuation" data-tab="valuation">Valuation</button>
-      <button class="tab" role="tab" id="tab-run" aria-controls="panel-run" data-tab="run">Run pipeline</button>
+      <button class="tab" role="tab" id="tab-run" aria-controls="panel-run" data-tab="run">Run Pipeline</button>
     </nav>
   </header>
 
@@ -46,8 +46,22 @@
         </div>
         <div class="card">
           <div class="card-head"><h2>Returns</h2><span class="muted small">Average balances, annual</span></div>
+          <p class="chart-note">RNOA isolates operating performance: NOPAT on net operating assets. ROCE is the return on common equity after financing. The shaded gap is the financing effect, FLEV × (RNOA − net borrowing cost):
+            <span class="swatch pos"></span>leverage adds to shareholder returns <span class="swatch neg"></span>leverage subtracts.</p>
           <div class="legend" id="ret-legend"></div>
           <div id="ret-chart"></div>
+        </div>
+      </div>
+      <div class="grid-2" style="margin-top:16px">
+        <div class="card">
+          <div class="card-head"><h2>Margins</h2><span class="muted small" id="mar-sub"></span></div>
+          <div class="legend" id="mar-legend"></div>
+          <div id="mar-chart"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>Cash Conversion</h2><span class="muted small">Net income vs. FCF (CFO − Capex), $</span></div>
+          <div class="legend" id="cash-legend"></div>
+          <div id="cash-chart"></div>
         </div>
       </div>
       <div class="card" style="margin-top:16px">
@@ -56,12 +70,13 @@
           <div class="seg spacer" id="view-seg" role="group" aria-label="Period view">
             <button type="button" data-view="annual" aria-pressed="true">Annual</button>
             <button type="button" data-view="quarterly" aria-pressed="false">Quarterly</button>
-            <button type="button" data-view="ttm" aria-pressed="false">TTM</button>
+            <button type="button" data-view="ttm" aria-pressed="false">LTM</button>
           </div>
         </div>
         <div class="table-wrap"><table id="stmt-table"></table></div>
         <p class="legend-note"><span class="mark">d</span> derived: Q4 = full year − 9-month YTD, or a quarter from YTD differences. Shaded columns are estimates. Values in millions unless noted.</p>
         <p class="legend-note" id="stmt-note"></p>
+        <p class="legend-note" id="stmt-full"></p>
       </div>
       <div class="card">
         <div class="card-head">
@@ -89,7 +104,7 @@
     <!-- Run pipeline -->
     <section id="panel-run" class="panel" role="tabpanel" aria-labelledby="tab-run" hidden>
       <div class="card">
-        <div class="card-head"><h2>Run the pipeline</h2></div>
+        <div class="card-head"><h2>Run the Pipeline</h2></div>
         <p class="muted">Starts the <code>Pipeline</code> GitHub Action. It fetches SEC filings, builds company detail, publishes the results here and redeploys the site. That usually takes a few minutes.</p>
         <form id="run-form" autocomplete="off">
           <div class="seg" id="r-mode" role="group" aria-label="What to run" style="margin-bottom:12px">
@@ -99,12 +114,12 @@
           <div id="r-company">
             <div class="form-grid">
               <div class="field"><label for="r-ticker">Ticker</label><input type="text" id="r-ticker" pattern="[A-Za-z][A-Za-z0-9.\-]{0,9}" placeholder="AAPL"></div>
-              <div class="field"><label for="r-asof">As of</label><input type="date" id="r-asof"></div>
+              <div class="field"><label for="r-asof">As Of</label><input type="date" id="r-asof"></div>
             </div>
             <fieldset style="margin-top:12px">
               <legend>Run</legend>
               <div class="checks">
-                <label><input type="checkbox" id="r-detail" checked> Company details <span class="hint">filings, statements, ratios, profile, trend projection</span></label>
+                <label><input type="checkbox" id="r-detail" checked> Company Details <span class="hint">filings, statements, ratios, profile, trend projection</span></label>
               </div>
               <div class="checks" id="r-models" style="margin-top:8px">
                 <label><input type="checkbox" value="dcf"> DCF</label>
@@ -118,43 +133,45 @@
           </div>
           <div id="r-sector" hidden>
             <div class="form-grid">
-              <div class="field"><label for="r-skind">Sector by</label>
+              <div class="field"><label for="r-skind">Sector By</label>
                 <select id="r-skind">
-                  <option value="sic-of">A company's industry code</option>
-                  <option value="sic">SEC industry code (SIC)</option>
-                  <option value="traits">Trait group</option>
-                  <option value="list">My list</option>
+                  <option value="sic-of">A Company's Sector</option>
+                  <option value="sector">Sector</option>
+                  <option value="sic">SIC Code</option>
+                  <option value="traits">Trait Group</option>
+                  <option value="list">My List</option>
                 </select></div>
               <div class="field" data-for="sic-of"><label for="r-sicof">Ticker</label><input type="text" id="r-sicof" placeholder="AAPL"></div>
-              <div class="field" data-for="sic" hidden><label for="r-sic">SIC code</label><input type="text" id="r-sic" inputmode="numeric" pattern="[0-9]{4}" placeholder="3674"></div>
-              <div class="field" data-for="list" hidden><label for="r-list">List name</label><input type="text" id="r-list" placeholder="example_chips">
+              <div class="field" data-for="sector" hidden><label for="r-sector-id">Sector</label><select id="r-sector-id"></select></div>
+              <div class="field" data-for="sic" hidden><label for="r-sic">SIC Code</label><input type="text" id="r-sic" inputmode="numeric" pattern="[0-9]{4}" placeholder="3674"></div>
+              <div class="field" data-for="list" hidden><label for="r-list">List Name</label><input type="text" id="r-list" placeholder="example_chips">
                 <span class="hint">sectors/<b>name</b>.json in the repo</span></div>
               <div class="field" data-for="traits" hidden><label for="r-t-stage">Stage</label><select id="r-t-stage" data-trait="stage"><option value="">any</option><option>high growth</option><option>mature grower</option><option>mature</option><option>declining</option></select></div>
               <div class="field" data-for="traits" hidden><label for="r-t-pred">Predictability</label><select id="r-t-pred" data-trait="predictability"><option value="">any</option><option>high</option><option>medium</option><option>low</option></select></div>
-              <div class="field" data-for="traits" hidden><label for="r-t-int">Asset intensity</label><select id="r-t-int" data-trait="asset_intensity"><option value="">any</option><option>light</option><option>moderate</option><option>heavy</option></select></div>
-              <div class="field" data-for="traits" hidden><label for="r-t-cap">Capital structure</label><select id="r-t-cap" data-trait="capital_structure"><option value="">any</option><option>low leverage</option><option>moderate leverage</option><option>high leverage</option><option>financial</option></select></div>
-              <div class="field"><label for="r-sasof">As of</label><input type="date" id="r-sasof"></div>
+              <div class="field" data-for="traits" hidden><label for="r-t-int">Asset Intensity</label><select id="r-t-int" data-trait="asset_intensity"><option value="">any</option><option>light</option><option>moderate</option><option>heavy</option></select></div>
+              <div class="field" data-for="traits" hidden><label for="r-t-cap">Capital Structure</label><select id="r-t-cap" data-trait="capital_structure"><option value="">any</option><option>low leverage</option><option>moderate leverage</option><option>high leverage</option><option>financial</option></select></div>
+              <div class="field"><label for="r-sasof">As Of</label><input type="date" id="r-sasof"></div>
             </div>
-            <p class="hint" style="margin-top:8px">Screens every company in the sector from SEC data (a few figures each). Full company detail is built when you open a company from the sector table.</p>
+            <p class="hint" style="margin-top:8px">Screens every company in the sector from SEC data (a few figures each, the 300 largest by revenue). Benchmarks then compare at sector, industry group or industry level. Full company detail is built when you open a company from the sector table.</p>
           </div>
           <fieldset>
             <legend>GitHub</legend>
             <div class="form-grid">
               <div class="field"><label for="r-owner">Owner</label><input type="text" id="r-owner"></div>
               <div class="field"><label for="r-repo">Repository</label><input type="text" id="r-repo"></div>
-              <div class="field" style="grid-column: 1 / -1"><label for="r-token">Token (fine-grained, this repo: Actions read and write; Contents read and write to save peers)</label>
+              <div class="field" style="grid-column: 1 / -1"><label for="r-token">GitHub Token <span class="hint">fine-grained, this repo only: Actions and Contents, read and write</span></label>
                 <input type="password" id="r-token" placeholder="github_pat_…">
                 <span class="hint">Sent only to api.github.com from your browser. Leave blank to use the Actions page or the CLI instead.</span></div>
             </div>
-            <div class="checks" style="margin-top:8px"><label><input type="checkbox" id="r-remember"> Remember token on this device</label></div>
+            <div class="checks" style="margin-top:8px"><label><input type="checkbox" id="r-remember"> Remember Token on This Device</label></div>
           </fieldset>
           <div class="actions">
-            <button type="submit" class="primary">Start run</button>
-            <a id="r-actions-link" target="_blank" rel="noopener">Open the Actions page</a>
+            <button type="submit" class="primary">Start Run</button>
+            <a id="r-actions-link" target="_blank" rel="noopener">Open the Actions Page</a>
             <span id="r-status" class="status" role="status"></span>
           </div>
         </form>
-        <h3 style="margin-top:16px">Same run from a terminal</h3>
+        <h3 style="margin-top:16px">Same Run from a Terminal</h3>
         <pre id="r-cli"></pre>
       </div>
     </section>
@@ -162,6 +179,6 @@
   <footer>
     Built from SEC companyfacts. Not investment advice. <span id="generated"></span>
   </footer>
-  <script type="module" src="assets/app.js"></script>
+  <script type="module" src="assets/main.js"></script>
 </body>
 </html>

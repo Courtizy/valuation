@@ -27,6 +27,8 @@ choice of methods downstream can be explained.
 """
 from __future__ import annotations
 
+from core.num import div as _div
+
 import json
 import statistics
 from pathlib import Path
@@ -41,8 +43,6 @@ def load_rules(overrides: dict | None = None) -> dict:
     return rules
 
 
-def _div(a, b):
-    return None if a is None or b in (None, 0) else a / b
 
 
 def _latest(detail: dict) -> tuple[dict | None, dict | None]:

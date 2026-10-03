@@ -6,17 +6,16 @@ from pathlib import Path
 
 import pytest
 
+from fakes import FakeSecClient
 from L0_ingest.sec_companyfacts import SecCompanyFactsAdapter
 from pipeline import Paths, execute, main, plan
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
-class FakeClient:
-    def get_bytes(self, url: str) -> bytes:
-        if url.endswith("company_tickers.json"):
-            return (FIXTURES / "company_tickers.json").read_bytes()
-        return (FIXTURES / "companyfacts_CIK0000320193.json").read_bytes()
+def FakeClient():
+    return FakeSecClient(fallback=lambda url: FIXTURES / ("company_tickers.json" if url.endswith("company_tickers.json")
+                                                          else "companyfacts_CIK0000320193.json"))
 
 
 def factory():
@@ -95,3 +94,12 @@ def test_cli_dry_run(tmp_path):
                "--assumptions-dir", str(tmp_path / "assumptions"), "--dry-run"],
               adapter_factory=factory)
     assert rc == 0
+
+
+def test_peer_detail_built_for_the_same_date_is_reused(tmp_path):
+    paths = make_paths(tmp_path, peers=["MSFT"])
+    d = paths.detail("MSFT", "2026-09-30")
+    d.parent.mkdir(parents=True)
+    d.write_text("{}")
+    names = [s.name for s in plan("AAPL", ["comps"], "2026-09-30", paths, factory)]
+    assert "ingest MSFT" not in names and "ingest AAPL" in names

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "valuation"
-version = "0.0.2"
+version = "0.1.0"
 requires-python = ">=3.10"
 dependencies = []  # core pipeline is stdlib-only; extras below
 
@@ -17,7 +17,7 @@ export = ["openpyxl"]   # per-model Excel templates, memo; course parity tests
 py-modules = ["pipeline", "lineage"]
 
 [tool.setuptools.packages.find]
-include = ["L0_ingest*", "L1_detail*", "L2_models*", "L3_app*", "core*"]
+include = ["L0_ingest*", "L1_detail*", "L2_models*", "L3_app*", "core*", "runner*"]
 
 [tool.setuptools.package-data]
 L1_detail = ["*.json"]

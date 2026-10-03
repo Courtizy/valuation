@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from L0_ingest.http import HttpError
+from fakes import FakeSecClient as _FakeSecClient
 from L0_ingest.sec_companyfacts import TICKERS_URL
 from L0_ingest.sec_sector import FRAMES_URL, SecSectorAdapter, frame_plan, parse_sic_page, screen_year
 from L1_detail.profile import classify_stage, load_rules
@@ -37,29 +37,28 @@ def sic_html(ciks, start=0):
             f'</div><table class="tableFile2">{rows}</table>')
 
 
-class FakeSecClient:
-    """Serves frames, the ticker map, an EDGAR SIC page and Apple's submissions file."""
+def _sec_route(url: str):
+    """Frames, the ticker map, EDGAR SIC pages and two submissions files."""
+    if url == TICKERS_URL:
+        return json.dumps({str(i): t for i, t in enumerate(FX["_tickers"])})
+    if "browse-edgar" in url:
+        first = "start=0&" in url
+        members = {"SIC=3674&": SEMIS + [DEFUNCT], "SIC=3571&": [320193]}
+        return sic_html(next((m for k, m in members.items() if k in url and first), []))
+    if "submissions/CIK0000320193" in url:
+        return FIXTURES / "submissions_CIK0000320193.json"
+    if "submissions/CIK0000002488" in url:
+        return json.dumps({"sic": "3674", "sicDescription": "Semiconductors & Related Devices"})
+    if "/frames/" in url:
+        tag, period = url.split("/us-gaap/")[1].split("/USD/")
+        rows = FX.get(f"{tag}/{period.removesuffix('.json')}")
+        if isinstance(rows, list):
+            return json.dumps({"data": [dict(zip(["cik", "entityName", "start", "end", "val"], r)) for r in rows]})
+    return None
 
-    def __init__(self):
-        self.calls: list[str] = []
 
-    def get_bytes(self, url: str) -> bytes:
-        self.calls.append(url)
-        if url == TICKERS_URL:
-            return json.dumps({str(i): t for i, t in enumerate(FX["_tickers"])}).encode()
-        if "browse-edgar" in url:
-            return sic_html(SEMIS + [DEFUNCT] if "start=0&" in url else []).encode()
-        if "submissions/CIK0000320193" in url:
-            return (FIXTURES / "submissions_CIK0000320193.json").read_bytes()
-        if "submissions/CIK0000002488" in url:
-            return json.dumps({"sic": "3674", "sicDescription": "Semiconductors & Related Devices"}).encode()
-        if "/frames/" in url:
-            tag, period = url.split("/us-gaap/")[1].split("/USD/")
-            rows = FX.get(f"{tag}/{period.removesuffix('.json')}")
-            if not isinstance(rows, list):
-                raise HttpError(url, 404, "Not Found")
-            return json.dumps({"data": [dict(zip(["cik", "entityName", "start", "end", "val"], r)) for r in rows]}).encode()
-        raise HttpError(url, 404, "Not Found")
+def FakeSecClient():
+    return _FakeSecClient(fallback=_sec_route)
 
 
 def sector_adapter():
@@ -182,7 +181,7 @@ def test_parse_sector_spec():
             parse_sector_spec(bad)
 
 
-def test_run_sector_sic_of_writes_file_and_reuses_raw(tmp_path):
+def test_run_sector_sic_of_screens_the_whole_sector(tmp_path):
     paths = Paths(tmp_path / "data", tmp_path / "assumptions")
     clients = []
 
@@ -191,14 +190,25 @@ def test_run_sector_sic_of_writes_file_and_reuses_raw(tmp_path):
         clients.append(c)
         return SecSectorAdapter(client=c)
 
-    out = run_sector("sic-of:AMD", "2026-10-02", paths, fac)
+    out = run_sector("sic-of:AAPL", "2026-10-02", paths, fac)
     doc = json.loads(out.read_text())
-    assert out == paths.sector("sic-3674", "2026-10-02")
-    assert doc["label"] == "SIC 3674 · Semiconductors & Related Devices"
-    assert doc["notes"][0] == "AMD files under SIC 3674" and doc["lineage"]["inputs"]
-    assert paths.sic_list("2026-10-02", "3674").exists()
+    assert out == paths.sector("sector-technology", "2026-10-02")
+    assert doc["kind"] == "sector" and doc["label"] == "Technology"
+    assert doc["notes"][0].startswith("AAPL files under SIC 3571") and "Technology › Hardware & Equipment › Hardware & Peripherals" in doc["notes"][0]
+    tick = {c["ticker"]: c for c in doc["companies"]}
+    assert set(tick) == {"AAPL", "NVDA", "INTC", "QCOM", "MU", "AMD", "TXN", "ADI"}
+    assert tick["AAPL"]["classification"] == {"sector": "technology", "group": "hardware_equipment", "industry": "hardware_peripherals"}
+    assert tick["NVDA"]["classification"]["industry"] == "semiconductors" and tick["NVDA"]["sic"] == "3674"
+    assert doc["levels"]["industries"]["semiconductors"]["count"] == 7 and doc["levels"]["groups"]["semiconductors"]["name"] == "Semiconductors"
+    assert paths.sic_list("2026-10-02", "3674").exists() and doc["lineage"]["inputs"]
     run_sector("sic:3674", "2026-10-02", paths, fac)          # second run reads the saved raw screen
     assert not any("/frames/" in u for u in clients[1].calls)
+
+
+def test_sector_spec_checks_taxonomy():
+    assert parse_sector_spec("sector:technology") == ("sector", "technology")
+    with pytest.raises(ValueError, match="unknown sector"):
+        parse_sector_spec("sector:crypto")
 
 
 def test_run_sector_list(tmp_path):
@@ -221,3 +231,13 @@ def test_cli_sector(tmp_path):
                   adapter_factory=sector_adapter)
     assert rc == 0 and "High growth: 1 companies" in buf.getvalue()
     assert main(["sector", "sic:12", "--data-dir", str(tmp_path / "d")], adapter_factory=sector_adapter) == 2
+
+
+def test_taxonomy_covers_every_sec_code_once():
+    from L1_detail.taxonomy import load
+    tax = load()
+    codes = {c[0] for c in json.loads((Path(__file__).parent.parent / "sectors" / "sic_codes.json").read_text())["codes"]}
+    assert codes - set(tax.by_sic) == tax.excluded            # all mapped except the non-operating codes
+    assert set(tax.by_sic) <= codes                            # nothing invented
+    assert tax.classify("7370")["sector"] == "communication_services"   # GICS: interactive media
+    assert tax.classify(3571)["industry"] == "hardware_peripherals" and tax.classify("9995") is None

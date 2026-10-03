@@ -28,8 +28,8 @@ replace the weights; roles then follow the new weights.
 """
 from __future__ import annotations
 
-METHOD_NAMES = {"dcf": "DCF (standalone)", "dcf_synergy": "DCF with synergies", "just_synergy": "Just synergies",
-                "comps": "Public comps", "precedents": "Precedent transactions", "lbo": "LBO", "ipo": "IPO"}
+METHOD_NAMES = {"dcf": "DCF (Standalone)", "dcf_synergy": "DCF with Synergies", "just_synergy": "Just Synergies",
+                "comps": "Public Comps", "precedents": "Precedent Transactions", "lbo": "LBO", "ipo": "IPO"}
 
 
 def _plan(profile: dict | None, context: str) -> tuple[list[tuple[str, str, float, str]], str]:

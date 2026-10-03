@@ -1,6 +1,6 @@
 {
   "mode": "implied",
-  "base_period": "ttm",
+  "base_period": "annual",
   "market": {
     "price": 333.69,
     "price_date": "2026-10-02",

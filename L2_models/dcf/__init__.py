@@ -33,7 +33,7 @@ from __future__ import annotations
 from copy import deepcopy
 
 from core.cost_of_capital import discount_rates
-from core.dcf import scenario_range, solve, value_firm
+from core.dcf import scenario_range, sensitivity_grid, solve, value_firm
 from core.projection import base_from_detail, project
 from core.shares import treasury_stock_method
 from core.projection import statement_row
@@ -93,7 +93,7 @@ class DCF:
         fc, cc = a.get("forecast", {}), a.get("cost_of_capital", {})
         mkt, br = a.get("market", {}), a.get("bridge", {})
         warnings: list[str] = []
-        period = _base_period(detail, a.get("base_period", "ttm"))
+        period = _base_period(detail, a.get("base_period", "annual"))
         v = period["values"]
         base = base_from_detail(v)
         rev = base["revenue"]
@@ -264,6 +264,10 @@ class DCF:
             wacc_step=s.get("wacc_step", 0.01), terminal_growth_step=s.get("terminal_growth_step", 0.005),
             terminal_wacc_step=s.get("terminal_wacc_step", 0.005))
         notes.append("range = course scenario method (conservative / expected / aggressive), not simulated percentiles")
+        grid = sensitivity_grid(
+            lambda wacc, wacc_terminal, g_terminal: self.value(
+                p, wacc=wacc, wacc_terminal=wacc_terminal, g_terminal=g_terminal)["value_per_share"],
+            wacc=r["wacc"], wacc_terminal=r["wacc_terminal"], g_terminal=rev["g_terminal"])
 
         years = base_val["projection"]["years"]
         growth_path = [y["revenue"] / (years[i - 1]["revenue"] if i else p["base"]["revenue"]) - 1
@@ -295,7 +299,9 @@ class DCF:
         details = {
             "mode": p["mode"],
             "implied_growth": implied,
-            "base_period": {"label": p["period"]["label"], "end": p["period"]["end"]},
+            "base_period": {"label": p["period"]["label"], "end": p["period"]["end"],
+                            "fiscal_year": p["period"].get("fiscal_year"),
+                            "kind": "fiscal" if p["period"].get("fiscal_period") == "FY" else "ltm"},
             "market_price": p["price"],
             "rates": r,
             "bridge": {"enterprise_value": base_val["enterprise_value"], "pv_fcf": base_val["pv_fcf"],
@@ -312,6 +318,7 @@ class DCF:
                            for y, cf in zip(years, base_val["cash_flows"])],
             "drivers": p["drivers"],
             "statements": [statement_row(y) for y in years],
+            "sensitivity": grid,
         }
         return ModelResult(
             model=self.name,

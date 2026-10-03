@@ -113,7 +113,7 @@ export function columnChart(container, { categories, values, format, label = "",
   });
 }
 
-export function lineChart(container, { categories, series, format, label = "", height = 220 }) {
+export function lineChart(container, { categories, series, format, label = "", height = 220, splitAt = null }) {
   observe(container, () => {
     const { svg, tip, width } = setup(container, height);
     svg.setAttribute("aria-label", label);
@@ -137,13 +137,23 @@ export function lineChart(container, { categories, series, format, label = "", h
     });
     const cross = el("line", { y1: m.t, y2: m.t + ih, class: "baseline", opacity: 0 }, svg);
     const ends = [];
+    if (Number.isFinite(splitAt) && splitAt > 0 && splitAt < categories.length) {
+      const sx = (x(splitAt - 1) + x(splitAt)) / 2;
+      el("line", { x1: sx, x2: sx, y1: m.t, y2: m.t + ih, class: "divider" }, svg);
+    }
     for (const s of series) {
-      let d = "", pen = false;
-      s.values.forEach((v, i) => {
-        if (!Number.isFinite(v)) { pen = false; return; }
-        d += `${pen ? "L" : "M"}${x(i)},${y(v)}`; pen = true;
-      });
-      el("path", { d, fill: "none", stroke: s.color, "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }, svg);
+      // reported part solid; from the last reported point onward, dashed (estimates)
+      const path = (from, to) => {
+        let d = "", pen = false;
+        s.values.forEach((v, i) => {
+          if (i < from || i > to || !Number.isFinite(v)) { pen = false; return; }
+          d += `${pen ? "L" : "M"}${x(i)},${y(v)}`; pen = true;
+        });
+        return d;
+      };
+      const cut = Number.isFinite(splitAt) ? splitAt : s.values.length;
+      el("path", { d: path(0, cut - 1), fill: "none", stroke: s.color, "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }, svg);
+      if (cut < s.values.length) el("path", { d: path(cut - 1, s.values.length - 1), fill: "none", stroke: s.color, "stroke-width": 2, "stroke-dasharray": "5 4" }, svg);
       const li = s.values.map((v, i) => (Number.isFinite(v) ? i : -1)).filter((i) => i >= 0).pop();
       if (li !== undefined) {
         el("circle", { cx: x(li), cy: y(s.values[li]), r: 4, fill: s.color, stroke: "var(--surface)", "stroke-width": 2 }, svg);
@@ -292,7 +302,7 @@ export function areaChart(container, { categories, values, estimate = [], low = 
 
 // Scatter: one dot per company. points: [{x, y, label, sub, highlight, r}]
 // onClick(point) optional. Axis titles sit along the axes.
-export function scatterChart(container, { points, xFormat, yFormat, xLabel = "", yLabel = "", height = 280, onClick }) {
+export function scatterChart(container, { points, xFormat, yFormat, xLabel = "", yLabel = "", height = 280, onClick, refX = null, refY = null }) {
   observe(container, () => {
     const { svg, tip, width } = setup(container, height);
     svg.setAttribute("aria-label", `${yLabel} against ${xLabel}`);
@@ -314,9 +324,15 @@ export function scatterChart(container, { points, xFormat, yFormat, xLabel = "",
     }
     el("text", { x: m.l + iw, y: height - 4, "text-anchor": "end", class: "tick axis-title" }, svg).textContent = `${xLabel} →`;
     el("text", { x: m.l, y: 12, class: "tick axis-title" }, svg).textContent = `↑ ${yLabel}`;
-    const ordered = [...pts].sort((a, b) => (a.highlight ? 1 : 0) - (b.highlight ? 1 : 0));   // highlight drawn last
+    // median crosshairs: a quadrant read (faster growth, higher margin) at a glance
+    if (Number.isFinite(refX)) el("line", { x1: x(refX), x2: x(refX), y1: m.t, y2: m.t + ih, class: "ref-line" }, svg);
+    if (Number.isFinite(refY)) el("line", { x1: m.l, x2: m.l + iw, y1: y(refY), y2: y(refY), class: "ref-line" }, svg);
+    // dot area proportional to size (revenue), 3–12 px radius
+    const smax = Math.max(...pts.map((p) => p.size).filter(Number.isFinite), 0);
+    const rad = (p) => (p.highlight ? 7 : Number.isFinite(p.size) && smax > 0 ? 3 + 9 * Math.sqrt(p.size / smax) : 5);
+    const ordered = [...pts].sort((a, b) => (a.highlight ? 1 : 0) - (b.highlight ? 1 : 0) || (b.size || 0) - (a.size || 0));   // big first, highlight last
     for (const p of ordered) {
-      const c = el("circle", { cx: x(p.x), cy: y(p.y), r: p.highlight ? 7 : 5, class: "sc-dot" + (p.highlight ? " me" : "") + (onClick ? " link" : "") }, svg);
+      const c = el("circle", { cx: x(p.x), cy: y(p.y), r: rad(p), class: "sc-dot" + (p.highlight ? " me" : "") + (onClick ? " link" : "") }, svg);
       if (p.highlight) el("text", { x: x(p.x) + 10, y: y(p.y) + 4, class: "dlabel" }, svg).textContent = p.label;
       c.addEventListener("mousemove", (e) => {
         const r = container.getBoundingClientRect();
@@ -356,4 +372,109 @@ export function barListChart(container, { items, format, rowHeight = 20, labelWi
 function barPathH(x, y, w, h, r = 4) {
   r = Math.min(r, w, h / 2);
   return `M${x},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h - r}Q${x + w},${y + h} ${x + w - r},${y + h}H${x}Z`;
+}
+
+// Two lines with the gap between them shaded: green where the second series is above
+// the first (a positive spread), red where it's below. Optional dashed reference line.
+//   a, b: {name, values, color}; ref: {value, label} | null
+export function spreadChart(container, { categories, a, b, format, label = "", height = 240, ref = null, spreadLabel = "Spread" }) {
+  observe(container, () => {
+    const { svg, tip, width } = setup(container, height);
+    svg.setAttribute("aria-label", label);
+    const all = a.values.concat(b.values, ref && Number.isFinite(ref.value) ? [ref.value] : []).filter(Number.isFinite);
+    if (!all.length) { container.innerHTML = '<p class="muted small">No data for this view.</p>'; return; }
+    const m = { t: 12, r: 104, b: 26, l: 56 };
+    const ticks = niceTicks(Math.min(0, ...all), Math.max(...all));
+    const lo = ticks[0], hi = ticks.at(-1);
+    const ih = height - m.t - m.b, iw = width - m.l - m.r;
+    const x = (i) => m.l + (categories.length === 1 ? iw / 2 : (iw * i) / (categories.length - 1));
+    const y = (v) => m.t + ih - ((v - lo) / (hi - lo)) * ih;
+    for (const t of ticks) {
+      el("line", { x1: m.l, x2: m.l + iw, y1: y(t), y2: y(t), class: t === 0 ? "baseline" : "gridline" }, svg);
+      el("text", { x: m.l - 8, y: y(t) + 4, "text-anchor": "end", class: "tick" }, svg).textContent = format(t, true);
+    }
+    categories.forEach((c, i) => el("text", { x: x(i), y: height - 8, "text-anchor": "middle", class: "tick" }, svg).textContent = c);
+    // shaded gap, split where the lines cross so each piece takes one colour
+    for (let i = 0; i < categories.length - 1; i++) {
+      const a0 = a.values[i], a1 = a.values[i + 1], b0 = b.values[i], b1 = b.values[i + 1];
+      if (![a0, a1, b0, b1].every(Number.isFinite)) continue;
+      const d0 = b0 - a0, d1 = b1 - a1;
+      const piece = (t0, t1) => {
+        const xa = (t) => x(i) + (x(i + 1) - x(i)) * t, va = (t) => a0 + (a1 - a0) * t, vb = (t) => b0 + (b1 - b0) * t;
+        const mid = (t0 + t1) / 2, pos = vb(mid) >= va(mid);
+        el("path", { d: `M${xa(t0)},${y(va(t0))}L${xa(t1)},${y(va(t1))}L${xa(t1)},${y(vb(t1))}L${xa(t0)},${y(vb(t0))}Z`,
+          class: `spread ${pos ? "pos" : "neg"}` }, svg);
+      };
+      if (d0 * d1 < 0) { const tc = d0 / (d0 - d1); piece(0, tc); piece(tc, 1); } else piece(0, 1);
+    }
+    if (ref && Number.isFinite(ref.value)) {
+      el("line", { x1: m.l, x2: m.l + iw, y1: y(ref.value), y2: y(ref.value), class: "ref-line" }, svg);
+      el("text", { x: m.l + iw + 8, y: y(ref.value) + 4, class: "tick" }, svg).textContent = `${ref.label} ${format(ref.value)}`;
+    }
+    const ends = [];
+    for (const s of [a, b]) {
+      let d = "", pen = false;
+      s.values.forEach((v, i) => { if (!Number.isFinite(v)) { pen = false; return; } d += `${pen ? "L" : "M"}${x(i)},${y(v)}`; pen = true; });
+      el("path", { d, fill: "none", stroke: s.color, "stroke-width": 2, "stroke-linejoin": "round" }, svg);
+      const li = s.values.map((v, i) => (Number.isFinite(v) ? i : -1)).filter((i) => i >= 0).pop();
+      if (li !== undefined) {
+        el("circle", { cx: x(li), cy: y(s.values[li]), r: 4, fill: s.color, stroke: "var(--surface)", "stroke-width": 2 }, svg);
+        ends.push({ s, y: y(s.values[li]), v: s.values[li], x: x(li) });
+      }
+    }
+    ends.sort((p, q) => p.y - q.y);
+    if (ends.length === 2 && ends[1].y - ends[0].y < 14) { ends[0].y -= 7; ends[1].y += 7; }
+    for (const e of ends) el("text", { x: e.x + 10, y: e.y + 4, class: "dlabel" }, svg).textContent = `${e.s.name} ${format(e.v)}`;
+    const cross = el("line", { y1: m.t, y2: m.t + ih, class: "baseline", opacity: 0 }, svg);
+    const hit = el("rect", { x: m.l, y: m.t, width: iw, height: ih, class: "hit" }, svg);
+    hit.addEventListener("mousemove", (e) => {
+      const r = container.getBoundingClientRect(), px = ((e.clientX - r.left) / r.width) * width;
+      const i = Math.max(0, Math.min(categories.length - 1, Math.round(((px - m.l) / iw) * (categories.length - 1))));
+      cross.setAttribute("x1", x(i)); cross.setAttribute("x2", x(i)); cross.setAttribute("opacity", 1);
+      const sp = Number.isFinite(a.values[i]) && Number.isFinite(b.values[i]) ? b.values[i] - a.values[i] : null;
+      showTip(tip, container, e.clientX - r.left, e.clientY - r.top, categories[i], [
+        { label: a.name, color: a.color, value: Number.isFinite(a.values[i]) ? format(a.values[i]) : "n/a" },
+        { label: b.name, color: b.color, value: Number.isFinite(b.values[i]) ? format(b.values[i]) : "n/a" },
+        { label: spreadLabel, value: sp === null ? "n/a" : `${sp >= 0 ? "+" : "−"}${format(Math.abs(sp))}` }]);
+    });
+    hit.addEventListener("mouseleave", () => { cross.setAttribute("opacity", 0); hideTip(tip); });
+  });
+}
+
+// Side-by-side bars per period for two or three measures. series: [{name, values, color}]
+export function groupedBarChart(container, { categories, series, format, label = "", height = 220, tipExtra = null }) {
+  observe(container, () => {
+    const { svg, tip, width } = setup(container, height);
+    svg.setAttribute("aria-label", label);
+    const all = series.flatMap((s) => s.values).filter(Number.isFinite);
+    if (!all.length) { container.innerHTML = '<p class="muted small">No data for this view.</p>'; return; }
+    const m = { t: 16, r: 8, b: 26, l: 56 };
+    const ticks = niceTicks(Math.min(0, ...all), Math.max(0, ...all));
+    const lo = ticks[0], hi = ticks.at(-1);
+    const ih = height - m.t - m.b, iw = width - m.l - m.r;
+    const y = (v) => m.t + ih - ((v - lo) / (hi - lo)) * ih;
+    for (const t of ticks) {
+      el("line", { x1: m.l, x2: width - m.r, y1: y(t), y2: y(t), class: t === 0 ? "baseline" : "gridline" }, svg);
+      el("text", { x: m.l - 8, y: y(t) + 4, "text-anchor": "end", class: "tick" }, svg).textContent = format(t, true);
+    }
+    const band = iw / categories.length, bw = Math.min(18, (band * 0.7) / series.length);
+    categories.forEach((c, i) => {
+      const x0 = m.l + band * i + band / 2 - (bw * series.length) / 2;
+      const hover = el("rect", { x: m.l + band * i, y: m.t, width: band, height: ih, class: "hover-band", opacity: 0 }, svg);
+      series.forEach((s, k) => {
+        const v = s.values[i];
+        if (Number.isFinite(v) && v !== 0) el("path", { d: barPath(x0 + k * bw, bw - 2, y(0), y(v)), fill: s.color }, svg);
+      });
+      el("text", { x: m.l + band * i + band / 2, y: height - 8, "text-anchor": "middle", class: "tick" }, svg).textContent = c;
+      const hit = el("rect", { x: m.l + band * i, y: m.t, width: band, height: ih, class: "hit" }, svg);
+      hit.addEventListener("mousemove", (e) => {
+        hover.setAttribute("opacity", 1);
+        const r = container.getBoundingClientRect();
+        const rows = series.map((s) => ({ label: s.name, color: s.color, value: Number.isFinite(s.values[i]) ? format(s.values[i]) : "n/a" }));
+        if (tipExtra) rows.push(tipExtra(i));
+        showTip(tip, container, e.clientX - r.left, e.clientY - r.top, c, rows);
+      });
+      hit.addEventListener("mouseleave", () => { hover.setAttribute("opacity", 0); hideTip(tip); });
+    });
+  });
 }

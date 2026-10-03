@@ -12,6 +12,7 @@ from L0_ingest.__main__ import main
 from L0_ingest.cache import FileCache
 from L0_ingest.http import HttpClient, HttpError
 from L0_ingest.schema import validate_raw_filing
+from fakes import FakeSecClient
 from L0_ingest.sec_companyfacts import (
     COMPANYFACTS_URL,
     SUBMISSIONS_URL,
@@ -25,23 +26,13 @@ from L0_ingest.sec_companyfacts import (
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
-class FakeClient:
-    """Serves fixture files by URL and counts calls."""
-
-    def __init__(self):
-        self.calls: list[str] = []
-        self.routes = {
-            TICKERS_URL: FIXTURES / "company_tickers.json",
-            COMPANYFACTS_URL.format(cik="0000320193"): FIXTURES
-            / "companyfacts_CIK0000320193.json",
-            SUBMISSIONS_URL.format(cik="0000320193"): FIXTURES / "submissions_CIK0000320193.json",
-        }
-
-    def get_bytes(self, url: str) -> bytes:
-        self.calls.append(url)
-        if url not in self.routes:
-            raise HttpError(url, 404, "Not Found")
-        return self.routes[url].read_bytes()
+def FakeClient():
+    """Serves Apple's fixtures by URL and counts calls."""
+    return FakeSecClient({
+        TICKERS_URL: FIXTURES / "company_tickers.json",
+        COMPANYFACTS_URL.format(cik="0000320193"): FIXTURES / "companyfacts_CIK0000320193.json",
+        SUBMISSIONS_URL.format(cik="0000320193"): FIXTURES / "submissions_CIK0000320193.json",
+    })
 
 
 @pytest.fixture

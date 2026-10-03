@@ -26,12 +26,13 @@ def test_publish_copies_outputs_and_indexes(tmp_path):
     (data / "ABC" / "raw" / "raw_filing.json").write_text("{}")   # never published
     site = tmp_path / "site"
     out = publish(data, site)
-    assert sorted(out["copied"]) == ["ABC/2026-09-30/company_detail.json", "ABC/2026-09-30/model_results/dcf.json"]
+    assert sorted(out["copied"]) == ["ABC/2026-09-30/company_detail.json", "ABC/2026-09-30/company_detail_full.json",
+                                     "ABC/2026-09-30/model_results/dcf.json"]
     index = json.loads((site / "data" / "index.json").read_text())
     (c,) = index["companies"]
     assert c["ticker"] == "ABC" and c["name"] == "ABC Inc." and not c["demo"]
     assert c["runs"][0] == {"as_of": "2026-09-30", "detail": "ABC/2026-09-30/company_detail.json",
-                            "comparison": None, "models": ["dcf"], "latest": {"ttm": "x"}}
+                            "full": "ABC/2026-09-30/company_detail_full.json", "comparison": None, "models": ["dcf"], "latest": {"ttm": "x"}}
     # earlier runs already in site/data stay listed
     publish(tmp_path / "empty", site)
     assert json.loads((site / "data" / "index.json").read_text())["companies"][0]["ticker"] == "ABC"
@@ -58,6 +59,32 @@ def test_publish_sectors_and_skips_raw_screens(tmp_path):
     assert s["path"] == "sectors/sic-3674/2026-10-02/sector.json" and s["as_of_all"] == ["2026-10-02", "2026-09-30"]
     card = json.loads((site / "data" / "companies.json").read_text())["companies"][0]
     assert card["sic"] == "3674"
+
+
+def test_site_copy_is_sliced_compact_and_full_history_kept(tmp_path):
+    data = tmp_path / "data"
+    run = data / "ABC" / "2026-09-30"
+    run.mkdir(parents=True)
+    detail = {"entity": {"name": "ABC"}, "views": {"annual": [{"label": f"FY{y}"} for y in range(2000, 2026)],
+              "quarterly": [{}] * 40, "ttm": [{}] * 40}, "analysis": {"annual": [{}] * 26, "ttm": [{}] * 40}}
+    (run / "company_detail.json").write_text(json.dumps(detail, indent=2))
+    publish(data, tmp_path / "site")
+    site = tmp_path / "site" / "data" / "ABC" / "2026-09-30"
+    small, full = json.loads((site / "company_detail.json").read_text()), json.loads((site / "company_detail_full.json").read_text())
+    assert len(small["views"]["annual"]) == 11 and small["views"]["annual"][-1]["label"] == "FY2025"
+    assert len(small["analysis"]["ttm"]) == 8 and len(full["views"]["annual"]) == 26
+    assert "\n" not in (site / "company_detail.json").read_text()        # compact
+
+
+def test_site_keeps_latest_three_runs(tmp_path):
+    data = tmp_path / "data"
+    for d in ("2026-06-30", "2026-07-31", "2026-08-31", "2026-09-30"):
+        (data / "ABC" / d).mkdir(parents=True)
+        (data / "ABC" / d / "company_detail.json").write_text(json.dumps({"entity": {"name": "ABC"}}))
+    out = publish(data, tmp_path / "site")
+    assert out["removed"] == ["ABC/2026-06-30"]
+    assert [r["as_of"] for r in json.loads((tmp_path / "site" / "data" / "index.json").read_text())["companies"][0]["runs"]] == \
+        ["2026-09-30", "2026-08-31", "2026-07-31"]
 
 
 def test_demo_is_valid_and_flagged(tmp_path):

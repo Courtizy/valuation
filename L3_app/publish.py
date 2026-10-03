@@ -9,6 +9,8 @@ published earlier are kept.
 """
 from __future__ import annotations
 
+from core.num import div as _ratio
+
 import argparse
 import json
 import re
@@ -17,6 +19,26 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 AS_OF = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+KEEP_RUNS = 3        # latest as-of runs kept on the site per company and per sector (older ones stay in git history)
+# Periods the page shows (plus the year before, for growth); the full history is published
+# alongside as company_detail_full.json for download.
+SITE_PERIODS = {"annual": 11, "quarterly": 16, "ttm": 16}
+SITE_ANALYSIS = {"annual": 10, "ttm": 8}
+
+
+def write_json(path: Path, doc) -> None:
+    """Site files are written compact: same data, about a quarter smaller than indented."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(doc, separators=(",", ":")))
+
+
+def site_slice(detail: dict) -> dict:
+    """company_detail.json trimmed to the periods the page shows."""
+    d = dict(detail)
+    d["views"] = {k: v[-SITE_PERIODS.get(k, len(v)):] for k, v in (detail.get("views") or {}).items()}
+    d["analysis"] = {k: v[-SITE_ANALYSIS.get(k, len(v)):] for k, v in (detail.get("analysis") or {}).items()}
+    d["site_slice"] = {"views": SITE_PERIODS, "analysis": SITE_ANALYSIS, "full": "company_detail_full.json"}
+    return d
 PUBLISHED = ("company_detail.json", "comparison.json")
 
 
@@ -33,8 +55,7 @@ def copy_sectors(data_dir: Path, site_data: Path) -> list[str]:
         if not AS_OF.match(f.parent.name):
             continue
         target = site_data / "sectors" / f.parent.parent.name / f.parent.name / "sector.json"
-        target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(f, target)
+        write_json(target, json.loads(f.read_text()))
         copied.append(str(target.relative_to(site_data)))
     return copied
 
@@ -68,10 +89,27 @@ def copy_outputs(data_dir: Path, site_data: Path) -> list[str]:
                 continue
             for f in files:
                 target = dest / f.relative_to(adir)
-                target.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(f, target)
+                doc = json.loads(f.read_text())
+                if f.name == "company_detail.json":
+                    write_json(dest / "company_detail_full.json", doc)
+                    copied.append(str((dest / "company_detail_full.json").relative_to(site_data)))
+                    doc = site_slice(doc)
+                write_json(target, doc)
                 copied.append(str(target.relative_to(site_data)))
     return copied
+
+
+def prune(site_data: Path, keep: int = KEEP_RUNS) -> list[str]:
+    """Drop all but the latest `keep` as-of runs per company and per sector from the site."""
+    removed = []
+    roots = list(_ticker_dirs(site_data)) + ([p for p in (site_data / "sectors").iterdir() if p.is_dir()]
+                                             if (site_data / "sectors").exists() else [])
+    for root in roots:
+        runs = sorted((p for p in root.iterdir() if p.is_dir() and AS_OF.match(p.name)), reverse=True)
+        for old in runs[keep:]:
+            shutil.rmtree(old)
+            removed.append(str(old.relative_to(site_data)))
+    return removed
 
 
 def build_index(site_data: Path) -> dict:
@@ -89,6 +127,8 @@ def build_index(site_data: Path) -> dict:
             runs.append({
                 "as_of": adir.name,
                 "detail": f"{tdir.name}/{adir.name}/company_detail.json",
+                "full": (f"{tdir.name}/{adir.name}/company_detail_full.json"
+                         if (adir / "company_detail_full.json").exists() else None),
                 "comparison": (f"{tdir.name}/{adir.name}/comparison.json"
                                if (adir / "comparison.json").exists() else None),
                 "models": sorted(p.stem for p in (adir / "model_results").glob("*.json"))
@@ -109,8 +149,12 @@ def concept_labels() -> dict:
             for c in load_registry().concepts.values()}
 
 
-def _ratio(a, b):
-    return a / b if a is not None and b not in (None, 0) else None
+def _classify(sic):
+    from L1_detail.taxonomy import load
+    c = load().classify(sic) if sic else None
+    return {k: c[k] for k in ("sector", "group", "industry")} if c else None
+
+
 
 
 def company_card(site_data: Path, ticker: str, run: dict) -> dict:
@@ -133,6 +177,7 @@ def company_card(site_data: Path, ticker: str, run: dict) -> dict:
     return {
         "ticker": ticker, "name": detail.get("entity", {}).get("name", ticker), "demo": bool(detail.get("demo")),
         "sic": detail.get("entity", {}).get("sic"), "sic_description": detail.get("entity", {}).get("sic_description"),
+        "classification": _classify(detail.get("entity", {}).get("sic")),
         "as_of": run["as_of"], "period": prof.get("as_of_period"),
         "traits": {k: v["label"] for k, v in (prof.get("traits") or {}).items()},
         "vector": vec,
@@ -147,16 +192,39 @@ def company_card(site_data: Path, ticker: str, run: dict) -> dict:
     }
 
 
+def add_rankings(site_data: Path, cards: list[dict], sectors: list[dict]) -> None:
+    """card["similar"]: the 10 closest published companies; card["peers"][sector_id]:
+    the 25 closest members of each sector the company belongs to (same ranking)."""
+    from L3_app.similar import from_card, rank
+    pool = [from_card(c) for c in cards]
+    docs = {}
+    for c, me in zip(cards, pool):
+        c["similar"] = rank(me, pool, 10)
+        c["peers"] = {}
+        for sec in sectors:
+            if c["ticker"] not in sec["members"]:
+                continue
+            if sec["id"] not in docs:
+                docs[sec["id"]] = json.loads((site_data / sec["path"]).read_text())["companies"]
+            rows = docs[sec["id"]]
+            own = next((r for r in rows if r["ticker"] == c["ticker"]), me)
+            c["peers"][sec["id"]] = rank(own, rows, 25)
+
+
 def publish(data_dir: Path, site_dir: Path) -> dict:
     site_data = site_dir / "data"
     site_data.mkdir(parents=True, exist_ok=True)
     copied = (copy_outputs(data_dir, site_data) + copy_sectors(data_dir, site_data)) if data_dir.exists() else []
+    removed = prune(site_data)
     index = build_index(site_data)
     (site_data / "index.json").write_text(json.dumps(index, indent=2))
     (site_data / "concepts.json").write_text(json.dumps(concept_labels(), indent=2))
+    from L1_detail.taxonomy import DEFAULT_PATH
+    shutil.copy2(DEFAULT_PATH, site_data / "taxonomy.json")
     cards = [company_card(site_data, c["ticker"], c["runs"][0]) for c in index["companies"]]
+    add_rankings(site_data, cards, index.get("sectors") or [])
     (site_data / "companies.json").write_text(json.dumps({"companies": cards}, indent=2))
-    return {"copied": copied, "companies": [c["ticker"] for c in index["companies"]]}
+    return {"copied": copied, "removed": removed, "companies": [c["ticker"] for c in index["companies"]]}
 
 
 def main(argv: list[str] | None = None) -> int:

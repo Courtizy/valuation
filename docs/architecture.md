@@ -45,20 +45,24 @@
 valuation/
   L0_ingest/          adapters, cache, raw schema, CLI                built
   L1_detail/          registry, normalize, periods, analysis, build    built
-  core/               projection, cost_of_capital, dcf, shares         built
+  core/               projection, cost_of_capital, dcf, shares, num    built
   L2_models/
     base.py           ModelResult, Model protocol, get_model()        built
     dcf/              standalone DCF, forecast + implied modes        built
     comps/            public comps, SEC + manual peers                built
     lbo/ ipo/ precedents/                                             scaffolded
     reconcile/        profile-driven plan, weights, blend, warnings   built
-  L3_app/             publish.py (outputs -> site/data), demo.py       built
+  L3_app/             publish.py (outputs -> site/data), similar.py,  built
+                      demo/ (companies, sector)
   site/               GitHub Pages app: index.html, assets/, data/    built
   .github/workflows/  pipeline (dispatch), pages (deploy), tests       built
-  pipeline.py         runner + CLI                                    built
+  runner/             paths, company plan/execute, sector, cli         built
+  pipeline.py         thin entry: python pipeline.py run|sector       built
   lineage.py          lineage block helper                            built
   L0 sec_sector.py    SEC frames, EDGAR SIC lists                     built
   L1 sector.py        sector screen: figures, traits, benchmarks      built
+  L1 taxonomy.py      sector › group › industry over SIC              built
+  sectors/            taxonomy.json, sic_codes.json, custom lists     built
   packs/default.json  sector pack template                            built
   assumptions/        {TICKER}/{model}.json, _template/               built
   tests/  docs/
@@ -82,11 +86,15 @@ Everything from L1 onward is keyed by `as_of`, so a past valuation can be rerun 
 
 ## Cross-cutting rules
 
-**Runner.** `pipeline.py` holds sequencing only (`--stop-after L1` skips models): ingest and build for the target and any peers, then models, then reconcile. It stops at the first step that isn't built or fails and marks the rest skipped. `--dry-run` prints the plan. The app starts the runner through the Pipeline GitHub Action; every layer still runs on its own.
+**Runner.** `runner/` holds sequencing only (`pipeline.py` is its entry point) (`--stop-after L1` skips models): ingest and build for the target and any peers, then models, then reconcile. It stops at the first step that isn't built or fails and marks the rest skipped. Peers whose company detail already exists for the same `as_of` are reused, not rebuilt. `--dry-run` prints the plan. The app starts the runner through the Pipeline GitHub Action; every layer still runs on its own.
 
 ```bash
 python pipeline.py run AAPL --models dcf,comps --as-of 2026-09-30 --dry-run
 ```
+
+**Shared helpers.** `core/num.py` (`div`, None-safe division) is used across L1; `profile.py` holds the trait classifiers used by both full profiles and sector screens; `L3_app/similar.py` is the one similarity ranking behind Similar Companies and the peer picker.
+
+**Projection horizon.** Year 1 is the fiscal year after the last 10-K (DCF `base_period` defaults to `annual`). The trend case runs 10 years, fading to its terminal rates by Year 10.
 
 **Lineage.** Every file from L1 onward carries `schema_version`, `as_of`, and `inputs: [{file, sha256}]`. Reconcile warns when models used different versions of the same input or different `as_of` dates.
 

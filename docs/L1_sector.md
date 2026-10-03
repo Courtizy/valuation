@@ -3,13 +3,31 @@
 A sector screen gives every company in a sector the same dozen figures, cheaply, so a company can be read against its sector and comps peers can be picked from it. Full company detail (statements, ratios, profile) is still built per company, when you open one.
 
 ```
-python pipeline.py sector sic:3674                                   # SEC industry code
-python pipeline.py sector sic-of:AAPL                                # the code a company files under
+python pipeline.py sector sic-of:AAPL                                # the whole sector a company belongs to (Technology)
+python pipeline.py sector sector:technology                          # a sector of sectors/taxonomy.json
+python pipeline.py sector sic:3674                                   # one SEC industry code
 python pipeline.py sector "traits:stage=high growth;asset_intensity=light"
 python pipeline.py sector list:example_chips                         # sectors/example_chips.json
 ```
 
-From the site: **Run pipeline → Sector**, or the **Screen SIC …** button on Company detail.
+From the site: **Run Pipeline → Sector**, or the **Screen {Sector}** button on Company Detail.
+
+## Classification: sector › industry group › industry
+
+SEC assigns each filer one four-digit SIC code, and a single code is often too narrow to compare against (Apple's 3571, Electronic Computers, has six filers). `sectors/taxonomy.json` groups SEC's 444 SIC codes into a GICS-style tree, so you read a company from the top down:
+
+```
+Technology                      sector          (11 sectors)
+ └ Hardware & Equipment         industry group
+    └ Hardware & Peripherals    industry        ← SIC 3571, 3572, 3575, 3577 …
+```
+
+- 439 codes are mapped. Five are left out on purpose (6189 asset-backed, 8880/8888 foreign governments, 9721 international affairs, 9995 non-operating shells).
+- SIC 7370 sits under Communication Services › Interactive Media (GICS puts Alphabet and Meta there); 7371–7374 stay in Technology › Software & Services.
+- `sectors/sic_codes.json` is SEC's official list, kept for reference. Each industry has an empty `naics` list reserved: SEC doesn't publish NAICS, so SIC stays the building block.
+- `L1_detail/taxonomy.py` loads the tree: `classify(sic)` returns sector, group and industry with names.
+
+**Default screen = the whole sector.** `sic-of:TICKER` looks up the company's SIC, classifies it, and screens every code in its sector, with a note such as "AAPL files under SIC 3571 (Electronic Computers): Technology › Hardware & Equipment › Hardware & Peripherals". Every member row carries its `sic` and `classification`, and the screen lists its `levels` (groups and industries with counts), so the site can narrow to the group or industry without another run.
 
 ## Sources (L0, `L0_ingest/sec_sector.py`)
 
@@ -40,21 +58,21 @@ Latest calendar year with revenue; a filer that hasn't reported it yet falls bac
 
 **Traits** use the same rules as the full company profile (`profile.py` → `classify_*`). Asset intensity uses capex/sales only (NOA turnover needs the full balance sheet). The stage rule checks *declining* (CAGR < 0) before *not yet profitable*, so a shrinking loss-maker is declining rather than high growth; this applies to full profiles too.
 
-**Members:** `sic` = EDGAR's list ∩ companies with data; `list` = the file's tickers; `traits` = every company with data whose traits match. All keep the 100 largest by revenue (`--limit`), with notes on who was left out and why.
+**Members:** `sector` = EDGAR's list for every code in the sector ∩ companies with data; `sic` = one code's list ∩ companies with data; `list` = the file's tickers; `traits` = every company with data whose traits match. A sector keeps the 300 largest by revenue, the others 100 (`--limit` overrides), with notes on who was left out and why.
 
-**Benchmarks:** Q1 / median / Q3 of each figure across the members.
+**Benchmarks:** Q1 / median / Q3 of each figure across the members. The site recomputes them for the group or industry level you pick.
 
 Checked against real frames for NVDA, AMD, INTC, TXN, MU, QCOM, ADI and AAPL (`tests/fixtures/sec_frames_semis.json`).
 
 ## Output
 
-`data/sectors/{id}/{as_of}/sector.json` (id `sic-3674`, `traits-stage-high-growth`, `list-example-chips`), published to `site/data/sectors/…`; `index.json` → `sectors` lists each sector's latest screen with its member tickers.
+`data/sectors/{id}/{as_of}/sector.json` (id `sector-technology`, `sic-3674`, `traits-stage-high-growth`, `list-example-chips`), published to `site/data/sectors/…`; `index.json` → `sectors` lists each sector's latest screen with its member tickers.
 
-## On the site (layout: spread into existing tabs)
+## On the site
 
 | Where | What |
 |---|---|
-| Company detail → **Versus its sector** | each figure's Q1 / median / Q3, this company's value, gap to median, and a position bar; a picker when the company is in several sectors; "Screen SIC …" when it's in none |
-| Company detail → **Sector** | growth vs operating margin scatter, revenue ranking, sortable table. Clicking a company opens it, or offers **Build company detail** (a Pipeline run through company details) |
-| Valuation → **Comps peers from …** | sector companies ranked by closeness (z-scores of growth, margins, FCF margin, capex intensity, leverage, size, plus shared traits); tick peers, type prices, **Save to comps.json** or **Save and run comps** (GitHub contents API; token needs Contents: read and write). Peers the picker doesn't show (hand-entered, or outside this sector) are kept |
-| Run pipeline → **Sector** | SIC code, a company's code, a trait group, or a list |
+| Company Detail → **Versus Sector** | breadcrumb Sector › Group › Industry (with member counts) to switch level; each figure's Q1 / median / Q3, this company's value, gap to median (green favourable, red unfavourable, tiny gaps neutral) and a position bar; "Screen {Sector}" when no screen covers the company |
+| Company Detail → **Sector** | same level switch; growth vs operating margin scatter (median crosshairs, dot size = revenue), revenue ranking, sortable table with an Industry column. Clicking a company opens it, or offers **Build Company Detail** (a Pipeline run through company details) |
+| Valuation → **Comps Peers from …** | ranked by the one similarity score (`L3_app/similar.py`, computed at publish). Opens at the company's industry if it has 6+ members, else widens. Tick peers, type prices, **Save Peers** or **Save Peers & Run Comps** (GitHub contents API; token needs Contents: Read and write). Peers the picker didn't show (hand-entered, or outside the level in view) are kept |
+| Run Pipeline → **Sector** | a company's sector (default), a taxonomy sector, a SIC code, a trait group, or a list |

@@ -4,9 +4,12 @@ Shown next to the reported statements so current and projected growth sit
 side by side. It isn't a valuation; the DCF model's projection (from its
 assumptions) replaces it on the site when a DCF has run.
 
+Base period: the last reported fiscal year, so Year 1 is the fiscal year in
+progress (FY+1E) and estimate columns line up with filings. Ten years.
+
 Drivers, all measured from the filings:
   revenue        g0 = revenue CAGR over up to five fiscal years (bounded to
-                 -20%..+40%), fading linearly to 3% by the last year
+                 -20%..+40%), fading linearly to 3% by Year 10
                  (fade_years = horizon - 1, since the engine's fade lands in year n+1)
   cost lines     base-period ratios to sales; "other operating" is the
                  residual so base EBIT equals reported operating income
@@ -20,7 +23,7 @@ from __future__ import annotations
 
 from core.projection import base_from_detail, project, statement_row
 
-HORIZON = 5
+HORIZON = 10
 TERMINAL_GROWTH = 0.03
 GROWTH_BOUNDS = (-0.20, 0.40)
 DEFAULT_NWC = 0.20
@@ -41,7 +44,7 @@ def _nwc_ratio(detail: dict) -> tuple[float, str]:
 
 def trend_case(detail: dict, horizon: int = HORIZON) -> dict | None:
     views = detail["views"]
-    base_p = (views.get("ttm") or views.get("annual") or [None])[-1]
+    base_p = (views.get("annual") or views.get("ttm") or [None])[-1]
     if not base_p or not base_p["values"].get("revenue"):
         return None
     v = base_p["values"]
@@ -73,7 +76,8 @@ def trend_case(detail: dict, horizon: int = HORIZON) -> dict | None:
     years = project(b, drivers, horizon)["years"]
     return {
         "case": "trend",
-        "base_period": {"label": base_p["label"], "end": base_p["end"]},
+        "base_period": {"label": base_p["label"], "end": base_p["end"], "fiscal_year": base_p.get("fiscal_year"),
+                        "kind": "fiscal" if base_p.get("fiscal_period") == "FY" else "ltm"},
         "assumptions": {"revenue_growth_start": g0, "terminal_growth": TERMINAL_GROWTH, "fade_years": max(horizon - 1, 1),
                         "tax_rate": tax, "nwc_to_sales_change": nwc, "nwc_source": nwc_src,
                         "capex_pct_revenue": drivers["capex"]["value"]},

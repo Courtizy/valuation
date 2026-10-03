@@ -5,7 +5,7 @@
 ## How it fits together
 
 ```
- Run pipeline tab ──► Pipeline action (workflow_dispatch)
+ Run Pipeline tab ──► Pipeline action (workflow_dispatch)
    (or Actions page,       pipeline.py run TICKER --stop-after L1|L2
     or gh CLI)             python -m L3_app.publish  → commits site/data/
                                    │
@@ -22,9 +22,35 @@ GitHub Pages only serves static files, and the SEC API can't be called from a br
 
 The page does no valuation math. Projections are calculated in Python and published with the data: the DCF's projection when a DCF has run, otherwise the L1 trend case (`company_detail.json` → `projection`). There are no driver selectors on the site; to change a projection, edit `assumptions/{TICKER}/dcf.json` and rerun.
 
+## Code layout (site/assets)
+
+Plain ES modules, no build step. `main.js` loads `index.json`, concepts, companies and the taxonomy in parallel, then each run's files together.
+
+| Module | Holds |
+|---|---|
+| `main.js` | start-up, company and run selection, tabs, theme |
+| `state.js` | shared state, `$`, `getJSON`, banners |
+| `format.js` | the presentation standard (below): numbers, periods, Title Case, labels |
+| `tables.js` | statement rows (`finRow`, `acct`) |
+| `charts.js` | SVG charts: column, line (dashed estimates), area, range, scatter, bar list, spread, grouped bars |
+| `company.js` | Company Detail: tiles, Revenue, Returns, Margins, Cash Conversion, statements, ratios |
+| `sector.js` | Versus Sector and Sector cards, level switch |
+| `valuation.js` | headline, football field, profile, comps, peer picker, DCF, similar companies |
+| `run.js`, `github.js` | Run Pipeline form; GitHub API (dispatch, read/write repo JSON) |
+
+The Pages workflow stamps every stylesheet and module import with `?v=<commit>`, so a deploy is never hidden by the browser cache.
+
+## Presentation standard
+
+- Titles, headers, line items and buttons in Title Case (small words lower case, acronyms kept); notes in sentence case.
+- Periods: `FY25A` reported, `Q3 FY26`, `LTM Jun-26`, `FY27E` estimate.
+- Estimates shown: Years 1–4, then Year 5 and Year 10 (tagged), with LTM as a reference column. Year 1 is the fiscal year after the last 10-K (the closing year).
+- $ millions with one decimal in tables; $5.76B in tiles; percentages one decimal; valuation multiples one decimal (`11.1x`, `NM` on a negative base); turnover two decimals; `–` = no data.
+- Every card ends with a source line.
+
 ## Table formatting
 
-Financial tables use a hybrid statement look (`finRow` / `acct` in `app.js`, styles under "tables" in `styles.css`): accounting structure with modern shading.
+Financial tables use a hybrid statement look (`finRow` / `acct` in `tables.js`, styles under "tables" in `styles.css`): accounting structure with modern shading.
 
 | Row kind | Look | Used for |
 |---|---|---|
@@ -42,9 +68,9 @@ Amounts: negatives in parentheses (positives reserve the ")" so digits align); c
 
 | Tab | Shows |
 |---|---|
-| Company detail | KPI tiles incl. projected revenue CAGR; revenue area chart (reported area from the TTM base, projection as a dashed line, Bear–Bull band = projected growth ± the DCF growth step, 1 pt for the trend case; tooltip shows growth); statements with derived quarters marked and, in the Annual view, a TTM base column plus five shaded estimate columns (DCF case, else trend case); a Growth and margins block (revenue growth, gross, EBITDA, operating, net margin) across history and estimates; projected unlevered FCF; ratios in five framework views; **Versus its sector** benchmarks and a **Sector** card with charts and a sortable table (`docs/L1_sector.md`) |
-| Valuation | Value vs price headline; football field with each method's range, selected value, upside, weight and reason, plus a Bear / Base / Bull toggle; company profile card; DCF detail; comps peer picker from the company's sector (saves `comps.json`); similar companies ranked by profile with multiples and rates (`docs/L2_reconcile.md`) |
-| Run pipeline | **Company:** ticker, as-of, a *Company details* box and one box per model (built: DCF, Comps). Details alone runs through L1; ticking a model runs through L2 and locks details on, since models use them. **Sector:** SIC code, a company's code, trait group or list. Starts the Pipeline action with a token, or links to the Actions page and prints the `gh` command |
+| Company Detail | KPI tiles (Revenue CAGR 5Y / 10Y projected); **Revenue** area chart (reported area, projection dashed, Bear–Bull band); **Returns**: RNOA and ROCE lines with the spread shaded green (RNOA above, leverage adds) or red, plus WACC; **Margins** (gross, EBITDA, operating; estimates dashed); **Cash Conversion** (net income vs FCF, conversion in the tooltip); statements: five fiscal years, LTM reference, Years 1–4, 5 and 10 (DCF case, else the 10-year trend case), with a full-history download; ratios in five framework views; **Versus Sector** and **Sector** cards (`docs/L1_sector.md`) |
+| Valuation | Value vs price headline; football field (range, base, upside, weight; the reason on its own line; Bear / Base / Bull toggle; precedents tagged Illustrative); company profile; comps card with a dot plot of each peer's implied price (range = IQR with 4+ peers, else min–max); peer picker; DCF with EV bridge, discount rates, projection (Years 1–4, 5, 10, terminal) and a WACC × terminal growth sensitivity grid; similar companies (`docs/L2_reconcile.md`) |
+| Run Pipeline | **Company:** ticker, as-of, a *Company Details* box and one box per model (built: DCF, Comps). Details alone runs through L1; ticking a model runs through L2 and locks details on. **Sector:** a company's sector (default), a taxonomy sector, SIC code, trait group or list. Starts the Pipeline action with a token, or links to the Actions page and prints the `gh` command |
 
 Light and dark themes follow the OS, with a manual toggle. The layout works down to phone width.
 
@@ -60,7 +86,7 @@ Light and dark themes follow the OS, with a manual toggle. The layout works down
 2. **Settings → Pages → Source: GitHub Actions.**
 3. **Settings → Secrets and variables → Actions → New repository secret:** `SEC_USER_AGENT` = `Your Name you@example.com`.
 4. **Settings → Actions → General → Workflow permissions:** read and write (the Pipeline job commits `site/data`).
-5. Run a ticker from the **Run pipeline** tab, or run:
+5. Run a ticker from the **Run Pipeline** tab, or run:
 
    ```bash
    gh workflow run pipeline.yml -f ticker=AAPL -f stop_after=L1
@@ -85,6 +111,13 @@ This writes three synthetic companies (`DEMO` manufacturing, `DEMOG` high-growth
 python -m L3_app.publish            # data/ → site/data, rebuild index.json, concepts.json and companies.json
 python -m http.server -d site 8000  # open http://localhost:8000
 ```
+
+## What publish writes
+
+- `company_detail.json` is a site slice (11 years annual, 16 quarters and LTM points, recent analysis); `company_detail_full.json` keeps everything and is linked from the statements card.
+- JSON is compact. Each ticker keeps its latest 3 runs; older ones are removed from `site/data`.
+- `companies.json` holds one card per company, with its classification, the top 10 similar companies and the top 25 ranked peers within each sector screen (`L3_app/similar.py`).
+- `taxonomy.json` is copied for the level switch.
 
 ## What's public
 

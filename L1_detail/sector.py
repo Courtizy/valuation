@@ -1,6 +1,7 @@
 """Sector screen: a few comparable figures for every company in a sector.
 
 A sector is one of
+  sector  a sector of sectors/taxonomy.json (e.g. Technology): every SIC code under it
   sic     an SEC industry code (EDGAR's company list for that code)
   traits  companies whose profile traits match, across all industries
           (e.g. stage = high growth, asset intensity = light)
@@ -29,6 +30,8 @@ Benchmarks: Q1 / median / Q3 of each metric across the sector's companies.
 """
 from __future__ import annotations
 
+from core.num import div as _div
+
 import re
 import statistics
 
@@ -41,6 +44,7 @@ BENCHMARK_METRICS = ["revenue_growth", "revenue_cagr", "gross_margin", "operatin
                      "liabilities_to_assets"]
 TRAITS = ("stage", "predictability", "asset_intensity", "capital_structure")
 DEFAULT_LIMIT = 100
+SECTOR_LIMIT = 300   # a whole sector (all of Technology) keeps more companies
 # The raw screen carries the tags it fetched; these match L0's lists for older files.
 DEFAULT_TAGS = {
     "revenue": ["RevenueFromContractWithCustomerExcludingAssessedTax", "Revenues", "SalesRevenueNet",
@@ -53,8 +57,6 @@ DEFAULT_TAGS = {
 }
 
 
-def _div(a, b):
-    return None if a is None or b in (None, 0) else a / b
 
 
 class Frames:
@@ -215,6 +217,8 @@ def parse_traits(spec: str | dict) -> dict:
 
 
 def sector_id(kind: str, value) -> str:
+    if kind == "sector":
+        return f"sector-{slug(value)}"
     if kind == "sic":
         return f"sic-{value}"
     if kind == "traits":
@@ -224,8 +228,15 @@ def sector_id(kind: str, value) -> str:
 
 def build_sector(raw_screen: dict, *, kind: str, value, as_of: str, tickers: list[dict],
                  members: list[str] | None = None, label: str | None = None,
-                 limit: int = DEFAULT_LIMIT, rules: dict | None = None) -> dict:
-    """kind sic/list: `members` = CIKs (10-digit). kind traits: `value` = {trait: label}."""
+                 limit: int | None = None, rules: dict | None = None,
+                 member_sic: dict[str, str] | None = None, taxonomy=None) -> dict:
+    """kind sector/sic/list: `members` = CIKs (10-digit). kind traits: `value` = {trait: label}.
+
+    member_sic (CIK -> SIC code) + taxonomy add each company's sector, industry group
+    and industry, so the site can re-cut the screen at any level.
+    """
+    if limit is None:
+        limit = SECTOR_LIMIT if kind == "sector" else DEFAULT_LIMIT
     rules = rules or load_rules()
     year = raw_screen["year"]
     fr = Frames(raw_screen)
@@ -234,7 +245,7 @@ def build_sector(raw_screen: dict, *, kind: str, value, as_of: str, tickers: lis
         by_cik.setdefault(t["cik"], t["ticker"])
     pool = fr.ciks_with_revenue(year) | fr.ciks_with_revenue(year - 1)
     notes = []
-    if kind in ("sic", "list"):
+    if kind in ("sector", "sic", "list"):
         wanted = [int(c) for c in (members or [])]
         no_data = [c for c in wanted if c not in pool]
         cands = [c for c in wanted if c in pool]
@@ -242,7 +253,7 @@ def build_sector(raw_screen: dict, *, kind: str, value, as_of: str, tickers: lis
         value = parse_traits(value)
         no_data, cands = [], sorted(pool)
     else:
-        raise ValueError(f"kind must be sic, traits or list, not {kind!r}")
+        raise ValueError(f"kind must be sector, sic, traits or list, not {kind!r}")
 
     rows = []
     for cik in cands:
@@ -253,6 +264,10 @@ def build_sector(raw_screen: dict, *, kind: str, value, as_of: str, tickers: lis
         if kind == "traits" and any(m["traits"][k] != v for k, v in value.items()):
             continue
         m["ticker"] = by_cik.get(m["cik"])
+        code = (member_sic or {}).get(m["cik"])
+        m["sic"] = code
+        c = taxonomy.classify(code) if taxonomy and code else None
+        m["classification"] = ({k: c[k] for k in ("sector", "group", "industry")} if c else None)
         rows.append(m)
     no_ticker = [r for r in rows if not r["ticker"]]
     rows = [r for r in rows if r["ticker"]]
@@ -271,14 +286,25 @@ def build_sector(raw_screen: dict, *, kind: str, value, as_of: str, tickers: lis
     if kind == "traits":
         notes.append("trait screen: asset intensity uses capex / sales only")
 
+    levels = None
+    if taxonomy and any(r["classification"] for r in rows):
+        # names for the level switch: every group and industry present, with member counts
+        levels = {"groups": {}, "industries": {}}
+        for r in rows:
+            c = taxonomy.classify(r["sic"])
+            if not c:
+                continue
+            levels["groups"].setdefault(c["group"], {"name": c["group_name"], "sector": c["sector"], "count": 0})["count"] += 1
+            levels["industries"].setdefault(c["industry"], {"name": c["industry_name"], "group": c["group"], "count": 0})["count"] += 1
     if label is None:
-        label = (f"SIC {value}" if kind == "sic" else
+        label = (taxonomy.name(value) if kind == "sector" and taxonomy else
+                 f"SIC {value}" if kind == "sic" else
                  " · ".join(v.capitalize() for v in value.values()) if kind == "traits" else value)
     return {
         "schema_version": SCHEMA_VERSION, "stage": "L1.sector",
         "id": sector_id(kind, value), "kind": kind, "label": label,
         "source": {"kind": kind, "value": value}, "as_of": as_of, "year": year,
-        "companies": rows, "benchmarks": benchmarks(rows),
+        "companies": rows, "benchmarks": benchmarks(rows), "levels": levels,
         "excluded": {"no_data": len(no_data), "no_ticker": len(no_ticker), "over_limit": len(over)},
         "notes": notes,
     }

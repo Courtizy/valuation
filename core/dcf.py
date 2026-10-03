@@ -133,6 +133,28 @@ def scenario_range(price_at: Callable[..., float], *, g0: float, g_terminal: flo
     }
 
 
+def sensitivity_grid(price_at: Callable[..., float], *, wacc: float, wacc_terminal: float, g_terminal: float,
+                     wacc_shifts=(-0.01, -0.005, 0.0, 0.005, 0.01),
+                     growth_shifts=(-0.01, -0.005, 0.0, 0.005, 0.01)) -> dict:
+    """Value per share across WACC (rows) and terminal growth (columns).
+
+    A WACC shift moves the pre-terminal and terminal WACC together; the centre
+    cell is the base case. A cell whose terminal WACC would not exceed terminal
+    growth (no finite Gordon value) is None.
+    """
+    rows = []
+    for dw in wacc_shifts:
+        row = []
+        for dg in growth_shifts:
+            if wacc_terminal + dw <= g_terminal + dg:
+                row.append(None)
+            else:
+                row.append(price_at(wacc=wacc + dw, wacc_terminal=wacc_terminal + dw, g_terminal=g_terminal + dg))
+        rows.append(row)
+    return {"wacc": [wacc + d for d in wacc_shifts], "wacc_terminal": [wacc_terminal + d for d in wacc_shifts],
+            "terminal_growth": [g_terminal + d for d in growth_shifts], "values": rows}
+
+
 def solve(f: Callable[[float], float], target: float, lo: float, hi: float, tol: float = 1e-10,
           max_iter: int = 200) -> float:
     """Bisection: x in [lo, hi] with f(x) = target. Requires a sign change."""

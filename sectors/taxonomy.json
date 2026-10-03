@@ -1,0 +1,1178 @@
+{
+ "version": "0.1.0",
+ "_about": "Sector > Industry Group > Industry, modelled on market classification (GICS-style names), each industry defined by SEC SIC codes. Edit freely. Interactive Media (SIC 7370) sits in Communication Services, as in GICS since 2018. naics is reserved for a future data source.",
+ "excluded": {
+  "6189": "asset-backed securities (not operating companies)",
+  "8880": "American depositary receipts",
+  "8888": "foreign governments",
+  "9721": "international affairs",
+  "9995": "non-operating establishments"
+ },
+ "sectors": [
+  {
+   "id": "energy",
+   "name": "Energy",
+   "groups": [
+    {
+     "id": "energy_equipment_services",
+     "name": "Energy Equipment & Services",
+     "industries": [
+      {
+       "id": "drilling_field_services",
+       "name": "Drilling & Field Services",
+       "sic": [
+        "1381",
+        "1382",
+        "1389",
+        "3533"
+       ],
+       "naics": []
+      }
+     ]
+    },
+    {
+     "id": "oil_gas_consumable_fuels",
+     "name": "Oil, Gas & Consumable Fuels",
+     "industries": [
+      {
+       "id": "exploration_production",
+       "name": "Exploration & Production",
+       "sic": [
+        "1311",
+        "6792"
+       ],
+       "naics": []
+      },
+      {
+       "id": "integrated_refining",
+       "name": "Integrated & Refining",
+       "sic": [
+        "2911",
+        "2990",
+        "5171",
+        "5172"
+       ],
+       "naics": []
+      },
+      {
+       "id": "midstream_pipelines",
+       "name": "Midstream & Pipelines",
+       "sic": [
+        "4610",
+        "4922"
+       ],
+       "naics": []
+      },
+      {
+       "id": "coal",
+       "name": "Coal",
+       "sic": [
+        "1220",
+        "1221"
+       ],
+       "naics": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "materials",
+   "name": "Materials",
+   "groups": [
+    {
+     "id": "materials",
+     "name": "Materials",
+     "industries": [
+      {
+       "id": "chemicals",
+       "name": "Chemicals",
+       "sic": [
+        "2800",
+        "2810",
+        "2820",
+        "2821",
+        "2851",
+        "2860",
+        "2870",
+        "2890",
+        "2891",
+        "5160"
+       ],
+       "naics": []
+      },
+      {
+       "id": "construction_materials",
+       "name": "Construction Materials",
+       "sic": [
+        "1400",
+        "2950",
+        "3241",
+        "3250",
+        "3270",
+        "3272",
+        "3281",
+        "3290"
+       ],
+       "naics": []
+      },
+      {
+       "id": "containers_packaging",
+       "name": "Containers & Packaging",
+       "sic": [
+        "2650",
+        "2673",
+        "3080",
+        "3081",
+        "3086",
+        "3089",
+        "3221",
+        "3411",
+        "3412"
+       ],
+       "naics": []
+      },
+      {
+       "id": "metals_mining",
+       "name": "Metals & Mining",
+       "sic": [
+        "1000",
+        "1040",
+        "1090",
+        "3310",
+        "3312",
+        "3317",
+        "3320",
+        "3330",
+        "3334",
+        "3341",
+        "3350",
+        "3357",
+        "3360",
+        "3390",
+        "5050",
+        "5051",
+        "6795"
+       ],
+       "naics": []
+      },
+      {
+       "id": "paper_forest_products",
+       "name": "Paper & Forest Products",
+       "sic": [
+        "0800",
+        "2400",
+        "2421",
+        "2600",
+        "2611",
+        "2621",
+        "2631",
+        "2670",
+        "5110"
+       ],
+       "naics": []
+      },
+      {
+       "id": "glass_ceramics",
+       "name": "Glass & Ceramics",
+       "sic": [
+        "3211",
+        "3220",
+        "3231",
+        "3260"
+       ],
+       "naics": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "industrials",
+   "name": "Industrials",
+   "groups": [
+    {
+     "id": "capital_goods",
+     "name": "Capital Goods",
+     "industries": [
+      {
+       "id": "aerospace_defense",
+       "name": "Aerospace & Defense",
+       "sic": [
+        "3480",
+        "3720",
+        "3721",
+        "3724",
+        "3728",
+        "3760",
+        "3812"
+       ],
+       "naics": []
+      },
+      {
+       "id": "building_products",
+       "name": "Building Products",
+       "sic": [
+        "2430",
+        "2452",
+        "3430",
+        "3433",
+        "3440",
+        "3442",
+        "3448",
+        "3585",
+        "3822"
+       ],
+       "naics": []
+      },
+      {
+       "id": "construction_engineering",
+       "name": "Construction & Engineering",
+       "sic": [
+        "1540",
+        "1600",
+        "1623",
+        "1700",
+        "1731",
+        "8711"
+       ],
+       "naics": []
+      },
+      {
+       "id": "electrical_equipment",
+       "name": "Electrical Equipment",
+       "sic": [
+        "3600",
+        "3612",
+        "3613",
+        "3620",
+        "3621",
+        "3640",
+        "3690"
+       ],
+       "naics": []
+      },
+      {
+       "id": "machinery",
+       "name": "Machinery",
+       "sic": [
+        "3050",
+        "3060",
+        "3420",
+        "3443",
+        "3444",
+        "3451",
+        "3452",
+        "3460",
+        "3470",
+        "3490",
+        "3510",
+        "3523",
+        "3524",
+        "3530",
+        "3531",
+        "3532",
+        "3537",
+        "3540",
+        "3541",
+        "3550",
+        "3555",
+        "3560",
+        "3561",
+        "3562",
+        "3564",
+        "3567",
+        "3569",
+        "3580",
+        "3590",
+        "3713",
+        "3715",
+        "3730",
+        "3743",
+        "3790"
+       ],
+       "naics": []
+      },
+      {
+       "id": "trading_companies_distributors",
+       "name": "Trading Companies & Distributors",
+       "sic": [
+        "5000",
+        "5010",
+        "5013",
+        "5030",
+        "5031",
+        "5040",
+        "5063",
+        "5065",
+        "5070",
+        "5072",
+        "5080",
+        "5082",
+        "5084",
+        "5090",
+        "5099",
+        "7350",
+        "7359",
+        "7377"
+       ],
+       "naics": []
+      }
+     ]
+    },
+    {
+     "id": "commercial_professional_services",
+     "name": "Commercial & Professional Services",
+     "industries": [
+      {
+       "id": "commercial_services_supplies",
+       "name": "Commercial Services & Supplies",
+       "sic": [
+        "2520",
+        "2522",
+        "2531",
+        "2540",
+        "2750",
+        "2761",
+        "2780",
+        "2790",
+        "3950",
+        "4950",
+        "4953",
+        "4955",
+        "7330",
+        "7331",
+        "7340",
+        "7380",
+        "7381",
+        "7384",
+        "7389",
+        "8744",
+        "8900"
+       ],
+       "naics": []
+      },
+      {
+       "id": "professional_services",
+       "name": "Professional Services",
+       "sic": [
+        "7320",
+        "7361",
+        "7363",
+        "8111",
+        "8700",
+        "8741",
+        "8742"
+       ],
+       "naics": []
+      }
+     ]
+    },
+    {
+     "id": "transportation",
+     "name": "Transportation",
+     "industries": [
+      {
+       "id": "air_freight_logistics",
+       "name": "Air Freight & Logistics",
+       "sic": [
+        "4220",
+        "4231",
+        "4513",
+        "4700",
+        "4731"
+       ],
+       "naics": []
+      },
+      {
+       "id": "passenger_airlines",
+       "name": "Passenger Airlines",
+       "sic": [
+        "4512",
+        "4522",
+        "4581"
+       ],
+       "naics": []
+      },
+      {
+       "id": "ground_transportation",
+       "name": "Ground Transportation",
+       "sic": [
+        "4011",
+        "4013",
+        "4100",
+        "4210",
+        "4213"
+       ],
+       "naics": []
+      },
+      {
+       "id": "marine_transportation",
+       "name": "Marine Transportation",
+       "sic": [
+        "4400",
+        "4412"
+       ],
+       "naics": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "consumer_discretionary",
+   "name": "Consumer Discretionary",
+   "groups": [
+    {
+     "id": "automobiles_components",
+     "name": "Automobiles & Components",
+     "industries": [
+      {
+       "id": "automobiles",
+       "name": "Automobiles",
+       "sic": [
+        "3711",
+        "3716",
+        "3751"
+       ],
+       "naics": []
+      },
+      {
+       "id": "automotive_parts",
+       "name": "Automotive Parts",
+       "sic": [
+        "3011",
+        "3714"
+       ],
+       "naics": []
+      }
+     ]
+    },
+    {
+     "id": "consumer_durables_apparel",
+     "name": "Consumer Durables & Apparel",
+     "industries": [
+      {
+       "id": "household_durables",
+       "name": "Household Durables",
+       "sic": [
+        "1520",
+        "1531",
+        "2273",
+        "2451",
+        "2510",
+        "2511",
+        "2590",
+        "3630",
+        "3634"
+       ],
+       "naics": []
+      },
+      {
+       "id": "leisure_products",
+       "name": "Leisure Products",
+       "sic": [
+        "3861",
+        "3931",
+        "3942",
+        "3944",
+        "3949"
+       ],
+       "naics": []
+      },
+      {
+       "id": "textiles_apparel_luxury_goods",
+       "name": "Textiles, Apparel & Luxury Goods",
+       "sic": [
+        "2200",
+        "2211",
+        "2221",
+        "2250",
+        "2253",
+        "2300",
+        "2320",
+        "2330",
+        "2340",
+        "2390",
+        "3021",
+        "3100",
+        "3140",
+        "3873",
+        "3910",
+        "3911",
+        "3960",
+        "5094",
+        "5130"
+       ],
+       "naics": []
+      }
+     ]
+    },
+    {
+     "id": "consumer_services",
+     "name": "Consumer Services",
+     "industries": [
+      {
+       "id": "hotels_restaurants_leisure",
+       "name": "Hotels, Restaurants & Leisure",
+       "sic": [
+        "5810",
+        "5812",
+        "7000",
+        "7011",
+        "7900",
+        "7948",
+        "7990",
+        "7997"
+       ],
+       "naics": []
+      },
+      {
+       "id": "diversified_consumer_services",
+       "name": "Diversified Consumer Services",
+       "sic": [
+        "7200",
+        "7500",
+        "7510",
+        "7600",
+        "8200",
+        "8351",
+        "8600"
+       ],
+       "naics": []
+      }
+     ]
+    },
+    {
+     "id": "retail",
+     "name": "Retail",
+     "industries": [
+      {
+       "id": "broadline_retail",
+       "name": "Broadline Retail",
+       "sic": [
+        "5311",
+        "5331",
+        "5399",
+        "5960",
+        "5961"
+       ],
+       "naics": []
+      },
+      {
+       "id": "specialty_retail",
+       "name": "Specialty Retail",
+       "sic": [
+        "5020",
+        "5064",
+        "5200",
+        "5211",
+        "5271",
+        "5500",
+        "5531",
+        "5600",
+        "5621",
+        "5651",
+        "5661",
+        "5700",
+        "5712",
+        "5731",
+        "5734",
+        "5735",
+        "5900",
+        "5940",
+        "5944",
+        "5945",
+        "5990"
+       ],
+       "naics": []
+      },
+      {
+       "id": "distributors",
+       "name": "Distributors",
+       "sic": [
+        "3990"
+       ],
+       "naics": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "consumer_staples",
+   "name": "Consumer Staples",
+   "groups": [
+    {
+     "id": "consumer_staples_distribution_retail",
+     "name": "Consumer Staples Distribution & Retail",
+     "industries": [
+      {
+       "id": "food_drug_retail",
+       "name": "Food & Drug Retail",
+       "sic": [
+        "5140",
+        "5141",
+        "5180",
+        "5190",
+        "5400",
+        "5411",
+        "5412",
+        "5912"
+       ],
+       "naics": []
+      }
+     ]
+    },
+    {
+     "id": "food_beverage_tobacco",
+     "name": "Food, Beverage & Tobacco",
+     "industries": [
+      {
+       "id": "beverages",
+       "name": "Beverages",
+       "sic": [
+        "2080",
+        "2082",
+        "2086"
+       ],
+       "naics": []
+      },
+      {
+       "id": "food_products",
+       "name": "Food Products",
+       "sic": [
+        "0100",
+        "0200",
+        "0700",
+        "0900",
+        "2000",
+        "2011",
+        "2013",
+        "2015",
+        "2020",
+        "2024",
+        "2030",
+        "2033",
+        "2040",
+        "2050",
+        "2052",
+        "2060",
+        "2070",
+        "2090",
+        "2092",
+        "5150"
+       ],
+       "naics": []
+      },
+      {
+       "id": "tobacco",
+       "name": "Tobacco",
+       "sic": [
+        "2100",
+        "2111"
+       ],
+       "naics": []
+      }
+     ]
+    },
+    {
+     "id": "household_personal_products",
+     "name": "Household & Personal Products",
+     "industries": [
+      {
+       "id": "household_personal_products",
+       "name": "Household & Personal Products",
+       "sic": [
+        "2771",
+        "2840",
+        "2842",
+        "2844"
+       ],
+       "naics": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "health_care",
+   "name": "Health Care",
+   "groups": [
+    {
+     "id": "health_care_equipment_services",
+     "name": "Health Care Equipment & Services",
+     "industries": [
+      {
+       "id": "medical_devices_supplies",
+       "name": "Medical Devices & Supplies",
+       "sic": [
+        "3841",
+        "3842",
+        "3843",
+        "3844",
+        "3845",
+        "3851"
+       ],
+       "naics": []
+      },
+      {
+       "id": "health_care_providers_services",
+       "name": "Health Care Providers & Services",
+       "sic": [
+        "8000",
+        "8011",
+        "8050",
+        "8051",
+        "8060",
+        "8062",
+        "8071",
+        "8082",
+        "8090",
+        "8093",
+        "8300"
+       ],
+       "naics": []
+      },
+      {
+       "id": "managed_health_care",
+       "name": "Managed Health Care",
+       "sic": [
+        "6324"
+       ],
+       "naics": []
+      },
+      {
+       "id": "health_care_distributors",
+       "name": "Health Care Distributors",
+       "sic": [
+        "5047",
+        "5122"
+       ],
+       "naics": []
+      }
+     ]
+    },
+    {
+     "id": "pharmaceuticals_biotechnology_life_sciences",
+     "name": "Pharmaceuticals, Biotechnology & Life Sciences",
+     "industries": [
+      {
+       "id": "pharmaceuticals",
+       "name": "Pharmaceuticals",
+       "sic": [
+        "2833",
+        "2834",
+        "2835"
+       ],
+       "naics": []
+      },
+      {
+       "id": "biotechnology",
+       "name": "Biotechnology",
+       "sic": [
+        "2836",
+        "8731"
+       ],
+       "naics": []
+      },
+      {
+       "id": "life_sciences_tools_services",
+       "name": "Life Sciences Tools & Services",
+       "sic": [
+        "3821",
+        "3826",
+        "8734"
+       ],
+       "naics": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "financials",
+   "name": "Financials",
+   "groups": [
+    {
+     "id": "banks",
+     "name": "Banks",
+     "industries": [
+      {
+       "id": "banks",
+       "name": "Banks",
+       "sic": [
+        "6021",
+        "6022",
+        "6029",
+        "6035",
+        "6036"
+       ],
+       "naics": []
+      }
+     ]
+    },
+    {
+     "id": "financial_services",
+     "name": "Financial Services",
+     "industries": [
+      {
+       "id": "consumer_finance",
+       "name": "Consumer Finance",
+       "sic": [
+        "6111",
+        "6141",
+        "6153",
+        "6159",
+        "6162",
+        "6163",
+        "6172"
+       ],
+       "naics": []
+      },
+      {
+       "id": "financial_services_payments",
+       "name": "Financial Services & Payments",
+       "sic": [
+        "6099",
+        "6199"
+       ],
+       "naics": []
+      },
+      {
+       "id": "capital_markets",
+       "name": "Capital Markets",
+       "sic": [
+        "6200",
+        "6211",
+        "6221",
+        "6282",
+        "6799"
+       ],
+       "naics": []
+      },
+      {
+       "id": "blank_check_companies",
+       "name": "Blank-Check Companies",
+       "sic": [
+        "6770"
+       ],
+       "naics": []
+      }
+     ]
+    },
+    {
+     "id": "insurance",
+     "name": "Insurance",
+     "industries": [
+      {
+       "id": "insurance",
+       "name": "Insurance",
+       "sic": [
+        "6311",
+        "6321",
+        "6331",
+        "6351",
+        "6361",
+        "6399",
+        "6411"
+       ],
+       "naics": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "technology",
+   "name": "Technology",
+   "groups": [
+    {
+     "id": "semiconductors",
+     "name": "Semiconductors",
+     "industries": [
+      {
+       "id": "semiconductors",
+       "name": "Semiconductors",
+       "sic": [
+        "3674"
+       ],
+       "naics": []
+      },
+      {
+       "id": "semiconductor_equipment",
+       "name": "Semiconductor Equipment",
+       "sic": [
+        "3559",
+        "3825"
+       ],
+       "naics": []
+      }
+     ]
+    },
+    {
+     "id": "software_services",
+     "name": "Software & Services",
+     "industries": [
+      {
+       "id": "software",
+       "name": "Software",
+       "sic": [
+        "7372"
+       ],
+       "naics": []
+      },
+      {
+       "id": "it_services",
+       "name": "IT Services",
+       "sic": [
+        "7371",
+        "7373"
+       ],
+       "naics": []
+      },
+      {
+       "id": "data_processing_hosting",
+       "name": "Data Processing & Hosting",
+       "sic": [
+        "7374"
+       ],
+       "naics": []
+      }
+     ]
+    },
+    {
+     "id": "hardware_equipment",
+     "name": "Hardware & Equipment",
+     "industries": [
+      {
+       "id": "hardware_peripherals",
+       "name": "Hardware & Peripherals",
+       "sic": [
+        "3570",
+        "3571",
+        "3572",
+        "3575",
+        "3577",
+        "3578",
+        "3579",
+        "3695",
+        "5045"
+       ],
+       "naics": []
+      },
+      {
+       "id": "communications_equipment",
+       "name": "Communications Equipment",
+       "sic": [
+        "3576",
+        "3661",
+        "3663",
+        "3669"
+       ],
+       "naics": []
+      },
+      {
+       "id": "consumer_electronics",
+       "name": "Consumer Electronics",
+       "sic": [
+        "3651"
+       ],
+       "naics": []
+      },
+      {
+       "id": "electronic_components",
+       "name": "Electronic Components",
+       "sic": [
+        "3670",
+        "3672",
+        "3677",
+        "3678",
+        "3679"
+       ],
+       "naics": []
+      },
+      {
+       "id": "electronic_instruments",
+       "name": "Electronic Instruments",
+       "sic": [
+        "3823",
+        "3824",
+        "3827",
+        "3829"
+       ],
+       "naics": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "communication_services",
+   "name": "Communication Services",
+   "groups": [
+    {
+     "id": "telecommunication_services",
+     "name": "Telecommunication Services",
+     "industries": [
+      {
+       "id": "telecom_services",
+       "name": "Telecom Services",
+       "sic": [
+        "4812",
+        "4813",
+        "4822",
+        "4899",
+        "7385"
+       ],
+       "naics": []
+      }
+     ]
+    },
+    {
+     "id": "media_entertainment",
+     "name": "Media & Entertainment",
+     "industries": [
+      {
+       "id": "interactive_media_services",
+       "name": "Interactive Media & Services",
+       "sic": [
+        "7370"
+       ],
+       "naics": []
+      },
+      {
+       "id": "media",
+       "name": "Media",
+       "sic": [
+        "2711",
+        "2721",
+        "2731",
+        "2732",
+        "2741",
+        "4832",
+        "4833",
+        "4841",
+        "7310",
+        "7311"
+       ],
+       "naics": []
+      },
+      {
+       "id": "entertainment",
+       "name": "Entertainment",
+       "sic": [
+        "3652",
+        "7812",
+        "7819",
+        "7822",
+        "7829",
+        "7830",
+        "7841"
+       ],
+       "naics": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "utilities",
+   "name": "Utilities",
+   "groups": [
+    {
+     "id": "utilities",
+     "name": "Utilities",
+     "industries": [
+      {
+       "id": "electric_utilities",
+       "name": "Electric Utilities",
+       "sic": [
+        "4900",
+        "4911"
+       ],
+       "naics": []
+      },
+      {
+       "id": "gas_utilities",
+       "name": "Gas Utilities",
+       "sic": [
+        "4923",
+        "4924"
+       ],
+       "naics": []
+      },
+      {
+       "id": "multi_utilities",
+       "name": "Multi-Utilities",
+       "sic": [
+        "4931",
+        "4932",
+        "4961"
+       ],
+       "naics": []
+      },
+      {
+       "id": "water_utilities",
+       "name": "Water Utilities",
+       "sic": [
+        "4941"
+       ],
+       "naics": []
+      },
+      {
+       "id": "independent_power_producers",
+       "name": "Independent Power Producers",
+       "sic": [
+        "4991"
+       ],
+       "naics": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "real_estate",
+   "name": "Real Estate",
+   "groups": [
+    {
+     "id": "equity_reits",
+     "name": "Equity REITs",
+     "industries": [
+      {
+       "id": "reits",
+       "name": "REITs",
+       "sic": [
+        "6798"
+       ],
+       "naics": []
+      }
+     ]
+    },
+    {
+     "id": "real_estate_management_development",
+     "name": "Real Estate Management & Development",
+     "industries": [
+      {
+       "id": "real_estate_operators_developers",
+       "name": "Real Estate Operators & Developers",
+       "sic": [
+        "6500",
+        "6510",
+        "6512",
+        "6513",
+        "6519",
+        "6531",
+        "6532",
+        "6552",
+        "6794"
+       ],
+       "naics": []
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

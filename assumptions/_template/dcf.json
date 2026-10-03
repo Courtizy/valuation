@@ -1,6 +1,6 @@
 {
   "mode": "forecast",
-  "base_period": "ttm",
+  "base_period": "annual",
   "market": {
     "price": null,
     "price_date": null,

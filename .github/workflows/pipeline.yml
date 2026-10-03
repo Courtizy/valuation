@@ -16,7 +16,7 @@ on:
         required: false
         type: string
       sector:
-        description: "Sector to screen instead: sic:3674 | sic-of:AAPL | traits:stage=high growth;asset_intensity=light | list:name"
+        description: "Sector to screen instead: sic-of:AAPL | sector:technology | sic:3674 | traits:stage=high growth | list:name"
         required: false
         type: string
       as_of:
@@ -62,7 +62,7 @@ jobs:
       - name: Validate inputs
         run: |
           if [[ -n "$SECTOR" ]]; then
-            [[ "$SECTOR" =~ ^(sic:[0-9]{4}|sic-of:[A-Za-z][A-Za-z0-9.\-]{0,9}|list:[A-Za-z0-9_\-]{1,40}|traits:[a-z_]+=[a-z ]+(;[a-z_]+=[a-z ]+)*)$ ]] || { echo "bad sector: $SECTOR"; exit 1; }
+            [[ "$SECTOR" =~ ^(sector:[a-z_]{3,30}|sic:[0-9]{4}|sic-of:[A-Za-z][A-Za-z0-9.\-]{0,9}|list:[A-Za-z0-9_\-]{1,40}|traits:[a-z_]+=[a-z ]+(;[a-z_]+=[a-z ]+)*)$ ]] || { echo "bad sector: $SECTOR"; exit 1; }
             echo "MODE=sector" >> "$GITHUB_ENV"
           else
             [[ "$TICKER" =~ ^[A-Za-z][A-Za-z0-9.\-]{0,9}$ ]] || { echo "bad ticker: $TICKER"; exit 1; }

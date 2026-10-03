@@ -113,10 +113,11 @@ def test_trend_case_projection_is_calculated_from_history():
     d = build_detail(two_years(), "2026-09-30")
     p = d["projection"]
     assert p is not None and p == trend_case(d)
-    assert p["case"] == "trend" and len(p["years"]) == 5
+    assert p["case"] == "trend" and len(p["years"]) == 10
+    assert p["base_period"]["kind"] == "fiscal" and p["base_period"]["fiscal_year"] == 2024
     a = p["assumptions"]
     assert -0.20 <= a["revenue_growth_start"] <= 0.40 and a["terminal_growth"] == TERMINAL_GROWTH
-    revs = [d["views"]["ttm"][-1]["values"]["revenue"]] + [y["revenue"] for y in p["years"]]
+    revs = [d["views"]["annual"][-1]["values"]["revenue"]] + [y["revenue"] for y in p["years"]]
     growth = [b / a_ - 1 for a_, b in zip(revs, revs[1:])]
     assert growth[0] == pytest.approx(a["revenue_growth_start"])
     assert growth[-1] == pytest.approx(TERMINAL_GROWTH)

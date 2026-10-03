@@ -22,8 +22,9 @@ Implied target value per share (per peer, per multiple)
 
 Range
 -----
-"min_max" (course default): conservative = lowest implied price, expected =
-median, aggressive = highest. "quartiles": Q1 / median / Q3. Multiples are
+"auto" (default): Q1 / median / Q3 with four or more peers, else lowest /
+median / highest, so one outlier peer can't set the range. "min_max" (the
+course method): lowest / median / highest always. "quartiles": Q1 / median / Q3. Multiples are
 blended with weights (equal by default). A multiple whose target metric is
 not positive (EBITDA or earnings below zero) is dropped with a note.
 """
@@ -104,6 +105,8 @@ def implied_price(multiple_id: str, multiple: float, target: dict) -> float | No
 
 def _range(values: list[float], method: str) -> dict:
     xs = sorted(values)
+    if method == "auto":
+        method = "quartiles" if len(xs) >= 4 else "min_max"
     if method == "quartiles" and len(xs) >= 4:
         q1, med, q3 = statistics.quantiles(xs, n=4, method="inclusive")
         return {"conservative": q1, "expected": med, "aggressive": q3}
@@ -155,7 +158,9 @@ class Comps:
 
         wanted = a.get("multiples") or DEFAULT_MULTIPLES
         weights = a.get("weights") or {m: 1.0 for m in wanted}
-        method = a.get("range", "min_max")
+        method = a.get("range", "auto")
+        if method == "auto":
+            method = "quartiles" if len(live) >= 4 else "min_max"
         per_multiple = {}
         for mid in wanted:
             if mid not in MULTIPLES:

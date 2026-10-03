@@ -28,6 +28,8 @@ flow-to-stock ratios need no annualizing.
 """
 from __future__ import annotations
 
+from core.num import div as _div
+
 import json
 from pathlib import Path
 
@@ -42,10 +44,6 @@ def load_classification(overrides: dict | None = None) -> dict:
 
 # ---------------------------------------------------------------- helpers
 
-def _div(a, b):
-    if a is None or b is None or b == 0:
-        return None
-    return a / b
 
 
 def _sub(a, b):
