@@ -20,6 +20,19 @@ Share prices, beta and the risk-free rate, point-in-time at `as_of`. Code: `mode
 - **Optional step:** if both sources fail, the run continues without market figures and reports a warning, not a failure.
 - **Share count** = the newest filed count (the 10-K/10-Q cover page), so market cap = price × shares outstanding.
 
+## Yahoo as the backup after SEC filings (private runs)
+
+With prices allowed (`--market all`), the market step also pulls Yahoo's fundamentals timeseries (`query1.finance.yahoo.com/ws/fundamentals-timeseries`, no key) into `raw_market.json` → `fundamentals`. L1 (`model/L1_detail/backfill.py`) then fills gaps:
+
+- **Only gaps:** a Yahoo value is added only where no filed record exists for the same concept and period. Filed values always win.
+- **Only filed periods:** the fiscal year and quarter labels come from the SEC record with the same end date (within 7 days, for 52/53-week years), so Yahoo can never add or relabel a period. A company the filings don't cover (a 20-F filer in IFRS) stays unsupported.
+- **Point-in-time:** Yahoo gives no filing date, so a period counts only 60 days after a fiscal year end and 40 after a quarter end.
+- **Items:** revenue, cost of revenue, gross profit, operating income, D&A, interest expense and income, pretax income, tax, net income, R&D, SG&A, operating cash flow, capex (sign flipped to the filed convention), cash and short-term investments, debt, equity, total assets and liabilities, current assets and liabilities, shares outstanding and diluted average shares. Derived lines (EBITDA, FCF) recompute from them.
+- **Shown as `y`** on the statements; company detail lists every filled value under `backfill`.
+- **Never public:** showcase runs don't call Yahoo, and `publish` in showcase mode skips any run that carries backfill.
+
+Prices for comps peers and beta already come from Yahoo in the same private runs.
+
 ## Derived figures (L1)
 
 | Figure | Rule |

@@ -22,7 +22,7 @@ export function renderValuation() {
   const c = state.comparison, body = $("val-body");
   if (!c || !c.football_field?.length) {
     body.innerHTML = `<div class="card empty"><h2>No Model Results for This Run</h2>
-      <p>Run the pipeline through <b>Company Details + Models</b> (with an assumptions file for each model) and the valuation appears here.</p></div>`;
+      <p>Tick <b>DCF</b> under Models on the Run Pipeline tab and run this ticker. Without a <code>dcf.json</code> the DCF uses default assumptions from the data; Comps needs a <code>comps.json</code> with peers.</p></div>`;
     renderProfileCard(body);
     body.insertAdjacentHTML("beforeend", '<div id="val-peers"></div>');
     renderPeerPicker();
@@ -443,7 +443,8 @@ export function renderDcfCard() {
   const tile = (l, v, sub = "") => `<div class="tile"><div class="label">${esc(l)}</div><div class="value">${v}</div>${sub ? `<div class="delta">${esc(sub)}</div>` : ""}</div>`;
   card.innerHTML = `
     <div class="card-head"><h2>DCF (Standalone)</h2>
-      <span class="muted small">${esc(d.mode === "implied" ? "Implied Mode: growth solved to match the price" : "Forecast Mode")} · Base ${esc(d.base_period.kind === "fiscal" ? String(d.base_period.fiscal_year) : d.base_period.label)}</span></div>
+      <span class="muted small">${esc(d.mode === "implied" ? "Implied Mode: growth solved to match the price" : "Forecast Mode")} · Base ${esc(d.base_period.kind === "fiscal" ? String(d.base_period.fiscal_year) : d.base_period.label)}${d.default_case
+        ? ` · <span class="tile-tag" title="No inputs/assumptions/${esc(state.company.ticker)}/dcf.json: growth from the company's history, rates from the data. Add a dcf.json to set your own.">Default Assumptions</span>` : ""}</span></div>
     <div class="tiles">
       ${tile("Value per Share", price(b.value_per_share), `Bear ${price(sc.conservative)} – Bull ${price(sc.aggressive)}`)}
       ${d.implied_growth != null ? tile("Implied Near-Term Growth", pct(d.implied_growth), `At price ${price(d.market_price)}`) : tile("Share Price", price(d.market_price), state.detail.market?.price === d.market_price ? marketLine(state.detail.market).replace(/<[^>]+>/g, "") : "From the DCF assumptions")}

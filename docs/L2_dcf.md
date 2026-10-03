@@ -53,3 +53,22 @@ Checked against the three course cases:
 
 - **Data-driven market inputs:** price, Treasury rates and beta are typed into the assumptions file until the market-data adapter exists.
 - **Synergy models:** the DCF with synergies and the just-synergies model are next.
+
+## Default case (no dcf.json)
+
+When `inputs/assumptions/{TICKER}/dcf.json` doesn't exist, the runner values the company on `default_assumptions(detail)` instead of skipping the DCF:
+
+| Input | Default |
+|---|---|
+| Mode | forecast |
+| Revenue growth | the company's historical revenue CAGR from the L1 trend case, capped to −5%…20%, fading to 2.5% over 10 years |
+| Equity risk premium | 5% |
+| Risk-free | FRED 10-year Treasury on or before as_of (company detail `risk_free`) |
+| Beta | market beta when prices are allowed, else the sector's illustrative beta |
+| Cost of debt | interest / debt from the filings, else risk-free + 1.5% |
+| Shares | newest filed share count (cover page) |
+| Costs, capex, tax, working capital | from the filings, as in any DCF |
+
+The result carries `default_case: true`, its first note says so, and the site tags the DCF card **Default Assumptions**. Adding a `dcf.json` always replaces the default case.
+
+**No market price (showcase mode or no data):** today's D/E is solved at the model's own equity value: D/E = debt / equity value from a DCF at the WACC that D/E implies, iterated to a fixed point (`debt_to_equity_basis: "model equity value"`). Book D/E isn't used, because buybacks leave many companies (Dell, for one) with tiny or negative book equity.

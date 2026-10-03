@@ -45,6 +45,16 @@ SCHEMA_VERSION = "0.1.0"
 YAHOO_URL = "https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?period1={p1}&period2={p2}&interval={interval}&events=div%2Csplit"
 AV_URL = "https://www.alphavantage.co/query?function={function}&symbol={symbol}{extra}&apikey={key}"
 FRED_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}&cosd={start}&coed={end}"
+FUNDAMENTALS_URL = ("https://query1.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/{symbol}"
+                    "?type={types}&period1={p1}&period2={p2}")
+# Yahoo fundamentals fetched as a backup for statement items SEC filings lack (private runs only;
+# L1_detail/backfill.py maps them to concepts and fills gaps, never overwriting a filed value)
+FUNDAMENTAL_ITEMS = ("TotalRevenue", "CostOfRevenue", "GrossProfit", "OperatingIncome", "ReconciledDepreciation",
+                     "InterestExpense", "InterestIncome", "PretaxIncome", "TaxProvision", "NetIncome",
+                     "ResearchAndDevelopment", "SellingGeneralAndAdministration", "OperatingCashFlow", "CapitalExpenditure",
+                     "CashCashEquivalentsAndShortTermInvestments", "LongTermDebt", "CurrentDebt", "StockholdersEquity",
+                     "TotalAssets", "TotalLiabilitiesNetMinorityInterest", "CurrentAssets", "CurrentLiabilities",
+                     "OrdinarySharesNumber", "DilutedAverageShares")
 YAHOO_INDEX, AV_INDEX = "^GSPC", "SPY"
 CHECK_TOLERANCE = 0.02
 BETA_YEARS = 5
@@ -115,6 +125,19 @@ def parse_alphavantage(payload: dict) -> dict:
     return {"currency": "USD", "rows": sorted(rows)}
 
 
+def parse_fundamentals(payload: dict) -> dict:
+    """fundamentals-timeseries JSON -> {"annualTotalRevenue": [{end, value, period, currency}], ...}."""
+    out = {}
+    for res in ((payload or {}).get("timeseries") or {}).get("result") or []:
+        t = ((res.get("meta") or {}).get("type") or [None])[0]
+        rows = [{"end": r.get("asOfDate"), "value": (r.get("reportedValue") or {}).get("raw"),
+                 "period": r.get("periodType"), "currency": r.get("currencyCode")}
+                for r in (res.get(t) or []) if r and r.get("asOfDate") and (r.get("reportedValue") or {}).get("raw") is not None]
+        if t and rows:
+            out[t] = rows
+    return out
+
+
 def parse_fred(text: str) -> list[tuple[str, float]]:
     out = []
     for row in csv.reader(io.StringIO(text)):
@@ -174,6 +197,17 @@ class MarketAdapter:
             raise MarketDataError(f"alphavantage: no {symbol} data between {start} and {end}")
         return {**doc, "rows": rows}
 
+    def fundamentals(self, ticker: str, as_of: str) -> dict:
+        """Annual and quarterly statement items from Yahoo, periods ending on or before as_of."""
+        end = date.fromisoformat(as_of)
+        types = ",".join(f"{f}{i}" for f in ("annual", "quarterly") for i in FUNDAMENTAL_ITEMS)
+        sym = yahoo_symbol(ticker)
+        url = FUNDAMENTALS_URL.format(symbol=quote(sym, safe=""), types=types,
+                                      p1=_epoch(date(end.year - 6, 1, 1)), p2=_epoch(end + timedelta(days=1)))
+        series = parse_fundamentals(json.loads(self._get("yahoo", url, f"yahoo_fund_{sym}_{end}")))
+        series = {k: [r for r in v if r["end"] <= as_of] for k, v in series.items()}
+        return {"source": "yahoo", "series": {k: v for k, v in series.items() if v}}
+
     def risk_free(self, as_of: str, series: str = "DGS10") -> dict:
         """Last 10-year Treasury yield on or before as_of, as a decimal."""
         end = date.fromisoformat(as_of)
@@ -220,6 +254,11 @@ class MarketAdapter:
             raise MarketDataError(f"{t}: no market data ({'; '.join(errors)})")
         doc["fallback"] = doc["source"] != "yahoo"
         doc["check"] = self.check(t, doc) if cross_check and not doc["fallback"] else None
+        try:
+            doc["fundamentals"] = self.fundamentals(t, as_of)
+        except (HttpError, MarketDataError, ValueError, KeyError) as e:
+            doc["fundamentals"] = None
+            errors.append(f"yahoo fundamentals: {e}")
         return {"schema_version": SCHEMA_VERSION, "ticker": t, "as_of": as_of, **doc, "errors": errors,
                 "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
 

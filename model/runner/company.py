@@ -116,9 +116,13 @@ def plan(
             model = get_model(m)
             detail = _read_json(paths.detail(ticker, as_of))
             a_path = paths.model_assumptions(ticker, m)
-            if not a_path.exists():
+            if a_path.exists():
+                assumptions = _read_json(a_path, {})
+            elif m == "dcf":
+                from L2_models.dcf import default_assumptions   # no dcf.json: the default case from the data
+                assumptions = default_assumptions(detail)
+            else:
                 raise FileNotFoundError(f"{a_path} not found; copy inputs/assumptions/_template/{m}.json and fill it in")
-            assumptions = _read_json(a_path, {})
             peer_details = [d for d in (_read_json(paths.detail(p, as_of)) for p in peers) if d] if model.needs_peers else None
             result = model.run(detail, assumptions, peer_details)
             result.lineage = lineage_block(as_of, [paths.detail(ticker, as_of)])

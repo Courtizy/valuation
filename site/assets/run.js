@@ -44,6 +44,7 @@ export function setupRunForm() {
     $("r-run-hint").textContent = anyModel ? "Models use the company details, so those are rebuilt too." : "";
   };
   $("r-models").addEventListener("change", syncDetail);
+  syncDetail();                                       // DCF is ticked by default
 
   const refresh = () => {
     syncDetail();

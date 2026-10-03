@@ -81,6 +81,40 @@ def _nwc_ratio(detail: dict, warnings: list[str]) -> float:
     return DEFAULT_NWC_RATIO
 
 
+DEFAULT_CREDIT_SPREAD = 0.015
+DEFAULT_TERMINAL_GROWTH = 0.025
+DEFAULT_ERP = 0.05
+GROWTH_CAP = (-0.05, 0.20)
+
+
+def default_assumptions(detail: dict) -> dict:
+    """The default case, used when inputs/assumptions/{TICKER}/dcf.json doesn't exist.
+
+    Everything comes from the data: revenue growth = the company's own historical CAGR
+    (from the L1 trend case, capped to -5%..20%) fading to 2.5% terminal growth over ten
+    years; 5% equity risk premium; risk-free from FRED and price / beta from market data
+    when present (else the sector's illustrative beta and book D/E); cost lines, capex,
+    tax and working capital from the filings. A dcf.json always replaces it."""
+    trend = ((detail or {}).get("projection") or {}).get("assumptions") or {}
+    g0 = trend.get("revenue_growth_start")
+    g0 = 0.05 if g0 is None else min(max(g0, GROWTH_CAP[0]), GROWTH_CAP[1])
+    return {
+        "default_case": True, "mode": "forecast", "base_period": "annual",
+        "market": {"price": None, "basic_shares": None, "options": []},
+        "forecast": {"years_to_terminal": 10, "revenue_growth": g0, "terminal_growth": DEFAULT_TERMINAL_GROWTH},
+        "cost_of_capital": {"risk_free": None, "risk_free_terminal": None, "equity_risk_premium": DEFAULT_ERP, "beta": None,
+                            "pre_tax_cost_of_debt": None, "pre_tax_cost_of_debt_fallback": None},
+        "bridge": {"operating_cash_pct": 0.5, "include_longterm_investments": False},
+        "terminal": {"method": "gordon", "weight": 1.0},
+        "sources": {
+            "revenue_growth": f"default case: historical revenue CAGR {g0:.1%} (capped {GROWTH_CAP[0]:.0%} to {GROWTH_CAP[1]:.0%}), fading over 10 years",
+            "terminal_growth": f"default case: {DEFAULT_TERMINAL_GROWTH:.1%}",
+            "equity_risk_premium": f"default case: {DEFAULT_ERP:.0%}",
+            "pre_tax_cost_of_debt": "interest expense / total debt from the filings, else risk-free + 1.5%",
+        },
+    }
+
+
 class DCF:
     name = "dcf"
     needs_peers = False
@@ -158,9 +192,15 @@ class DCF:
             cc["beta"] = b["value"]
             sources["beta"] = (f"{b['value']:.2f}, {b['basis']}" if b.get("basis")
                                else f"{b['value']:.2f}, {b['months']} monthly returns vs {b.get('index')} ({live.get('source')})")
+        rf_doc = detail.get("risk_free") or {}
         if cc.get("risk_free") is None and (live.get("wacc") or {}).get("risk_free") is not None:
             cc["risk_free"] = live["wacc"]["risk_free"]
             sources["risk_free"] = f"{live['wacc'].get('risk_free_series', 'DGS10')} on {live['wacc'].get('risk_free_date')} (FRED)"
+        elif cc.get("risk_free") is None and rf_doc.get("value") is not None:
+            cc["risk_free"] = rf_doc["value"]
+            sources["risk_free"] = f"{rf_doc.get('series', 'DGS10')} on {rf_doc.get('date')} (FRED)"
+        if cc.get("pre_tax_cost_of_debt_fallback") is None and a.get("default_case") and cc.get("risk_free") is not None:
+            cc["pre_tax_cost_of_debt_fallback"] = cc["risk_free"] + DEFAULT_CREDIT_SPREAD
         if cc.get("beta") is None:
             # no beta in the file and none from market data (showcase mode): the sector's typical beta,
             # which L1 puts in company detail (inputs/sectors/taxonomy.json "typical_beta")
@@ -172,7 +212,7 @@ class DCF:
 
         # shares and bridge
         price = mkt.get("price")
-        basic = (mkt.get("basic_shares") or live.get("shares_outstanding")
+        basic = (mkt.get("basic_shares") or live.get("shares_outstanding") or detail.get("shares_outstanding")
                  or v.get("shares_year_end") or v.get("shares_fully_diluted_average"))
         if not basic:
             raise AssumptionError("no share count: set market.basic_shares")
@@ -190,6 +230,7 @@ class DCF:
 
         # discount rates
         current_de = cc.get("current_debt_to_equity")
+        solve_de = False
         if current_de is None:
             if price:
                 current_de = debt / (price * shares)
@@ -197,11 +238,9 @@ class DCF:
                 current_de = cc["target_debt_to_equity"]
                 warnings.append("no market price: today's D/E taken as the target D/E")
             else:
-                equity = v.get("all_equity_balance")
-                if not equity or equity <= 0:
-                    raise AssumptionError("no market price and no positive book equity: set cost_of_capital.current_debt_to_equity")
-                current_de = debt / equity
-                warnings.append(f"no market price: D/E at book value ({current_de:.2f}), which overstates leverage for most companies")
+                # no price: D/E at the model's own equity value, solved in run() (book equity is often
+                # tiny or negative after buybacks, so book D/E would misstate leverage)
+                solve_de, current_de = True, 0.5
         rf = _need(cc, "risk_free", "cost_of_capital")
         rd, rd_method = self.cost_of_debt(cc, v, debt, rf, warnings)
         rates = discount_rates(
@@ -213,6 +252,9 @@ class DCF:
             target_debt_to_equity=cc.get("target_debt_to_equity"),
             risk_free_terminal=cc.get("risk_free_terminal"))
         rates.update(pre_tax_cost_of_debt=rd, cost_of_debt_method=rd_method)
+        rate_args = dict(risk_free=rf, pre_tax_cost_of_debt=rd, beta=cc["beta"], equity_risk_premium=cc["equity_risk_premium"],
+                         tax_rate=tax, target_debt_to_equity=cc.get("target_debt_to_equity"),
+                         risk_free_terminal=cc.get("risk_free_terminal"))
 
         invested = (v.get("assets") or 0) - ((v.get("current_liabilities_total") or 0) - (v.get("short_term_debt") or 0))
         return {
@@ -223,6 +265,8 @@ class DCF:
             "convention": a.get("discounting", {}).get("convention", "closing_year_zero"),
             "ic_to_sales": (invested - cash) / rev if invested else None,
             "mode": a.get("mode", "forecast"), "sensitivity": a.get("sensitivity", {}),
+            "risk_free": rf, "default_case": bool(a.get("default_case")),
+            "solve_de": solve_de, "rate_args": rate_args,
             "sources": a["sources"], "warnings": warnings,
         }
 
@@ -253,6 +297,23 @@ class DCF:
         warnings.append("interest / debt not measurable; using the fallback cost of debt")
         return fb, "fallback"
 
+    def solve_debt_to_equity(self, p: dict, iterations: int = 40) -> float:
+        """Fixed point: D/E = debt / equity value, where the equity value comes from a DCF at the
+        WACC that D/E implies. Damped; equity value floored so a near-zero value can't explode D/E."""
+        de = p["rates"]["current_debt_to_equity"]
+        for _ in range(iterations):
+            eq = self.value(p)["equity_value"]
+            target = min(p["debt"] / max(eq, p["debt"] / 4, 1.0), 4.0) if p["debt"] > 0 else 0.0
+            new = 0.5 * de + 0.5 * target
+            rates = discount_rates(current_debt_to_equity=new, **p["rate_args"])
+            rates.update(pre_tax_cost_of_debt=p["rates"]["pre_tax_cost_of_debt"], cost_of_debt_method=p["rates"]["cost_of_debt_method"],
+                         debt_to_equity_basis="model equity value")
+            p["rates"] = rates
+            if abs(new - de) < 1e-6:
+                break
+            de = new
+        return p["rates"]["current_debt_to_equity"]
+
     def value(self, p: dict, g0: float | None = None, g_terminal: float | None = None,
               wacc: float | None = None, wacc_terminal: float | None = None) -> dict:
         d = deepcopy(p["drivers"])
@@ -275,6 +336,11 @@ class DCF:
     def run(self, detail: dict, assumptions: dict, peers: list[dict] | None = None) -> ModelResult:
         p = self.prepare(detail, assumptions)
         notes = list(p["warnings"])
+        if p["default_case"]:
+            notes.insert(0, "default assumptions: no inputs/assumptions dcf.json, so growth comes from the company's history and rates from the data")
+        if p["solve_de"]:
+            de = self.solve_debt_to_equity(p)
+            notes.append(f"no market price: D/E {de:.2f} at the model's own equity value (solved with the WACC it implies)")
         implied = None
         if p["mode"] == "implied" and not p["price"]:
             p["mode"] = "forecast"
@@ -316,7 +382,7 @@ class DCF:
                 "tax_rate": p["tax"],
             },
             "cost_of_capital": {
-                "risk_free": (assumptions.get("cost_of_capital") or {}).get("risk_free"),
+                "risk_free": p["risk_free"],
                 "risk_free_terminal": r["risk_free_terminal"],
                 "equity_risk_premium": (assumptions.get("cost_of_capital") or {}).get("equity_risk_premium"),
                 "beta": r["beta_levered_observed"],
@@ -329,9 +395,11 @@ class DCF:
             },
             "terminal": {"method": "gordon", "growth": rev["g_terminal"], "weight": p["tv_weight"]},
             "sources": p["sources"],
+            "default_case": p["default_case"],
         }
         details = {
             "mode": p["mode"],
+            "default_case": p["default_case"],
             "implied_growth": implied,
             "base_period": {"label": p["period"]["label"], "end": p["period"]["end"],
                             "fiscal_year": p["period"].get("fiscal_year"),

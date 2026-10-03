@@ -25,6 +25,7 @@ from core.market import beta as _beta, wacc_estimate
 from lineage import lineage_block
 
 from .analysis import _one_year_apart, analyze_view, load_classification
+from .backfill import backfill_records
 from .periods import build_views
 from .forecast import trend_case
 from .profile import build_profile, load_rules
@@ -94,7 +95,10 @@ def build_detail(canonical: dict, as_of: str, raw_market: dict | None = None, pa
         raise ValueError(f"canonical as_of {canonical['as_of']} != {as_of}")
     reg = load_registry()
     cfg = load_classification(((pack or {}).get("l1") or {}).get("classification"))
-    views = build_views(canonical["records"], reg)
+    # gaps in the filings filled from Yahoo fundamentals (private runs; raw_market carries them)
+    backfill = backfill_records(canonical["records"], (raw_market or {}).get("fundamentals"), reg, as_of)
+    records = canonical["records"] + backfill
+    views = build_views(records, reg)
     if not any(p["values"].get("revenue") for p in views["annual"] + views["ttm"]):
         basis = canonical.get("reporting_basis") or {}
         if basis.get("taxonomy") not in (None, "us-gaap") or basis.get("currency") not in (None, "USD"):
@@ -102,7 +106,7 @@ def build_detail(canonical: dict, as_of: str, raw_market: dict | None = None, pa
                 f"no usable statements: this company reports under {basis['taxonomy']} in {basis['currency']} "
                 "(typical of a 20-F foreign filer). Only us-gaap in USD is supported so far.")
         raise ValueError("no usable statements: no 12-month revenue found in the filings")
-    market = _market_block(raw_market, as_of, views, risk_free, canonical.get("records"))
+    market = _market_block(raw_market, as_of, views, risk_free, records)
 
     statement_date = max((p["end"] for p in views["quarterly"] + views["annual"]), default=None)
     market_cap_at = {statement_date: market["market_cap"]} if market and market["market_cap"] else None
@@ -139,6 +143,12 @@ def build_detail(canonical: dict, as_of: str, raw_market: dict | None = None, pa
         },
         "warnings": warnings,
     }
+    doc["risk_free"] = risk_free          # FRED rate, also present in showcase mode (no prices)
+    doc["shares_outstanding"] = _latest_share_count(records, as_of)   # newest filed count (else Yahoo backup)
+    doc["backfill"] = [{"concept": r["concept"], "end": r["end"], "months": r["months"], "source": r["source"]["tags"][0]}
+                       for r in backfill]
+    if backfill:
+        doc["warnings"].append(f"{len(backfill)} value(s) the filings lack were filled from Yahoo fundamentals (marked y)")
     from .taxonomy import load as load_taxonomy
     doc["sector_beta"] = load_taxonomy().typical_beta((canonical.get("entity") or {}).get("sic"))
     doc["profile"] = build_profile(doc, load_rules(((pack or {}).get("l1") or {}).get("profile_rules")))

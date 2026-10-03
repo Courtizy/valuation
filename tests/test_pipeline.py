@@ -62,7 +62,7 @@ def test_paths_are_point_in_time(tmp_path):
     assert paths.raw_filing("AAPL").parent.name == "raw"
 
 
-def test_execute_runs_l0_and_l1_then_stops_at_model_without_assumptions(tmp_path):
+def test_execute_runs_l0_and_l1_then_the_dcf_default_case(tmp_path):
     paths = make_paths(tmp_path)
     report = execute(plan("AAPL", ["dcf"], "2026-09-30", paths, factory))
     status = {name: st for name, st, _ in report}
@@ -72,8 +72,10 @@ def test_execute_runs_l0_and_l1_then_stops_at_model_without_assumptions(tmp_path
     assert paths.canonical("AAPL", "2026-09-30").exists()
     assert status["build detail AAPL"] == "done"
     assert paths.detail("AAPL", "2026-09-30").exists()
+    # no dcf.json: the default case runs; this two-fact fixture has no risk-free rate (no market step), so it
+    # stops on that named input, and reconcile has nothing to blend
     assert status["model dcf"] == "failed"
-    assert "assumptions" in {name: msg for name, _, msg in report}["model dcf"]
+    assert "risk_free" in {name: msg for name, _, msg in report}["model dcf"]   # named input, not a missing file
     assert status["reconcile"] == "failed"          # models are soft; reconcile reports nothing to blend
 
 

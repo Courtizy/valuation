@@ -283,7 +283,8 @@ export function renderStatements() {
       const sg = r.sign || 1, o = { digits: r.digits ?? 1, scale: r.scale ?? 1e6 };
       const cells = cols.map(({ p, ref }) => {
         const v = p.values[r.id], m = p.methods[r.id];
-        const mark = DERIVED_METHODS.has(m) ? `<span class="mark" title="${esc(m.replace(/_/g, " "))}">d</span>` : "";
+        const mark = m === "yahoo_backup" ? `<span class="mark" title="not in the filings: filled from Yahoo fundamentals">y</span>`
+          : DERIVED_METHODS.has(m) ? `<span class="mark" title="${esc(m.replace(/_/g, " "))}">d</span>` : "";
         return fin(v) ? { html: acct(sg * v, o) + mark, cls: ref ? "ref" : "" } : cellOf(NA, ref ? "ref" : "");
       }).concat(est.map(({ e }) => (fin(e[r.id]) ? { html: acct(sg * e[r.id], o), cls: "est" } : cellOf(NA, "est"))));
       html += finRow(esc(r.label || label(r.id)), cells, { kind: r.kind, indent: r.indent, title: label(r.id) });

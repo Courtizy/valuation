@@ -299,15 +299,15 @@ export async function sectorOpen(ticker) {
     return;
   }
   box.innerHTML = `<p><b>${esc(ticker)}</b> · ${esc(c?.name || "")} has no company detail yet. Building it fetches its filings and
-    publishes statements, ratios and a profile here (a few minutes).</p>
-    <div class="actions"><button type="button" class="primary" id="sec-build">Build Company Detail for ${esc(ticker)}</button>
+    publishes statements, ratios, a profile and a DCF on default assumptions here (a few minutes).</p>
+    <div class="actions"><button type="button" class="primary" id="sec-build">Build Company Detail + DCF for ${esc(ticker)}</button>
     <span class="status" role="status"></span></div>`;
   box.scrollIntoView({ behavior: "smooth", block: "nearest" });
   $("sec-build").onclick = async () => {
     const st = box.querySelector(".status");
     st.className = "status"; st.textContent = "Starting…";
     try {
-      setStatus(st, await dispatchPipeline({ ticker, as_of: new Date().toISOString().slice(0, 10), models: "dcf", stop_after: "L1" }));
+      setStatus(st, await dispatchPipeline({ ticker, as_of: new Date().toISOString().slice(0, 10), models: "dcf", stop_after: "L2" }));
     } catch (err) { setStatus(st, { ok: false, msg: err.message }); }
   };
 }

@@ -27,7 +27,12 @@ AS_OF = "2026-10-02"
 FRED_CSV = "observation_date,DGS10\n2026-09-29,5.26\n2026-09-30,5.29\n2026-10-01,5.24\n2026-10-02,.\n"
 
 
+FUND = (FIXTURES / "yahoo_fundamentals.json").read_text()
+
+
 def yahoo_route(url: str):
+    if "fundamentals-timeseries" in url:
+        return FUND if "/timeseries/AAPL?" in url else None
     sym = url.split("/chart/")[1].split("?")[0]
     if "interval=1d" in url and sym == "AAPL":
         return json.dumps(FX["AAPL_1d"])
@@ -224,3 +229,48 @@ def test_publish_records_the_market_mode(tmp_path):
     assert json.loads((site / "data" / "index.json").read_text())["market_data"] == "real"
     with pytest.raises(ValueError):
         publish(tmp_path / "data", site, "live")
+
+
+# ---------------------------------------------------------------- Yahoo backfill (private runs)
+
+def test_fundamentals_parsed_and_cut_at_as_of():
+    from L0_ingest.market import parse_fundamentals
+    s = parse_fundamentals(json.loads(FUND))
+    assert s["annualCapitalExpenditure"][-1] == {"end": "2025-09-30", "value": -12715000000, "period": "12M", "currency": "USD"}
+    f = adapter().fundamentals("AAPL", "2026-01-15")
+    assert all(r["end"] <= "2026-01-15" for rows in f["series"].values() for r in rows)
+
+
+def test_backfill_fills_only_gaps_in_periods_the_filings_define(tmp_path):
+    paths = Paths(tmp_path / "data", tmp_path / "assumptions")
+    execute(plan("AAPL", ["dcf"], AS_OF, paths, sec_factory, "L1", market_factory=adapter))
+    det = json.loads(paths.detail("AAPL", AS_OF).read_text())
+    filled = {(b["concept"], b["end"]) for b in det["backfill"]}
+    # the two-fact SEC fixture has revenue for FY2022 (52-week year ending 2022-09-24) and FY2023
+    assert ("depreciation_amortization_cf", "2022-09-24") in filled          # matched despite the 6-day offset
+    assert ("capital_expenses", "2023-09-30") in filled
+    assert not any(c == "revenue" for c, _ in filled)                        # filed revenue is never replaced
+    fy23 = next(p for p in det["views"]["annual"] if p["label"] == "FY2023")
+    assert fy23["values"]["revenue"] == 383285000000 and fy23["methods"]["revenue"] != "yahoo_backup"
+    assert fy23["values"]["capital_expenses"] == 10959000000                 # Yahoo's negative capex flipped
+    assert fy23["methods"]["depreciation_amortization_cf"] == "yahoo_backup"
+    assert not any(e > "2026" for _, e in filled)                            # no period the filings don't define
+
+
+def test_backfill_respects_filing_lag():
+    from L1_detail.backfill import backfill_records
+    from L1_detail.registry import load_registry
+    recs = [{"concept": "revenue", "period_type": "duration", "months": 3, "end": "2026-06-30", "start": "2026-04-01",
+             "fiscal_year": 2026, "fiscal_period": "Q3"}]
+    fund = {"series": {"quarterlyReconciledDepreciation": [{"end": "2026-06-30", "value": 5, "period": "3M", "currency": "USD"}]}}
+    assert backfill_records(recs, fund, load_registry(), "2026-07-20") == []            # 20 days: not yet filed
+    assert len(backfill_records(recs, fund, load_registry(), "2026-08-15")) == 1
+
+
+def test_showcase_publish_skips_runs_with_backfill(tmp_path):
+    from L3_app.publish import publish
+    run = tmp_path / "data" / "DELL" / "2026-10-02"
+    run.mkdir(parents=True)
+    (run / "company_detail.json").write_text(json.dumps({"backfill": [{"concept": "ebitda"}], "views": {}, "analysis": {}}))
+    out = publish(tmp_path / "data", tmp_path / "site")
+    assert not any(c.startswith("DELL") for c in out["copied"])

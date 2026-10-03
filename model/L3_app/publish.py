@@ -108,6 +108,11 @@ def copy_outputs(data_dir: Path, site_data: Path, market_data: str = "showcase")
         for adir in sorted(p for p in tdir.iterdir() if p.is_dir() and AS_OF.match(p.name)):
             dest = site_data / tdir.name / adir.name
             files = [adir / f for f in PUBLISHED if (adir / f).exists()]
+            detail_path = adir / "company_detail.json"
+            if market_data == "showcase" and detail_path.exists() and json.loads(detail_path.read_text()).get("backfill"):
+                print(f"skipped {tdir.name}/{adir.name}: it has Yahoo-backfilled values, which showcase mode doesn't publish "
+                      "(rerun with --market risk-free, or publish with --market-data real)")
+                continue
             files += sorted((adir / "model_results").glob("*.json")) if (adir / "model_results").exists() else []
             if not files:
                 continue

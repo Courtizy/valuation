@@ -144,7 +144,7 @@ def test_missing_inputs_fall_back_or_are_named(detail):
     assert "illustrative" in r["assumptions_used"]["sources"]["beta"]
     # no price (showcase mode): book D/E, and implied mode falls back to forecast
     r = get_model("dcf").run(detail, {**assumptions(), "mode": "implied", "market": {"basic_shares": 1e8}}).to_dict()
-    assert r["details"]["implied_growth"] is None and any("book value" in n for n in r["notes"])
+    assert r["details"]["implied_growth"] is None and any("model's own equity value" in n for n in r["notes"])
     with pytest.raises(AssumptionError, match="risk_free"):
         get_model("dcf").run(detail, assumptions(cost_of_capital={"risk_free": None}))
     with pytest.raises(AssumptionError):
@@ -192,3 +192,32 @@ def test_sensitivity_grid_centre_is_base_and_slopes_right(detail):
     assert g["values"][2][2] == A(r.details["bridge"]["value_per_share"])
     assert g["values"][0][2] > g["values"][2][2] > g["values"][4][2]      # higher WACC, lower value
     assert g["values"][2][0] < g["values"][2][2] < g["values"][2][4]      # higher growth, higher value
+
+
+def test_default_case_values_a_company_without_a_dcf_json(detail):
+    from L2_models.dcf import default_assumptions
+    d = {**detail, "market": None, "shares_outstanding": 330e6,
+         "risk_free": {"value": 0.045, "date": "2026-09-30", "series": "DGS10"}}
+    a = default_assumptions(d)
+    assert a["default_case"] and -0.05 <= a["forecast"]["revenue_growth"] <= 0.20
+    r = get_model("dcf").run(d, a).to_dict()
+    assert r["details"]["default_case"] and r["value_per_share"]["p50"] > 0
+    assert r["assumptions_used"]["cost_of_capital"]["risk_free"] == 0.045
+    assert r["notes"][0].startswith("default assumptions")
+    assert "illustrative" in r["assumptions_used"]["sources"]["beta"]
+
+
+def test_default_case_handles_negative_book_equity(detail):
+    """Dell-like: buybacks leave book equity negative, and there's no price in showcase mode."""
+    from copy import deepcopy
+    from L2_models.dcf import default_assumptions
+    d = deepcopy({**detail, "market": None, "shares_outstanding": 330e6,
+                  "risk_free": {"value": 0.045, "date": "2026-09-30", "series": "DGS10"}})
+    for view in ("annual", "ttm", "quarterly"):
+        for p in d["views"][view]:
+            p["values"]["all_equity_balance"] = -2.0e9
+    r = get_model("dcf").run(d, default_assumptions(d)).to_dict()
+    rates = r["details"]["rates"]
+    assert rates["debt_to_equity_basis"] == "model equity value" and 0 < rates["current_debt_to_equity"] < 4
+    eq = r["details"]["bridge"]["equity_value"]
+    assert rates["current_debt_to_equity"] == A(r["details"]["bridge"]["debt"] / eq, rel=1e-3)   # converged
