@@ -36,12 +36,17 @@
         "capex_to_sales": 0.021509222981729692,
         "debt_to_ebitda": 0.5021701724825701,
         "wacc": 0.10576293663301836,
+        "wacc_basis": "dcf",
         "beta": 1.09
       },
       "market": {
         "price": 333.69,
+        "price_date": null,
         "market_cap": 4929689129400.0,
-        "enterprise_value": 4951634129400.0
+        "enterprise_value": 4951634129400.0,
+        "source": null,
+        "fallback": null,
+        "check": null
       },
       "multiples": {
         "pe": 38.23539230124874,
@@ -248,12 +253,17 @@
         "capex_to_sales": 0.02375708512735041,
         "debt_to_ebitda": 1.9930607760365466,
         "wacc": null,
+        "wacc_basis": null,
         "beta": null
       },
       "market": {
         "price": null,
+        "price_date": null,
         "market_cap": null,
-        "enterprise_value": null
+        "enterprise_value": null,
+        "source": null,
+        "fallback": null,
+        "check": null
       },
       "multiples": {
         "pe": null,
@@ -460,12 +470,17 @@
         "capex_to_sales": 0.01330245765863223,
         "debt_to_ebitda": 2.2061657032755297,
         "wacc": null,
+        "wacc_basis": null,
         "beta": null
       },
       "market": {
         "price": null,
+        "price_date": null,
         "market_cap": null,
-        "enterprise_value": null
+        "enterprise_value": null,
+        "source": null,
+        "fallback": null,
+        "check": null
       },
       "multiples": {
         "pe": null,
@@ -672,12 +687,17 @@
         "capex_to_sales": 0.015890934352205628,
         "debt_to_ebitda": null,
         "wacc": null,
+        "wacc_basis": null,
         "beta": null
       },
       "market": {
         "price": null,
+        "price_date": null,
         "market_cap": null,
-        "enterprise_value": null
+        "enterprise_value": null,
+        "source": null,
+        "fallback": null,
+        "check": null
       },
       "multiples": {
         "pe": null,
@@ -884,12 +904,17 @@
         "capex_to_sales": null,
         "debt_to_ebitda": null,
         "wacc": null,
+        "wacc_basis": null,
         "beta": null
       },
       "market": {
         "price": null,
+        "price_date": null,
         "market_cap": null,
-        "enterprise_value": null
+        "enterprise_value": null,
+        "source": null,
+        "fallback": null,
+        "check": null
       },
       "multiples": {
         "pe": null,
@@ -1096,12 +1121,17 @@
         "capex_to_sales": 0.0026052165091169166,
         "debt_to_ebitda": 0.7794333813870629,
         "wacc": null,
+        "wacc_basis": null,
         "beta": null
       },
       "market": {
         "price": null,
+        "price_date": null,
         "market_cap": null,
-        "enterprise_value": null
+        "enterprise_value": null,
+        "source": null,
+        "fallback": null,
+        "check": null
       },
       "multiples": {
         "pe": null,
@@ -1308,12 +1338,17 @@
         "capex_to_sales": 0.046658466584665846,
         "debt_to_ebitda": 0.8157894736842105,
         "wacc": null,
+        "wacc_basis": null,
         "beta": null
       },
       "market": {
         "price": null,
+        "price_date": null,
         "market_cap": null,
-        "enterprise_value": null
+        "enterprise_value": null,
+        "source": null,
+        "fallback": null,
+        "check": null
       },
       "multiples": {
         "pe": null,
