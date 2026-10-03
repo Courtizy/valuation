@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-03T08:12:24+00:00",
+  "generated_at": "2026-10-03T08:19:03+00:00",
   "companies": [
     {
       "ticker": "AAPL",
@@ -48,8 +48,10 @@
           "as_of": "2026-10-03",
           "detail": "DELL/2026-10-03/company_detail.json",
           "full": "DELL/2026-10-03/company_detail_full.json",
-          "comparison": null,
-          "models": [],
+          "comparison": "DELL/2026-10-03/comparison.json",
+          "models": [
+            "dcf"
+          ],
           "latest": {
             "annual": "FY2026",
             "ttm": "TTM 2026-07-31"

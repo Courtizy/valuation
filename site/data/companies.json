@@ -509,9 +509,9 @@
         "rnoa": 0.5798002445984509,
         "capex_to_sales": 0.02375708512735041,
         "debt_to_ebitda": 1.9930607760365466,
-        "wacc": null,
-        "wacc_basis": null,
-        "beta": null
+        "wacc": 0.09151410106649753,
+        "wacc_basis": "dcf",
+        "beta": 1.2
       },
       "market": {
         "price": null,
