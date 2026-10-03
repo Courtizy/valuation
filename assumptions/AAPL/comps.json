@@ -1,0 +1,30 @@
+{
+  "multiples": [
+    "ev_ebitda",
+    "ev_sales"
+  ],
+  "range": "min_max",
+  "peers": [
+    {
+      "ticker": "OMCL"
+    },
+    {
+      "ticker": "DELL"
+    },
+    {
+      "ticker": "SMCI"
+    },
+    {
+      "ticker": "OSS"
+    },
+    {
+      "ticker": "SCKT"
+    },
+    {
+      "ticker": "ZEPP"
+    }
+  ],
+  "sources": {
+    "peers": "picked from SIC 3571 · Electronic Computers (screened 2026-10-03) on 2026-10-03"
+  }
+}
