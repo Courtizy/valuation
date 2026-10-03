@@ -5,7 +5,9 @@
   "entity": {
     "cik": "0000320193",
     "name": "Apple Inc.",
-    "ticker": "AAPL"
+    "ticker": "AAPL",
+    "sic": "3571",
+    "sic_description": "Electronic Computers"
   },
   "registry_version": "0.3.0",
   "lineage": {
@@ -13,7 +15,7 @@
     "inputs": [
       {
         "file": "canonical_statements.json",
-        "sha256": "8f2660e63de603001e4fa407f202578657faade933d59e9afcc1f6086bacac85"
+        "sha256": "5ba15ddaddf43fcecc34b4419d3cd426e729e11d8eb8e4478879d90e332864f7"
       }
     ]
   },

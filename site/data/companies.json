@@ -4,8 +4,8 @@
       "ticker": "AAPL",
       "name": "Apple Inc.",
       "demo": false,
-      "sic": null,
-      "sic_description": null,
+      "sic": "3571",
+      "sic_description": "Electronic Computers",
       "as_of": "2026-10-03",
       "period": "TTM 2026-06-27",
       "traits": {
@@ -44,6 +44,236 @@
         "ev_sales": 10.489649960413262,
         "pb": 45.33914493554688,
         "fcf_yield": 0.028038315692449172
+      }
+    },
+    {
+      "ticker": "DELL",
+      "name": "Dell Technologies Inc.",
+      "demo": false,
+      "sic": "3571",
+      "sic_description": "Electronic Computers",
+      "as_of": "2026-10-03",
+      "period": "TTM 2026-07-31",
+      "traits": {
+        "stage": "mature",
+        "predictability": "high",
+        "asset_intensity": "light",
+        "capital_structure": "financial"
+      },
+      "vector": {
+        "revenue_cagr": 0.029184887544758453,
+        "operating_margin": 0.0942611295197656,
+        "fcf_margin_stdev": 0.029693466204669665,
+        "capex_to_sales": 0.02375708512735041,
+        "noa_turnover": 7.704698328577252,
+        "debt_to_ebitda": 1.9930607760365466,
+        "revenue": 151197000000,
+        "rnoa": 0.5798002445984509
+      },
+      "rates": {
+        "revenue_cagr": 0.029184887544758453,
+        "operating_margin": 0.0942611295197656,
+        "rnoa": 0.5798002445984509,
+        "capex_to_sales": 0.02375708512735041,
+        "debt_to_ebitda": 1.9930607760365466,
+        "wacc": null,
+        "beta": null
+      },
+      "market": {
+        "price": null,
+        "market_cap": null,
+        "enterprise_value": null
+      },
+      "multiples": {
+        "pe": null,
+        "ev_ebitda": null,
+        "ev_sales": null,
+        "pb": null,
+        "fcf_yield": null
+      }
+    },
+    {
+      "ticker": "OMCL",
+      "name": "OMNICELL,\u00a0INC",
+      "demo": false,
+      "sic": "3571",
+      "sic_description": "Electronic Computers",
+      "as_of": "2026-10-03",
+      "period": "TTM 2026-06-30",
+      "traits": {
+        "stage": "mature",
+        "predictability": "medium",
+        "asset_intensity": "moderate",
+        "capital_structure": "low leverage"
+      },
+      "vector": {
+        "revenue_cagr": 0.011467777442682126,
+        "operating_margin": 0.04649222790030986,
+        "fcf_margin_stdev": 0.053666793924528576,
+        "capex_to_sales": 0.03115176589773186,
+        "noa_turnover": 1.3376246945503218,
+        "debt_to_ebitda": 0.0,
+        "revenue": 1246703000,
+        "rnoa": 0.04193331205356065
+      },
+      "rates": {
+        "revenue_cagr": 0.011467777442682126,
+        "operating_margin": 0.04649222790030986,
+        "rnoa": 0.04193331205356065,
+        "capex_to_sales": 0.03115176589773186,
+        "debt_to_ebitda": 0.0,
+        "wacc": null,
+        "beta": null
+      },
+      "market": {
+        "price": null,
+        "market_cap": null,
+        "enterprise_value": null
+      },
+      "multiples": {
+        "pe": null,
+        "ev_ebitda": null,
+        "ev_sales": null,
+        "pb": null,
+        "fcf_yield": null
+      }
+    },
+    {
+      "ticker": "OSS",
+      "name": "ONE STOP SYSTEMS, INC.",
+      "demo": false,
+      "sic": "3571",
+      "sic_description": "Electronic Computers",
+      "as_of": "2026-10-03",
+      "period": "TTM 2026-06-30",
+      "traits": {
+        "stage": "declining",
+        "predictability": "low",
+        "asset_intensity": "moderate",
+        "capital_structure": "low leverage"
+      },
+      "vector": {
+        "revenue_cagr": -0.15091798780619947,
+        "operating_margin": -0.3418452574700349,
+        "fcf_margin_stdev": 0.06959567699487137,
+        "capex_to_sales": 0.00789959971183688,
+        "noa_turnover": 1.9441263537331468,
+        "debt_to_ebitda": null,
+        "revenue": 23265989,
+        "rnoa": 0.10750407139908937
+      },
+      "rates": {
+        "revenue_cagr": -0.15091798780619947,
+        "operating_margin": -0.3418452574700349,
+        "rnoa": 0.10750407139908937,
+        "capex_to_sales": 0.00789959971183688,
+        "debt_to_ebitda": null,
+        "wacc": null,
+        "beta": null
+      },
+      "market": {
+        "price": null,
+        "market_cap": null,
+        "enterprise_value": null
+      },
+      "multiples": {
+        "pe": null,
+        "ev_ebitda": null,
+        "ev_sales": null,
+        "pb": null,
+        "fcf_yield": null
+      }
+    },
+    {
+      "ticker": "SCKT",
+      "name": "SOCKET MOBILE, INC.",
+      "demo": false,
+      "sic": "3571",
+      "sic_description": "Electronic Computers",
+      "as_of": "2026-10-03",
+      "period": "TTM 2026-06-30",
+      "traits": {
+        "stage": "declining",
+        "predictability": "low",
+        "asset_intensity": "moderate",
+        "capital_structure": "low leverage"
+      },
+      "vector": {
+        "revenue_cagr": -0.10211498481834724,
+        "operating_margin": -0.26097318121181673,
+        "fcf_margin_stdev": 0.06730544064953212,
+        "capex_to_sales": 0.03563769734318581,
+        "noa_turnover": 1.8595048447185893,
+        "debt_to_ebitda": null,
+        "revenue": 13804315,
+        "rnoa": -2.0596751733075815
+      },
+      "rates": {
+        "revenue_cagr": -0.10211498481834724,
+        "operating_margin": -0.26097318121181673,
+        "rnoa": -2.0596751733075815,
+        "capex_to_sales": 0.03563769734318581,
+        "debt_to_ebitda": null,
+        "wacc": null,
+        "beta": null
+      },
+      "market": {
+        "price": null,
+        "market_cap": null,
+        "enterprise_value": null
+      },
+      "multiples": {
+        "pe": null,
+        "ev_ebitda": null,
+        "ev_sales": null,
+        "pb": null,
+        "fcf_yield": null
+      }
+    },
+    {
+      "ticker": "SMCI",
+      "name": "Super Micro Computer, Inc.",
+      "demo": false,
+      "sic": "3571",
+      "sic_description": "Electronic Computers",
+      "as_of": "2026-10-03",
+      "period": "TTM 2026-06-30",
+      "traits": {
+        "stage": "high growth",
+        "predictability": "low",
+        "asset_intensity": "light",
+        "capital_structure": "low leverage"
+      },
+      "vector": {
+        "revenue_cagr": 0.6558547730952831,
+        "operating_margin": 0.07092340305442439,
+        "fcf_margin_stdev": 0.1156680623448284,
+        "capex_to_sales": 0.0041471136729850635,
+        "noa_turnover": 9.692164491332262,
+        "debt_to_ebitda": 0.0,
+        "revenue": 39063072000,
+        "rnoa": 0.5534105808725314
+      },
+      "rates": {
+        "revenue_cagr": 0.6558547730952831,
+        "operating_margin": 0.07092340305442439,
+        "rnoa": 0.5534105808725314,
+        "capex_to_sales": 0.0041471136729850635,
+        "debt_to_ebitda": 0.0,
+        "wacc": null,
+        "beta": null
+      },
+      "market": {
+        "price": null,
+        "market_cap": null,
+        "enterprise_value": null
+      },
+      "multiples": {
+        "pe": null,
+        "ev_ebitda": null,
+        "ev_sales": null,
+        "pb": null,
+        "fcf_yield": null
       }
     },
     {
@@ -122,6 +352,52 @@
         "rnoa": 0.1337442591249698,
         "capex_to_sales": null,
         "debt_to_ebitda": 0.4579435322807829,
+        "wacc": null,
+        "beta": null
+      },
+      "market": {
+        "price": null,
+        "market_cap": null,
+        "enterprise_value": null
+      },
+      "multiples": {
+        "pe": null,
+        "ev_ebitda": null,
+        "ev_sales": null,
+        "pb": null,
+        "fcf_yield": null
+      }
+    },
+    {
+      "ticker": "ZEPP",
+      "name": "ZEPP HEALTH CORP",
+      "demo": false,
+      "sic": "3571",
+      "sic_description": "Electronic Computers",
+      "as_of": "2026-10-03",
+      "period": "FY2025",
+      "traits": {
+        "stage": "declining",
+        "predictability": "low",
+        "asset_intensity": "moderate",
+        "capital_structure": "low leverage"
+      },
+      "vector": {
+        "revenue_cagr": -0.28321472395494207,
+        "operating_margin": -0.11290204212486046,
+        "fcf_margin_stdev": 0.10622906802134797,
+        "capex_to_sales": 0.001993070603367362,
+        "noa_turnover": 1.6275204385366604,
+        "debt_to_ebitda": null,
+        "revenue": 258897000,
+        "rnoa": -0.2518819798270622
+      },
+      "rates": {
+        "revenue_cagr": -0.28321472395494207,
+        "operating_margin": -0.11290204212486046,
+        "rnoa": -0.2518819798270622,
+        "capex_to_sales": 0.001993070603367362,
+        "debt_to_ebitda": null,
         "wacc": null,
         "beta": null
       },

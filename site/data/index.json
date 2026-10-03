@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-03T04:25:17+00:00",
+  "generated_at": "2026-10-03T04:54:25+00:00",
   "companies": [
     {
       "ticker": "AAPL",
@@ -26,6 +26,91 @@
           "latest": {
             "annual": "FY2025",
             "ttm": "TTM 2026-06-27"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "DELL",
+      "name": "Dell Technologies Inc.",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-10-03",
+          "detail": "DELL/2026-10-03/company_detail.json",
+          "comparison": null,
+          "models": [],
+          "latest": {
+            "annual": "FY2026",
+            "ttm": "TTM 2026-07-31"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "OMCL",
+      "name": "OMNICELL,\u00a0INC",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-10-03",
+          "detail": "OMCL/2026-10-03/company_detail.json",
+          "comparison": null,
+          "models": [],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-06-30"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "OSS",
+      "name": "ONE STOP SYSTEMS, INC.",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-10-03",
+          "detail": "OSS/2026-10-03/company_detail.json",
+          "comparison": null,
+          "models": [],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-06-30"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "SCKT",
+      "name": "SOCKET MOBILE, INC.",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-10-03",
+          "detail": "SCKT/2026-10-03/company_detail.json",
+          "comparison": null,
+          "models": [],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-06-30"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "SMCI",
+      "name": "Super Micro Computer, Inc.",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-10-03",
+          "detail": "SMCI/2026-10-03/company_detail.json",
+          "comparison": null,
+          "models": [],
+          "latest": {
+            "annual": "FY2026",
+            "ttm": "TTM 2026-06-30"
           }
         }
       ]
@@ -60,6 +145,23 @@
           "latest": {
             "annual": "FY2025",
             "ttm": "TTM 2026-06-30"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "ZEPP",
+      "name": "ZEPP HEALTH CORP",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-10-03",
+          "detail": "ZEPP/2026-10-03/company_detail.json",
+          "comparison": null,
+          "models": [],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": null
           }
         }
       ]
