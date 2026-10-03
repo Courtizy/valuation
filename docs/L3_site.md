@@ -20,14 +20,13 @@
 
 GitHub Pages only serves static files, and the SEC API can't be called from a browser (no CORS, and it needs a contact User-Agent). So all fetching and computation runs in Actions; the page only renders.
 
-The one exception is the **projection what-if**. `site/assets/projection.js` is a line-for-line port of `core/projection.py`, and `tests/test_site_projection.py` runs both on the same inputs under Node, requiring identical results.
+The page does no valuation math. Projections are calculated in Python and published with the data: the DCF's projection when a DCF has run, otherwise the L1 trend case (`company_detail.json` → `projection`). There are no driver selectors on the site; to change a projection, edit `assumptions/{TICKER}/dcf.json` and rerun.
 
 ## Tabs
 
 | Tab | Shows |
 |---|---|
-| Company detail | KPI tiles; revenue (annual, quarterly or TTM) and RNOA/ROCE charts; statements with derived quarters marked; ratios in five framework views |
-| Projection | Driver form (growth fade, % of sales, ΔNWC/ΔSales, tax, financing); FCF chart; projected IS, MBS, CF and FCF with balance checks; drivers download as JSON |
+| Company detail | KPI tiles incl. projected revenue CAGR; revenue chart with projected years as lighter bars; statements with derived quarters marked and, in the Annual view, a TTM base column plus five shaded estimate columns (DCF case, else trend case); a Growth and margins block (revenue growth, gross, EBITDA, operating, net margin) across history and estimates; projected unlevered FCF; ratios in five framework views |
 | Valuation | Value vs price headline; football field with each method's range, selected value, upside, weight and reason, plus a Bear / Base / Bull toggle; company profile card; DCF detail; similar companies ranked by profile with multiples and rates (`docs/L2_reconcile.md`) |
 | Run pipeline | Starts the Pipeline action. With a token it calls the GitHub API directly; without one it links to the Actions page and prints the `gh` command |
 

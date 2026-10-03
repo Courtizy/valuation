@@ -403,3 +403,15 @@ def base_from_detail(values: dict) -> dict:
         "other_lt_liabilities": lt_liab - g("long_term_debt"),
         "equity": g("assets") - (liabilities or 0),
     }
+
+
+def statement_row(y: dict) -> dict:
+    """The income-statement and cash-flow lines the site shows for a projected year."""
+    return {
+        "year": y["year"], "revenue": y["revenue"], "cogs": y["cogs"], "gross_profit": y["revenue"] - y["cogs"],
+        "rnd": y["rnd"], "sga": y["sga"], "other_opex": y["other_opex"], "ebitda": y["ebitda"],
+        "depreciation": y["depreciation"] + y["amortization"], "ebit": y["ebit"],
+        "interest_net": y["interest_expense"] - y["interest_income"], "ebt": y["ebt"],
+        "income_taxes": y["income_taxes"], "net_income": y["net_income"], "capex": y["capex"],
+        "change_in_nwc": y["free_cash_flow"]["change_in_nwc"], "fcf": y["free_cash_flow"]["fcf"],
+    }

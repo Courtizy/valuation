@@ -249,3 +249,7 @@ footer { max-width: 1200px; margin: 0 auto; padding: 8px 16px 32px; color: var(-
   .ff-why { display: none; }
   .ff-row.ff-head > div:first-child { display: none; }
 }
+
+/* projected (estimate) columns */
+th.est, td.est { background: var(--surface-2); }
+th.est { color: var(--ink-2); font-style: italic; }

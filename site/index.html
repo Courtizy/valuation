@@ -28,7 +28,6 @@
     </div>
     <nav class="tabs" role="tablist" aria-label="Sections">
       <button class="tab" role="tab" id="tab-company" aria-controls="panel-company" data-tab="company">Company detail</button>
-      <button class="tab" role="tab" id="tab-projection" aria-controls="panel-projection" data-tab="projection">Projection</button>
       <button class="tab" role="tab" id="tab-valuation" aria-controls="panel-valuation" data-tab="valuation">Valuation</button>
       <button class="tab" role="tab" id="tab-run" aria-controls="panel-run" data-tab="run">Run pipeline</button>
     </nav>
@@ -61,7 +60,8 @@
           </div>
         </div>
         <div class="table-wrap"><table id="stmt-table"></table></div>
-        <p class="legend-note"><span class="mark">d</span> derived: Q4 = full year − 9-month YTD, or a quarter from YTD differences. Values in millions unless noted.</p>
+        <p class="legend-note"><span class="mark">d</span> derived: Q4 = full year − 9-month YTD, or a quarter from YTD differences. Shaded columns are estimates. Values in millions unless noted.</p>
+        <p class="legend-note" id="stmt-note"></p>
       </div>
       <div class="card">
         <div class="card-head">
@@ -76,71 +76,6 @@
         </div>
         <div class="table-wrap"><table id="ratio-table"></table></div>
         <p class="legend-note" id="ratio-note"></p>
-      </div>
-    </section>
-
-    <!-- Projection -->
-    <section id="panel-projection" class="panel" role="tabpanel" aria-labelledby="tab-projection" hidden>
-      <div class="card">
-        <div class="card-head">
-          <h2>Drivers</h2>
-          <span class="muted small" id="proj-base-note"></span>
-          <div class="spacer actions" style="margin:0">
-            <button type="button" id="proj-reset">Reset to base ratios</button>
-            <button type="button" id="proj-download">Download drivers JSON</button>
-          </div>
-        </div>
-        <form id="proj-form" autocomplete="off">
-          <fieldset>
-            <legend>Base and horizon</legend>
-            <div class="form-grid">
-              <div class="field"><label for="p-base">Base period</label><select id="p-base"></select></div>
-              <div class="field"><label for="p-years">Years</label><input type="number" id="p-years" min="1" max="20" step="1"></div>
-            </div>
-          </fieldset>
-          <fieldset>
-            <legend>Revenue</legend>
-            <div class="form-grid">
-              <div class="field"><label for="p-g0">First-year growth %</label><input type="number" id="p-g0" step="0.1"></div>
-              <div class="field"><label for="p-gt">Terminal growth %</label><input type="number" id="p-gt" step="0.1"></div>
-              <div class="field"><label for="p-fade">Fade over (years)</label><input type="number" id="p-fade" min="1" step="1"><span class="hint">Growth falls linearly to terminal</span></div>
-            </div>
-          </fieldset>
-          <fieldset>
-            <legend>Costs and investment (% of sales)</legend>
-            <div class="form-grid">
-              <div class="field"><label for="p-cogs">COGS</label><input type="number" id="p-cogs" step="0.1"></div>
-              <div class="field"><label for="p-sga">SG&amp;A</label><input type="number" id="p-sga" step="0.1"></div>
-              <div class="field"><label for="p-rnd">R&amp;D</label><input type="number" id="p-rnd" step="0.1"></div>
-              <div class="field"><label for="p-other">Other operating</label><input type="number" id="p-other" step="0.1"></div>
-              <div class="field"><label for="p-dep">Depreciation &amp; amortization</label><input type="number" id="p-dep" step="0.1"></div>
-              <div class="field"><label for="p-capex">Capex</label><input type="number" id="p-capex" step="0.1"></div>
-              <div class="field"><label for="p-nwc">ΔNWC / ΔSales</label><input type="number" id="p-nwc" step="0.1"><span class="hint">Working capital added per $ of new sales</span></div>
-              <div class="field"><label for="p-tax">Tax rate %</label><input type="number" id="p-tax" step="0.1"></div>
-            </div>
-            <div class="checks" style="margin-top:10px">
-              <label><input type="checkbox" id="p-cida"> Cost lines include D&amp;A (EBITDA adds it back)</label>
-            </div>
-          </fieldset>
-          <fieldset>
-            <legend>Financing</legend>
-            <div class="form-grid">
-              <div class="field"><label for="p-plug">Balancing item</label>
-                <select id="p-plug"><option value="cash">Cash</option><option value="revolver">Revolver</option><option value="equity">Equity</option></select></div>
-              <div class="field"><label for="p-rate">Interest rate on debt %</label><input type="number" id="p-rate" step="0.1"></div>
-              <div class="field"><label for="p-payout">Dividend payout %</label><input type="number" id="p-payout" step="1"></div>
-            </div>
-          </fieldset>
-        </form>
-      </div>
-      <div class="tiles" id="proj-tiles"></div>
-      <div class="card">
-        <div class="card-head"><h2>Unlevered free cash flow</h2><span class="muted small">EBITDA(1−t) + D·t − capex − ΔNWC</span></div>
-        <div id="proj-chart"></div>
-      </div>
-      <div class="card">
-        <div class="card-head"><h2>Projected statements</h2><span class="muted small" id="proj-checks"></span></div>
-        <div class="table-wrap"><table id="proj-table"></table></div>
       </div>
     </section>
 

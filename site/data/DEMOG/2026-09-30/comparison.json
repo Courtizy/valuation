@@ -1,0 +1,155 @@
+{
+  "schema_version": "0.2.0",
+  "ticker": "DEMOG",
+  "profile": {
+    "as_of_period": "TTM 2026-06-30",
+    "history_years": 5,
+    "traits": {
+      "stage": {
+        "label": "high growth",
+        "rule": "CAGR > 15% or not yet profitable",
+        "measures": {
+          "revenue_cagr": 0.32000000000000006,
+          "operating_margin": 0.03000000000013385
+        }
+      },
+      "predictability": {
+        "label": "low",
+        "rule": "FCF > 0 in \u2264 50% of years or margin stdev \u2265 8 pts",
+        "measures": {
+          "fcf_positive_share": 0.4,
+          "fcf_margin_stdev": 0.05878775382676938,
+          "years": 5
+        }
+      },
+      "asset_intensity": {
+        "label": "light",
+        "rule": "capex/sales < 3% and NOAT > 3x",
+        "measures": {
+          "capex_to_sales": 0.01999999999785835,
+          "noa_turnover": 3.1871684349792027
+        }
+      },
+      "capital_structure": {
+        "label": "low leverage",
+        "rule": "debt/EBITDA < 2x",
+        "measures": {
+          "debt_to_ebitda": 0.0,
+          "net_debt_to_equity": -0.2380952380911575,
+          "liabilities_to_assets": 0.27586206896284254
+        }
+      }
+    },
+    "vector": {
+      "revenue_cagr": 0.32000000000000006,
+      "operating_margin": 0.03000000000013385,
+      "fcf_margin_stdev": 0.05878775382676938,
+      "capex_to_sales": 0.01999999999785835,
+      "noa_turnover": 3.1871684349792027,
+      "debt_to_ebitda": 0.0,
+      "revenue": 2988353942.32,
+      "rnoa": 0.07553589190582458
+    }
+  },
+  "plan": {
+    "context": "standalone",
+    "summary": "High growth \u2192 comps primary, DCF cross-check.",
+    "methods": [
+      {
+        "model": "comps",
+        "name": "Public comps",
+        "role": "primary",
+        "default_weight": 0.6,
+        "reason": "high growth: current multiples (EV/Sales, EV/EBITDA) anchor better than distant cash flows",
+        "ran": true,
+        "weight": 0.6,
+        "value_per_share": {
+          "p10": 42.635592400473335,
+          "p50": 52.04654170418085,
+          "p90": 100.52630116019095,
+          "mean": 52.04654170418085
+        }
+      },
+      {
+        "model": "dcf",
+        "name": "DCF (standalone)",
+        "role": "cross-check",
+        "default_weight": 0.4,
+        "reason": "tests whether the multiple is supported by plausible long-run cash flows",
+        "ran": true,
+        "weight": 0.4,
+        "value_per_share": {
+          "p10": 15.51765983230703,
+          "p50": 16.67421036680461,
+          "p90": 18.066044965021817,
+          "mean": 16.67421036680461
+        }
+      },
+      {
+        "model": "lbo",
+        "name": "LBO",
+        "role": "reference",
+        "default_weight": 0.0,
+        "reason": "what a financial buyer could pay given the cash flows and debt capacity",
+        "ran": false,
+        "weight": 0.0,
+        "value_per_share": null
+      },
+      {
+        "model": "precedents",
+        "name": "Precedent transactions",
+        "role": "reference",
+        "default_weight": 0.0,
+        "reason": "includes a control premium; not a standalone value",
+        "ran": true,
+        "weight": 0.0,
+        "value_per_share": {
+          "p10": 17.341178781476792,
+          "p50": 20.676020854837713,
+          "p90": 23.677378720862542,
+          "mean": 20.564859452392348
+        }
+      }
+    ],
+    "notes": []
+  },
+  "blend": {
+    "p10": 31.788419373206814,
+    "p50": 37.89760916923035,
+    "p90": 67.5421986821233
+  },
+  "price": 18.0,
+  "price_source": "dcf assumptions",
+  "upside": {
+    "p10": 0.7660232985114896,
+    "p50": 1.1054227316239085,
+    "p90": 2.7523443712290723
+  },
+  "as_of": "2026-09-30",
+  "football_field": [
+    {
+      "model": "comps",
+      "p10": 42.635592400473335,
+      "p50": 52.04654170418085,
+      "p90": 100.52630116019095,
+      "mean": 52.04654170418085
+    },
+    {
+      "model": "dcf",
+      "p10": 15.51765983230703,
+      "p50": 16.67421036680461,
+      "p90": 18.066044965021817,
+      "mean": 16.67421036680461
+    },
+    {
+      "model": "precedents",
+      "p10": 17.341178781476792,
+      "p50": 20.676020854837713,
+      "p90": 23.677378720862542,
+      "mean": 20.564859452392348
+    }
+  ],
+  "assumption_differences": [],
+  "warnings": [],
+  "demo": true
+}

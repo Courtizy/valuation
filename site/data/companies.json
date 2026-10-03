@@ -1,121 +1,135 @@
 {
   "companies": [
     {
-      "ticker": "AAPL",
-      "name": "Apple Inc.",
-      "demo": false,
-      "as_of": "2026-10-03",
-      "period": "TTM 2026-06-27",
-      "traits": {
-        "stage": "mature grower",
-        "predictability": "high",
-        "asset_intensity": "light",
-        "capital_structure": "low leverage"
-      },
-      "vector": {
-        "revenue_cagr": 0.03275991627577457,
-        "operating_margin": 0.3317295848747812,
-        "fcf_margin_stdev": 0.016517646085819168,
-        "capex_to_sales": 0.021509222981729692,
-        "noa_turnover": 3.8640929389415657,
-        "debt_to_ebitda": 0.5021701724825701,
-        "revenue": 466823000000,
-        "rnoa": 1.067208562169679
-      },
-      "rates": {
-        "revenue_cagr": 0.03275991627577457,
-        "operating_margin": 0.3317295848747812,
-        "rnoa": 1.067208562169679,
-        "capex_to_sales": 0.021509222981729692,
-        "debt_to_ebitda": 0.5021701724825701,
-        "wacc": 0.10589764999537835,
-        "beta": 1.09
-      },
-      "market": {
-        "price": 333.69,
-        "market_cap": 4874864863470.0,
-        "enterprise_value": 4896809863470.0
-      },
-      "multiples": {
-        "pe": 37.81016724943768,
-        "ev_ebitda": 29.15479291654511,
-        "ev_sales": 10.489649960413262,
-        "pb": 45.33914493554688,
-        "fcf_yield": 0.028038315692449172
-      }
-    },
-    {
-      "ticker": "TSM",
-      "name": "Taiwan Semiconductor Manufacturing Company Limited",
-      "demo": false,
-      "as_of": "2026-10-03",
-      "period": null,
-      "traits": {
-        "stage": "unknown",
-        "predictability": "unknown",
-        "asset_intensity": "unknown",
-        "capital_structure": "unknown"
-      },
-      "vector": {
-        "revenue_cagr": null,
-        "operating_margin": null,
-        "fcf_margin_stdev": null,
-        "capex_to_sales": null,
-        "noa_turnover": null,
-        "debt_to_ebitda": null,
-        "revenue": null,
-        "rnoa": null
-      },
-      "rates": {
-        "revenue_cagr": null,
-        "operating_margin": null,
-        "rnoa": null,
-        "capex_to_sales": null,
-        "debt_to_ebitda": null,
-        "wacc": null,
-        "beta": null
-      },
-      "market": {
-        "price": null,
-        "market_cap": null,
-        "enterprise_value": null
-      },
-      "multiples": {
-        "pe": null,
-        "ev_ebitda": null,
-        "ev_sales": null,
-        "pb": null,
-        "fcf_yield": null
-      }
-    },
-    {
       "ticker": "DEMO",
       "name": "Demo Manufacturing Co. (synthetic)",
       "demo": true,
       "as_of": "2026-09-30",
-      "period": null,
-      "traits": {},
-      "vector": {},
+      "period": "TTM 2026-06-30",
+      "traits": {
+        "stage": "mature grower",
+        "predictability": "high",
+        "asset_intensity": "moderate",
+        "capital_structure": "low leverage"
+      },
+      "vector": {
+        "revenue_cagr": 0.08000000000000007,
+        "operating_margin": 0.17999999999996527,
+        "fcf_margin_stdev": 0.0008329594065971234,
+        "capex_to_sales": 0.05000000000008688,
+        "noa_turnover": 1.5771139530471032,
+        "debt_to_ebitda": 0.8292589411627865,
+        "revenue": 5755412496.389999,
+        "rnoa": 0.22426560412421387
+      },
       "rates": {
-        "revenue_cagr": null,
-        "operating_margin": null,
-        "rnoa": null,
-        "capex_to_sales": null,
-        "debt_to_ebitda": null,
-        "wacc": null,
-        "beta": null
+        "revenue_cagr": 0.08000000000000007,
+        "operating_margin": 0.17999999999996527,
+        "rnoa": 0.22426560412421387,
+        "capex_to_sales": 0.05000000000008688,
+        "debt_to_ebitda": 0.8292589411627865,
+        "wacc": 0.0937245283018868,
+        "beta": 1.1
       },
       "market": {
-        "price": null,
-        "market_cap": null,
-        "enterprise_value": null
+        "price": 45.0,
+        "market_cap": 14850000000.0,
+        "enterprise_value": 15288759520.05
       },
       "multiples": {
-        "pe": null,
-        "ev_ebitda": null,
-        "ev_sales": null,
-        "pb": null,
-        "fcf_yield": null
+        "pe": 18.968674884010337,
+        "ev_ebitda": 12.074610029799176,
+        "ev_sales": 2.6564142065646306,
+        "pb": 4.431603629208849,
+        "fcf_yield": 0.04109139946734006
+      }
+    },
+    {
+      "ticker": "DEMOG",
+      "name": "Demo Cloud Software (synthetic)",
+      "demo": true,
+      "as_of": "2026-09-30",
+      "period": "TTM 2026-06-30",
+      "traits": {
+        "stage": "high growth",
+        "predictability": "low",
+        "asset_intensity": "light",
+        "capital_structure": "low leverage"
+      },
+      "vector": {
+        "revenue_cagr": 0.32000000000000006,
+        "operating_margin": 0.03000000000013385,
+        "fcf_margin_stdev": 0.05878775382676938,
+        "capex_to_sales": 0.01999999999785835,
+        "noa_turnover": 3.1871684349792027,
+        "debt_to_ebitda": 0.0,
+        "revenue": 2988353942.32,
+        "rnoa": 0.07553589190582458
+      },
+      "rates": {
+        "revenue_cagr": 0.32000000000000006,
+        "operating_margin": 0.03000000000013385,
+        "rnoa": 0.07553589190582458,
+        "capex_to_sales": 0.01999999999785835,
+        "debt_to_ebitda": 0.0,
+        "wacc": 0.11199999999999999,
+        "beta": 1.4
+      },
+      "market": {
+        "price": 18.0,
+        "market_cap": 1800000000.0,
+        "enterprise_value": 1466578974.97
+      },
+      "multiples": {
+        "pe": 25.415117672722683,
+        "ev_ebitda": 9.815296335950872,
+        "ev_sales": 0.4907648167778364,
+        "pb": 1.2853761352589648,
+        "fcf_yield": 0.14342738814444445
+      }
+    },
+    {
+      "ticker": "DEMOU",
+      "name": "Demo Regional Utility (synthetic)",
+      "demo": true,
+      "as_of": "2026-09-30",
+      "period": "TTM 2026-06-30",
+      "traits": {
+        "stage": "mature",
+        "predictability": "high",
+        "asset_intensity": "heavy",
+        "capital_structure": "high leverage"
+      },
+      "vector": {
+        "revenue_cagr": 0.020000000000000018,
+        "operating_margin": 0.3799999999985732,
+        "fcf_margin_stdev": 0.010121090400670262,
+        "capex_to_sales": 0.1700000000004402,
+        "noa_turnover": 0.3145691667641172,
+        "debt_to_ebitda": 4.743390109656854,
+        "revenue": 6588115098.63,
+        "rnoa": 0.09443366386217134
+      },
+      "rates": {
+        "revenue_cagr": 0.020000000000000018,
+        "operating_margin": 0.3799999999985732,
+        "rnoa": 0.09443366386217134,
+        "capex_to_sales": 0.1700000000004402,
+        "debt_to_ebitda": 4.743390109656854,
+        "wacc": 0.06265822784810127,
+        "beta": 0.6
+      },
+      "market": {
+        "price": 98.0,
+        "market_cap": 24500000000.0,
+        "enterprise_value": 38811053578.8
+      },
+      "multiples": {
+        "pe": 17.195973317387498,
+        "ev_ebitda": 12.273064512736147,
+        "ev_sales": 5.8910709660902505,
+        "pb": 3.5820800106478083,
+        "fcf_yield": 0.037845484698775515
       }
     }
   ]

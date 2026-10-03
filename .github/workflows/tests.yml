@@ -16,9 +16,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - uses: actions/setup-node@v4   # for the site projection parity test
-        with:
-          node-version: "22"
       - run: pip install -e ".[dev]"
       # Course parity tests skip here: the workbooks are local-only.
       - run: pytest -q

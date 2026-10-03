@@ -68,7 +68,7 @@ function observe(container, draw) {
   container._ro.observe(container);
 }
 
-export function columnChart(container, { categories, values, format, label = "", height = 220 }) {
+export function columnChart(container, { categories, values, format, label = "", height = 220, estimate = [] }) {
   observe(container, () => {
     const { svg, tip, width } = setup(container, height);
     svg.setAttribute("aria-label", label);
@@ -91,7 +91,8 @@ export function columnChart(container, { categories, values, format, label = "",
       const hover = el("rect", { x: m.l + band * i, y: m.t, width: band, height: ih, class: "hover-band", opacity: 0 }, svg);
       const v = values[i];
       if (Number.isFinite(v) && v !== 0) {
-        el("path", { d: barPath(cx - bw / 2, bw, y(0), y(v)), fill: "var(--series-1)", class: "bar" }, svg);
+        el("path", { d: barPath(cx - bw / 2, bw, y(0), y(v)), fill: "var(--series-1)", class: "bar",
+          "fill-opacity": estimate[i] ? 0.4 : 1 }, svg);
       }
       if ((categories.length - 1 - i) % every === 0) {   // anchor labels on the latest period
         el("text", { x: cx, y: height - 8, "text-anchor": "middle", class: "tick" }, svg).textContent = c;
@@ -105,7 +106,7 @@ export function columnChart(container, { categories, values, format, label = "",
         hover.setAttribute("opacity", 1);
         const r = container.getBoundingClientRect();
         showTip(tip, container, e.clientX - r.left, e.clientY - r.top, c,
-          [{ label, value: Number.isFinite(v) ? format(v) : "n/a", color: "var(--series-1)" }]);
+          [{ label: estimate[i] ? `${label} (projected)` : label, value: Number.isFinite(v) ? format(v) : "n/a", color: "var(--series-1)" }]);
       });
       hit.addEventListener("mouseleave", () => { hover.setAttribute("opacity", 0); hideTip(tip); });
     });

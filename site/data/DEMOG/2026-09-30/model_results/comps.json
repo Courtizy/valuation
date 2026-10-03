@@ -1,13 +1,13 @@
 {
   "schema_version": "0.1.0",
   "model": "comps",
-  "ticker": "DEMO",
+  "ticker": "DEMOG",
   "as_of": "2026-09-30",
   "value_per_share": {
-    "p10": 21.780412637132592,
-    "p50": 38.318822894243254,
-    "p90": 73.58797752384875,
-    "mean": 38.318822894243254
+    "p10": 42.635592400473335,
+    "p50": 52.04654170418085,
+    "p90": 100.52630116019095,
+    "mean": 52.04654170418085
   },
   "assumptions_used": {
     "multiples": {
@@ -22,7 +22,7 @@
       "range": "min_max"
     },
     "peers": [
-      "DEMOG",
+      "DEMO",
       "DEMOU",
       "MANUALCO"
     ],
@@ -40,49 +40,49 @@
   ],
   "details": {
     "target": {
-      "sales": 5755412496.389999,
-      "ebitda": 1266190749.21,
-      "net_income": 782869656.99,
-      "debt": 1050000000.0,
-      "cash": 611240479.95,
-      "shares": 330000000.0,
-      "revenue_growth": 0.08000000000000007,
-      "price": 45.0,
-      "ticker": "DEMO",
+      "sales": 2988353942.32,
+      "ebitda": 149417697.10999998,
+      "net_income": 70823988.43,
+      "debt": 0,
+      "cash": 333421025.03,
+      "shares": 100000000.0,
+      "revenue_growth": 0.32000000000000006,
+      "price": 18.0,
+      "ticker": "DEMOG",
       "name": "target",
-      "market_value": 14850000000.0,
-      "net_debt": 438759520.04999995,
-      "enterprise_value": 15288759520.05,
-      "net_debt_to_ev": 0.028698176557398362,
-      "ebitda_margin": 0.22000000000072978,
+      "market_value": 1800000000.0,
+      "net_debt": -333421025.03,
+      "enterprise_value": 1466578974.97,
+      "net_debt_to_ev": 0.0,
+      "ebitda_margin": 0.0499999999979922,
       "multiples": {
-        "ev_sales": 2.6564142065646306,
-        "ev_ebitda": 12.074610029799176,
-        "pe": 18.968674884010337
+        "ev_sales": 0.4907648167778364,
+        "ev_ebitda": 9.815296335950872,
+        "pe": 25.415117672722683
       }
     },
     "peers": [
       {
-        "sales": 2988353942.32,
-        "ebitda": 149417697.10999998,
-        "net_income": 70823988.43,
-        "debt": 0,
-        "cash": 333421025.03,
-        "shares": 100000000.0,
-        "revenue_growth": 0.32000000000000006,
-        "price": 18.0,
-        "ticker": "DEMOG",
-        "name": "Demo Cloud Software (synthetic)",
+        "sales": 5755412496.389999,
+        "ebitda": 1266190749.21,
+        "net_income": 782869656.99,
+        "debt": 1050000000.0,
+        "cash": 611240479.95,
+        "shares": 330000000.0,
+        "revenue_growth": 0.08000000000000007,
+        "price": 45.0,
+        "ticker": "DEMO",
+        "name": "Demo Manufacturing Co. (synthetic)",
         "source": "sec",
-        "market_value": 1800000000.0,
-        "net_debt": -333421025.03,
-        "enterprise_value": 1466578974.97,
-        "net_debt_to_ev": 0.0,
-        "ebitda_margin": 0.0499999999979922,
+        "market_value": 14850000000.0,
+        "net_debt": 438759520.04999995,
+        "enterprise_value": 15288759520.05,
+        "net_debt_to_ev": 0.028698176557398362,
+        "ebitda_margin": 0.22000000000072978,
         "multiples": {
-          "ev_sales": 0.4907648167778364,
-          "ev_ebitda": 9.815296335950872,
-          "pe": 25.415117672722683
+          "ev_sales": 2.6564142065646306,
+          "ev_ebitda": 12.074610029799176,
+          "pe": 18.968674884010337
         }
       },
       {
@@ -136,40 +136,40 @@
       "ev_ebitda": {
         "label": "EV / EBITDA",
         "weight": 1.0,
-        "peer_average": 11.120362707138097,
-        "peer_median": 11.272727272727273,
-        "implied_at_average": 41.33860868966101,
+        "peer_average": 11.8734672717542,
+        "peer_median": 12.074610029799176,
+        "implied_at_average": 21.07527161486467,
         "implied": {
-          "DEMOG": 36.33114515541153,
-          "DEMOU": 45.76145827404256,
-          "MANUALCO": 41.92322263952893
+          "DEMO": 21.375814491839012,
+          "DEMOU": 21.672340610054988,
+          "MANUALCO": 20.1776597427
         },
-        "conservative": 36.33114515541153,
-        "expected": 41.92322263952893,
-        "aggressive": 45.76145827404256
+        "conservative": 20.1776597427,
+        "expected": 21.375814491839012,
+        "aggressive": 21.672340610054988
       },
       "ev_sales": {
         "label": "EV / Sales",
         "weight": 1.0,
-        "peer_average": 2.8161674831782513,
-        "peer_median": 2.066666666666667,
-        "implied_at_average": 47.78620001382206,
+        "peer_average": 3.5380506131071825,
+        "peer_median": 2.6564142065646306,
+        "implied_at_average": 109.06368522836544,
         "implied": {
-          "DEMOG": 7.229680118853661,
-          "DEMOU": 101.41449677365495,
-          "MANUALCO": 34.71442314895758
+          "DEMO": 82.71726891652268,
+          "DEMOU": 179.38026171032692,
+          "MANUALCO": 65.09352505824667
         },
-        "conservative": 7.229680118853661,
-        "expected": 34.71442314895758,
-        "aggressive": 101.41449677365495
+        "conservative": 65.09352505824667,
+        "expected": 82.71726891652268,
+        "aggressive": 179.38026171032692
       }
     },
     "blend": {
-      "conservative": 21.780412637132592,
-      "expected": 38.318822894243254,
-      "aggressive": 73.58797752384875
+      "conservative": 42.635592400473335,
+      "expected": 52.04654170418085,
+      "aggressive": 100.52630116019095
     },
-    "market_price": 45.0,
+    "market_price": 18.0,
     "range_method": "min_max"
   },
   "demo": true

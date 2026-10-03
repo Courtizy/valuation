@@ -1,52 +1,6 @@
 {
-  "generated_at": "2026-10-03T02:51:51+00:00",
+  "generated_at": "2026-10-03T02:56:29+00:00",
   "companies": [
-    {
-      "ticker": "AAPL",
-      "name": "Apple Inc.",
-      "demo": false,
-      "runs": [
-        {
-          "as_of": "2026-10-03",
-          "detail": "AAPL/2026-10-03/company_detail.json",
-          "comparison": "AAPL/2026-10-03/comparison.json",
-          "models": [
-            "dcf"
-          ],
-          "latest": {
-            "annual": "FY2025",
-            "ttm": "TTM 2026-06-27"
-          }
-        },
-        {
-          "as_of": "2026-10-02",
-          "detail": "AAPL/2026-10-02/company_detail.json",
-          "comparison": null,
-          "models": [],
-          "latest": {
-            "annual": "FY2025",
-            "ttm": "TTM 2026-06-27"
-          }
-        }
-      ]
-    },
-    {
-      "ticker": "TSM",
-      "name": "Taiwan Semiconductor Manufacturing Company Limited",
-      "demo": false,
-      "runs": [
-        {
-          "as_of": "2026-10-03",
-          "detail": "TSM/2026-10-03/company_detail.json",
-          "comparison": null,
-          "models": [],
-          "latest": {
-            "annual": null,
-            "ttm": null
-          }
-        }
-      ]
-    },
     {
       "ticker": "DEMO",
       "name": "Demo Manufacturing Co. (synthetic)",
@@ -56,6 +10,48 @@
           "as_of": "2026-09-30",
           "detail": "DEMO/2026-09-30/company_detail.json",
           "comparison": "DEMO/2026-09-30/comparison.json",
+          "models": [
+            "comps",
+            "dcf",
+            "precedents"
+          ],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-06-30"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "DEMOG",
+      "name": "Demo Cloud Software (synthetic)",
+      "demo": true,
+      "runs": [
+        {
+          "as_of": "2026-09-30",
+          "detail": "DEMOG/2026-09-30/company_detail.json",
+          "comparison": "DEMOG/2026-09-30/comparison.json",
+          "models": [
+            "comps",
+            "dcf",
+            "precedents"
+          ],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-06-30"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "DEMOU",
+      "name": "Demo Regional Utility (synthetic)",
+      "demo": true,
+      "runs": [
+        {
+          "as_of": "2026-09-30",
+          "detail": "DEMOU/2026-09-30/company_detail.json",
+          "comparison": "DEMOU/2026-09-30/comparison.json",
           "models": [
             "comps",
             "dcf",

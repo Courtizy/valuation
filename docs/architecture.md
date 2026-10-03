@@ -25,8 +25,8 @@
                          → comparison.json, football field, memo, scenario_result.json
       |
  L3  App               static site on GitHub Pages (site/); Actions run pipeline.py
-                       and publish JSON; the page renders it, holds no logic except
-                       the projection what-if (a tested port of core/projection.py)
+                       and publish JSON; the page renders it and holds no model logic
+                       (projections come from L1's trend case or the DCF)
 ```
 
 | Framework doc layer | v4 home |

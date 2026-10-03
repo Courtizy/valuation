@@ -106,3 +106,25 @@ def test_foreign_ifrs_filer_fails_clearly():
     assert any("ifrs-full in TWD" in w for w in canon["warnings"])
     with pytest.raises(ValueError, match="ifrs-full in TWD"):
         build_detail(canon, "2026-09-30")
+
+
+def test_trend_case_projection_is_calculated_from_history():
+    from L1_detail.forecast import TERMINAL_GROWTH, trend_case
+    d = build_detail(two_years(), "2026-09-30")
+    p = d["projection"]
+    assert p is not None and p == trend_case(d)
+    assert p["case"] == "trend" and len(p["years"]) == 5
+    a = p["assumptions"]
+    assert -0.20 <= a["revenue_growth_start"] <= 0.40 and a["terminal_growth"] == TERMINAL_GROWTH
+    revs = [d["views"]["ttm"][-1]["values"]["revenue"]] + [y["revenue"] for y in p["years"]]
+    growth = [b / a_ - 1 for a_, b in zip(revs, revs[1:])]
+    assert growth[0] == pytest.approx(a["revenue_growth_start"])
+    assert growth[-1] == pytest.approx(TERMINAL_GROWTH)
+    for y in p["years"]:   # rows tie out
+        assert y["gross_profit"] == pytest.approx(y["revenue"] - y["cogs"])
+        assert y["ebt"] == pytest.approx(y["ebit"] - y["interest_net"])
+
+
+def test_trend_case_none_without_revenue():
+    from L1_detail.forecast import trend_case
+    assert trend_case({"views": {"ttm": [], "annual": []}, "analysis": {}}) is None

@@ -23,6 +23,7 @@ from lineage import lineage_block
 
 from .analysis import _one_year_apart, analyze_view, load_classification
 from .periods import build_views
+from .forecast import trend_case
 from .profile import build_profile, load_rules
 from .registry import load_registry
 
@@ -109,6 +110,7 @@ def build_detail(canonical: dict, as_of: str, raw_market: dict | None = None, pa
         "warnings": warnings,
     }
     doc["profile"] = build_profile(doc, load_rules(((pack or {}).get("l1") or {}).get("profile_rules")))
+    doc["projection"] = trend_case(doc)
     return doc
 
 

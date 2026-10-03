@@ -1,8 +1,7 @@
 // Valuation site: reads the JSON the pipeline publishes to data/ and renders it.
-// The only computation here is the projection what-if (projection.js, a tested
-// port of core/projection.py). Everything else is display.
+// No valuation math runs here: projections are calculated in Python (L1 trend
+// case, or the DCF's projection) and only displayed.
 
-import { project, baseFromDetail, ProjectionError } from "./projection.js";
 import { columnChart, lineChart, rangeChart } from "./charts.js";
 
 const $ = (id) => document.getElementById(id);
@@ -59,7 +58,6 @@ async function init() {
   setupTheme();
   setupTabs();
   setupSegments();
-  setupProjectionForm();
   setupRunForm();
   try {
     [state.index, state.concepts] = await Promise.all([getJSON("data/index.json"), getJSON("data/concepts.json").catch(() => ({}))]);
@@ -110,7 +108,6 @@ async function selectRun(asOf) {
   if (demo) banner("This company is synthetic demo data, made up to preview the pages. Run the pipeline for a real ticker.");
   else if (state.detail.warnings?.length) banner(`Build warnings: ${state.detail.warnings.join("; ")}`);
   renderCompany();
-  resetProjection();
   renderValuation();
   $("r-ticker").value = state.company.demo ? "" : state.company.ticker;
 }
@@ -118,7 +115,7 @@ async function selectRun(asOf) {
 function renderEmptyEverywhere() {
   const msg = `<div class="card empty"><h2>No published results yet</h2>
     <p>Use <b>Run pipeline</b> to fetch a company, or run <code>python -m L3_app.demo</code> for a synthetic preview.</p></div>`;
-  for (const id of ["panel-company", "panel-projection", "panel-valuation"]) $(id).innerHTML = msg;
+  for (const id of ["panel-company", "panel-valuation"]) $(id).innerHTML = msg;
 }
 
 // ---------------------------------------------------------------- tabs, theme
@@ -136,7 +133,6 @@ function setupTabs() {
     if (location.hash !== `#${name}`) history.replaceState(null, "", `#${name}`);
     // charts measure their container, so draw after the panel is visible
     if (name === "company" && state.detail) renderCompany();
-    if (name === "projection" && state.detail) runProjection();
     if (name === "valuation" && state.detail) renderValuation();
   };
   tabs.forEach((t, i) => {
@@ -167,7 +163,7 @@ function setupTheme() {
     const next = order[(order.indexOf(store.get("theme")) + 1) % 3];
     store.set("theme", next);
     apply(next);
-    if (state.detail) { renderCompany(); runProjection(); renderValuation(); }
+    if (state.detail) { renderCompany(); renderValuation(); }
   };
 }
 
@@ -238,16 +234,29 @@ function renderTiles() {
     { label: "Free cash flow (CFO − capex)", value: money(val.free_cash_flow) },
     { label: "Net debt", value: money(val.net_debt) },
   ];
+  const proj = projection();
+  if (proj && fin(val.revenue) && val.revenue > 0) {
+    const last = proj.rows.at(-1).revenue, n = proj.rows.length;
+    const cagr = (last / val.revenue) ** (1 / n) - 1;
+    tiles.splice(1, 0, { label: `Projected revenue growth · ${n} yrs`, value: pct(cagr),
+      delta: `${proj.kind === "dcf" ? "DCF case" : "trend case"} · ${money(last)} in year ${n}`, dir: 0, neutral: true });
+  }
   $("tiles").innerHTML = tiles.map((t) => `<div class="tile"><div class="label">${esc(t.label)}</div>
-    <div class="value">${t.value}</div>${t.delta ? `<div class="delta ${t.dir >= 0 ? "up" : "down"}">${t.delta}</div>` : ""}</div>`).join("");
+    <div class="value">${t.value}</div>${t.delta ? `<div class="delta ${t.neutral ? "" : t.dir >= 0 ? "up" : "down"}">${t.delta}</div>` : ""}</div>`).join("");
 }
 
 function renderRevenueChart() {
   const view = state.view;
-  const ps = (state.detail.views[view] || []).slice(-12);
-  $("rev-title").textContent = view === "ttm" ? "Revenue, trailing twelve months" : view === "quarterly" ? "Revenue by quarter" : "Revenue by fiscal year";
-  $("rev-sub").textContent = ps.length ? `${ps[0].label} to ${ps.at(-1).label}` : "";
-  columnChart($("rev-chart"), { categories: ps.map(shortLabel), values: ps.map((p) => p.values.revenue), format: money, label: "Revenue" });
+  const ps = (state.detail.views[view] || []).slice(view === "annual" ? -7 : -12);
+  const proj = view === "annual" ? projection() : null;
+  const est = proj ? proj.rows : [];
+  $("rev-title").textContent = view === "ttm" ? "Revenue, trailing twelve months" : view === "quarterly" ? "Revenue by quarter" : "Revenue: reported and projected";
+  $("rev-sub").textContent = ps.length ? `${ps[0].label} to ${est.length ? estLabel(proj.baseEnd, est.length) : ps.at(-1).label}${est.length ? ` · lighter bars = ${proj.kind === "dcf" ? "DCF case" : "trend case"}` : ""}` : "";
+  columnChart($("rev-chart"), {
+    categories: ps.map(shortLabel).concat(est.map((_, i) => estLabel(proj.baseEnd, i + 1))),
+    values: ps.map((p) => p.values.revenue).concat(est.map((r) => r.revenue)),
+    estimate: ps.map(() => false).concat(est.map(() => true)),
+    format: money, label: "Revenue" });
 }
 
 function renderReturnsChart() {
@@ -260,28 +269,94 @@ function renderReturnsChart() {
   lineChart($("ret-chart"), { categories: an.map((a) => `FY${a.label.slice(-2)}`), series, format: pct, label: "RNOA and ROCE" });
 }
 
+// Projected years: the DCF's projection when a DCF has run (the numbers behind
+// the valuation), otherwise the trend case calculated in L1 from history.
+const PROJ_MAP = { revenue: "revenue", cost_of_goods_and_services_sold: "cogs", gross_profit: "gross_profit",
+  research_and_development_expenses: "rnd", selling_general_and_admin_expenses: "sga", operating_income_loss: "ebit",
+  depreciation_amortization_cf: "depreciation", ebitda: "ebitda", pretax_income_loss: "ebt", income_taxes: "income_taxes",
+  net_income: "net_income", capital_expenses: "capex" };
+
+function projection() {
+  const d = state.dcf?.details;
+  if (d?.statements?.length) {
+    return { kind: "dcf", rows: d.statements.slice(0, 5), baseEnd: d.base_period.end,
+      note: `Estimates: DCF case (assumptions/${state.company.ticker}/dcf.json), first 5 of ${d.statements.length} projected years.` };
+  }
+  const p = state.detail.projection;
+  if (!p?.years?.length) return null;
+  const a = p.assumptions;
+  return { kind: "trend", rows: p.years, baseEnd: p.base_period.end,
+    note: `Estimates: trend case from the filings, no inputs. Revenue growth starts at the ${pct(a.revenue_growth_start)} historical CAGR and fades to ${pct(a.terminal_growth)}; costs, D&A and capex stay at base-period ratios; working capital ${pct(a.nwc_to_sales_change)} of new sales; tax ${pct(a.tax_rate)}. Run a DCF to replace it with your own case.` };
+}
+
+function estLabel(baseEnd, t) {
+  const d = new Date(baseEnd + "T00:00:00Z");
+  d.setUTCFullYear(d.getUTCFullYear() + t);
+  return `${d.toLocaleString("en-US", { month: "short", timeZone: "UTC" })} ${String(d.getUTCFullYear()).slice(-2)}E`;
+}
+
+function priorFor(p, view) {
+  const lag = view === "quarterly" || view === "ttm" ? 4 : 1;
+  const all = state.detail.views[view];
+  const idx = all.indexOf(p);
+  return idx - lag >= 0 ? all[idx - lag].values : null;
+}
+
+const GROWTH_ROWS = [
+  ["Revenue growth", (v, prev) => (prev?.revenue && fin(v.revenue) ? v.revenue / prev.revenue - 1 : null)],
+  ["Gross margin", (v) => (v.revenue && fin(v.gross_profit) ? v.gross_profit / v.revenue : null)],
+  ["EBITDA margin", (v) => (v.revenue && fin(v.ebitda) ? v.ebitda / v.revenue : null)],
+  ["Operating margin", (v) => (v.revenue && fin(v.operating_income_loss) ? v.operating_income_loss / v.revenue : null)],
+  ["Net margin", (v) => (v.revenue && fin(v.net_income) ? v.net_income / v.revenue : null)],
+];
+
 function renderStatements() {
-  const ps = periodsFor(state.view);
+  const view = state.view, ps = periodsFor(view);
   const t = $("stmt-table");
-  if (!ps.length) { t.innerHTML = `<tbody><tr><td class="muted">No ${state.view} periods.</td></tr></tbody>`; return; }
-  let html = `<thead><tr><th scope="col">$ millions</th>${ps.map((p) => `<th scope="col" title="${esc(p.start)} to ${esc(p.end)}">${esc(shortLabel(p))}</th>`).join("")}</tr></thead><tbody>`;
+  if (!ps.length) { t.innerHTML = `<tbody><tr><td class="muted">No ${view} periods.</td></tr></tbody>`; return; }
+  const proj = view === "annual" ? projection() : null;
+  // the projection starts from the latest TTM; show it as the bridge column when it's newer than the last fiscal year
+  const ttmBase = proj && state.detail.views.ttm.at(-1);
+  const cols = ps.map((p) => ({ p, view })).concat(ttmBase && ttmBase.end > ps.at(-1).end ? [{ p: ttmBase, view: "ttm" }] : []);
+  // projected rows in concept terms, so one renderer serves both
+  const est = proj ? proj.rows.map((r) => Object.fromEntries(Object.entries(PROJ_MAP).map(([cid, k]) => [cid, r[k]]))) : [];
+  const n = cols.length + est.length;
+  let html = `<thead><tr><th scope="col">$ millions</th>${cols.map(({ p, view: vw }) => `<th scope="col" title="${esc(p.start)} to ${esc(p.end)}${vw !== view ? " · trailing twelve months, the projection's base" : ""}">${esc(vw !== view ? `TTM ${shortLabel(p)}` : shortLabel(p))}</th>`).join("")}
+    ${est.map((_, i) => `<th scope="col" class="est" title="projected year ${i + 1}">${estLabel(proj.baseEnd, i + 1)}</th>`).join("")}</tr></thead><tbody>`;
+
+  html += `<tr class="group"><td colspan="${n + 1}">Growth and margins</td></tr>`;
+  for (const [name, f] of GROWTH_ROWS) {
+    html += `<tr><td>${name}</td>`;
+    cols.forEach(({ p, view: vw }) => { const v = f(p.values, priorFor(p, vw)); html += `<td class="${fin(v) ? "" : "na"}">${pct(v)}</td>`; });
+    est.forEach((e, i) => {
+      const prev = i ? est[i - 1] : cols.at(-1).p.values;
+      const v = f(e, prev); html += `<td class="est ${fin(v) ? "" : "na"}">${pct(v)}</td>`;
+    });
+    html += "</tr>";
+  }
   for (const [group, ids] of STATEMENT_ROWS) {
-    const rows = ids.filter((id) => ps.some((p) => fin(p.values[id])));
+    const rows = ids.filter((id) => cols.some(({ p }) => fin(p.values[id])));
     if (!rows.length) continue;
-    html += `<tr class="group"><td colspan="${ps.length + 1}">${group}</td></tr>`;
+    html += `<tr class="group"><td colspan="${n + 1}">${group}</td></tr>`;
     for (const id of rows) {
       const perShare = id === "eps_diluted", shares = id.startsWith("shares");
       html += `<tr class="${TOTALS.has(id) ? "total" : ""}"><td>${esc(label(id))}${perShare ? " ($)" : shares ? " (M shares)" : ""}</td>`;
-      for (const p of ps) {
+      for (const { p } of cols) {
         const v = p.values[id], m = p.methods[id];
-        const txt = perShare ? num(v) : shares ? millions(v) : millions(v);
+        const txt = perShare ? num(v) : millions(v);
         const mark = DERIVED_METHODS.has(m) ? `<span class="mark" title="${esc(m.replace(/_/g, " "))}">d</span>` : "";
         html += `<td class="${fin(v) ? "" : "na"}">${txt}${mark}</td>`;
       }
+      for (const e of est) html += `<td class="est ${fin(e[id]) ? "" : "na"}">${millions(e[id])}</td>`;
       html += "</tr>";
+    }
+    if (group === "Cash flow" && est.length) {
+      html += `<tr class="total"><td>Unlevered FCF (projected)</td>${cols.map(() => `<td class="na">–</td>`).join("")}${
+        proj.rows.map((r) => `<td class="est">${millions(r.fcf)}</td>`).join("")}</tr>`;
     }
   }
   t.innerHTML = html + "</tbody>";
+  $("stmt-note").textContent = proj ? proj.note : view === "annual" ? "" : "Estimates are shown in the Annual view.";
 }
 
 const RATIO_ROWS = {
@@ -400,166 +475,6 @@ function renderRatios() {
   }
   $("ratio-table").innerHTML = html + "</tbody>";
   $("ratio-note").textContent = `${spec.note} Marginal tax rate ${pct(state.detail.classification.marginal_tax_rate)}.`;
-}
-
-// ---------------------------------------------------------------- projection
-
-const F = { years: "p-years", g0: "p-g0", gt: "p-gt", fade: "p-fade", cogs: "p-cogs", sga: "p-sga", rnd: "p-rnd",
-  other: "p-other", dep: "p-dep", capex: "p-capex", nwc: "p-nwc", tax: "p-tax", plug: "p-plug", rate: "p-rate",
-  payout: "p-payout", cida: "p-cida", base: "p-base" };
-
-function setupProjectionForm() {
-  $("proj-form").addEventListener("input", () => runProjection());
-  $("proj-form").addEventListener("change", (e) => { if (e.target.id === F.base) { fillDefaults(); } runProjection(); });
-  $("proj-reset").onclick = () => { fillDefaults(); runProjection(); };
-  $("proj-download").onclick = downloadDrivers;
-}
-
-function basePeriods() {
-  const v = state.detail.views;
-  const out = [];
-  if (v.ttm.length) out.push({ key: `ttm:${v.ttm.length - 1}`, label: `TTM to ${v.ttm.at(-1).end}`, p: v.ttm.at(-1), series: v.ttm });
-  v.annual.slice().reverse().forEach((p, i) => out.push({ key: `annual:${v.annual.length - 1 - i}`, label: p.label, p, series: v.annual }));
-  return out;
-}
-
-function resetProjection() {
-  const opts = basePeriods();
-  $(F.base).innerHTML = opts.map((o) => `<option value="${o.key}">${esc(o.label)}</option>`).join("");
-  fillDefaults();
-  runProjection();
-}
-
-function currentBase() {
-  return basePeriods().find((o) => o.key === $(F.base).value) || basePeriods()[0];
-}
-
-const r1 = (x) => Math.round(x * 1000) / 10;   // ratio -> percent with one decimal
-const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
-
-function fillDefaults() {
-  const sel = currentBase();
-  if (!sel) return;
-  const v = sel.p.values, b = baseFromDetail(v);
-  const prior = sel.series.find((p) => Math.abs(new Date(sel.p.end) - new Date(p.end) - 365 * 864e5) < 20 * 864e5);
-  const g = prior?.values.revenue ? v.revenue / prior.values.revenue - 1 : 0.05;
-  const rev = b.revenue || 1;
-  const da = (b.depreciation || 0) + (b.amortization || 0);
-  const tax = fin(v.income_taxes) && fin(v.pretax_income_loss) && v.pretax_income_loss > 0 ? v.income_taxes / v.pretax_income_loss : 0.21;
-  const debt = (b.short_term_debt || 0) + (b.long_term_debt || 0);
-  const rate = debt > 0 && fin(v.interest_expense) ? v.interest_expense / debt : 0.05;
-  let nwc = 0.1;
-  if (prior) {
-    const bp = baseFromDetail(prior.values);
-    const wcr = (x) => x.receivables + x.inventory + x.other_current_assets - x.payables - x.accrued;
-    const dS = b.revenue - bp.revenue;
-    if (dS) nwc = clamp((wcr(b) - wcr(bp)) / dS, -0.5, 0.5);
-  }
-  const set = (k, x) => { $(F[k]).value = x; };
-  set("years", 5); set("g0", r1(clamp(g, -0.5, 1))); set("gt", 3); set("fade", 5);
-  set("cogs", r1((b.cogs || 0) / rev)); set("sga", r1((b.sga || 0) / rev)); set("rnd", r1((b.rnd || 0) / rev));
-  set("other", r1((b.other_opex || 0) / rev)); set("dep", r1(da / rev));
-  set("capex", r1(fin(b.capex) ? b.capex / rev : da / rev)); set("nwc", r1(nwc));
-  set("tax", r1(clamp(tax, 0, 0.6))); set("rate", r1(clamp(rate, 0, 0.3))); set("payout", 0);
-  $(F.plug).value = "cash"; $(F.cida).checked = true;
-  $("proj-base-note").textContent = `Base: ${sel.label}. Defaults are the base period's own ratios.`;
-}
-
-function readDrivers() {
-  const n = (k) => { const x = parseFloat($(F[k]).value); return Number.isFinite(x) ? x : 0; };
-  const p = (k) => n(k) / 100;
-  const years = clamp(Math.round(n("years")) || 5, 1, 20);
-  const drivers = {
-    revenue: { method: "fade", g0: p("g0"), g_terminal: p("gt"), fade_years: Math.max(1, Math.round(n("fade"))) },
-    cogs: { method: "pct_of_sales", value: p("cogs") },
-    sga: { method: "pct_of_sales", value: p("sga") },
-    rnd: { method: "pct_of_sales", value: p("rnd") },
-    other_opex: { method: "pct_of_sales", value: p("other") },
-    depreciation: { method: "pct_of_sales", value: p("dep") },
-    amortization: { method: "values", values: [0] },
-    capex: { method: "pct_of_sales", value: p("capex") },
-    nwc: { method: "incremental", ratio: p("nwc") },
-    tax_rate: p("tax"),
-    interest: { method: "rate_on_debt", rate: p("rate"), basis: "beginning" },
-    dividends: { payout: p("payout") },
-    costs_include_da: $(F.cida).checked,
-    plug: $(F.plug).value,
-  };
-  return { years, drivers };
-}
-
-function projectionBase() {
-  const b = baseFromDetail(currentBase().p.values);
-  // the form has one D&A line; fold amortization into depreciation
-  b.depreciation = (b.depreciation || 0) + (b.amortization || 0);
-  b.amortization = 0;
-  return b;
-}
-
-function runProjection() {
-  if (!state.detail || state.tab !== "projection") return;
-  const sel = currentBase();
-  if (!sel) return;
-  const { years, drivers } = readDrivers();
-  let out;
-  try {
-    out = project(projectionBase(), drivers, years);
-  } catch (e) {
-    $("proj-checks").textContent = e instanceof ProjectionError ? e.message : String(e);
-    return;
-  }
-  const ys = out.years, last = ys.at(-1);
-  const cagr = (last.revenue / out.base.revenue) ** (1 / ys.length) - 1;
-  const cumFcf = ys.reduce((s, y) => s + y.free_cash_flow.fcf, 0);
-  $("proj-tiles").innerHTML = [
-    ["Revenue, final year", money(last.revenue), `${pct(cagr)} a year`],
-    ["EBIT margin, final year", pct(last.ebit / last.revenue), ""],
-    [`Cumulative FCF, ${ys.length} years`, money(cumFcf), ""],
-    ["Statements balance", ys.every((y) => Math.abs(y.balance_check) < 1 && y.cash_flow.ties) ? "Yes" : "No", "invested capital = capital employed; cash flow ties"],
-  ].map(([l, v, d]) => `<div class="tile"><div class="label">${esc(l)}</div><div class="value">${v}</div>${d ? `<div class="delta">${esc(d)}</div>` : ""}</div>`).join("");
-  const cats = ys.map((y) => `Y${y.year}`);
-  columnChart($("proj-chart"), { categories: cats, values: ys.map((y) => y.free_cash_flow.fcf), format: money, label: "Free cash flow" });
-
-  const base = out.base;
-  const rows = [
-    ["group", "Income statement"],
-    ["Revenue", (y) => y.revenue, base.revenue, true],
-    ["Growth", (y, p) => y.revenue / p.revenue - 1, null, false, pct],
-    ["COGS", (y) => y.cogs, base.cogs], ["SG&A", (y) => y.sga, base.sga], ["R&D", (y) => y.rnd, base.rnd],
-    ["Other operating", (y) => y.other_opex, base.other_opex],
-    ["EBITDA", (y) => y.ebitda, null, true], ["D&A", (y) => y.depreciation, base.depreciation],
-    ["EBIT", (y) => y.ebit, null, true], ["Interest, net", (y) => y.interest_expense - y.interest_income, null],
-    ["Taxes", (y) => y.income_taxes, base.income_taxes], ["Net income", (y) => y.net_income, base.net_income, true],
-    ["group", "Managerial balance sheet"],
-    ["Cash", (y) => y.cash, base.cash], ["Working-capital requirement", (y) => y.wcr, base.wcr],
-    ["Fixed assets", (y) => y.fixed_assets, base.fixed_assets],
-    ["Debt incl. revolver", (y) => y.short_term_debt + y.long_term_debt + y.revolver, base.short_term_debt + base.long_term_debt],
-    ["Equity", (y) => y.equity, base.equity, true],
-    ["group", "Cash flow"],
-    ["Operating", (y) => y.cash_flow.cfo], ["Investing", (y) => y.cash_flow.cfi], ["Financing", (y) => y.cash_flow.cff],
-    ["group", "Free cash flow"],
-    ["NOPAT", (y) => y.free_cash_flow.nopat], ["Capex", (y) => y.capex], ["ΔNWC", (y) => y.free_cash_flow.change_in_nwc],
-    ["Unlevered FCF", (y) => y.free_cash_flow.fcf, null, true],
-  ];
-  let html = `<thead><tr><th scope="col">$ millions</th><th scope="col">Base</th>${cats.map((c) => `<th scope="col">${c}</th>`).join("")}</tr></thead><tbody>`;
-  for (const [name, get, b0, total, fmt = millions] of rows) {
-    if (name === "group") { html += `<tr class="group"><td colspan="${ys.length + 2}">${esc(get)}</td></tr>`; continue; }
-    html += `<tr class="${total ? "total" : ""}"><td>${esc(name)}</td><td class="${fin(b0) ? "" : "na"}">${fin(b0) ? fmt(b0) : NA}</td>`;
-    ys.forEach((y, i) => { html += `<td>${fmt(get(y, i ? ys[i - 1] : base))}</td>`; });
-    html += "</tr>";
-  }
-  $("proj-table").innerHTML = html + "</tbody>";
-  const ok = ys.every((y) => Math.abs(y.balance_check) < 1 && y.cash_flow.ties);
-  $("proj-checks").innerHTML = ok ? `<span class="ok-pill">✓ Balances and cash flow tie every year</span>` : `<span class="bad-pill">✕ Check failed</span>`;
-}
-
-function downloadDrivers() {
-  const { years, drivers } = readDrivers();
-  const body = { ticker: state.company?.ticker, as_of: state.run?.as_of, base_period: currentBase()?.label, years, drivers };
-  const blob = new Blob([JSON.stringify(body, null, 2)], { type: "application/json" });
-  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: `${state.company?.ticker || "drivers"}_projection.json` });
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
 // ---------------------------------------------------------------- valuation

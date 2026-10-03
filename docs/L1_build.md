@@ -100,6 +100,21 @@ Also: FCF = NOPAT − ΔNOA.
 
 **Diagnostics:** CFO/OI, CFO/avg NOA, accruals/ΔSales, sales/AR, depreciation/capex, sales/deferred revenue, allowance/gross AR.
 
+## 3. Trend case projection (`forecast.py`)
+
+`company_detail.json` carries `projection`: five years calculated from the filings with no inputs, so the site can show current and projected growth side by side. It is not a valuation; when a DCF has run, the site shows the DCF's projection instead.
+
+| Driver | Rule |
+|---|---|
+| Revenue | g0 = revenue CAGR (up to 5 fiscal years, bounded −20%..+40%), fading linearly to 3% in year 5 |
+| COGS, SG&A, R&D, other opex | base-period ratios to sales; other opex is the residual so base EBIT = reported operating income |
+| D&A, capex | base-period ratios to sales (capex defaults to D&A) |
+| ΔNWC | ΔWCR/ΔSales from managerial balance sheet history, else 0.20 |
+| Tax | base effective rate if 0–50%, else 21% |
+| Interest | base amount held flat |
+
+Base period is the latest TTM (else latest fiscal year). The math is `core.projection`, the same engine the DCF uses. `None` when there's no revenue.
+
 ## Classification (`classification.json`)
 
 | Setting | Default | Why |

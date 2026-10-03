@@ -36,6 +36,7 @@ from core.cost_of_capital import discount_rates
 from core.dcf import scenario_range, solve, value_firm
 from core.projection import base_from_detail, project
 from core.shares import treasury_stock_method
+from core.projection import statement_row
 from L2_models.base import ModelResult
 
 DEFAULT_NWC_RATIO = 0.20          # used when history can't give dNWC/dSales
@@ -310,6 +311,7 @@ class DCF:
                             "fcf": y["free_cash_flow"]["fcf"], "pv": cf["pv"]}
                            for y, cf in zip(years, base_val["cash_flows"])],
             "drivers": p["drivers"],
+            "statements": [statement_row(y) for y in years],
         }
         return ModelResult(
             model=self.name,
