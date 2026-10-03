@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-03T08:19:03+00:00",
+  "generated_at": "2026-10-03T08:19:43+00:00",
   "companies": [
     {
       "ticker": "AAPL",
@@ -35,6 +35,24 @@
           "latest": {
             "annual": "FY2026",
             "ttm": "TTM 2026-08-02"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "CSCO",
+      "name": "CISCO SYSTEMS, INC.",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-10-03",
+          "detail": "CSCO/2026-10-03/company_detail.json",
+          "full": "CSCO/2026-10-03/company_detail_full.json",
+          "comparison": null,
+          "models": [],
+          "latest": {
+            "annual": "FY2026",
+            "ttm": "TTM 2026-07-25"
           }
         }
       ]
@@ -109,6 +127,24 @@
           "latest": {
             "annual": "FY2025",
             "ttm": "TTM 2026-06-27"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "JBL",
+      "name": "JABIL INC",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-10-03",
+          "detail": "JBL/2026-10-03/company_detail.json",
+          "full": "JBL/2026-10-03/company_detail_full.json",
+          "comparison": null,
+          "models": [],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-05-31"
           }
         }
       ]

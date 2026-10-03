@@ -58,52 +58,52 @@
       "similar": [
         {
           "ticker": "IBM",
-          "score": 0.466552389213131,
+          "score": 0.45463803037590217,
           "traits_shared": 1
         },
         {
           "ticker": "TSN",
-          "score": 0.4593942193407231,
+          "score": 0.44935110679690465,
           "traits_shared": 4
         },
         {
           "ticker": "MDLZ",
-          "score": 0.43070569041323803,
+          "score": 0.4202310074998186,
           "traits_shared": 3
         },
         {
           "ticker": "DELL",
-          "score": 0.39907455810756326,
+          "score": 0.397923017256469,
           "traits_shared": 2
         },
         {
+          "ticker": "CSCO",
+          "score": 0.3889852059036311,
+          "traits_shared": 1
+        },
+        {
           "ticker": "PPC",
-          "score": 0.38253383245386313,
+          "score": 0.3732041963802565,
           "traits_shared": 3
+        },
+        {
+          "ticker": "JBL",
+          "score": 0.3636825029963182,
+          "traits_shared": 2
         },
         {
           "ticker": "CPB",
-          "score": 0.3704616611443119,
-          "traits_shared": 3
-        },
-        {
-          "ticker": "SNX",
-          "score": 0.34880351270964394,
+          "score": 0.3592227273550757,
           "traits_shared": 3
         },
         {
           "ticker": "KO",
-          "score": 0.34760868929600863,
+          "score": 0.34435856580567153,
           "traits_shared": 2
         },
         {
-          "ticker": "INGM",
-          "score": 0.34512253387652436,
-          "traits_shared": 1
-        },
-        {
           "ticker": "HPQ",
-          "score": 0.34453694736735163,
+          "score": 0.34094091420160816,
           "traits_shared": 2
         }
       ],
@@ -295,53 +295,53 @@
       "similar": [
         {
           "ticker": "MDLZ",
-          "score": 0.6030644222732127,
+          "score": 0.5921462943391517,
           "traits_shared": 4
         },
         {
           "ticker": "PPC",
-          "score": 0.5076150400836186,
+          "score": 0.5063105518358982,
           "traits_shared": 2
         },
         {
           "ticker": "TSN",
-          "score": 0.4938349591878661,
+          "score": 0.4834902052246942,
           "traits_shared": 3
         },
         {
           "ticker": "LW",
-          "score": 0.4486016842849438,
+          "score": 0.44134976957201116,
           "traits_shared": 3
         },
         {
+          "ticker": "JBL",
+          "score": 0.4347965099054258,
+          "traits_shared": 1
+        },
+        {
           "ticker": "INGM",
-          "score": 0.42527778437923697,
+          "score": 0.4155862598336885,
           "traits_shared": 0
         },
         {
           "ticker": "KHC",
-          "score": 0.4080589863746256,
+          "score": 0.40376752946185185,
           "traits_shared": 1
         },
         {
           "ticker": "IBM",
-          "score": 0.3961704344376978,
+          "score": 0.3860658814394637,
           "traits_shared": 1
         },
         {
           "ticker": "STX",
-          "score": 0.38026168527034826,
+          "score": 0.3792737022015943,
           "traits_shared": 2
         },
         {
-          "ticker": "KO",
-          "score": 0.36346551571585295,
-          "traits_shared": 3
-        },
-        {
-          "ticker": "DELL",
-          "score": 0.3611237076702636,
-          "traits_shared": 1
+          "ticker": "CSCO",
+          "score": 0.3783376688980283,
+          "traits_shared": 2
         }
       ],
       "peers": {
@@ -475,6 +475,243 @@
       }
     },
     {
+      "ticker": "CSCO",
+      "name": "CISCO SYSTEMS, INC.",
+      "demo": false,
+      "sic": "3576",
+      "sic_description": "Computer Communications Equipment",
+      "classification": {
+        "sector": "technology",
+        "group": "hardware_equipment",
+        "industry": "communications_equipment"
+      },
+      "as_of": "2026-10-03",
+      "period": "TTM 2026-07-25",
+      "traits": {
+        "stage": "mature grower",
+        "predictability": "medium",
+        "asset_intensity": "moderate",
+        "capital_structure": "unknown"
+      },
+      "vector": {
+        "revenue_cagr": 0.052741854880861805,
+        "operating_margin": 0.24268456375838926,
+        "fcf_margin_stdev": 0.050802423984667264,
+        "capex_to_sales": 0.022266087643110936,
+        "noa_turnover": 1.0058931918543699,
+        "debt_to_ebitda": null,
+        "revenue": 63325000000,
+        "rnoa": 0.2107411760968326
+      },
+      "rates": {
+        "revenue_cagr": 0.052741854880861805,
+        "operating_margin": 0.24268456375838926,
+        "rnoa": 0.2107411760968326,
+        "capex_to_sales": 0.022266087643110936,
+        "debt_to_ebitda": null,
+        "wacc": null,
+        "wacc_basis": null,
+        "beta": null
+      },
+      "market": {
+        "price": null,
+        "price_date": null,
+        "market_cap": null,
+        "enterprise_value": null,
+        "source": null,
+        "fallback": null,
+        "check": null
+      },
+      "multiples": {
+        "pe": null,
+        "ev_ebitda": null,
+        "ev_sales": null,
+        "pb": null,
+        "fcf_yield": null
+      },
+      "similar": [
+        {
+          "ticker": "KO",
+          "score": 0.5204607678875588,
+          "traits_shared": 3
+        },
+        {
+          "ticker": "PPC",
+          "score": 0.45896930024866905,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "IBM",
+          "score": 0.4566536059127966,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "DELL",
+          "score": 0.4340396061146925,
+          "traits_shared": 0
+        },
+        {
+          "ticker": "MDLZ",
+          "score": 0.408635460787196,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "TSN",
+          "score": 0.40560297305760723,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "STX",
+          "score": 0.40540225362341453,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "CPB",
+          "score": 0.3773225748413845,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "AAPL",
+          "score": 0.3772813580151696,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "JBL",
+          "score": 0.3539167565112879,
+          "traits_shared": 0
+        }
+      ],
+      "peers": {
+        "sector-technology": [
+          {
+            "ticker": "CRM",
+            "score": 0.8615788934357977,
+            "traits_shared": 4
+          },
+          {
+            "ticker": "AMD",
+            "score": 0.7629223694186815,
+            "traits_shared": 4
+          },
+          {
+            "ticker": "QCOM",
+            "score": 0.727820298429102,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "AMAT",
+            "score": 0.7277353678326607,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "IBM",
+            "score": 0.7171658569124885,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "INTU",
+            "score": 0.6768300399414288,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "NTES",
+            "score": 0.6766896467141276,
+            "traits_shared": 4
+          },
+          {
+            "ticker": "XYZ",
+            "score": 0.6762811408445104,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "DELL",
+            "score": 0.6694029500500704,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "ADBE",
+            "score": 0.6644473955765029,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "AVGO",
+            "score": 0.6614081087308045,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "INGM",
+            "score": 0.6517899580602523,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "LDOS",
+            "score": 0.6480107256071513,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "CTSH",
+            "score": 0.646970999099559,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "SNX",
+            "score": 0.6453676906876372,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "HPQ",
+            "score": 0.6417275653298447,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "TMO",
+            "score": 0.6381461711023825,
+            "traits_shared": 0
+          },
+          {
+            "ticker": "FLEX",
+            "score": 0.6118523268492978,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "DHR",
+            "score": 0.6103852674855407,
+            "traits_shared": 0
+          },
+          {
+            "ticker": "JBL",
+            "score": 0.6093977080388709,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "LRCX",
+            "score": 0.6092587262274682,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "ADSK",
+            "score": 0.6074290192404685,
+            "traits_shared": 4
+          },
+          {
+            "ticker": "TYGO",
+            "score": 0.6051547023816873,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "ROK",
+            "score": 0.5978394759167385,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "MSI",
+            "score": 0.5942157894770409,
+            "traits_shared": 2
+          }
+        ]
+      }
+    },
+    {
       "ticker": "DELL",
       "name": "Dell Technologies Inc.",
       "demo": false,
@@ -531,54 +768,54 @@
       },
       "similar": [
         {
+          "ticker": "JBL",
+          "score": 0.5504132844898277,
+          "traits_shared": 4
+        },
+        {
           "ticker": "IBM",
-          "score": 0.5495375116601235,
+          "score": 0.5426750134963791,
           "traits_shared": 1
         },
         {
           "ticker": "HPQ",
-          "score": 0.5361707225590212,
+          "score": 0.5280106129242436,
           "traits_shared": 3
         },
         {
           "ticker": "INGM",
-          "score": 0.49996147289312104,
+          "score": 0.49546952778020514,
           "traits_shared": 2
         },
         {
           "ticker": "TSN",
-          "score": 0.45546894629032464,
+          "score": 0.45192406077155334,
           "traits_shared": 2
         },
         {
+          "ticker": "CSCO",
+          "score": 0.43046030654518896,
+          "traits_shared": 0
+        },
+        {
           "ticker": "AAPL",
-          "score": 0.4013938579874746,
+          "score": 0.39783692681229554,
           "traits_shared": 2
         },
         {
           "ticker": "MDLZ",
-          "score": 0.39693196750357596,
+          "score": 0.3927518715299444,
           "traits_shared": 1
         },
         {
           "ticker": "KHC",
-          "score": 0.36686768967289357,
+          "score": 0.35968289526904673,
           "traits_shared": 0
         },
         {
           "ticker": "CPB",
-          "score": 0.36657549059167294,
+          "score": 0.35840663424925956,
           "traits_shared": 1
-        },
-        {
-          "ticker": "PPC",
-          "score": 0.35608433209471746,
-          "traits_shared": 1
-        },
-        {
-          "ticker": "SNX",
-          "score": 0.34312766077476853,
-          "traits_shared": 2
         }
       ],
       "peers": {
@@ -768,53 +1005,53 @@
       },
       "similar": [
         {
+          "ticker": "JBL",
+          "score": 0.6267396611696062,
+          "traits_shared": 3
+        },
+        {
           "ticker": "INGM",
-          "score": 0.5832385914680215,
+          "score": 0.5760906470122724,
           "traits_shared": 1
         },
         {
           "ticker": "DELL",
-          "score": 0.5421265632865718,
+          "score": 0.533345299840685,
           "traits_shared": 3
         },
         {
           "ticker": "IBM",
-          "score": 0.49969990884743076,
+          "score": 0.49025407785808034,
           "traits_shared": 1
         },
         {
           "ticker": "TSN",
-          "score": 0.4409437781804981,
+          "score": 0.43661082935381224,
           "traits_shared": 2
         },
         {
           "ticker": "KHC",
-          "score": 0.4046901499909245,
+          "score": 0.39945466307419897,
           "traits_shared": 1
         },
         {
           "ticker": "CPB",
-          "score": 0.3664727183000479,
+          "score": 0.35876007599396254,
           "traits_shared": 1
         },
         {
           "ticker": "MDLZ",
-          "score": 0.36460481645946136,
+          "score": 0.3582642146703553,
           "traits_shared": 1
+        },
+        {
+          "ticker": "CSCO",
+          "score": 0.3409898515705497,
+          "traits_shared": 0
         },
         {
           "ticker": "AAPL",
-          "score": 0.34594059521252896,
-          "traits_shared": 2
-        },
-        {
-          "ticker": "PPC",
-          "score": 0.33495130462648626,
-          "traits_shared": 1
-        },
-        {
-          "ticker": "SNX",
-          "score": 0.3192052047932897,
+          "score": 0.33988597773534934,
           "traits_shared": 2
         }
       ],
@@ -1006,52 +1243,52 @@
       "similar": [
         {
           "ticker": "TSN",
-          "score": 0.7625138815840351,
+          "score": 0.7582477343448496,
           "traits_shared": 1
         },
         {
           "ticker": "INGM",
-          "score": 0.5769707649827728,
+          "score": 0.5728327471967051,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "JBL",
+          "score": 0.5475373672498688,
           "traits_shared": 1
         },
         {
           "ticker": "DELL",
-          "score": 0.5475075363625872,
+          "score": 0.5403804759275948,
           "traits_shared": 1
         },
         {
           "ticker": "HPQ",
-          "score": 0.48582555290525814,
+          "score": 0.47737516779240696,
           "traits_shared": 1
         },
         {
           "ticker": "MDLZ",
-          "score": 0.4778523547140875,
+          "score": 0.4696208930272778,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "CSCO",
+          "score": 0.4502799566613031,
           "traits_shared": 1
         },
         {
           "ticker": "AAPL",
-          "score": 0.43966901427329036,
+          "score": 0.4278926317032477,
           "traits_shared": 1
         },
         {
           "ticker": "PPC",
-          "score": 0.43175152757764,
+          "score": 0.4240669113470961,
           "traits_shared": 0
         },
         {
           "ticker": "KHC",
-          "score": 0.41949767283462835,
-          "traits_shared": 1
-        },
-        {
-          "ticker": "CPB",
-          "score": 0.39079390900761407,
-          "traits_shared": 1
-        },
-        {
-          "ticker": "SNX",
-          "score": 0.3418461964872452,
+          "score": 0.41220002166586917,
           "traits_shared": 1
         }
       ],
@@ -1242,53 +1479,53 @@
       },
       "similar": [
         {
+          "ticker": "JBL",
+          "score": 0.6937600421588737,
+          "traits_shared": 2
+        },
+        {
           "ticker": "TSN",
-          "score": 0.6222222142936211,
+          "score": 0.6193031101597626,
           "traits_shared": 1
         },
         {
           "ticker": "IBM",
-          "score": 0.5800805978522225,
+          "score": 0.5755651544811523,
           "traits_shared": 1
         },
         {
           "ticker": "HPQ",
-          "score": 0.5754023078318726,
+          "score": 0.5685123522550697,
           "traits_shared": 1
         },
         {
           "ticker": "DELL",
-          "score": 0.5004316176469974,
+          "score": 0.4954122869774212,
           "traits_shared": 2
         },
         {
           "ticker": "MDLZ",
-          "score": 0.468167404753056,
+          "score": 0.460414609001558,
           "traits_shared": 0
         },
         {
           "ticker": "PPC",
-          "score": 0.4302785255268885,
+          "score": 0.42518352758777045,
           "traits_shared": 1
         },
         {
           "ticker": "CPB",
-          "score": 0.41698863172042727,
+          "score": 0.40696242912841163,
           "traits_shared": 0
         },
         {
           "ticker": "KHC",
-          "score": 0.39136980899394375,
+          "score": 0.3888987136017505,
           "traits_shared": 0
         },
         {
-          "ticker": "AAPL",
-          "score": 0.32470036315079637,
-          "traits_shared": 1
-        },
-        {
-          "ticker": "SNX",
-          "score": 0.31797520347867636,
+          "ticker": "CSCO",
+          "score": 0.34362556314474324,
           "traits_shared": 1
         }
       ],
@@ -1423,6 +1660,243 @@
       }
     },
     {
+      "ticker": "JBL",
+      "name": "JABIL INC",
+      "demo": false,
+      "sic": "3672",
+      "sic_description": "Printed Circuit Boards",
+      "classification": {
+        "sector": "technology",
+        "group": "hardware_equipment",
+        "industry": "electronic_components"
+      },
+      "as_of": "2026-10-03",
+      "period": "TTM 2026-05-31",
+      "traits": {
+        "stage": "mature",
+        "predictability": "high",
+        "asset_intensity": "light",
+        "capital_structure": "financial"
+      },
+      "vector": {
+        "revenue_cagr": 0.004384600809504091,
+        "operating_margin": 0.04284013099136648,
+        "fcf_margin_stdev": 0.012375976632631371,
+        "capex_to_sales": 0.016403691574873473,
+        "noa_turnover": 11.209744702152511,
+        "debt_to_ebitda": 1.5814606741573034,
+        "revenue": 33590000000,
+        "rnoa": 0.2873352244284999
+      },
+      "rates": {
+        "revenue_cagr": 0.004384600809504091,
+        "operating_margin": 0.04284013099136648,
+        "rnoa": 0.2873352244284999,
+        "capex_to_sales": 0.016403691574873473,
+        "debt_to_ebitda": 1.5814606741573034,
+        "wacc": null,
+        "wacc_basis": null,
+        "beta": null
+      },
+      "market": {
+        "price": null,
+        "price_date": null,
+        "market_cap": null,
+        "enterprise_value": null,
+        "source": null,
+        "fallback": null,
+        "check": null
+      },
+      "multiples": {
+        "pe": null,
+        "ev_ebitda": null,
+        "ev_sales": null,
+        "pb": null,
+        "fcf_yield": null
+      },
+      "similar": [
+        {
+          "ticker": "INGM",
+          "score": 0.6934638142024748,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "HPQ",
+          "score": 0.6149317041126785,
+          "traits_shared": 3
+        },
+        {
+          "ticker": "IBM",
+          "score": 0.5489187043250852,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "DELL",
+          "score": 0.5451211691068487,
+          "traits_shared": 4
+        },
+        {
+          "ticker": "TSN",
+          "score": 0.523851889583967,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "CPB",
+          "score": 0.4344476010685759,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "MDLZ",
+          "score": 0.4284984379089472,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "KHC",
+          "score": 0.39772618957440437,
+          "traits_shared": 0
+        },
+        {
+          "ticker": "PPC",
+          "score": 0.3870401072884401,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "CSCO",
+          "score": 0.35075728965874775,
+          "traits_shared": 0
+        }
+      ],
+      "peers": {
+        "sector-technology": [
+          {
+            "ticker": "FLEX",
+            "score": 0.8661320951320224,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "HPQ",
+            "score": 0.8266218839703097,
+            "traits_shared": 4
+          },
+          {
+            "ticker": "DXC",
+            "score": 0.7218415432158741,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "SNX",
+            "score": 0.7155979130439583,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "CTSH",
+            "score": 0.6970013773372583,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "DHR",
+            "score": 0.6960392758037433,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "LDOS",
+            "score": 0.6895415584443568,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "INGM",
+            "score": 0.6843182021644718,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "IBM",
+            "score": 0.6769011097752438,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "KD",
+            "score": 0.6749233251466776,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "STX",
+            "score": 0.6707512160587107,
+            "traits_shared": 4
+          },
+          {
+            "ticker": "TMO",
+            "score": 0.6655165954302276,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "DELL",
+            "score": 0.656587965580472,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "XYZ",
+            "score": 0.6467044550518775,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "AMD",
+            "score": 0.6428183898466525,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "KLAC",
+            "score": 0.6425581802407653,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "ADP",
+            "score": 0.6409802272053975,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "CRM",
+            "score": 0.6280230273166927,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "MSI",
+            "score": 0.6275463488248896,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "QCOM",
+            "score": 0.625600039347292,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "CLS",
+            "score": 0.6222118587036369,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "STM",
+            "score": 0.6203896061851505,
+            "traits_shared": 1
+          },
+          {
+            "ticker": "SAIC",
+            "score": 0.618440393579318,
+            "traits_shared": 3
+          },
+          {
+            "ticker": "WDAY",
+            "score": 0.6144123003291633,
+            "traits_shared": 2
+          },
+          {
+            "ticker": "XRX",
+            "score": 0.6131554972579402,
+            "traits_shared": 3
+          }
+        ]
+      }
+    },
+    {
       "ticker": "KHC",
       "name": "Kraft Heinz Co",
       "demo": false,
@@ -1480,53 +1954,53 @@
       "similar": [
         {
           "ticker": "PPC",
-          "score": 0.48922800022308266,
+          "score": 0.4815342324056623,
           "traits_shared": 2
         },
         {
           "ticker": "TSN",
-          "score": 0.42680676156189956,
+          "score": 0.42057209082600117,
           "traits_shared": 1
         },
         {
           "ticker": "IBM",
-          "score": 0.42016607836300784,
+          "score": 0.41304555177090146,
           "traits_shared": 1
         },
         {
           "ticker": "CPB",
-          "score": 0.417600709138461,
+          "score": 0.412601337220218,
           "traits_shared": 1
         },
         {
           "ticker": "HPQ",
-          "score": 0.40896066290917477,
+          "score": 0.4037379482212326,
           "traits_shared": 1
         },
         {
+          "ticker": "JBL",
+          "score": 0.40247134253164535,
+          "traits_shared": 0
+        },
+        {
           "ticker": "INGM",
-          "score": 0.3943452529407981,
+          "score": 0.39180742894888215,
           "traits_shared": 0
         },
         {
           "ticker": "MDLZ",
-          "score": 0.37750616464548464,
+          "score": 0.37279668537848243,
           "traits_shared": 1
         },
         {
           "ticker": "DELL",
-          "score": 0.37281851546733613,
+          "score": 0.36495734778963596,
           "traits_shared": 0
         },
         {
-          "ticker": "LW",
-          "score": 0.33289988965276995,
-          "traits_shared": 2
-        },
-        {
-          "ticker": "STX",
-          "score": 0.3321712169603137,
-          "traits_shared": 2
+          "ticker": "CSCO",
+          "score": 0.3441682941085215,
+          "traits_shared": 1
         }
       ],
       "peers": {
@@ -1716,53 +2190,53 @@
       },
       "similar": [
         {
+          "ticker": "CSCO",
+          "score": 0.5322726136180028,
+          "traits_shared": 3
+        },
+        {
           "ticker": "STX",
-          "score": 0.51704462509315,
+          "score": 0.510507884714624,
           "traits_shared": 3
         },
         {
           "ticker": "PPC",
-          "score": 0.4378526290901132,
+          "score": 0.43171222413279486,
           "traits_shared": 3
         },
         {
           "ticker": "LW",
-          "score": 0.4047082196408004,
+          "score": 0.39643576305743483,
           "traits_shared": 4
         },
         {
           "ticker": "MDLZ",
-          "score": 0.39246618104017644,
+          "score": 0.3891456343634534,
           "traits_shared": 3
         },
         {
           "ticker": "CPB",
-          "score": 0.38329445971854315,
+          "score": 0.3785099412024806,
           "traits_shared": 3
         },
         {
-          "ticker": "AAPL",
-          "score": 0.35663264526850513,
+          "ticker": "TSN",
+          "score": 0.3517174530233405,
           "traits_shared": 2
         },
         {
-          "ticker": "TSN",
-          "score": 0.3562490761554264,
+          "ticker": "AAPL",
+          "score": 0.3502541965794312,
           "traits_shared": 2
         },
         {
           "ticker": "KHC",
-          "score": 0.3309450214126044,
+          "score": 0.3252765244437814,
           "traits_shared": 2
         },
         {
           "ticker": "IBM",
-          "score": 0.3170087174525288,
-          "traits_shared": 0
-        },
-        {
-          "ticker": "DELL",
-          "score": 0.29691998694609106,
+          "score": 0.3130435440939141,
           "traits_shared": 0
         }
       ],
@@ -1954,53 +2428,53 @@
       "similar": [
         {
           "ticker": "CPB",
-          "score": 0.4662362282241429,
+          "score": 0.45962905272063115,
           "traits_shared": 3
         },
         {
           "ticker": "PPC",
-          "score": 0.46043164385274843,
+          "score": 0.45144218056234886,
           "traits_shared": 3
         },
         {
           "ticker": "MDLZ",
-          "score": 0.44276796395056034,
+          "score": 0.435182905466276,
           "traits_shared": 3
         },
         {
           "ticker": "KO",
-          "score": 0.4011168775100118,
+          "score": 0.39564543038170685,
           "traits_shared": 4
         },
         {
           "ticker": "STX",
-          "score": 0.3863125604763693,
+          "score": 0.3816996211603685,
+          "traits_shared": 3
+        },
+        {
+          "ticker": "CSCO",
+          "score": 0.3515389861872103,
           "traits_shared": 3
         },
         {
           "ticker": "TSN",
-          "score": 0.35221923598683924,
+          "score": 0.3438938431197493,
           "traits_shared": 2
         },
         {
           "ticker": "KHC",
-          "score": 0.3406580113978549,
+          "score": 0.33314167220171476,
           "traits_shared": 2
         },
         {
           "ticker": "INGM",
-          "score": 0.3116666391381473,
+          "score": 0.30459964121715216,
           "traits_shared": 0
         },
         {
           "ticker": "SNX",
-          "score": 0.3001835280506492,
+          "score": 0.29327660359784136,
           "traits_shared": 1
-        },
-        {
-          "ticker": "AAPL",
-          "score": 0.2886567577945828,
-          "traits_shared": 2
         }
       ],
       "peers": {
@@ -2191,53 +2665,53 @@
       "similar": [
         {
           "ticker": "CPB",
-          "score": 0.5952538867875437,
+          "score": 0.5840768514456889,
           "traits_shared": 4
         },
         {
           "ticker": "TSN",
-          "score": 0.5614506603049505,
+          "score": 0.5540104151940405,
           "traits_shared": 3
         },
         {
           "ticker": "PPC",
-          "score": 0.5058669604055183,
+          "score": 0.5044369681277188,
           "traits_shared": 2
         },
         {
           "ticker": "IBM",
-          "score": 0.47623896905088364,
+          "score": 0.4687901831447179,
           "traits_shared": 1
         },
         {
           "ticker": "INGM",
-          "score": 0.4669570664697831,
+          "score": 0.45972289737588395,
           "traits_shared": 0
         },
         {
+          "ticker": "JBL",
+          "score": 0.4244479238915145,
+          "traits_shared": 1
+        },
+        {
           "ticker": "LW",
-          "score": 0.42434695138868156,
+          "score": 0.4160496289200325,
           "traits_shared": 3
         },
         {
+          "ticker": "CSCO",
+          "score": 0.4056933841589935,
+          "traits_shared": 2
+        },
+        {
           "ticker": "AAPL",
-          "score": 0.40632174381727065,
+          "score": 0.3969446843339704,
           "traits_shared": 3
         },
         {
           "ticker": "SNX",
-          "score": 0.39726882651390716,
+          "score": 0.38871997485226645,
           "traits_shared": 2
-        },
-        {
-          "ticker": "DELL",
-          "score": 0.3840566888212887,
-          "traits_shared": 1
-        },
-        {
-          "ticker": "KHC",
-          "score": 0.369567261872522,
-          "traits_shared": 1
         }
       ],
       "peers": {
@@ -2428,53 +2902,53 @@
       "similar": [
         {
           "ticker": "TSN",
-          "score": 0.5485247064871085,
+          "score": 0.5428229984911848,
           "traits_shared": 3
         },
         {
           "ticker": "CPB",
-          "score": 0.5100993752954714,
+          "score": 0.5085988326768297,
           "traits_shared": 2
         },
         {
           "ticker": "MDLZ",
-          "score": 0.5052465353228414,
+          "score": 0.5039949765921183,
           "traits_shared": 2
         },
         {
           "ticker": "KHC",
-          "score": 0.47533300083801194,
+          "score": 0.46870436424020806,
           "traits_shared": 2
         },
         {
-          "ticker": "LW",
-          "score": 0.4341192399228074,
-          "traits_shared": 3
+          "ticker": "CSCO",
+          "score": 0.45586871621113156,
+          "traits_shared": 2
         },
         {
           "ticker": "IBM",
-          "score": 0.4320482911919126,
+          "score": 0.4246279026213599,
           "traits_shared": 0
         },
         {
+          "ticker": "LW",
+          "score": 0.42447445921304316,
+          "traits_shared": 3
+        },
+        {
           "ticker": "INGM",
-          "score": 0.42809630302533697,
+          "score": 0.4234510134781079,
           "traits_shared": 1
         },
         {
           "ticker": "KO",
-          "score": 0.41777068439581766,
+          "score": 0.41450331232906035,
           "traits_shared": 3
         },
         {
-          "ticker": "STX",
-          "score": 0.3745577755749023,
-          "traits_shared": 2
-        },
-        {
-          "ticker": "AAPL",
-          "score": 0.36057638052650637,
-          "traits_shared": 3
+          "ticker": "JBL",
+          "score": 0.38730275787952656,
+          "traits_shared": 1
         }
       ],
       "peers": {
@@ -2665,53 +3139,53 @@
       "similar": [
         {
           "ticker": "TSN",
-          "score": 0.46012074493884336,
+          "score": 0.45068101930876153,
           "traits_shared": 3
         },
         {
           "ticker": "MDLZ",
-          "score": 0.4242361622359905,
+          "score": 0.414019926536862,
+          "traits_shared": 2
+        },
+        {
+          "ticker": "JBL",
+          "score": 0.37087551261723894,
           "traits_shared": 2
         },
         {
           "ticker": "PPC",
-          "score": 0.3776898144690444,
+          "score": 0.3706815764200585,
           "traits_shared": 2
         },
         {
           "ticker": "IBM",
-          "score": 0.37687739075036114,
+          "score": 0.3683219597522592,
           "traits_shared": 1
         },
         {
           "ticker": "DELL",
-          "score": 0.36131169446073796,
+          "score": 0.35595597461327966,
           "traits_shared": 2
         },
         {
           "ticker": "AAPL",
-          "score": 0.35769244337061723,
+          "score": 0.34966929696529353,
           "traits_shared": 3
         },
         {
           "ticker": "INGM",
-          "score": 0.35254536400602254,
+          "score": 0.3439780844142535,
           "traits_shared": 1
         },
         {
           "ticker": "CPB",
-          "score": 0.350518392870856,
+          "score": 0.34033934219959416,
           "traits_shared": 2
         },
         {
           "ticker": "HPQ",
-          "score": 0.3304406599145591,
+          "score": 0.32482171980922014,
           "traits_shared": 2
-        },
-        {
-          "ticker": "LW",
-          "score": 0.2926354723642657,
-          "traits_shared": 1
         }
       ],
       "peers": {
@@ -2902,53 +3376,53 @@
       "similar": [
         {
           "ticker": "KO",
-          "score": 0.5175461527384756,
+          "score": 0.5113438592383533,
           "traits_shared": 3
         },
         {
+          "ticker": "CSCO",
+          "score": 0.41473558834198915,
+          "traits_shared": 2
+        },
+        {
           "ticker": "CPB",
-          "score": 0.4009456161322901,
+          "score": 0.3971451272109189,
           "traits_shared": 2
         },
         {
           "ticker": "LW",
-          "score": 0.3911173242905192,
+          "score": 0.3843234394497916,
           "traits_shared": 3
         },
         {
           "ticker": "PPC",
-          "score": 0.38835110639523623,
+          "score": 0.3836267350460048,
           "traits_shared": 2
         },
         {
           "ticker": "MDLZ",
-          "score": 0.35710616344412416,
+          "score": 0.3524393131722108,
           "traits_shared": 2
         },
         {
           "ticker": "KHC",
-          "score": 0.3351775685973062,
+          "score": 0.3291769117080836,
           "traits_shared": 2
         },
         {
           "ticker": "TSN",
-          "score": 0.32056625837463787,
+          "score": 0.3150288054349439,
+          "traits_shared": 1
+        },
+        {
+          "ticker": "JBL",
+          "score": 0.3134597280402073,
           "traits_shared": 1
         },
         {
           "ticker": "DELL",
-          "score": 0.31850674405887824,
+          "score": 0.31314127161348393,
           "traits_shared": 1
-        },
-        {
-          "ticker": "AAPL",
-          "score": 0.3027381998985688,
-          "traits_shared": 1
-        },
-        {
-          "ticker": "IBM",
-          "score": 0.29540142157214067,
-          "traits_shared": 0
         }
       ],
       "peers": {
@@ -3139,52 +3613,52 @@
       "similar": [
         {
           "ticker": "IBM",
-          "score": 0.7622296824227733,
+          "score": 0.7579561286398051,
           "traits_shared": 1
         },
         {
           "ticker": "INGM",
-          "score": 0.6190397382176764,
+          "score": 0.6164602428689913,
           "traits_shared": 1
         },
         {
           "ticker": "MDLZ",
-          "score": 0.5636103338656315,
+          "score": 0.5553146336839099,
           "traits_shared": 3
         },
         {
           "ticker": "PPC",
-          "score": 0.5463679970127101,
+          "score": 0.5405123326150173,
           "traits_shared": 3
         },
         {
+          "ticker": "JBL",
+          "score": 0.5175182782086725,
+          "traits_shared": 2
+        },
+        {
           "ticker": "CPB",
-          "score": 0.48910729285196825,
+          "score": 0.47768964697776184,
           "traits_shared": 3
         },
         {
           "ticker": "DELL",
-          "score": 0.43674168907893834,
+          "score": 0.43712293080889286,
           "traits_shared": 2
         },
         {
           "ticker": "AAPL",
-          "score": 0.4338392207116522,
+          "score": 0.4254518047263098,
           "traits_shared": 4
         },
         {
           "ticker": "KHC",
-          "score": 0.4219165852409839,
+          "score": 0.41578273621293804,
           "traits_shared": 1
         },
         {
-          "ticker": "SNX",
-          "score": 0.42110840211250894,
-          "traits_shared": 3
-        },
-        {
           "ticker": "HPQ",
-          "score": 0.41190933859181245,
+          "score": 0.41268251552672947,
           "traits_shared": 2
         }
       ],
