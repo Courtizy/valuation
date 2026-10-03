@@ -38,6 +38,25 @@ const shortLabel = (p) => (p.fiscal_period === "FY" ? `FY${String(p.fiscal_year)
   : p.label.startsWith("TTM") ? p.end.slice(0, 7) : `${p.fiscal_period} FY${String(p.fiscal_year).slice(-2)}`);
 
 function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]); }
+// ---- financial-table formatting (classic accounting layout) -------------------
+// Negatives in parentheses; positives carry a hidden ")" so digits line up.
+// "$" sits flush left on the first row of a statement and on grand totals.
+function acct(v, { digits = 1, scale = 1e6, dollar = false } = {}) {
+  if (!fin(v)) return NA;
+  const x = scale === 1e6 && Math.abs(v) < 5e4 ? 0 : v / scale;
+  const body = Math.abs(x).toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  const neg = x < 0 && body !== (0).toFixed(digits);
+  return `${dollar ? '<span class="cur">$</span>' : ""}<span class="${neg ? "an" : "ap"}">${neg ? `(${body})` : body}</span>`;
+}
+// One row of a financial table. kind: item | head | sub (rule above) | grand (rule above, double rule below)
+// | key (bold, no rule) | memo (muted italic). cells: [{html, cls}]
+function finRow(lbl, cells, { kind = "item", indent = 0, title = "" } = {}) {
+  const cls = [kind !== "item" ? kind : "", indent ? `i${indent}` : ""].filter(Boolean).join(" ");
+  return `<tr${cls ? ` class="${cls}"` : ""}><td${title ? ` title="${esc(title)}"` : ""}>${lbl}</td>${cells.map((c) =>
+    `<td${c.cls ? ` class="${c.cls}"` : ""}>${c.html}</td>`).join("")}</tr>`;
+}
+const cellOf = (html, extra = "") => ({ html, cls: [html === NA ? "na" : "", extra].filter(Boolean).join(" ") });
+
 function label(id) { return state.concepts[id]?.name || id.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase()); }
 
 // ---------------------------------------------------------------- data
@@ -184,18 +203,60 @@ function setupSegments() {
 
 // ---------------------------------------------------------------- company
 
-const STATEMENT_ROWS = [
-  ["Income statement", ["revenue", "cost_of_goods_and_services_sold", "gross_profit", "research_and_development_expenses",
-    "selling_general_and_admin_expenses", "operating_income_loss", "depreciation_amortization_cf", "ebitda",
-    "interest_expense", "interest_income", "pretax_income_loss", "income_taxes", "net_income"]],
-  ["Balance sheet", ["cash_and_marketable_securities", "trade_receivables", "inventories", "current_assets_total",
-    "plant_property_equipment_net", "goodwill", "assets", "trade_payables", "short_term_debt",
-    "current_liabilities_total", "long_term_debt", "liabilities", "all_equity_balance", "net_debt"]],
-  ["Cash flow", ["operating_cash_flow", "capital_expenses", "free_cash_flow", "stock_repurchased", "common_dividends_paid"]],
-  ["Per share", ["eps_diluted", "shares_fully_diluted_average"]],
+// Statement layout. sign -1 = shown as a deduction (reported as a positive cost).
+// A "head" row is dropped when none of the rows under it has data.
+const STATEMENTS = [
+  ["Income statement", [
+    { id: "revenue", label: "Revenue", kind: "key", dollar: true },
+    { id: "cost_of_goods_and_services_sold", label: "Cost of revenue", indent: 1, sign: -1 },
+    { id: "gross_profit", label: "Gross profit", kind: "sub" },
+    { head: "Operating expenses", indent: 1 },
+    { id: "research_and_development_expenses", label: "Research and development", indent: 2, sign: -1 },
+    { id: "selling_general_and_admin_expenses", label: "Selling, general and administrative", indent: 2, sign: -1 },
+    { id: "operating_income_loss", label: "Operating income", kind: "sub" },
+    { id: "interest_expense", label: "Interest expense", indent: 1, sign: -1 },
+    { id: "interest_income", label: "Interest income", indent: 1 },
+    { id: "pretax_income_loss", label: "Income before taxes", kind: "sub" },
+    { id: "income_taxes", label: "Income tax expense", indent: 1, sign: -1 },
+    { id: "net_income", label: "Net income", kind: "grand", dollar: true },
+    { head: "Memo", indent: 0 },
+    { id: "depreciation_amortization_cf", label: "Depreciation and amortization", indent: 1, kind: "memo" },
+    { id: "ebitda", label: "EBITDA", indent: 1, kind: "memo" },
+  ]],
+  ["Balance sheet", [
+    { head: "Assets", indent: 0 },
+    { id: "cash_and_marketable_securities", label: "Cash and marketable securities", indent: 1, dollar: true },
+    { id: "trade_receivables", label: "Accounts receivable", indent: 1 },
+    { id: "inventories", label: "Inventories", indent: 1 },
+    { id: "current_assets_total", label: "Total current assets", indent: 1, kind: "sub" },
+    { id: "plant_property_equipment_net", label: "Property, plant and equipment, net", indent: 1 },
+    { id: "goodwill", label: "Goodwill", indent: 1 },
+    { id: "assets", label: "Total assets", kind: "grand", dollar: true },
+    { head: "Liabilities and equity", indent: 0 },
+    { id: "trade_payables", label: "Accounts payable", indent: 1 },
+    { id: "short_term_debt", label: "Short-term debt", indent: 1 },
+    { id: "current_liabilities_total", label: "Total current liabilities", indent: 1, kind: "sub" },
+    { id: "long_term_debt", label: "Long-term debt", indent: 1 },
+    { id: "liabilities", label: "Total liabilities", kind: "sub" },
+    { id: "all_equity_balance", label: "Total equity", indent: 1 },
+    { id: "liabilities_and_equity", label: "Total liabilities and equity", kind: "grand", dollar: true },
+    { head: "Memo", indent: 0 },
+    { id: "total_debt", label: "Total debt", indent: 1, kind: "memo" },
+    { id: "net_debt", label: "Net debt", indent: 1, kind: "memo" },
+  ]],
+  ["Cash flow", [
+    { id: "operating_cash_flow", label: "Net cash from operating activities", kind: "key", dollar: true },
+    { id: "capital_expenses", label: "Capital expenditures", indent: 1, sign: -1 },
+    { id: "free_cash_flow", label: "Free cash flow (CFO − capex)", kind: "sub" },
+    { head: "Returned to shareholders", indent: 1 },
+    { id: "stock_repurchased", label: "Share repurchases", indent: 2, sign: -1 },
+    { id: "common_dividends_paid", label: "Dividends paid", indent: 2, sign: -1 },
+  ]],
+  ["Per share", [
+    { id: "eps_diluted", label: "Diluted EPS ($)", digits: 2, scale: 1, dollar: true },
+    { id: "shares_fully_diluted_average", label: "Diluted shares (M)", indent: 0 },
+  ]],
 ];
-const TOTALS = new Set(["revenue", "gross_profit", "operating_income_loss", "net_income", "assets", "liabilities",
-  "current_assets_total", "current_liabilities_total", "operating_cash_flow", "free_cash_flow"]);
 const DERIVED_METHODS = new Set(["q4_derived", "ytd_derived", "summed_4q_with_derived"]);
 
 function periodsFor(view) {
@@ -324,51 +385,55 @@ function renderStatements() {
   let html = `<thead><tr><th scope="col">$ millions</th>${cols.map(({ p, view: vw }) => `<th scope="col" title="${esc(p.start)} to ${esc(p.end)}${vw !== view ? " · trailing twelve months, the projection's base" : ""}">${esc(vw !== view ? `TTM ${shortLabel(p)}` : shortLabel(p))}</th>`).join("")}
     ${est.map((_, i) => `<th scope="col" class="est" title="projected year ${i + 1}">${estLabel(proj.baseEnd, i + 1)}</th>`).join("")}</tr></thead><tbody>`;
 
-  html += `<tr class="group"><td colspan="${n + 1}">Growth and margins</td></tr>`;
+  const section = (name) => `<tr class="group"><td colspan="${n + 1}">${esc(name)}</td></tr>`;
+  html += section("Growth and margins");
   for (const [name, f] of GROWTH_ROWS) {
-    html += `<tr><td>${name}</td>`;
-    cols.forEach(({ p, view: vw }) => { const v = f(p.values, priorFor(p, vw)); html += `<td class="${fin(v) ? "" : "na"}">${pct(v)}</td>`; });
-    est.forEach((e, i) => {
-      const prev = i ? est[i - 1] : cols.at(-1).p.values;
-      const v = f(e, prev); html += `<td class="est ${fin(v) ? "" : "na"}">${pct(v)}</td>`;
-    });
-    html += "</tr>";
+    const cells = cols.map(({ p, view: vw }) => cellOf(pct(f(p.values, priorFor(p, vw)))))
+      .concat(est.map((e, i) => cellOf(pct(f(e, i ? est[i - 1] : cols.at(-1).p.values)), "est")));
+    html += finRow(name, cells, { indent: 1, kind: name === "Revenue growth" ? "key" : "item" });
   }
-  for (const [group, ids] of STATEMENT_ROWS) {
-    const rows = ids.filter((id) => cols.some(({ p }) => fin(p.values[id])));
-    if (!rows.length) continue;
-    html += `<tr class="group"><td colspan="${n + 1}">${group}</td></tr>`;
-    for (const id of rows) {
-      const perShare = id === "eps_diluted", shares = id.startsWith("shares");
-      html += `<tr class="${TOTALS.has(id) ? "total" : ""}"><td>${esc(label(id))}${perShare ? " ($)" : shares ? " (M shares)" : ""}</td>`;
-      for (const { p } of cols) {
-        const v = p.values[id], m = p.methods[id];
-        const txt = perShare ? num(v) : millions(v);
+  for (const [group, spec] of STATEMENTS) {
+    const has = (r) => r.id && (cols.some(({ p }) => fin(p.values[r.id])) || est.some((e) => fin(e[r.id])));
+    // keep heads only when a deeper row with data follows before the next row at the head's level
+    const rows = spec.filter((r, i) => {
+      if (!r.head) return has(r);
+      for (const nx of spec.slice(i + 1)) { if (nx.head || (nx.indent || 0) <= r.indent) break; if (has(nx)) return true; }
+      return false;
+    });
+    if (!rows.some((r) => r.id)) continue;
+    html += section(group);
+    for (const r of rows) {
+      if (r.head) { html += finRow(esc(r.head), cols.concat(est).map(() => ({ html: "" })), { kind: "head", indent: r.indent }); continue; }
+      const sg = r.sign || 1, o = { digits: r.digits ?? 1, scale: r.scale ?? 1e6, dollar: r.dollar };
+      const cells = cols.map(({ p }) => {
+        const v = p.values[r.id], m = p.methods[r.id];
         const mark = DERIVED_METHODS.has(m) ? `<span class="mark" title="${esc(m.replace(/_/g, " "))}">d</span>` : "";
-        html += `<td class="${fin(v) ? "" : "na"}">${txt}${mark}</td>`;
-      }
-      for (const e of est) html += `<td class="est ${fin(e[id]) ? "" : "na"}">${millions(e[id])}</td>`;
-      html += "</tr>";
+        return fin(v) ? { html: acct(sg * v, o) + mark } : cellOf(NA);
+      }).concat(est.map((e) => (fin(e[r.id]) ? { html: acct(sg * e[r.id], o), cls: "est" } : cellOf(NA, "est"))));
+      html += finRow(esc(r.label || label(r.id)), cells, { kind: r.kind, indent: r.indent, title: label(r.id) });
     }
     if (group === "Cash flow" && est.length) {
-      html += `<tr class="total"><td>Unlevered FCF (projected)</td>${cols.map(() => `<td class="na">–</td>`).join("")}${
-        proj.rows.map((r) => `<td class="est">${millions(r.fcf)}</td>`).join("")}</tr>`;
+      html += finRow("Unlevered free cash flow (projected)", cols.map(() => cellOf(NA)).concat(
+        proj.rows.map((x) => ({ html: acct(x.fcf), cls: "est" }))), { kind: "memo", indent: 1 });
     }
   }
   t.innerHTML = html + "</tbody>";
   $("stmt-note").textContent = proj ? proj.note : view === "annual" ? "" : "Estimates are shown in the Annual view.";
 }
 
+const $M = (v, o) => acct(v, o);   // $ millions, accounting style
+
 const RATIO_ROWS = {
   reformulated: {
     note: "Operating vs financial split. NOPAT = net income + after-tax net interest. ROCE = RNOA + FLEV × (RNOA − NBC).",
     rows: [
-      ["Operating margin (NOPM)", (a) => a.ratios.reformulated.nopm, pct],
+      ["group", "Margins"],
+      ["Operating margin (NOPM)", (a) => a.ratios.reformulated.nopm, pct, { kind: "key" }],
       ["Core NOPM", (a) => a.ratios.reformulated.core_nopm, pct],
       ["group", "Average balances"],
       ["NOA turnover (NOAT)", (a) => a.ratios.reformulated.avg?.noat, times],
-      ["RNOA", (a) => a.ratios.reformulated.avg?.rnoa, pct],
-      ["ROCE", (a) => a.ratios.reformulated.avg?.roce, pct],
+      ["RNOA", (a) => a.ratios.reformulated.avg?.rnoa, pct, { kind: "key" }],
+      ["ROCE", (a) => a.ratios.reformulated.avg?.roce, pct, { kind: "key" }],
       ["FLEV", (a) => a.ratios.reformulated.avg?.flev, num],
       ["NBC", (a) => a.ratios.reformulated.avg?.nbc, pct],
       ["Spread (RNOA − NBC)", (a) => a.ratios.reformulated.avg?.spread, pct],
@@ -381,24 +446,25 @@ const RATIO_ROWS = {
       ["ROCE", (a) => a.ratios.reformulated.beg?.roce, pct],
       ["FLEV", (a) => a.ratios.reformulated.beg?.flev, num],
       ["group", "Balance sheet ($M)"],
-      ["Net operating assets", (a) => a.reformulated_balance_sheet.noa, millions],
-      ["Net nonoperating obligations", (a) => a.reformulated_balance_sheet.nno, millions],
-      ["Common equity incl. NCI", (a) => a.reformulated_balance_sheet.cse_incl_nci, millions],
-      ["NOPAT", (a) => a.reformulated_income_statement.nopat, millions],
-      ["FCF = NOPAT − ΔNOA", (a) => a.ratios.reformulated.fcf, millions],
+      ["Net operating assets", (a) => a.reformulated_balance_sheet.noa, $M, { dollar: true }],
+      ["Net nonoperating obligations", (a) => a.reformulated_balance_sheet.nno, $M, { sign: -1 }],
+      ["Common equity incl. NCI", (a) => a.reformulated_balance_sheet.cse_incl_nci, $M, { kind: "grand", indent: 0, dollar: true }],
+      ["group", "Free cash flow ($M)"],
+      ["NOPAT", (a) => a.reformulated_income_statement.nopat, $M, { dollar: true }],
+      ["FCF = NOPAT − ΔNOA", (a) => a.ratios.reformulated.fcf, $M, { kind: "key" }],
     ],
   },
   managerial: {
     note: "Managerial balance sheet: cash + working-capital requirement + fixed assets = capital employed.",
     rows: [
       ["group", "Managerial balance sheet ($M)"],
-      ["Cash", (a) => a.managerial_balance_sheet.cash, millions],
-      ["Working-capital requirement", (a) => a.managerial_balance_sheet.wcr, millions],
-      ["Fixed assets", (a) => a.managerial_balance_sheet.fixed_assets, millions],
-      ["Invested capital", (a) => a.managerial_balance_sheet.invested_capital, millions],
+      ["Cash", (a) => a.managerial_balance_sheet.cash, $M, { dollar: true }],
+      ["Working-capital requirement", (a) => a.managerial_balance_sheet.wcr, $M],
+      ["Fixed assets", (a) => a.managerial_balance_sheet.fixed_assets, $M],
+      ["Invested capital", (a) => a.managerial_balance_sheet.invested_capital, $M, { kind: "grand", indent: 0, dollar: true }],
       ["group", "Liquidity and operating cycle"],
-      ["Net long-term financing (NLF)", (a) => a.ratios.managerial.nlf, millions],
-      ["Net short-term financing (NSF)", (a) => a.ratios.managerial.nsf, millions],
+      ["Net long-term financing (NLF)", (a) => a.ratios.managerial.nlf, $M],
+      ["Net short-term financing (NSF)", (a) => a.ratios.managerial.nsf, $M],
       ["Liquidity ratio (NLF / WCR)", (a) => a.ratios.managerial.liquidity_ratio, num],
       ["WCR / sales", (a) => a.ratios.managerial.wcr_to_sales, pct],
       ["Collection period", (a) => a.ratios.managerial.collection_period_days, days],
@@ -408,26 +474,30 @@ const RATIO_ROWS = {
       ["Current ratio", (a) => a.ratios.managerial.current_ratio, num],
       ["Acid test", (a) => a.ratios.managerial.acid_test, num],
       ["group", "Free cash flow ($M)"],
-      ["NOPLAT", (a) => a.fcf_managerial.noplat, millions],
-      ["Capex (ΔFA + depreciation)", (a) => a.fcf_managerial.capex_from_balance_sheet, millions],
-      ["ΔWCR", (a) => a.fcf_managerial.change_in_wcr, millions],
-      ["FCF", (a) => a.fcf_managerial.fcf, millions],
+      ["NOPLAT", (a) => a.fcf_managerial.noplat, $M, { dollar: true }],
+      ["Plus: depreciation", (a) => a.fcf_managerial.depreciation, $M],
+      ["Less: capex (ΔFA + depreciation)", (a) => a.fcf_managerial.capex_from_balance_sheet, $M, { sign: -1 }],
+      ["Less: increase in WCR", (a) => a.fcf_managerial.change_in_wcr, $M, { sign: -1 }],
+      ["Free cash flow", (a) => a.fcf_managerial.fcf, $M, { kind: "grand", indent: 0, dollar: true }],
     ],
   },
   traditional: {
     note: "Profit margin adds back after-tax interest expense. ROA = margin × turnover.",
     rows: [
+      ["group", "Return on assets"],
       ["Profit margin", (a) => a.ratios.traditional.profit_margin, pct],
-      ["Asset turnover", (a) => a.ratios.traditional.asset_turnover, times],
-      ["ROA", (a) => a.ratios.traditional.roa, pct],
+      ["× Asset turnover", (a) => a.ratios.traditional.asset_turnover, times],
+      ["ROA", (a) => a.ratios.traditional.roa, pct, { kind: "sub", indent: 0 }],
+      ["group", "Return on equity"],
       ["Leverage (assets / equity)", (a) => a.ratios.traditional.leverage, times],
-      ["ROE", (a) => a.ratios.traditional.roe, pct],
+      ["ROE", (a) => a.ratios.traditional.roe, pct, { kind: "key", indent: 0 }],
     ],
   },
   risk: {
     note: "Altman Z public needs a market price (not published on this site); the private-firm form uses book equity. Zones: Z < 1.2 distress, < 2.9 grey.",
     rows: [
-      ["Altman Z (private form)", (a) => a.ratios.risk.altman_z.private, num],
+      ["group", "Distress"],
+      ["Altman Z (private form)", (a) => a.ratios.risk.altman_z.private, num, { kind: "key" }],
       ["Zone", (a) => a.ratios.risk.altman_z.private_zone, (z) => z || NA],
       ["Altman Z (public form)", (a) => a.ratios.risk.altman_z.public, num],
       ["group", "Credit metrics"],
@@ -443,6 +513,7 @@ const RATIO_ROWS = {
   signals: {
     note: "Positive signals favor future earnings; negative ones flag possible quality issues. Year-over-year.",
     rows: [
+      ["group", "Earnings signals"],
       ["Gross margin signal", (a) => a.ratios.signals.gross_margin_signal, pct],
       ["SG&A signal", (a) => a.ratios.signals.sga_signal, pct],
       ["R&D signal", (a) => a.ratios.signals.rnd_signal, pct],
@@ -465,13 +536,14 @@ function renderRatios() {
   const spec = RATIO_ROWS[state.fw];
   const head = cols.map((a) => `<th scope="col">${esc(a.label.startsWith("TTM") ? `TTM ${a.end.slice(0, 7)}` : a.label)}</th>`).join("");
   let html = `<thead><tr><th scope="col">${esc(state.fw[0].toUpperCase() + state.fw.slice(1))}</th>${head}</tr></thead><tbody>`;
-  for (const [name, get, fmt] of spec.rows) {
-    if (name === "group") { html += `<tr class="group"><td colspan="${cols.length + 1}">${esc(get)}</td></tr>`; continue; }
-    html += `<tr><td>${esc(name)}</td>${cols.map((a) => {
+  let inGroup = false;
+  for (const [name, get, fmt, o = {}] of spec.rows) {
+    if (name === "group") { inGroup = true; html += `<tr class="group"><td colspan="${cols.length + 1}">${esc(get)}</td></tr>`; continue; }
+    const sg = o.sign || 1;
+    html += finRow(esc(name), cols.map((a) => {
       let v; try { v = get(a); } catch { v = null; }
-      const txt = fmt(v);
-      return `<td class="${txt === NA ? "na" : ""}">${txt}</td>`;
-    }).join("")}</tr>`;
+      return cellOf(fmt === $M ? (fin(v) ? acct(sg * v, { dollar: o.dollar }) : NA) : fmt(v));
+    }), { kind: o.kind || "item", indent: o.indent ?? (inGroup ? 1 : 0) });
   }
   $("ratio-table").innerHTML = html + "</tbody>";
   $("ratio-note").textContent = `${spec.note} Marginal tax rate ${pct(state.detail.classification.marginal_tax_rate)}.`;
@@ -510,7 +582,7 @@ function renderValuation() {
   renderSimilar($("val-similar"));
   const diffs = c.assumption_differences || [];
   $("val-diffs").innerHTML = `<div class="card"><div class="card-head"><h2>Where models disagree on inputs</h2></div>${diffs.length
-    ? `<div class="table-wrap"><table><thead><tr><th>Field</th>${Object.keys(diffs[0].values).map((m) => `<th>${esc(MODEL_NAMES[m] || m)}</th>`).join("")}</tr></thead><tbody>${
+    ? `<div class="table-wrap"><table class="list"><thead><tr><th>Field</th>${Object.keys(diffs[0].values).map((m) => `<th>${esc(MODEL_NAMES[m] || m)}</th>`).join("")}</tr></thead><tbody>${
       diffs.map((d) => `<tr><td>${esc(d.field)}</td>${Object.values(d.values).map((v) => `<td>${esc(typeof v === "number" ? num(v) : JSON.stringify(v))}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`
     : `<p class="muted">Every shared assumption matches, so gaps between models come from method, not inputs.</p>`}
     ${c.warnings?.length ? `<h3 style="margin-top:12px">Warnings</h3><ul>${c.warnings.map((w) => `<li>${esc(w)}</li>`).join("")}</ul>` : ""}</div>`;
@@ -682,13 +754,13 @@ async function renderSimilar(root) {
   const html = `<div class="card">
     <div class="card-head"><h2>Similar companies</h2><span class="muted small">ranked by closeness of growth, margins, cash-flow stability, capital intensity, leverage and size, across every company published here</span></div>
     ${ranked.length ? "" : `<p class="muted">No other ${me.demo ? "demo " : ""}companies published yet. Run the pipeline for more tickers; they're ranked here by profile, not sector.</p>`}
-    <div class="table-wrap"><table>
+    <div class="table-wrap"><table class="list">
       <thead><tr><th>Company</th><th>Similarity</th><th>Traits shared</th>${cols.map(([n]) => `<th>${n}</th>`).join("")}</tr></thead>
       <tbody>
-        <tr class="total"><td>${esc(me.ticker)} <span class="muted small">this company</span></td><td>–</td><td>–</td>${cells(me)}</tr>
+        <tr class="key target"><td>${esc(me.ticker)} <span class="muted small">this company</span></td><td>–</td><td>–</td>${cells(me)}</tr>
         ${ranked.map((r) => `<tr><td>${esc(r.c.ticker)} <span class="muted small">${esc(r.c.name)}</span></td><td>${fin(r.score) ? pct(r.score, true) : NA}</td>
           <td title="${Object.entries(r.c.traits).map(([k, v]) => `${TRAIT_NAMES[k]}: ${v}`).join("\n")}">${r.traitsMatch} of 4</td>${cells(r.c)}</tr>`).join("")}
-        ${ranked.length > 1 ? `<tr class="total"><td>Peer median</td><td></td><td></td>${cols.map(([, g, k, f]) => `<td>${f(med(k, g))}</td>`).join("")}</tr>` : ""}
+        ${ranked.length > 1 ? `<tr class="sub"><td>Peer median</td><td></td><td></td>${cols.map(([, g, k, f]) => `<td>${f(med(k, g))}</td>`).join("")}</tr>` : ""}
       </tbody></table></div>
     <p class="legend-note">Multiples need a share price, which currently comes from each company's DCF assumptions; "–" means no price yet. Hover "Traits shared" for each company's profile.</p>
   </div>`;
@@ -700,7 +772,7 @@ function renderCompsCard() {
   if (!d?.peers || !$("val-comps")) return;
   const mids = Object.keys(d.multiples);
   const mult = (k) => ({ ev_sales: "EV/Sales", ev_ebitda: "EV/EBITDA", pe: "P/E" })[k] || k;
-  const row = (p, isTarget) => `<tr class="${isTarget ? "total" : ""}${p.excluded ? " na" : ""}">
+  const row = (p, isTarget) => `<tr class="${isTarget ? "key target" : ""}${p.excluded ? " na" : ""}">
     <td>${esc(p.ticker || "")} <span class="muted small">${esc(isTarget ? "target" : p.source === "manual" ? "manual figures" : (p.name || ""))}</span></td>
     <td>${price(p.price)}</td><td>${millions(p.enterprise_value)}</td>
     <td>${times(p.multiples.ev_sales)}</td><td>${times(p.multiples.ev_ebitda)}</td><td>${times(p.multiples.pe)}</td>
@@ -712,12 +784,29 @@ function renderCompsCard() {
       <div class="value">${price(x.expected)}</div><div class="delta">${price(x.conservative)} – ${price(x.aggressive)} · peer avg ${times(x.peer_average)}</div></div>`; }).join("")}
       <div class="tile"><div class="label">Blended comps value</div><div class="value">${price(d.blend.expected)}</div>
       <div class="delta">${price(d.blend.conservative)} – ${price(d.blend.aggressive)}</div></div></div>
-    <div class="table-wrap"><table>
+    <div class="table-wrap"><table class="list">
       <thead><tr><th>Company</th><th>Price</th><th>EV ($M)</th><th>EV/Sales</th><th>EV/EBITDA</th><th>P/E</th><th>EBITDA margin</th><th>Rev. CAGR</th>
         ${mids.map((m) => `<th>Implied (${mult(m)})</th>`).join("")}</tr></thead>
       <tbody>${row(d.target, true)}${d.peers.map((p) => row(p, false)).join("")}</tbody></table></div>
     ${r.notes?.length ? `<p class="legend-note">${r.notes.map(esc).join(" · ")}</p>` : ""}
   </div>`;
+}
+
+function bridgeRows(b) {
+  const excess = b.cash * (1 - b.operating_cash_pct);
+  const other = b.debt - excess - b.net_debt;   // e.g. long-term investments, when included
+  const v = (x, o) => [cellOf(acct(x, o))];
+  return [
+    finRow("PV of free cash flow", v(b.pv_fcf, { dollar: true }), { indent: 1 }),
+    finRow("PV of terminal value", v(b.pv_terminal_value), { indent: 1 }),
+    finRow("Enterprise value", v(b.enterprise_value), { kind: "sub" }),
+    finRow("Less: debt", v(-b.debt), { indent: 1 }),
+    finRow(`Plus: cash beyond operating needs (${pct(1 - b.operating_cash_pct, true)} of ${millions(b.cash)})`, v(excess), { indent: 1 }),
+    Math.abs(other) > 1 ? finRow("Plus: long-term investments", v(other), { indent: 1 }) : "",
+    finRow("Equity value", v(b.equity_value), { kind: "sub" }),
+    finRow("÷ Diluted shares (M)", v(b.shares), { indent: 1 }),
+    finRow("Value per share", [cellOf(acct(b.value_per_share, { digits: 2, scale: 1, dollar: true }))], { kind: "grand" }),
+  ].join("");
 }
 
 function renderDcfCard() {
@@ -737,37 +826,36 @@ function renderDcfCard() {
       ${tile("Terminal value share", pct(d.terminal_value_share), `terminal EV/EBITDA ${times(t.ev_to_ebitda)}`)}
     </div>
     <div class="grid-2">
-      <div><h3>Bridge ($M)</h3><div class="table-wrap"><table><tbody>
-        <tr><td>PV of free cash flow</td><td>${millions(b.pv_fcf)}</td></tr>
-        <tr><td>PV of terminal value</td><td>${millions(b.pv_terminal_value)}</td></tr>
-        <tr class="total"><td>Enterprise value</td><td>${millions(b.enterprise_value)}</td></tr>
-        <tr><td>Debt</td><td>${millions(b.debt)}</td></tr>
-        <tr><td>Cash beyond operating needs (${pct(1 - b.operating_cash_pct, true)} of ${millions(b.cash)})</td><td>${millions(b.cash * (1 - b.operating_cash_pct))}</td></tr>
-        <tr><td>Net debt</td><td>${millions(b.net_debt)}</td></tr>
-        <tr class="total"><td>Equity value</td><td>${millions(b.equity_value)}</td></tr>
-        <tr><td>Diluted shares (M)</td><td>${millions(b.shares)}</td></tr>
-        <tr class="total"><td>Value per share</td><td>${price(b.value_per_share)}</td></tr>
-      </tbody></table></div></div>
+      <div><h3>Bridge ($M)</h3><div class="table-wrap"><table><tbody>${bridgeRows(b)}</tbody></table></div></div>
       <div><h3>Discount rates</h3><div class="table-wrap"><table><tbody>
-        <tr><td>Beta observed → unlevered → relevered</td><td>${num(rt.beta_levered_observed)} → ${num(rt.beta_unlevered)} → ${num(rt.beta_relevered)}</td></tr>
-        <tr><td>Target debt / equity</td><td>${num(rt.target_debt_to_equity)}</td></tr>
-        <tr><td>Cost of equity</td><td>${pct(rt.cost_of_equity)}</td></tr>
-        <tr><td>Pre-tax cost of debt (${esc({ interest_over_debt: "interest ÷ debt", given: "given", fallback: "fallback yield" }[rt.cost_of_debt_method] || "given")})</td><td>${pct(rt.pre_tax_cost_of_debt)}</td></tr>
-        <tr class="total"><td>WACC (pre-terminal)</td><td>${pct(rt.wacc)}</td></tr>
-        <tr><td>Terminal risk-free rate</td><td>${pct(rt.risk_free_terminal)}</td></tr>
-        <tr><td>Terminal cost of equity</td><td>${pct(rt.cost_of_equity_terminal)}</td></tr>
-        <tr class="total"><td>WACC (terminal year)</td><td>${pct(rt.wacc_terminal)}</td></tr>
-        <tr><td>Terminal growth</td><td>${pct(t.growth)}</td></tr>
-        <tr><td>Terminal ROIC</td><td>${pct(t.roic)}</td></tr>
+        <tr class="group"><td colspan="2">Cost of equity</td></tr>
+        ${finRow("Beta: observed → unlevered → relevered", [cellOf(`${num(rt.beta_levered_observed)} → ${num(rt.beta_unlevered)} → ${num(rt.beta_relevered)}`)], { indent: 1 })}
+        ${finRow("Target debt / equity", [cellOf(num(rt.target_debt_to_equity))], { indent: 1 })}
+        ${finRow("Cost of equity", [cellOf(pct(rt.cost_of_equity))], { kind: "sub", indent: 1 })}
+        <tr class="group"><td colspan="2">Cost of debt</td></tr>
+        ${finRow(`Pre-tax cost of debt (${esc({ interest_over_debt: "interest ÷ debt", given: "given", fallback: "fallback yield" }[rt.cost_of_debt_method] || "given")})`, [cellOf(pct(rt.pre_tax_cost_of_debt))], { indent: 1 })}
+        ${finRow("Weights: equity / debt", [cellOf(`${pct(rt.equity_weight)} / ${pct(rt.debt_weight)}`)], { indent: 1 })}
+        ${finRow("WACC (pre-terminal)", [cellOf(pct(rt.wacc))], { kind: "grand" })}
+        <tr class="group"><td colspan="2">Terminal year</td></tr>
+        ${finRow("Risk-free rate", [cellOf(pct(rt.risk_free_terminal))], { indent: 1 })}
+        ${finRow("Cost of equity", [cellOf(pct(rt.cost_of_equity_terminal))], { indent: 1 })}
+        ${finRow("WACC (terminal year)", [cellOf(pct(rt.wacc_terminal))], { kind: "sub" })}
+        ${finRow("Terminal growth", [cellOf(pct(t.growth))], { indent: 1, kind: "memo" })}
+        ${finRow("Terminal ROIC", [cellOf(pct(t.roic))], { indent: 1, kind: "memo" })}
       </tbody></table></div></div>
     </div>
     <h3 style="margin-top:16px">Projection ($M)</h3>
     <div class="table-wrap"><table>
       <thead><tr><th>Year</th>${d.projection.map((y) => `<th>Y${y.year}</th>`).join("")}</tr></thead>
       <tbody>
-        ${[["Revenue", "revenue"], ["EBITDA", "ebitda"], ["Capex", "capex"], ["ΔNWC", "change_in_nwc"], ["Free cash flow", "fcf"], ["Present value", "pv"]]
-          .map(([l, k]) => `<tr class="${k === "fcf" ? "total" : ""}"><td>${l}</td>${d.projection.map((y) => `<td>${millions(y[k])}</td>`).join("")}</tr>`).join("")}
+        ${finRow("Revenue", d.projection.map((y) => cellOf(acct(y.revenue, { dollar: true }))), { kind: "key" })}
+        ${finRow("EBITDA", d.projection.map((y) => cellOf(acct(y.ebitda))), { indent: 1 })}
+        ${finRow("Capital expenditures", d.projection.map((y) => cellOf(acct(-y.capex))), { indent: 1 })}
+        ${finRow("Increase in net working capital", d.projection.map((y) => cellOf(acct(-y.change_in_nwc))), { indent: 1 })}
+        ${finRow("Unlevered free cash flow", d.projection.map((y) => cellOf(acct(y.fcf, { dollar: true }))), { kind: "sub" })}
+        ${finRow("Present value", d.projection.map((y) => cellOf(acct(y.pv))), { kind: "memo", indent: 1 })}
       </tbody></table></div>
+    <p class="legend-note">Free cash flow = EBITDA × (1 − t) + D&amp;A × t − capex − ΔNWC, so it isn't the simple sum of the lines above.</p>
     <p class="legend-note">Year 1 is the closing year (not discounted). Range: conservative and aggressive move near-term growth with WACC and terminal growth with terminal WACC, blended by the terminal value's share.${r.notes?.length ? " " + esc(r.notes.filter((n) => !n.startsWith("range =")).join(" ")) : ""}</p>`;
   ($("val-dcf") || $("val-body")).appendChild(card);
 }

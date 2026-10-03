@@ -22,6 +22,22 @@ GitHub Pages only serves static files, and the SEC API can't be called from a br
 
 The page does no valuation math. Projections are calculated in Python and published with the data: the DCF's projection when a DCF has run, otherwise the L1 trend case (`company_detail.json` → `projection`). There are no driver selectors on the site; to change a projection, edit `assumptions/{TICKER}/dcf.json` and rerun.
 
+## Table formatting
+
+Financial tables follow classic statement layout (`finRow` / `acct` in `app.js`, styles under "tables" in `styles.css`):
+
+| Row kind | Look | Used for |
+|---|---|---|
+| section (`group`) | uppercase heading with a rule under it | Income statement, Balance sheet, ratio groups |
+| `head` | muted sub-heading, components indented under it | Operating expenses, Assets, Returned to shareholders |
+| item (indent 1–2) | plain, indented | components |
+| `sub` | bold, single rule above the figures | Gross profit, Operating income, Total current assets, EV, Equity value |
+| `grand` | bold, single rule above and double rule below, `$` | Net income, Total assets, Total liabilities and equity, Value per share |
+| `key` | bold, no rules | Revenue, RNOA, ROCE, CFO |
+| `memo` | muted italic | EBITDA, D&A, Net debt, projected UFCF, PV |
+
+Amounts: negatives in parentheses (positives reserve the ")" so digits align); expenses, capex, buybacks and dividends shown as deductions; `$` on a statement's first line and grand totals. Number columns hug their figures and the label column takes the slack. Lists of companies (`table.list`) keep faint row lines and tint the target row.
+
 ## Tabs
 
 | Tab | Shows |
