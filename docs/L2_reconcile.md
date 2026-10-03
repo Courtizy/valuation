@@ -1,6 +1,6 @@
 # L2 Reconcile: Profile-Driven Triangulation
 
-*Status: built. Inputs are `model_results/*.json`, `company_detail.json` (profile and price) and an optional `assumptions/{TICKER}/reconcile.json`. Output is `comparison.json` (schema 0.2.0).*
+*Status: built. Inputs are `model_results/*.json`, `company_detail.json` (profile and price) and an optional `inputs/assumptions/{TICKER}/reconcile.json`. Output is `comparison.json` (schema 0.2.0).*
 
 ## Principle
 
@@ -33,7 +33,7 @@ The thresholds are in `L1_detail/profile_rules.json`, and a pack can override th
 
 **Missing methods.** Weights for methods that didn't run are dropped, and the rest renormalized, as the course summary does with blank rows.
 
-**Overrides.** `assumptions/{TICKER}/reconcile.json` can replace the weights, for example `{"weights": {"dcf": 0.7, "comps": 0.3}}`. Roles then follow the weights.
+**Overrides.** `inputs/assumptions/{TICKER}/reconcile.json` can replace the weights, for example `{"weights": {"dcf": 0.7, "comps": 0.3}}`. Roles then follow the weights.
 
 ## Output additions (schema 0.2.0)
 

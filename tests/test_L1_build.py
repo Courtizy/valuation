@@ -88,7 +88,7 @@ def test_validator_flags_problems():
 
 def test_core_imports_no_layer():
     layers = ("L0_ingest", "L1_detail", "L2_models", "L3_app", "pipeline")
-    for py in (ROOT / "core").rglob("*.py"):
+    for py in (ROOT / "model" / "core").rglob("*.py"):
         for node in ast.walk(ast.parse(py.read_text())):
             names = [a.name for a in node.names] if isinstance(node, ast.Import) else \
                 [node.module or ""] if isinstance(node, ast.ImportFrom) else []

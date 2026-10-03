@@ -1,6 +1,6 @@
 // Presentation standard: every label, period and number on the site goes through here.
 //   Titles, headers, line items, buttons: Title Case (small words lower case).
-//   Periods: FY25A (reported fiscal year) · Q3 FY26 · LTM Jun-26 · FY27E (estimate).
+//   Periods: 2025 (reported fiscal year) · Q3 2026 (fiscal quarter) · LTM Jun 2026 · 2027E (estimate).
 //   Numbers: $ millions with one decimal in tables; $5.76B in tiles; percentages one
 //   decimal; valuation multiples one decimal ("11.1x"); turnover two ("1.58x").
 //   "–" = no data; "NM" = not meaningful (a multiple on a loss or negative base).
@@ -35,20 +35,19 @@ export const price = (v, axis = false) => (fin(v) ? `$${v.toFixed(axis ? 0 : 2)}
 
 // ---- periods
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const yy = (y) => String(y).slice(-2);
-export const monthYear = (iso) => `${MONTHS[Number(iso.slice(5, 7)) - 1]}-${iso.slice(2, 4)}`;
+export const monthYear = (iso) => `${MONTHS[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}`;
 
-/** A reported period: FY25A, Q3 FY26, LTM Jun-26. */
+/** A reported period: 2025 (fiscal year), Q3 2026 (fiscal quarter), LTM Jun 2026. */
 export function periodLabel(p) {
   if (!p) return "";
-  if (p.fiscal_period === "FY") return `FY${yy(p.fiscal_year)}A`;
+  if (p.fiscal_period === "FY") return String(p.fiscal_year);
   if (String(p.label).startsWith("TTM") || p.months === 12) return `LTM ${monthYear(p.end)}`;
-  return `${p.fiscal_period} FY${yy(p.fiscal_year)}`;
+  return `${p.fiscal_period} ${p.fiscal_year}`;
 }
 
-/** Estimate year t (1-based) after a base period: FY27E on a fiscal base, else "Year t". */
+/** Estimate year t (1-based) after a base period: 2027E on a fiscal base, else "Year t". */
 export function estLabel(base, t) {
-  return base?.kind === "fiscal" && fin(base.fiscal_year) ? `FY${yy(base.fiscal_year + t)}E` : `Year ${t}E`;
+  return base?.kind === "fiscal" && fin(base.fiscal_year) ? `${base.fiscal_year + t}E` : `Year ${t}E`;
 }
 
 // ---- words

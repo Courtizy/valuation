@@ -84,8 +84,8 @@ export function latestAnalysis() {
   return (a.ttm.length ? a.ttm : a.annual).at(-1);
 }
 
-/** Analysis periods carry "FY2024" / "TTM 2026-06" labels; show them as FY24A / LTM Jun-26. */
-export const analysisLabel = (a) => (a.label.startsWith("TTM") ? `LTM ${monthYear(a.end)}` : `FY${a.label.slice(-2)}A`);
+/** Analysis periods carry "FY2024" / "TTM 2026-06-30" labels; show them as 2024 / LTM Jun 2026. */
+export const analysisLabel = (a) => (a.label.startsWith("TTM") ? `LTM ${monthYear(a.end)}` : a.label.slice(-4));
 
 // ---- projection: which estimate years are shown -------------------------------------
 // Statements show Years 1–4, then Year 5 and Year 10 (indexes into the projected rows);
@@ -104,7 +104,7 @@ export function projection() {
   const d = state.dcf?.details;
   if (d?.statements?.length) {
     return { kind: "dcf", rows: d.statements.slice(0, 10), base: d.base_period, name: "DCF Case",
-      note: `Estimates: DCF case from assumptions/${state.company.ticker}/dcf.json (Year 1 is the undiscounted closing year).` };
+      note: `Estimates: DCF case from inputs/assumptions/${state.company.ticker}/dcf.json (Year 1 is the undiscounted closing year).` };
   }
   const p = state.detail.projection;
   if (!p?.years?.length) return null;
@@ -154,7 +154,7 @@ export function renderTiles() {
 // Bear–Bull band = projected growth ± the DCF's growth step (1 pt for the trend case).
 export function renderRevenueChart() {
   const view = state.view;
-  const ps = (state.detail.views[view] || []).slice(view === "annual" ? -6 : -12);
+  const ps = chartPeriods(view);
   const proj = view === "annual" ? projection() : null;
   const est = proj ? proj.rows : [];
   const step = (proj?.kind === "dcf" && state.dcf?.details?.scenarios?.steps?.growth) || 0.01;
@@ -178,21 +178,27 @@ export function renderRevenueChart() {
 // RNOA and ROCE with the gap shaded: ROCE − RNOA = FLEV × (RNOA − NBC), the financing
 // effect. Green where leverage adds to shareholder returns, red where it subtracts.
 // WACC (from the DCF, when one has run) is the reference RNOA has to beat.
+// Annual: fiscal-year returns. Quarterly and LTM: rolling twelve-month returns at each quarter end
+// (a single quarter's return isn't comparable), labeled by quarter or by LTM end month.
 export function renderReturnsChart() {
-  const an = state.detail.analysis.annual.filter((a) => a.ratios.reformulated.avg);
+  const view = state.view, rolling = view !== "annual";
+  const an = (rolling ? state.detail.analysis.ttm.slice(-12) : state.detail.analysis.annual).filter((a) => a.ratios.reformulated.avg);
+  const qByEnd = new Map((state.detail.views.quarterly || []).map((p) => [p.end, p]));
+  const lab = (x) => (view === "quarterly" && qByEnd.has(x.end) ? periodLabel(qByEnd.get(x.end)) : analysisLabel(x));
+  $("ret-sub").textContent = rolling ? "Average Balances, Rolling LTM" : "Average Balances, Annual";
   const a = { name: "RNOA", color: "var(--series-1)", values: an.map((x) => x.ratios.reformulated.avg.rnoa) };
   const b = { name: "ROCE", color: "var(--series-2)", values: an.map((x) => x.ratios.reformulated.avg.roce) };
   const wacc = state.dcf?.details?.rates?.wacc;
   $("ret-legend").innerHTML = [a, b].map((x) => `<span><span class="key" style="background:${x.color}"></span>${x.name}</span>`).join("")
     + (fin(wacc) ? `<span><span class="key" style="background:var(--ink-2)"></span>WACC (DCF)</span>` : "")
     + `<span><span class="swatch pos"></span>Leverage Adds</span><span><span class="swatch neg"></span>Leverage Subtracts</span>`;
-  spreadChart($("ret-chart"), { categories: an.map(analysisLabel), a, b, format: pct, label: "RNOA and ROCE with the financing spread",
+  spreadChart($("ret-chart"), { categories: an.map(lab), a, b, format: pct, label: "RNOA and ROCE with the financing spread",
     ref: fin(wacc) ? { value: wacc, label: "WACC" } : null, spreadLabel: "Financing effect (ROCE − RNOA)" });
 }
 
-// Margins over the reported fiscal years and every projected year (dashed).
+// Margins over the periods in view; in the Annual view, every projected year too (dashed).
 export function renderMarginChart() {
-  const ann = state.detail.views.annual.slice(-6), proj = projection();
+  const view = state.view, ann = chartPeriods(view), proj = view === "annual" ? projection() : null;
   const est = proj ? proj.rows : [];
   const m = (num, den) => (fin(num) && den ? num / den : null);
   const cats = ann.map(periodLabel).concat(est.map((_, i) => estLabel(proj.base, i + 1)));
@@ -202,18 +208,23 @@ export function renderMarginChart() {
     ["Operating Margin", "var(--series-3)", (v) => m(v.operating_income_loss, v.revenue), (r) => m(r.ebit, r.revenue)],
   ].map(([name, color, fa, fe]) => ({ name, color, values: ann.map((p) => fa(p.values)).concat(est.map(fe)) }));
   $("mar-legend").innerHTML = series.map((x) => `<span><span class="key" style="background:${x.color}"></span>${x.name}</span>`).join("");
-  $("mar-sub").textContent = est.length ? `${cats[0]} to ${cats.at(-1)} · dashed = ${proj.name}` : "";
+  $("mar-sub").textContent = cats.length ? `${cats[0]} to ${cats.at(-1)}${est.length ? ` · dashed = ${proj.name}` : ""}` : "";
   lineChart($("mar-chart"), { categories: cats, series, format: pct, label: "Margins, reported and projected", splitAt: ann.length });
 }
 
 // Net income against FCF (CFO − Capex): cash conversion = FCF / net income.
 export function renderCashChart() {
-  const ann = state.detail.views.annual.slice(-6);
+  const ann = chartPeriods(state.view);
   const ni = ann.map((p) => p.values.net_income), fcf = ann.map((p) => p.values.free_cash_flow);
   const series = [{ name: "Net Income", color: "var(--series-1)", values: ni }, { name: "FCF (CFO − Capex)", color: "var(--series-3)", values: fcf }];
   $("cash-legend").innerHTML = series.map((x) => `<span><span class="key" style="background:${x.color}"></span>${x.name}</span>`).join("");
   groupedBarChart($("cash-chart"), { categories: ann.map(periodLabel), series, format: money, label: "Net income and free cash flow",
     tipExtra: (i) => ({ label: "Cash Conversion", value: fin(ni[i]) && ni[i] > 0 && fin(fcf[i]) ? pct(fcf[i] / ni[i]) : NA }) });
+}
+
+/** Reported periods a chart shows: six fiscal years, or the last twelve quarters / LTM points. */
+export function chartPeriods(view) {
+  return (state.detail.views[view] || []).slice(view === "annual" ? -6 : -12);
 }
 
 export function priorFor(p, view) {

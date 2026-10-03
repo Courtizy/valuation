@@ -52,6 +52,7 @@ jobs:
       MODELS: ${{ inputs.models }}
       STOP_AFTER: ${{ inputs.stop_after }}
       SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+      PYTHONPATH: model          # code lives in model/
     steps:
       - uses: actions/checkout@v4
 

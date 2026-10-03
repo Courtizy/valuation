@@ -1,6 +1,6 @@
 # L2 Public Comps
 
-*Status: built. Inputs are `company_detail.json` (target), `assumptions/{TICKER}/comps.json`, and `company_detail.json` for each SEC peer, which the pipeline ingests first.*
+*Status: built. Inputs are `company_detail.json` (target), `inputs/assumptions/{TICKER}/comps.json`, and `company_detail.json` for each SEC peer, which the pipeline ingests first.*
 
 ## Peers
 

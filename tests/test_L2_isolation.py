@@ -10,7 +10,7 @@ import pytest
 from L2_models.base import MODEL_NAMES, ModelResult, get_model
 from L2_models.reconcile import build_comparison
 
-L2 = Path(__file__).resolve().parent.parent / "L2_models"
+L2 = Path(__file__).resolve().parent.parent / "model" / "L2_models"
 
 
 def _imports(pkg_dir: Path) -> set[str]:

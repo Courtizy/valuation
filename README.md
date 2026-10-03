@@ -8,14 +8,14 @@ L1  Company detail  normalize → canonical_statements.json; build → company_d
                     (annual / quarterly / TTM, ratios in two frameworks)
 L2  Models          dcf, comps, lbo, ipo, precedents → model_results/; reconcile → comparison.json
 L3  App             site/ on GitHub Pages; Actions run the pipeline and publish JSON
-core/               shared math: projection, cost of capital, DCF, shares
-runner/             sequencing for companies and sector screens (pipeline.py is the entry)
+model/              all Python: the layers above, core/ (shared math), runner/ (sequencing)
+inputs/             hand-edited: assumptions/, packs/, sectors/
 ```
 
 ## Quick start
 
 ```bash
-pip install -e ".[dev]"
+pip install -e ".[dev]"                             # puts model/ on the path
 pytest
 export SEC_USER_AGENT="Your Name you@example.com"
 python pipeline.py run AAPL --stop-after L1          # data/AAPL/<today>/company_detail.json

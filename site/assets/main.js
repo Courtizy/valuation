@@ -1,4 +1,4 @@
-import { renderCompany, renderRatios, renderRevenueChart, renderStatements } from "./company.js";
+import { renderCashChart, renderCompany, renderMarginChart, renderRatios, renderReturnsChart, renderRevenueChart, renderStatements } from "./company.js";
 import { esc } from "./format.js";
 import { fillSectorList, setupRunForm } from "./run.js";
 import { loadSector } from "./sector.js";
@@ -161,7 +161,7 @@ function setupSegments() {
       render();
     };
   };
-  wire("view-seg", "view", "view", () => { renderStatements(); renderRevenueChart(); });
+  wire("view-seg", "view", "view", () => { renderStatements(); renderRevenueChart(); renderReturnsChart(); renderMarginChart(); renderCashChart(); });
   wire("ratio-seg", "fw", "fw", renderRatios);
 }
 

@@ -6,7 +6,7 @@
 
 ```bash
 python -m L1_detail build data/AAPL/2026-09-30/canonical_statements.json --as-of 2026-09-30 \
-    --out data/AAPL/2026-09-30/company_detail.json [--market raw_market.json] [--pack packs/default.json]
+    --out data/AAPL/2026-09-30/company_detail.json [--market raw_market.json] [--pack inputs/packs/default.json]
 python -m L1_detail validate-detail data/AAPL/2026-09-30/company_detail.json
 ```
 

@@ -20,7 +20,7 @@
 
 GitHub Pages only serves static files, and the SEC API can't be called from a browser (no CORS, and it needs a contact User-Agent). So all fetching and computation runs in Actions; the page only renders.
 
-The page does no valuation math. Projections are calculated in Python and published with the data: the DCF's projection when a DCF has run, otherwise the L1 trend case (`company_detail.json` → `projection`). There are no driver selectors on the site; to change a projection, edit `assumptions/{TICKER}/dcf.json` and rerun.
+The page does no valuation math. Projections are calculated in Python and published with the data: the DCF's projection when a DCF has run, otherwise the L1 trend case (`company_detail.json` → `projection`). There are no driver selectors on the site; to change a projection, edit `inputs/assumptions/{TICKER}/dcf.json` and rerun.
 
 ## Code layout (site/assets)
 
@@ -43,7 +43,7 @@ The Pages workflow stamps every stylesheet and module import with `?v=<commit>`,
 ## Presentation standard
 
 - Titles, headers, line items and buttons in Title Case (small words lower case, acronyms kept); notes in sentence case.
-- Periods: `FY25A` reported, `Q3 FY26`, `LTM Jun-26`, `FY27E` estimate.
+- Periods: `2025` reported fiscal year, `Q3 2026` fiscal quarter, `LTM Jun 2026`, `2027E` estimate; in charts and tables alike.
 - Estimates shown: Years 1–4, then Year 5 and Year 10 (tagged), with LTM as a reference column. Year 1 is the fiscal year after the last 10-K (the closing year).
 - $ millions with one decimal in tables; $5.76B in tiles; percentages one decimal; valuation multiples one decimal (`11.1x`, `NM` on a negative base); turnover two decimals; `–` = no data.
 - Every card ends with a source line.
@@ -68,7 +68,7 @@ Amounts: negatives in parentheses (positives reserve the ")" so digits align); c
 
 | Tab | Shows |
 |---|---|
-| Company Detail | KPI tiles (Revenue CAGR 5Y / 10Y projected); **Revenue** area chart (reported area, projection dashed, Bear–Bull band); **Returns**: RNOA and ROCE lines with the spread shaded green (leverage adds) or red (leverage subtracts), plus WACC; legend only, no definitions; **Margins** (gross, EBITDA, operating; estimates dashed); **Cash Conversion** (net income vs FCF, conversion in the tooltip); statements: five fiscal years, LTM reference, Years 1–4, 5 and 10 (DCF case, else the 10-year trend case), with a full-history download; ratios in five framework views; one **Sector** section: picker and Sector › Group › Industry switch, then **Relative Performance** (quartiles and gap to median) and **Companies** (charts and table) (`docs/L1_sector.md`). Statements, Ratios and Sector are collapsible: Statements open and the others closed on a first visit, then each viewer's choice is remembered in the browser |
+| Company Detail | KPI tiles (Revenue CAGR 5Y / 10Y projected); **Revenue** area chart (reported area, projection dashed, Bear–Bull band); **Returns**: RNOA and ROCE lines with the spread shaded green (leverage adds) or red (leverage subtracts), plus WACC; legend only, no definitions; **Margins** (gross, EBITDA, operating; estimates dashed); **Cash Conversion** (net income vs FCF, conversion in the tooltip); the four charts follow the Statements switch: Annual (with estimates), Quarterly (Returns as rolling LTM at each quarter end) or LTM; statements: five fiscal years, LTM reference, Years 1–4, 5 and 10 (DCF case, else the 10-year trend case), with a full-history download; ratios in five framework views; one **Sector** section: picker and Sector › Group › Industry switch, then **Relative Performance** (quartiles and gap to median) and **Companies** (charts and table) (`docs/L1_sector.md`). Statements, Ratios and Sector are collapsible: Statements open and the others closed on a first visit, then each viewer's choice is remembered in the browser |
 | Valuation | Value vs price headline; football field (range, base, upside, weight; the reason on its own line; Bear / Base / Bull toggle; precedents tagged Illustrative); company profile; comps card with a dot plot of each peer's implied price (range = IQR with 4+ peers, else min–max); peer picker; DCF with EV bridge, discount rates, projection (Years 1–4, 5, 10, terminal) and a WACC × terminal growth sensitivity grid; similar companies (`docs/L2_reconcile.md`) |
 | Run Pipeline | **Company:** ticker, as-of, a *Company Details* box and one box per model (built: DCF, Comps). Details alone runs through L1; ticking a model runs through L2 and locks details on. **Sector:** a company's sector (default), a taxonomy sector, SIC code, trait group or list. Starts the Pipeline action with a token, or links to the Actions page and prints the `gh` command |
 
@@ -108,7 +108,7 @@ This writes three synthetic companies (`DEMO` manufacturing, `DEMOG` high-growth
 ## Local preview
 
 ```bash
-python -m L3_app.publish            # data/ → site/data, rebuild index.json, concepts.json and companies.json
+python -m L3_app.publish            # (after pip install -e ., or with PYTHONPATH=model) data/ → site/data, rebuild index.json, concepts.json and companies.json
 python -m http.server -d site 8000  # open http://localhost:8000
 ```
 

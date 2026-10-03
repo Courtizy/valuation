@@ -58,6 +58,12 @@ function barPath(x, w, y0, y1, r = 4) {
   return `M${x},${y0}V${y1 - r}Q${x},${y1} ${x + r},${y1}H${x + w - r}Q${x + w},${y1} ${x + w},${y1 - r}V${y0}Z`;
 }
 
+/** Show every nth period label so labels never overlap (about 56px each), anchored on the latest. */
+function showLabel(i, n, iw) {
+  const every = Math.max(1, Math.ceil(n / Math.max(1, Math.floor(iw / 56))));
+  return (n - 1 - i) % every === 0;
+}
+
 function observe(container, draw) {
   draw();
   if (container._ro) container._ro.disconnect();
@@ -393,7 +399,7 @@ export function spreadChart(container, { categories, a, b, format, label = "", h
       el("line", { x1: m.l, x2: m.l + iw, y1: y(t), y2: y(t), class: t === 0 ? "baseline" : "gridline" }, svg);
       el("text", { x: m.l - 8, y: y(t) + 4, "text-anchor": "end", class: "tick" }, svg).textContent = format(t, true);
     }
-    categories.forEach((c, i) => el("text", { x: x(i), y: height - 8, "text-anchor": "middle", class: "tick" }, svg).textContent = c);
+    categories.forEach((c, i) => { if (showLabel(i, categories.length, iw)) el("text", { x: x(i), y: height - 8, "text-anchor": "middle", class: "tick" }, svg).textContent = c; });
     // shaded gap, split where the lines cross so each piece takes one colour
     for (let i = 0; i < categories.length - 1; i++) {
       const a0 = a.values[i], a1 = a.values[i + 1], b0 = b.values[i], b1 = b.values[i + 1];
@@ -465,7 +471,7 @@ export function groupedBarChart(container, { categories, series, format, label =
         const v = s.values[i];
         if (Number.isFinite(v) && v !== 0) el("path", { d: barPath(x0 + k * bw, bw - 2, y(0), y(v)), fill: s.color }, svg);
       });
-      el("text", { x: m.l + band * i + band / 2, y: height - 8, "text-anchor": "middle", class: "tick" }, svg).textContent = c;
+      if (showLabel(i, categories.length, iw)) el("text", { x: m.l + band * i + band / 2, y: height - 8, "text-anchor": "middle", class: "tick" }, svg).textContent = c;
       const hit = el("rect", { x: m.l + band * i, y: m.t, width: band, height: ih, class: "hit" }, svg);
       hit.addEventListener("mousemove", (e) => {
         hover.setAttribute("opacity", 1);

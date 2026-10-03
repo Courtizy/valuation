@@ -43,29 +43,22 @@
 
 ```
 valuation/
-  L0_ingest/          adapters, cache, raw schema, CLI                built
-  L1_detail/          registry, normalize, periods, analysis, build    built
-  core/               projection, cost_of_capital, dcf, shares, num    built
-  L2_models/
-    base.py           ModelResult, Model protocol, get_model()        built
-    dcf/              standalone DCF, forecast + implied modes        built
-    comps/            public comps, SEC + manual peers                built
-    lbo/ ipo/ precedents/                                             scaffolded
-    reconcile/        profile-driven plan, weights, blend, warnings   built
-  L3_app/             publish.py (outputs -> site/data), similar.py,  built
-                      demo/ (companies, sector)
-  site/               GitHub Pages app: index.html, assets/, data/    built
-  .github/workflows/  pipeline (dispatch), pages (deploy), tests       built
-  runner/             paths, company plan/execute, sector, cli         built
-  pipeline.py         thin entry: python pipeline.py run|sector       built
-  lineage.py          lineage block helper                            built
-  L0 sec_sector.py    SEC frames, EDGAR SIC lists                     built
-  L1 sector.py        sector screen: figures, traits, benchmarks      built
-  L1 taxonomy.py      sector › group › industry over SIC              built
-  sectors/            taxonomy.json, sic_codes.json, custom lists     built
-  packs/default.json  sector pack template                            built
-  assumptions/        {TICKER}/{model}.json, _template/               built
-  tests/  docs/
+  model/                         all Python (on the path via pip install -e . or PYTHONPATH=model)
+    L0_ingest/                   adapters (companyfacts, sector frames), cache, raw schema, CLI
+    L1_detail/                   registry, normalize, periods, analysis, build, profile, forecast,
+                                 sector screen, taxonomy
+    L2_models/                   base, dcf, comps, reconcile; lbo/ ipo/ precedents scaffolded
+    L3_app/                      publish (outputs -> site/data), similar, demo/
+    core/                        projection, cost_of_capital, dcf, shares, num
+    runner/                      paths, company plan/execute, sector, cli
+    lineage.py                   lineage block helper
+  inputs/                        everything edited by hand
+    assumptions/                 {TICKER}/{model}.json, _template/
+    packs/                       sector packs (default.json)
+    sectors/                     taxonomy.json, sic_codes.json, custom ticker lists
+  site/                          GitHub Pages app: index.html, assets/, data/
+  tests/  docs/  .github/workflows/
+  pipeline.py                    entry point: python pipeline.py run|sector
 ```
 
 ## Data layout
@@ -79,7 +72,7 @@ data/{TICKER}/{as_of}/comparison.json                 L2 reconcile
 data/_screen/{as_of}/raw_screen.json                  L0 sector frames (all filers)
 data/_screen/{as_of}/sic_{code}.json                  L0 EDGAR company list for a SIC code
 data/sectors/{sector_id}/{as_of}/sector.json          L1 sector screen (docs/L1_sector.md)
-sectors/{name}.json                                   custom sector lists (in the repo)
+inputs/sectors/{name}.json                                   custom sector lists (in the repo)
 ```
 
 Everything from L1 onward is keyed by `as_of`, so a past valuation can be rerun and compared.
@@ -100,11 +93,11 @@ python pipeline.py run AAPL --models dcf,comps --as-of 2026-09-30 --dry-run
 
 **Point-in-time.** L1 normalize keeps only facts with `filed <= as_of`. Without this, back-testing a past forecast silently uses later restatements. L0 already stores `filed` on every fact.
 
-**Sector packs.** Data files in `packs/`. In L1 they override tag priorities, concepts and profile thresholds (banks have no gross profit). In L2 they set default assumptions. They do **not** decide which models apply: that comes from the company profile.
+**Sector packs.** Data files in `inputs/packs/`. In L1 they override tag priorities, concepts and profile thresholds (banks have no gross profit). In L2 they set default assumptions. They do **not** decide which models apply: that comes from the company profile.
 
-**Triangulation by company profile.** L1 measures four traits (stage, cash-flow predictability, asset intensity, capital structure). Reconcile turns them into a primary method, a cross-check and default weights, each with a reason (`docs/L2_reconcile.md`). `assumptions/{TICKER}/reconcile.json` can override the weights or switch to the acquisition context.
+**Triangulation by company profile.** L1 measures four traits (stage, cash-flow predictability, asset intensity, capital structure). Reconcile turns them into a primary method, a cross-check and default weights, each with a reason (`docs/L2_reconcile.md`). `inputs/assumptions/{TICKER}/reconcile.json` can override the weights or switch to the acquisition context.
 
-**Peers.** `assumptions/{TICKER}/comps.json` lists peers. The runner adds L0 and L1 steps for each peer only when a selected model has `needs_peers` (comps, ipo). All L1 work finishes before any model runs.
+**Peers.** `inputs/assumptions/{TICKER}/comps.json` lists peers. The runner adds L0 and L1 steps for each peer only when a selected model has `needs_peers` (comps, ipo). All L1 work finishes before any model runs.
 
 ## L0 rules
 

@@ -1,6 +1,6 @@
 # L2 DCF (standalone)
 
-*Status: built. `L2_models/dcf` uses `core/projection`, `core/cost_of_capital`, `core/dcf` and `core/shares`. Inputs are `company_detail.json` and `assumptions/{TICKER}/dcf.json` (see `assumptions/README.md`).*
+*Status: built. `L2_models/dcf` uses `core/projection`, `core/cost_of_capital`, `core/dcf` and `core/shares`. Inputs are `company_detail.json` and `inputs/assumptions/{TICKER}/dcf.json` (see `inputs/assumptions/README.md`).*
 
 ## Steps
 

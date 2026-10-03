@@ -236,7 +236,7 @@ def test_cli_sector(tmp_path):
 def test_taxonomy_covers_every_sec_code_once():
     from L1_detail.taxonomy import load
     tax = load()
-    codes = {c[0] for c in json.loads((Path(__file__).parent.parent / "sectors" / "sic_codes.json").read_text())["codes"]}
+    codes = {c[0] for c in json.loads((Path(__file__).parent.parent / "inputs" / "sectors" / "sic_codes.json").read_text())["codes"]}
     assert codes - set(tax.by_sic) == tax.excluded            # all mapped except the non-operating codes
     assert set(tax.by_sic) <= codes                            # nothing invented
     assert tax.classify("7370")["sector"] == "communication_services"   # GICS: interactive media

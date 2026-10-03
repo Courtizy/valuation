@@ -72,7 +72,7 @@ def test_site_copy_is_sliced_compact_and_full_history_kept(tmp_path):
     site = tmp_path / "site" / "data" / "ABC" / "2026-09-30"
     small, full = json.loads((site / "company_detail.json").read_text()), json.loads((site / "company_detail_full.json").read_text())
     assert len(small["views"]["annual"]) == 11 and small["views"]["annual"][-1]["label"] == "FY2025"
-    assert len(small["analysis"]["ttm"]) == 8 and len(full["views"]["annual"]) == 26
+    assert len(small["analysis"]["ttm"]) == 12 and len(full["views"]["annual"]) == 26
     assert "\n" not in (site / "company_detail.json").read_text()        # compact
 
 

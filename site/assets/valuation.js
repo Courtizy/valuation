@@ -113,7 +113,7 @@ export function renderField() {
     </div>
     <p class="legend-note"><b>Bear / Bull by model:</b> DCF moves near-term growth and WACC by ±1 pt and terminal growth and terminal WACC by ±0.5 pt, weighted by the terminal value's share; Comps uses the peer range (Q1–Q3 with 4+ peers, else lowest–highest); the Blended row weights each model's Bear, Base and Bull.</p>
     ${c.plan?.notes?.length ? `<p class="legend-note">${c.plan.notes.map((n) => esc(sentence(n))).join(" ")}</p>` : ""}
-    <p class="legend-note">Weights: assumptions/${esc(state.company.ticker)}/reconcile.json can override them (<code>{"weights": {"dcf": 0.7, "comps": 0.3}}</code>) or switch to <code>"context": "acquisition"</code> for an offer-price view.</p>
+    <p class="legend-note">Weights: inputs/assumptions/${esc(state.company.ticker)}/reconcile.json can override them (<code>{"weights": {"dcf": 0.7, "comps": 0.3}}</code>) or switch to <code>"context": "acquisition"</code> for an offer-price view.</p>
   </div>`;
   wireToggle($("val-ff"));
   drawPriceLine(fin(c.price) ? (c.price - lo) / (hi - lo) : null, c.price);
@@ -254,7 +254,7 @@ export function renderCompsCard() {
 // Ranks the sector's companies by closeness on screen figures (z-scores of growth,
 // margins, cash-flow stability, capex intensity, leverage and size) plus shared
 // traits. Saving writes the ticked tickers (and any prices typed) into
-// assumptions/{TICKER}/comps.json through the GitHub API. Peers the picker doesn't
+// inputs/assumptions/{TICKER}/comps.json through the GitHub API. Peers the picker doesn't
 // show (entered by hand with "sec": false, or outside this sector) are kept.
 export function renderPeerPicker() {
   const root = $("val-peers");
@@ -300,7 +300,7 @@ export function renderPeerPicker() {
       <button type="button" id="pp-run" ${demo ? "disabled" : ""}>Save Peers & Run Comps</button>
       <span class="status" role="status" id="pp-status">${demo ? "Demo data: saving is off." : ""}</span>
     </div>
-    <p class="legend-note">Writes <code>assumptions/${esc(state.company.ticker)}/comps.json</code> in your repo with the token from the Run Pipeline tab
+    <p class="legend-note">Writes <code>inputs/assumptions/${esc(state.company.ticker)}/comps.json</code> in your repo with the token from the Run Pipeline tab
       (it needs Contents: read and write). Peers not listed here (entered by hand, or from outside this sector) are kept.</p></div>`;
   wireSectorPicker(root);
   wireLevelBar(root, renderPeerPicker);
@@ -312,7 +312,7 @@ export function renderPeerPicker() {
 }
 
 export async function savePeers(andRun) {
-  const st = $("pp-status"), t = state.company.ticker, path = `assumptions/${t}/comps.json`;
+  const st = $("pp-status"), t = state.company.ticker, path = `inputs/assumptions/${t}/comps.json`;
   const picks = [...document.querySelectorAll("#pp-table input[type=checkbox]:checked")].map((x) => x.value);
   const prices = Object.fromEntries([...document.querySelectorAll(".pp-price")].filter((x) => x.value !== "").map((x) => [x.dataset.t, Number(x.value)]));
   if (!picks.length) { setStatus(st, { ok: false, msg: "Tick at least one peer." }); return; }
@@ -397,7 +397,7 @@ export function renderDcfCard() {
   const tile = (l, v, sub = "") => `<div class="tile"><div class="label">${esc(l)}</div><div class="value">${v}</div>${sub ? `<div class="delta">${esc(sub)}</div>` : ""}</div>`;
   card.innerHTML = `
     <div class="card-head"><h2>DCF (Standalone)</h2>
-      <span class="muted small">${esc(d.mode === "implied" ? "Implied Mode: growth solved to match the price" : "Forecast Mode")} · Base ${esc(d.base_period.kind === "fiscal" ? `FY${String(d.base_period.fiscal_year).slice(-2)}A` : d.base_period.label)}</span></div>
+      <span class="muted small">${esc(d.mode === "implied" ? "Implied Mode: growth solved to match the price" : "Forecast Mode")} · Base ${esc(d.base_period.kind === "fiscal" ? String(d.base_period.fiscal_year) : d.base_period.label)}</span></div>
     <div class="tiles">
       ${tile("Value per Share", price(b.value_per_share), `Bear ${price(sc.conservative)} – Bull ${price(sc.aggressive)}`)}
       ${d.implied_growth != null ? tile("Implied Near-Term Growth", pct(d.implied_growth), `At price ${price(d.market_price)}`) : tile("Share Price (Assumptions)", price(d.market_price))}

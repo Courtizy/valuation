@@ -4,10 +4,10 @@ A sector screen gives every company in a sector the same dozen figures, cheaply,
 
 ```
 python pipeline.py sector sic-of:AAPL                                # the whole sector a company belongs to (Technology)
-python pipeline.py sector sector:technology                          # a sector of sectors/taxonomy.json
+python pipeline.py sector sector:technology                          # a sector of inputs/sectors/taxonomy.json
 python pipeline.py sector sic:3674                                   # one SEC industry code
 python pipeline.py sector "traits:stage=high growth;asset_intensity=light"
-python pipeline.py sector list:example_chips                         # sectors/example_chips.json
+python pipeline.py sector list:example_chips                         # inputs/sectors/example_chips.json
 ```
 
 From the site: **Run Pipeline → Sector**, or the **Screen {Sector}** button on Company Detail.
