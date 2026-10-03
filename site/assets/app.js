@@ -38,18 +38,18 @@ const shortLabel = (p) => (p.fiscal_period === "FY" ? `FY${String(p.fiscal_year)
   : p.label.startsWith("TTM") ? p.end.slice(0, 7) : `${p.fiscal_period} FY${String(p.fiscal_year).slice(-2)}`);
 
 function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]); }
-// ---- financial-table formatting (classic accounting layout) -------------------
-// Negatives in parentheses; positives carry a hidden ")" so digits line up.
-// "$" sits flush left on the first row of a statement and on grand totals.
-function acct(v, { digits = 1, scale = 1e6, dollar = false } = {}) {
+// ---- financial-table formatting ----------------------------------------------
+// Statement look: indented components, costs as deductions in parentheses,
+// shaded bands on subtotals and totals. Positives reserve the ")" width so digits line up.
+function acct(v, { digits = 1, scale = 1e6 } = {}) {
   if (!fin(v)) return NA;
   const x = scale === 1e6 && Math.abs(v) < 5e4 ? 0 : v / scale;
   const body = Math.abs(x).toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits });
   const neg = x < 0 && body !== (0).toFixed(digits);
-  return `${dollar ? '<span class="cur">$</span>' : ""}<span class="${neg ? "an" : "ap"}">${neg ? `(${body})` : body}</span>`;
+  return `<span class="${neg ? "an" : "ap"}">${neg ? `(${body})` : body}</span>`;
 }
-// One row of a financial table. kind: item | head | sub (rule above) | grand (rule above, double rule below)
-// | key (bold, no rule) | memo (muted italic). cells: [{html, cls}]
+// One row of a financial table. kind: item | head | sub (shaded band) | grand (stronger accent band)
+// | key (bold, no band) | memo (muted italic). cells: [{html, cls}]
 function finRow(lbl, cells, { kind = "item", indent = 0, title = "" } = {}) {
   const cls = [kind !== "item" ? kind : "", indent ? `i${indent}` : ""].filter(Boolean).join(" ");
   return `<tr${cls ? ` class="${cls}"` : ""}><td${title ? ` title="${esc(title)}"` : ""}>${lbl}</td>${cells.map((c) =>
@@ -207,7 +207,7 @@ function setupSegments() {
 // A "head" row is dropped when none of the rows under it has data.
 const STATEMENTS = [
   ["Income statement", [
-    { id: "revenue", label: "Revenue", kind: "key", dollar: true },
+    { id: "revenue", label: "Revenue", kind: "key" },
     { id: "cost_of_goods_and_services_sold", label: "Cost of revenue", indent: 1, sign: -1 },
     { id: "gross_profit", label: "Gross profit", kind: "sub" },
     { head: "Operating expenses", indent: 1 },
@@ -218,20 +218,20 @@ const STATEMENTS = [
     { id: "interest_income", label: "Interest income", indent: 1 },
     { id: "pretax_income_loss", label: "Income before taxes", kind: "sub" },
     { id: "income_taxes", label: "Income tax expense", indent: 1, sign: -1 },
-    { id: "net_income", label: "Net income", kind: "grand", dollar: true },
+    { id: "net_income", label: "Net income", kind: "grand" },
     { head: "Memo", indent: 0 },
     { id: "depreciation_amortization_cf", label: "Depreciation and amortization", indent: 1, kind: "memo" },
     { id: "ebitda", label: "EBITDA", indent: 1, kind: "memo" },
   ]],
   ["Balance sheet", [
     { head: "Assets", indent: 0 },
-    { id: "cash_and_marketable_securities", label: "Cash and marketable securities", indent: 1, dollar: true },
+    { id: "cash_and_marketable_securities", label: "Cash and marketable securities", indent: 1 },
     { id: "trade_receivables", label: "Accounts receivable", indent: 1 },
     { id: "inventories", label: "Inventories", indent: 1 },
     { id: "current_assets_total", label: "Total current assets", indent: 1, kind: "sub" },
     { id: "plant_property_equipment_net", label: "Property, plant and equipment, net", indent: 1 },
     { id: "goodwill", label: "Goodwill", indent: 1 },
-    { id: "assets", label: "Total assets", kind: "grand", dollar: true },
+    { id: "assets", label: "Total assets", kind: "grand" },
     { head: "Liabilities and equity", indent: 0 },
     { id: "trade_payables", label: "Accounts payable", indent: 1 },
     { id: "short_term_debt", label: "Short-term debt", indent: 1 },
@@ -239,13 +239,13 @@ const STATEMENTS = [
     { id: "long_term_debt", label: "Long-term debt", indent: 1 },
     { id: "liabilities", label: "Total liabilities", kind: "sub" },
     { id: "all_equity_balance", label: "Total equity", indent: 1 },
-    { id: "liabilities_and_equity", label: "Total liabilities and equity", kind: "grand", dollar: true },
+    { id: "liabilities_and_equity", label: "Total liabilities and equity", kind: "grand" },
     { head: "Memo", indent: 0 },
     { id: "total_debt", label: "Total debt", indent: 1, kind: "memo" },
     { id: "net_debt", label: "Net debt", indent: 1, kind: "memo" },
   ]],
   ["Cash flow", [
-    { id: "operating_cash_flow", label: "Net cash from operating activities", kind: "key", dollar: true },
+    { id: "operating_cash_flow", label: "Net cash from operating activities", kind: "key" },
     { id: "capital_expenses", label: "Capital expenditures", indent: 1, sign: -1 },
     { id: "free_cash_flow", label: "Free cash flow (CFO − capex)", kind: "sub" },
     { head: "Returned to shareholders", indent: 1 },
@@ -253,7 +253,7 @@ const STATEMENTS = [
     { id: "common_dividends_paid", label: "Dividends paid", indent: 2, sign: -1 },
   ]],
   ["Per share", [
-    { id: "eps_diluted", label: "Diluted EPS ($)", digits: 2, scale: 1, dollar: true },
+    { id: "eps_diluted", label: "Diluted EPS ($)", digits: 2, scale: 1 },
     { id: "shares_fully_diluted_average", label: "Diluted shares (M)", indent: 0 },
   ]],
 ];
@@ -404,7 +404,7 @@ function renderStatements() {
     html += section(group);
     for (const r of rows) {
       if (r.head) { html += finRow(esc(r.head), cols.concat(est).map(() => ({ html: "" })), { kind: "head", indent: r.indent }); continue; }
-      const sg = r.sign || 1, o = { digits: r.digits ?? 1, scale: r.scale ?? 1e6, dollar: r.dollar };
+      const sg = r.sign || 1, o = { digits: r.digits ?? 1, scale: r.scale ?? 1e6 };
       const cells = cols.map(({ p }) => {
         const v = p.values[r.id], m = p.methods[r.id];
         const mark = DERIVED_METHODS.has(m) ? `<span class="mark" title="${esc(m.replace(/_/g, " "))}">d</span>` : "";
@@ -446,11 +446,11 @@ const RATIO_ROWS = {
       ["ROCE", (a) => a.ratios.reformulated.beg?.roce, pct],
       ["FLEV", (a) => a.ratios.reformulated.beg?.flev, num],
       ["group", "Balance sheet ($M)"],
-      ["Net operating assets", (a) => a.reformulated_balance_sheet.noa, $M, { dollar: true }],
+      ["Net operating assets", (a) => a.reformulated_balance_sheet.noa, $M, {}],
       ["Net nonoperating obligations", (a) => a.reformulated_balance_sheet.nno, $M, { sign: -1 }],
-      ["Common equity incl. NCI", (a) => a.reformulated_balance_sheet.cse_incl_nci, $M, { kind: "grand", indent: 0, dollar: true }],
+      ["Common equity incl. NCI", (a) => a.reformulated_balance_sheet.cse_incl_nci, $M, { kind: "grand", indent: 0 }],
       ["group", "Free cash flow ($M)"],
-      ["NOPAT", (a) => a.reformulated_income_statement.nopat, $M, { dollar: true }],
+      ["NOPAT", (a) => a.reformulated_income_statement.nopat, $M, {}],
       ["FCF = NOPAT − ΔNOA", (a) => a.ratios.reformulated.fcf, $M, { kind: "key" }],
     ],
   },
@@ -458,10 +458,10 @@ const RATIO_ROWS = {
     note: "Managerial balance sheet: cash + working-capital requirement + fixed assets = capital employed.",
     rows: [
       ["group", "Managerial balance sheet ($M)"],
-      ["Cash", (a) => a.managerial_balance_sheet.cash, $M, { dollar: true }],
+      ["Cash", (a) => a.managerial_balance_sheet.cash, $M, {}],
       ["Working-capital requirement", (a) => a.managerial_balance_sheet.wcr, $M],
       ["Fixed assets", (a) => a.managerial_balance_sheet.fixed_assets, $M],
-      ["Invested capital", (a) => a.managerial_balance_sheet.invested_capital, $M, { kind: "grand", indent: 0, dollar: true }],
+      ["Invested capital", (a) => a.managerial_balance_sheet.invested_capital, $M, { kind: "grand", indent: 0 }],
       ["group", "Liquidity and operating cycle"],
       ["Net long-term financing (NLF)", (a) => a.ratios.managerial.nlf, $M],
       ["Net short-term financing (NSF)", (a) => a.ratios.managerial.nsf, $M],
@@ -474,11 +474,11 @@ const RATIO_ROWS = {
       ["Current ratio", (a) => a.ratios.managerial.current_ratio, num],
       ["Acid test", (a) => a.ratios.managerial.acid_test, num],
       ["group", "Free cash flow ($M)"],
-      ["NOPLAT", (a) => a.fcf_managerial.noplat, $M, { dollar: true }],
+      ["NOPLAT", (a) => a.fcf_managerial.noplat, $M, {}],
       ["Plus: depreciation", (a) => a.fcf_managerial.depreciation, $M],
       ["Less: capex (ΔFA + depreciation)", (a) => a.fcf_managerial.capex_from_balance_sheet, $M, { sign: -1 }],
       ["Less: increase in WCR", (a) => a.fcf_managerial.change_in_wcr, $M, { sign: -1 }],
-      ["Free cash flow", (a) => a.fcf_managerial.fcf, $M, { kind: "grand", indent: 0, dollar: true }],
+      ["Free cash flow", (a) => a.fcf_managerial.fcf, $M, { kind: "grand", indent: 0 }],
     ],
   },
   traditional: {
@@ -542,7 +542,7 @@ function renderRatios() {
     const sg = o.sign || 1;
     html += finRow(esc(name), cols.map((a) => {
       let v; try { v = get(a); } catch { v = null; }
-      return cellOf(fmt === $M ? (fin(v) ? acct(sg * v, { dollar: o.dollar }) : NA) : fmt(v));
+      return cellOf(fmt === $M ? (fin(v) ? acct(sg * v, {}) : NA) : fmt(v));
     }), { kind: o.kind || "item", indent: o.indent ?? (inGroup ? 1 : 0) });
   }
   $("ratio-table").innerHTML = html + "</tbody>";
@@ -797,7 +797,7 @@ function bridgeRows(b) {
   const other = b.debt - excess - b.net_debt;   // e.g. long-term investments, when included
   const v = (x, o) => [cellOf(acct(x, o))];
   return [
-    finRow("PV of free cash flow", v(b.pv_fcf, { dollar: true }), { indent: 1 }),
+    finRow("PV of free cash flow", v(b.pv_fcf), { indent: 1 }),
     finRow("PV of terminal value", v(b.pv_terminal_value), { indent: 1 }),
     finRow("Enterprise value", v(b.enterprise_value), { kind: "sub" }),
     finRow("Less: debt", v(-b.debt), { indent: 1 }),
@@ -805,7 +805,7 @@ function bridgeRows(b) {
     Math.abs(other) > 1 ? finRow("Plus: long-term investments", v(other), { indent: 1 }) : "",
     finRow("Equity value", v(b.equity_value), { kind: "sub" }),
     finRow("÷ Diluted shares (M)", v(b.shares), { indent: 1 }),
-    finRow("Value per share", [cellOf(acct(b.value_per_share, { digits: 2, scale: 1, dollar: true }))], { kind: "grand" }),
+    finRow("Value per share", [cellOf(price(b.value_per_share))], { kind: "grand" }),
   ].join("");
 }
 
@@ -848,11 +848,11 @@ function renderDcfCard() {
     <div class="table-wrap"><table>
       <thead><tr><th>Year</th>${d.projection.map((y) => `<th>Y${y.year}</th>`).join("")}</tr></thead>
       <tbody>
-        ${finRow("Revenue", d.projection.map((y) => cellOf(acct(y.revenue, { dollar: true }))), { kind: "key" })}
+        ${finRow("Revenue", d.projection.map((y) => cellOf(acct(y.revenue))), { kind: "key" })}
         ${finRow("EBITDA", d.projection.map((y) => cellOf(acct(y.ebitda))), { indent: 1 })}
         ${finRow("Capital expenditures", d.projection.map((y) => cellOf(acct(-y.capex))), { indent: 1 })}
         ${finRow("Increase in net working capital", d.projection.map((y) => cellOf(acct(-y.change_in_nwc))), { indent: 1 })}
-        ${finRow("Unlevered free cash flow", d.projection.map((y) => cellOf(acct(y.fcf, { dollar: true }))), { kind: "sub" })}
+        ${finRow("Unlevered free cash flow", d.projection.map((y) => cellOf(acct(y.fcf))), { kind: "sub" })}
         ${finRow("Present value", d.projection.map((y) => cellOf(acct(y.pv))), { kind: "memo", indent: 1 })}
       </tbody></table></div>
     <p class="legend-note">Free cash flow = EBITDA × (1 − t) + D&amp;A × t − capex − ΔNWC, so it isn't the simple sum of the lines above.</p>

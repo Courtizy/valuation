@@ -24,19 +24,19 @@ The page does no valuation math. Projections are calculated in Python and publis
 
 ## Table formatting
 
-Financial tables follow classic statement layout (`finRow` / `acct` in `app.js`, styles under "tables" in `styles.css`):
+Financial tables use a hybrid statement look (`finRow` / `acct` in `app.js`, styles under "tables" in `styles.css`): accounting structure with modern shading.
 
 | Row kind | Look | Used for |
 |---|---|---|
 | section (`group`) | uppercase heading with a rule under it | Income statement, Balance sheet, ratio groups |
 | `head` | muted sub-heading, components indented under it | Operating expenses, Assets, Returned to shareholders |
 | item (indent 1–2) | plain, indented | components |
-| `sub` | bold, single rule above the figures | Gross profit, Operating income, Total current assets, EV, Equity value |
-| `grand` | bold, single rule above and double rule below, `$` | Net income, Total assets, Total liabilities and equity, Value per share |
-| `key` | bold, no rules | Revenue, RNOA, ROCE, CFO |
+| `sub` | bold on a light grey band | Gross profit, Operating income, Total current assets, EV, Equity value |
+| `grand` | bold on an accent band | Net income, Total assets, Total liabilities and equity, Value per share |
+| `key` | bold, no band | Revenue, RNOA, ROCE, CFO |
 | `memo` | muted italic | EBITDA, D&A, Net debt, projected UFCF, PV |
 
-Amounts: negatives in parentheses (positives reserve the ")" so digits align); expenses, capex, buybacks and dividends shown as deductions; `$` on a statement's first line and grand totals. Number columns hug their figures and the label column takes the slack. Lists of companies (`table.list`) keep faint row lines and tint the target row.
+Amounts: negatives in parentheses (positives reserve the ")" so digits align); costs, capex, buybacks and dividends shown as deductions. No row lines; rows highlight on hover. Number columns hug their figures and the label column takes the slack. Lists of companies (`table.list`) keep faint row lines and tint the target row. (Classic rules/double underlines and a fully modern style were compared; hybrid was chosen.)
 
 ## Tabs
 
