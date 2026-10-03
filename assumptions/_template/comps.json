@@ -1,6 +1,14 @@
 {
-  "peers": ["MSFT", "GOOGL", "META"],
-  "multiples": ["ev_ebitda", "ev_revenue", "pe"],
-  "period": "ntm",
-  "statistic": "median"
+  "peers": [
+    "MSFT",
+    {"ticker": "GOOGL", "price": null, "shares": null},
+    {"ticker": "PRIVATECO", "sec": false, "name": "Example manual peer", "price": 20.0, "shares": 1.0e8,
+     "debt": 0, "cash": 0, "sales": 2.0e9, "ebitda": 4.0e8, "net_income": 2.0e8}
+  ],
+  "market": {"price": null},
+  "target": {"shares": null},
+  "multiples": ["ev_ebitda", "ev_sales"],
+  "weights": {"ev_ebitda": 1, "ev_sales": 1},
+  "range": "min_max",
+  "sources": {"prices": "close on the as-of date"}
 }

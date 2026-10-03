@@ -37,7 +37,7 @@ def test_reconcile_imports_no_model():
     assert not bad, f"reconcile imports {bad}"
 
 
-BUILT = {"dcf"}
+BUILT = {"dcf", "comps"}
 
 
 def test_all_models_registered_and_scaffolded():

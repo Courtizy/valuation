@@ -55,4 +55,4 @@ Top level also holds `lineage` (hash of the input file), `checks`, `coverage` (c
 - **Fiscal labels for pre-XBRL periods** that first appear as comparatives inside a later filing take that filing's labels. Rare after 2011.
 - **As-filed for summed concepts** sums each component's earliest value, which can mix filings if components were first reported at different times.
 - **Companyfacts has no dimensions**, so segment totals and non-controlling splits beyond the face totals aren't available.
-- **Non-USD filers** (most 20-F filers) produce warnings and few records until a pack maps their currency and the `ifrs-full` taxonomy.
+- **Non-USD filers** (most 20-F filers, e.g. TSM) report under `ifrs-full` in their home currency. Stage 1 records the `reporting_basis` (taxonomy, currency, fact counts) and warns. Stage 2 then stops with a clear message, rather than publishing empty statements, until IFRS mapping and currency conversion are built.

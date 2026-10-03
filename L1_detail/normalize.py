@@ -208,6 +208,24 @@ def _run_checks(by_concept: dict[str, dict[Period, dict]]) -> list[dict]:
     return results
 
 
+def reporting_basis(facts: list[dict]) -> dict:
+    """The taxonomy and currency most monetary facts use, e.g. us-gaap/USD or ifrs-full/TWD.
+
+    Foreign private issuers filing 20-Fs under IFRS tag with ifrs-full in their
+    home currency; the registry maps us-gaap tags in USD."""
+    counts: dict[tuple[str, str], int] = {}
+    for f in facts:
+        if f["taxonomy"] == "dei" or "/" in f["unit"] or f["unit"] in ("shares", "pure"):
+            continue
+        k = (f["taxonomy"], f["unit"])
+        counts[k] = counts.get(k, 0) + 1
+    if not counts:
+        return {"taxonomy": "none", "currency": "none", "facts": 0, "breakdown": {}}
+    (tax, cur), n = max(counts.items(), key=lambda kv: kv[1])
+    return {"taxonomy": tax, "currency": cur, "facts": n,
+            "breakdown": {f"{t}/{u}": c for (t, u), c in sorted(counts.items(), key=lambda kv: -kv[1])}}
+
+
 def normalize(raw: dict, as_of: str, registry: Registry | None = None,
               lineage: dict | None = None) -> dict:
     registry = registry or load_registry()
@@ -236,6 +254,12 @@ def normalize(raw: dict, as_of: str, registry: Registry | None = None,
         if derived:
             by_concept[c.id] = derived
 
+    basis = reporting_basis(visible)
+    if basis["taxonomy"] != "us-gaap" or basis["currency"] != "USD":
+        warnings.append(
+            f"financials are reported under {basis['taxonomy']} in {basis['currency']} "
+            f"({basis['facts']} facts); only us-gaap in USD is mapped so far, so most statement lines are missing")
+
     records = sorted(
         (r for periods in by_concept.values() for r in periods.values()),
         key=lambda r: (r["concept"], r["end"], r["start"] or ""),
@@ -250,6 +274,7 @@ def normalize(raw: dict, as_of: str, registry: Registry | None = None,
         "source": {"name": raw.get("source"), "url": raw.get("source_url"),
                    "content_sha256": raw.get("content_sha256")},
         "lineage": lineage or {"as_of": as_of, "inputs": []},
+        "reporting_basis": basis,
         "facts_visible": len(visible),
         "facts_excluded_after_as_of": len(raw["facts"]) - len(visible),
         "records": records,

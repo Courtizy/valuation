@@ -97,6 +97,8 @@ async function selectRun(asOf) {
   try {
     state.detail = await getJSON(`data/${state.run.detail}`);
     state.comparison = state.run.comparison ? await getJSON(`data/${state.run.comparison}`) : null;
+    state.comps = state.run.models?.includes("comps")
+      ? await getJSON(`data/${state.company.ticker}/${state.run.as_of}/model_results/comps.json`).catch(() => null) : null;
     state.dcf = state.run.models?.includes("dcf")
       ? await getJSON(`data/${state.company.ticker}/${state.run.as_of}/model_results/dcf.json`).catch(() => null) : null;
   } catch (e) {
@@ -583,11 +585,12 @@ function renderValuation() {
     return;
   }
   state.scn = state.scn || "p50";
-  body.innerHTML = `<div id="val-head"></div><div id="val-ff"></div><div id="val-profile"></div><div id="val-dcf"></div>
+  body.innerHTML = `<div id="val-head"></div><div id="val-ff"></div><div id="val-profile"></div><div id="val-comps"></div><div id="val-dcf"></div>
     <div id="val-similar"></div><div id="val-diffs"></div>`;
   renderHeadline();
   renderField();
   renderProfileCard($("val-profile"));
+  renderCompsCard();
   renderDcfCard();
   renderSimilar($("val-similar"));
   const diffs = c.assumption_differences || [];
@@ -775,6 +778,31 @@ async function renderSimilar(root) {
     <p class="legend-note">Multiples need a share price, which currently comes from each company's DCF assumptions; "–" means no price yet. Hover "Traits shared" for each company's profile.</p>
   </div>`;
   if (root.id === "val-similar") root.innerHTML = html; else root.insertAdjacentHTML("beforeend", html);
+}
+
+function renderCompsCard() {
+  const r = state.comps, d = r?.details;
+  if (!d?.peers || !$("val-comps")) return;
+  const mids = Object.keys(d.multiples);
+  const mult = (k) => ({ ev_sales: "EV/Sales", ev_ebitda: "EV/EBITDA", pe: "P/E" })[k] || k;
+  const row = (p, isTarget) => `<tr class="${isTarget ? "total" : ""}${p.excluded ? " na" : ""}">
+    <td>${esc(p.ticker || "")} <span class="muted small">${esc(isTarget ? "target" : p.source === "manual" ? "manual figures" : (p.name || ""))}</span></td>
+    <td>${price(p.price)}</td><td>${millions(p.enterprise_value)}</td>
+    <td>${times(p.multiples.ev_sales)}</td><td>${times(p.multiples.ev_ebitda)}</td><td>${times(p.multiples.pe)}</td>
+    <td>${pct(p.ebitda_margin)}</td><td>${pct(p.revenue_growth)}</td>
+    ${mids.map((m) => `<td>${isTarget ? "–" : price(d.multiples[m].implied[p.ticker])}</td>`).join("")}</tr>`;
+  $("val-comps").innerHTML = `<div class="card">
+    <div class="card-head"><h2>Public comps</h2><span class="muted small">${esc(d.range_method === "min_max" ? "range = lowest / median / highest implied price" : "range = Q1 / median / Q3 implied price")}</span></div>
+    <div class="tiles">${mids.map((m) => { const x = d.multiples[m]; return `<div class="tile"><div class="label">${mult(m)} · weight ${pct(x.weight / mids.reduce((s, k) => s + d.multiples[k].weight, 0), true)}</div>
+      <div class="value">${price(x.expected)}</div><div class="delta">${price(x.conservative)} – ${price(x.aggressive)} · peer avg ${times(x.peer_average)}</div></div>`; }).join("")}
+      <div class="tile"><div class="label">Blended comps value</div><div class="value">${price(d.blend.expected)}</div>
+      <div class="delta">${price(d.blend.conservative)} – ${price(d.blend.aggressive)}</div></div></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Company</th><th>Price</th><th>EV ($M)</th><th>EV/Sales</th><th>EV/EBITDA</th><th>P/E</th><th>EBITDA margin</th><th>Rev. CAGR</th>
+        ${mids.map((m) => `<th>Implied (${mult(m)})</th>`).join("")}</tr></thead>
+      <tbody>${row(d.target, true)}${d.peers.map((p) => row(p, false)).join("")}</tbody></table></div>
+    ${r.notes?.length ? `<p class="legend-note">${r.notes.map(esc).join(" · ")}</p>` : ""}
+  </div>`;
 }
 
 function renderDcfCard() {

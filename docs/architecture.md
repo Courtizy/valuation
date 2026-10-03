@@ -49,7 +49,8 @@ valuation/
   L2_models/
     base.py           ModelResult, Model protocol, get_model()        built
     dcf/              standalone DCF, forecast + implied modes        built
-    comps/ lbo/ ipo/ precedents/                                      scaffolded
+    comps/            public comps, SEC + manual peers                built
+    lbo/ ipo/ precedents/                                             scaffolded
     reconcile/        profile-driven plan, weights, blend, warnings   built
   L3_app/             publish.py (outputs -> site/data), demo.py       built
   site/               GitHub Pages app: index.html, assets/, data/    built
@@ -165,5 +166,7 @@ Fields a model doesn't use are omitted, not zeroed. Reconcile flags fields prese
 2. ~~L1 stage 2: frequency views, analysis in both frameworks, market join~~ (done, see `L1_build.md`).
 3. ~~Three-statement projection in `core/`~~ (done, see `core_projection.md`).
 4. ~~`core/` cost of capital and treasury stock method; L2 `dcf` (forecast and implied modes)~~ (done, see `L2_dcf.md`).
-5. `dcf_synergy` and `just_synergy`, then reconcile weights and the bargaining-power offer price.
+5. ~~Public comps~~ (done, see `L2_comps.md`).
+6. `just_synergy` and `dcf_synergy`, then LBO, then precedents (needs a deal list).
+7. IFRS / foreign-currency filers (20-F): map `ifrs-full` tags, convert currency, handle ADR ratios. Until then such companies fail at L1 with a clear message.
 6. Market-data adapter and Treasury yields.

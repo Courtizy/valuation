@@ -64,6 +64,13 @@ def build_detail(canonical: dict, as_of: str, raw_market: dict | None = None, pa
     reg = load_registry()
     cfg = load_classification(((pack or {}).get("l1") or {}).get("classification"))
     views = build_views(canonical["records"], reg)
+    if not any(p["values"].get("revenue") for p in views["annual"] + views["ttm"]):
+        basis = canonical.get("reporting_basis") or {}
+        if basis.get("taxonomy") not in (None, "us-gaap") or basis.get("currency") not in (None, "USD"):
+            raise ValueError(
+                f"no usable statements: this company reports under {basis['taxonomy']} in {basis['currency']} "
+                "(typical of a 20-F foreign filer). Only us-gaap in USD is supported so far.")
+        raise ValueError("no usable statements: no 12-month revenue found in the filings")
     market = _market_block(raw_market, as_of)
 
     statement_date = max((p["end"] for p in views["quarterly"] + views["annual"]), default=None)

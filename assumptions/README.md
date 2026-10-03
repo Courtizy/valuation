@@ -38,3 +38,15 @@ file is missing and names the file it expected.
 ```
 
 Without it, the company profile sets the primary method, cross-check and weights (`docs/L2_reconcile.md`). `context` is `standalone` (default) or `acquisition` (offer-price view: synergy methods and precedents).
+
+## comps.json
+
+| Key | Meaning |
+|---|---|
+| `peers` | tickers, or objects. A ticker's figures come from its SEC filings (the pipeline ingests it first); `price` (and `shares` if filings lack it) must be given. `"sec": false` = manual peer: give `price`, `shares`, `debt`, `cash`, `sales`, `ebitda`, `net_income` |
+| `target.shares`, `market.price` | target share count (default from filings) and price (for upside) |
+| `multiples` | any of `ev_ebitda`, `ev_sales`, `pe` (default EV/EBITDA and EV/Sales) |
+| `weights` | blend weights per multiple (default equal) |
+| `range` | `min_max` (course: lowest / median / highest implied price) or `quartiles` |
+
+Any SEC-derived figure can be overridden by typing it into the peer's object.

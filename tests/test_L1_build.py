@@ -93,3 +93,16 @@ def test_core_imports_no_layer():
             names = [a.name for a in node.names] if isinstance(node, ast.Import) else \
                 [node.module or ""] if isinstance(node, ast.ImportFrom) else []
             assert not any(n.split(".")[0] in layers for n in names), f"{py.name} imports {names}"
+
+
+def test_foreign_ifrs_filer_fails_clearly():
+    from L1_detail.normalize import normalize
+    fact = lambda tag, val, start, end: {"taxonomy": "ifrs-full", "tag": tag, "label": tag, "description": None,  # noqa: E731
+                                          "unit": "TWD", "value": val, "start": start, "end": end, "fy": 2025,
+                                          "fp": "FY", "form": "20-F", "filed": "2026-04-15", "accn": "x", "frame": None}
+    raw = {"facts": [fact("Revenue", 3.8e12, "2025-01-01", "2025-12-31"), fact("ProfitLoss", 1.7e12, "2025-01-01", "2025-12-31")]}
+    canon = normalize(raw, "2026-09-30")
+    assert canon["reporting_basis"]["taxonomy"] == "ifrs-full" and canon["reporting_basis"]["currency"] == "TWD"
+    assert any("ifrs-full in TWD" in w for w in canon["warnings"])
+    with pytest.raises(ValueError, match="ifrs-full in TWD"):
+        build_detail(canon, "2026-09-30")

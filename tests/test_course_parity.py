@@ -334,3 +334,33 @@ def test_789_implied_growth_recovers_market_price(case):
     g = solve(lambda g0: price_at(g0, c("F11"), rates["wacc"], rates["wacc_terminal"]), c("B9"), -0.3, 0.6)
     assert price_at(g, c("F11"), rates["wacc"], rates["wacc_terminal"]) == pytest.approx(c("B9"), rel=1e-8)
     assert g == pytest.approx(c("F10"), abs=1e-4)
+
+
+# ------------------------------------------------- 789: public comparables
+
+from L2_models.comps import implied_price, peer_row  # noqa: E402
+
+
+@pytest.mark.parametrize("case", sorted(FIRM_DCF_CASES))
+def test_789_public_comps(case):
+    """Peer EV and multiples, peer averages, and the implied target price per peer."""
+    wb = _book(FIRM_DCF_CASES[case])
+    ws = wb["Pub_Comps"]
+    v = lambda a: ws[a].value  # noqa: E731
+    fig = lambda col: {"price": _num(v(f"{col}4")), "shares": _num(v(f"{col}5")), "debt": _num(v(f"{col}6")),  # noqa: E731
+                       "cash": _num(v(f"{col}7")), "sales": _num(v(f"{col}12")), "ebitda": _num(v(f"{col}13")),
+                       "net_income": _num(v(f"{col}14"))}
+    target = fig("C")
+    peers = [c for c in "DEFGHIJ" if v(f"{c}4") not in (None, 0) and v(f"{c}5") not in (None, 0)]
+    if not peers:
+        pytest.skip("no peers entered in this workbook")
+    rows = {c: peer_row(fig(c)) for c in peers}
+    for c, r in rows.items():
+        assert r["enterprise_value"] == pytest.approx(_num(v(f"{c}10")), rel=1e-9)
+        assert r["multiples"]["ev_sales"] == pytest.approx(_num(v(f"{c}16")), rel=1e-9)
+        assert r["multiples"]["ev_ebitda"] == pytest.approx(_num(v(f"{c}17")), rel=1e-9)
+        assert implied_price("ev_sales", r["multiples"]["ev_sales"], target) == pytest.approx(_num(v(f"{c}25")), rel=1e-9)
+        assert implied_price("ev_ebitda", r["multiples"]["ev_ebitda"], target) == pytest.approx(_num(v(f"{c}26")), rel=1e-9)
+    avg = lambda k: sum(r["multiples"][k] for r in rows.values()) / len(rows)  # noqa: E731
+    assert avg("ev_sales") == pytest.approx(_num(v("K16")), rel=1e-9)
+    assert avg("ev_ebitda") == pytest.approx(_num(v("K17")), rel=1e-9)

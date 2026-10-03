@@ -74,7 +74,14 @@ def load_peers(paths: Paths, ticker: str) -> list[str]:
     p = paths.model_assumptions(ticker, "comps")
     if not p.exists():
         return []
-    return [s.upper() for s in json.loads(p.read_text()).get("peers", [])]
+    out = []
+    for e in json.loads(p.read_text()).get("peers", []):
+        # a peer is a ticker, or {"ticker": ..., "price": ..., ...}; "sec": false = manual figures only
+        if isinstance(e, str):
+            out.append(e.upper())
+        elif e.get("ticker") and e.get("sec", True):
+            out.append(e["ticker"].upper())
+    return out
 
 
 def _read_json(p: Path, default=None):
@@ -111,11 +118,14 @@ def plan(
             out.parent.mkdir(parents=True, exist_ok=True)
             out.write_text(json.dumps(doc, indent=2))
 
-        steps.append(Step(f"ingest {c}", "L0", c, [paths.raw_filing(c)], ingest))
+        peer = c != ticker   # a peer that fails is reported but doesn't stop the target's run
+        steps.append(Step(f"ingest {c}", "L0", c, [paths.raw_filing(c)], ingest, soft=peer))
         steps.append(Step(f"normalize {c}", "L1", c, [paths.canonical(c, as_of)],
-                          lambda c=c: l1_normalize.run(paths.raw_filing(c), as_of, paths.canonical(c, as_of))))
+                          lambda c=c: l1_normalize.run(paths.raw_filing(c), as_of, paths.canonical(c, as_of)),
+                          soft=peer))
         steps.append(Step(f"build detail {c}", "L1", c, [paths.detail(c, as_of)],
-                          lambda c=c: l1_build.run(paths.canonical(c, as_of), None, as_of, paths.detail(c, as_of))))
+                          lambda c=c: l1_build.run(paths.canonical(c, as_of), None, as_of, paths.detail(c, as_of)),
+                          soft=peer))
 
     for m in models:
         def run_model(m=m):
@@ -125,7 +135,7 @@ def plan(
             if not a_path.exists():
                 raise FileNotFoundError(f"{a_path} not found; copy assumptions/_template/{m}.json and fill it in")
             assumptions = _read_json(a_path, {})
-            peer_details = [_read_json(paths.detail(p, as_of)) for p in peers] if model.needs_peers else None
+            peer_details = [d for d in (_read_json(paths.detail(p, as_of)) for p in peers) if d] if model.needs_peers else None
             result = model.run(detail, assumptions, peer_details)
             result.lineage = lineage_block(as_of, [paths.detail(ticker, as_of)])
             out = paths.result(ticker, as_of, m)
