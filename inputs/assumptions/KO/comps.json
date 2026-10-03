@@ -6,7 +6,22 @@
   "range": "auto",
   "peers": [
     {
-      "ticker": "MNST"
+      "ticker": "MDLZ"
+    },
+    {
+      "ticker": "TSN"
+    },
+    {
+      "ticker": "LW"
+    },
+    {
+      "ticker": "KHC"
+    },
+    {
+      "ticker": "PPC"
+    },
+    {
+      "ticker": "CPB"
     }
   ],
   "sources": {
