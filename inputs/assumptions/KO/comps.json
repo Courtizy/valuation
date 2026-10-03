@@ -1,0 +1,15 @@
+{
+  "multiples": [
+    "ev_ebitda",
+    "ev_sales"
+  ],
+  "range": "auto",
+  "peers": [
+    {
+      "ticker": "MNST"
+    }
+  ],
+  "sources": {
+    "peers": "picked from Consumer Staples (screened 2026-10-03) on 2026-10-03"
+  }
+}
