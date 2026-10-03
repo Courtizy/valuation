@@ -289,3 +289,71 @@ export function areaChart(container, { categories, values, estimate = [], low = 
     });
   });
 }
+
+// Scatter: one dot per company. points: [{x, y, label, sub, highlight, r}]
+// onClick(point) optional. Axis titles sit along the axes.
+export function scatterChart(container, { points, xFormat, yFormat, xLabel = "", yLabel = "", height = 280, onClick }) {
+  observe(container, () => {
+    const { svg, tip, width } = setup(container, height);
+    svg.setAttribute("aria-label", `${yLabel} against ${xLabel}`);
+    const pts = points.filter((p) => Number.isFinite(p.x) && Number.isFinite(p.y));
+    if (!pts.length) { container.innerHTML = '<p class="muted small">No data for this chart.</p>'; return; }
+    const m = { t: 24, r: 14, b: 40, l: 56 };
+    const xt = niceTicks(Math.min(0, ...pts.map((p) => p.x)), Math.max(...pts.map((p) => p.x)));
+    const yt = niceTicks(Math.min(0, ...pts.map((p) => p.y)), Math.max(...pts.map((p) => p.y)));
+    const iw = width - m.l - m.r, ih = height - m.t - m.b;
+    const x = (v) => m.l + ((v - xt[0]) / (xt.at(-1) - xt[0])) * iw;
+    const y = (v) => m.t + ih - ((v - yt[0]) / (yt.at(-1) - yt[0])) * ih;
+    for (const t of yt) {
+      el("line", { x1: m.l, x2: m.l + iw, y1: y(t), y2: y(t), class: t === 0 ? "baseline" : "gridline" }, svg);
+      el("text", { x: m.l - 8, y: y(t) + 4, "text-anchor": "end", class: "tick" }, svg).textContent = yFormat(t, true);
+    }
+    for (const t of xt) {
+      if (t === 0) el("line", { x1: x(0), x2: x(0), y1: m.t, y2: m.t + ih, class: "baseline" }, svg);
+      el("text", { x: x(t), y: m.t + ih + 16, "text-anchor": "middle", class: "tick" }, svg).textContent = xFormat(t, true);
+    }
+    el("text", { x: m.l + iw, y: height - 4, "text-anchor": "end", class: "tick axis-title" }, svg).textContent = `${xLabel} →`;
+    el("text", { x: m.l, y: 12, class: "tick axis-title" }, svg).textContent = `↑ ${yLabel}`;
+    const ordered = [...pts].sort((a, b) => (a.highlight ? 1 : 0) - (b.highlight ? 1 : 0));   // highlight drawn last
+    for (const p of ordered) {
+      const c = el("circle", { cx: x(p.x), cy: y(p.y), r: p.highlight ? 7 : 5, class: "sc-dot" + (p.highlight ? " me" : "") + (onClick ? " link" : "") }, svg);
+      if (p.highlight) el("text", { x: x(p.x) + 10, y: y(p.y) + 4, class: "dlabel" }, svg).textContent = p.label;
+      c.addEventListener("mousemove", (e) => {
+        const r = container.getBoundingClientRect();
+        showTip(tip, container, e.clientX - r.left, e.clientY - r.top, p.label + (p.sub ? ` · ${p.sub}` : ""),
+          [{ label: xLabel, value: xFormat(p.x) }, { label: yLabel, value: yFormat(p.y) }]);
+      });
+      c.addEventListener("mouseleave", () => hideTip(tip));
+      if (onClick) c.addEventListener("click", () => onClick(p));
+    }
+  });
+}
+
+// Horizontal bars ranked largest first. items: [{label, value, highlight}]
+export function barListChart(container, { items, format, rowHeight = 20, labelWidth = 70, onClick }) {
+  observe(container, () => {
+    const height = items.length * rowHeight + 6;
+    const { svg, tip, width } = setup(container, height);
+    const max = Math.max(...items.map((i) => i.value).filter(Number.isFinite), 0) || 1;
+    const iw = width - labelWidth - 64;
+    items.forEach((it, i) => {
+      const yy = 3 + i * rowHeight;
+      el("text", { x: labelWidth - 8, y: yy + rowHeight * 0.65, "text-anchor": "end", class: "tick" + (it.highlight ? " strong" : "") }, svg).textContent = it.label;
+      const w = Number.isFinite(it.value) ? Math.max(2, (it.value / max) * iw) : 0;
+      const bar = el("path", { d: barPathH(labelWidth, yy + 3, w, rowHeight - 7), class: "hbar" + (it.highlight ? " me" : "") + (onClick ? " link" : "") }, svg);
+      el("text", { x: labelWidth + w + 6, y: yy + rowHeight * 0.65, class: "dlabel" }, svg).textContent = format(it.value);
+      bar.addEventListener("mousemove", (e) => {
+        const r = container.getBoundingClientRect();
+        showTip(tip, container, e.clientX - r.left, e.clientY - r.top, it.title || it.label, [{ label: "Revenue", value: format(it.value) }]);
+      });
+      bar.addEventListener("mouseleave", () => hideTip(tip));
+      if (onClick) bar.addEventListener("click", () => onClick(it));
+    });
+  });
+}
+
+// Horizontal bar with a 4px rounded data end.
+function barPathH(x, y, w, h, r = 4) {
+  r = Math.min(r, w, h / 2);
+  return `M${x},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h - r}Q${x + w},${y + h} ${x + w - r},${y + h}H${x}Z`;
+}

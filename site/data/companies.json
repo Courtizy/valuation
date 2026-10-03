@@ -4,6 +4,8 @@
       "ticker": "DEMO",
       "name": "Demo Manufacturing Co. (synthetic)",
       "demo": true,
+      "sic": null,
+      "sic_description": null,
       "as_of": "2026-09-30",
       "period": "TTM 2026-06-30",
       "traits": {
@@ -48,6 +50,8 @@
       "ticker": "DEMOG",
       "name": "Demo Cloud Software (synthetic)",
       "demo": true,
+      "sic": null,
+      "sic_description": null,
       "as_of": "2026-09-30",
       "period": "TTM 2026-06-30",
       "traits": {
@@ -92,6 +96,8 @@
       "ticker": "DEMOU",
       "name": "Demo Regional Utility (synthetic)",
       "demo": true,
+      "sic": null,
+      "sic_description": null,
       "as_of": "2026-09-30",
       "period": "TTM 2026-06-30",
       "traits": {

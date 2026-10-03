@@ -3,7 +3,7 @@
   python -m L3_app.publish --data-dir data --site-dir site
 
 For every data/{TICKER}/{as_of}/ it copies company_detail.json, comparison.json
-and model_results/*.json when present. Raw SEC files and canonical statements
+and model_results/*.json when present, and every data/sectors/{id}/{as_of}/sector.json. Raw SEC files and canonical statements
 stay out of the site. The index is rebuilt from what is in site/data, so runs
 published earlier are kept.
 """
@@ -20,9 +20,46 @@ AS_OF = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 PUBLISHED = ("company_detail.json", "comparison.json")
 
 
+NOT_TICKERS = {"sectors"}   # plus anything starting with "_" (raw screens)
+
+
+def _ticker_dirs(root: Path):
+    return sorted(p for p in root.iterdir() if p.is_dir() and p.name not in NOT_TICKERS and not p.name.startswith("_"))
+
+
+def copy_sectors(data_dir: Path, site_data: Path) -> list[str]:
+    copied = []
+    for f in sorted((data_dir / "sectors").glob("*/*/sector.json")):
+        if not AS_OF.match(f.parent.name):
+            continue
+        target = site_data / "sectors" / f.parent.parent.name / f.parent.name / "sector.json"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(f, target)
+        copied.append(str(target.relative_to(site_data)))
+    return copied
+
+
+def build_sector_index(site_data: Path) -> list[dict]:
+    """Latest screen per sector, with its member tickers so the site can find a company's sectors."""
+    out = []
+    for sdir in sorted(p for p in (site_data / "sectors").glob("*") if p.is_dir()):
+        runs = sorted((p for p in sdir.iterdir() if p.is_dir() and AS_OF.match(p.name) and (p / "sector.json").exists()),
+                      key=lambda p: p.name, reverse=True)
+        if not runs:
+            continue
+        doc = json.loads((runs[0] / "sector.json").read_text())
+        out.append({"id": doc["id"], "label": doc["label"], "kind": doc["kind"], "as_of": runs[0].name,
+                    "year": doc.get("year"), "demo": bool(doc.get("demo")),
+                    "path": f"sectors/{sdir.name}/{runs[0].name}/sector.json",
+                    "count": len(doc["companies"]), "members": [c["ticker"] for c in doc["companies"]],
+                    "as_of_all": [p.name for p in runs]})
+    out.sort(key=lambda s: (s["demo"], s["kind"] != "sic", s["label"]))
+    return out
+
+
 def copy_outputs(data_dir: Path, site_data: Path) -> list[str]:
     copied = []
-    for tdir in sorted(p for p in data_dir.iterdir() if p.is_dir()):
+    for tdir in _ticker_dirs(data_dir):
         for adir in sorted(p for p in tdir.iterdir() if p.is_dir() and AS_OF.match(p.name)):
             dest = site_data / tdir.name / adir.name
             files = [adir / f for f in PUBLISHED if (adir / f).exists()]
@@ -39,7 +76,7 @@ def copy_outputs(data_dir: Path, site_data: Path) -> list[str]:
 
 def build_index(site_data: Path) -> dict:
     companies = []
-    for tdir in sorted(p for p in site_data.iterdir() if p.is_dir()):
+    for tdir in _ticker_dirs(site_data):
         runs = []
         name, demo = tdir.name, False
         for adir in sorted((p for p in tdir.iterdir() if p.is_dir() and AS_OF.match(p.name)), reverse=True):
@@ -61,7 +98,8 @@ def build_index(site_data: Path) -> dict:
         if runs:
             companies.append({"ticker": tdir.name, "name": name, "demo": demo, "runs": runs})
     companies.sort(key=lambda c: (c["demo"], c["ticker"]))
-    return {"generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "companies": companies}
+    return {"generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "companies": companies,
+            "sectors": build_sector_index(site_data)}
 
 
 def concept_labels() -> dict:
@@ -94,6 +132,7 @@ def company_card(site_data: Path, ticker: str, run: dict) -> dict:
     equity = ttm.get("all_equity_balance")
     return {
         "ticker": ticker, "name": detail.get("entity", {}).get("name", ticker), "demo": bool(detail.get("demo")),
+        "sic": detail.get("entity", {}).get("sic"), "sic_description": detail.get("entity", {}).get("sic_description"),
         "as_of": run["as_of"], "period": prof.get("as_of_period"),
         "traits": {k: v["label"] for k, v in (prof.get("traits") or {}).items()},
         "vector": vec,
@@ -111,7 +150,7 @@ def company_card(site_data: Path, ticker: str, run: dict) -> dict:
 def publish(data_dir: Path, site_dir: Path) -> dict:
     site_data = site_dir / "data"
     site_data.mkdir(parents=True, exist_ok=True)
-    copied = copy_outputs(data_dir, site_data) if data_dir.exists() else []
+    copied = (copy_outputs(data_dir, site_data) + copy_sectors(data_dir, site_data)) if data_dir.exists() else []
     index = build_index(site_data)
     (site_data / "index.json").write_text(json.dumps(index, indent=2))
     (site_data / "concepts.json").write_text(json.dumps(concept_labels(), indent=2))

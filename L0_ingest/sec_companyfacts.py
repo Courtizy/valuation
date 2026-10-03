@@ -17,6 +17,7 @@ from .schema import SCHEMA_VERSION
 
 TICKERS_URL = "https://www.sec.gov/files/company_tickers.json"
 COMPANYFACTS_URL = "https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json"
+SUBMISSIONS_URL = "https://data.sec.gov/submissions/CIK{cik}.json"
 
 
 class BytesClient(Protocol):
@@ -117,6 +118,16 @@ class SecCompanyFactsAdapter:
                 return normalize_cik(row["cik_str"]), row.get("title", "")
         raise TickerNotFound(f"ticker not found in SEC map: {ticker!r}")
 
+    def industry(self, cik10: str) -> dict:
+        """SIC code and description from the submissions endpoint; {} if unavailable.
+        Optional context for sector screens, so a failure here never stops ingest."""
+        try:
+            data, _, _ = self._get(SUBMISSIONS_URL.format(cik=cik10), f"submissions_CIK{cik10}.json")
+            j = json.loads(data)
+            return {"sic": str(j["sic"]) if j.get("sic") else None, "description": j.get("sicDescription") or None}
+        except Exception:  # noqa: BLE001
+            return {}
+
     def fetch(self, *, ticker: str | None = None, cik: str | int | None = None) -> dict:
         """Fetch companyfacts and return a raw_filing dict (not yet written)."""
         if (ticker is None) == (cik is None):
@@ -126,6 +137,7 @@ class SecCompanyFactsAdapter:
         url = COMPANYFACTS_URL.format(cik=cik10)
         data, fetched_at, from_cache = self._get(url, f"companyfacts_CIK{cik10}.json")
         payload = json.loads(data)
+        sic = self.industry(cik10)
 
         return {
             "schema_version": SCHEMA_VERSION,
@@ -140,6 +152,8 @@ class SecCompanyFactsAdapter:
                 "cik": cik10,
                 "name": payload.get("entityName", ""),
                 "ticker": ticker.strip().upper() if ticker else None,
+                "sic": sic.get("sic"),
+                "sic_description": sic.get("description"),
             },
             "facts": flatten_facts(payload),
         }

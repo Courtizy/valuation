@@ -18,6 +18,7 @@ pip install -e ".[dev]"
 pytest
 export SEC_USER_AGENT="Your Name you@example.com"
 python pipeline.py run AAPL --stop-after L1          # data/AAPL/<today>/company_detail.json
+python pipeline.py sector sic-of:AAPL                # data/sectors/sic-3571/<today>/sector.json
 python -m L3_app.publish && python -m http.server -d site 8000
 ```
 
@@ -29,6 +30,7 @@ python -m L3_app.publish && python -m http.server -d site 8000
 | `docs/L0_ingestor_design.md` | SEC ingest |
 | `docs/L1_concepts.md`, `docs/L1_normalize.md` | concept registry, normalizer |
 | `docs/L1_build.md` | frequency views and ratio analysis |
+| `docs/L1_sector.md` | sector screens: sources, figures, benchmarks, site |
 | `docs/core_projection.md` | projection engine |
 | `docs/L3_site.md` | GitHub Pages app, Actions, setup |
 

@@ -308,3 +308,38 @@ table:not(.list) td:not(:first-child), table:not(.list) th:not(:first-child) { w
 .chart .range-band { fill: var(--series-1); fill-opacity: 0.12; stroke: var(--series-1); stroke-opacity: 0.4; stroke-dasharray: 4 3; }
 .chart .divider { stroke: var(--muted); stroke-dasharray: 3 4; }
 .chart .tick.est { font-style: italic; }
+
+/* sector charts */
+.chart .sc-dot { fill: var(--series-1); fill-opacity: 0.55; stroke: var(--surface); stroke-width: 1.5; }
+.chart .sc-dot.me, .chart .hbar.me { fill: var(--series-2); fill-opacity: 1; }
+.chart .hbar { fill: var(--series-1); fill-opacity: 0.75; }
+.chart .link { cursor: pointer; }
+.chart .tick.strong { fill: var(--ink); font-weight: 600; }
+.chart .axis-title { fill: var(--ink-2); }
+
+/* sector: pills, sortable table, benchmark position bars */
+.pill { display: inline-block; font-size: 11px; line-height: 16px; padding: 0 7px; border-radius: 99px;
+  background: var(--surface-2); color: var(--ink-2); white-space: nowrap; }
+.pill.ok { background: color-mix(in srgb, var(--good) 15%, var(--surface)); color: var(--good); }
+table.sortable th { cursor: pointer; user-select: none; }
+table.sortable th.sorted { color: var(--ink); }
+tr.link { cursor: pointer; }
+td.strong { font-weight: 600; }
+td.up { color: var(--good); }
+td.down { color: var(--critical); }
+.sector-pick { max-width: 100%; font: inherit; font-size: 13px; padding: 4px 8px; border: 1px solid var(--border);
+  border-radius: 8px; background: var(--surface); color: var(--ink); }
+.sector-action { margin-top: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface-2); }
+.sector-action p { margin: 0 0 8px; }
+.posbar-cell { min-width: 170px; text-align: left !important; }
+.posbar { position: relative; height: 16px; }
+.posbar .rng { position: absolute; top: 5px; height: 6px; border-radius: 3px; background: color-mix(in srgb, var(--series-1) 30%, var(--surface)); }
+.posbar .med { position: absolute; top: 1px; width: 2px; height: 14px; margin-left: -1px; background: var(--ink-2); }
+.posbar .me { position: absolute; top: 2px; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%;
+  background: var(--series-2); border: 2px solid var(--surface); }
+table.bench td:first-child { white-space: nowrap; }
+.hint { font-size: 12px; color: var(--muted); }
+[hidden] { display: none !important; }
+#pp-table th:nth-child(2), #pp-table td:nth-child(2) { text-align: left; }
+#pp-table .pp-price { width: 92px; min-height: 30px; padding: 4px 8px; text-align: right; }

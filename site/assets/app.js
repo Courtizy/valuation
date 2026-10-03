@@ -2,11 +2,12 @@
 // No valuation math runs here: projections are calculated in Python (L1 trend
 // case, or the DCF's projection) and only displayed.
 
-import { areaChart, lineChart, rangeChart } from "./charts.js";
+import { areaChart, barListChart, lineChart, rangeChart, scatterChart } from "./charts.js";
 
 const $ = (id) => document.getElementById(id);
 const state = { index: null, concepts: {}, company: null, run: null, detail: null, comparison: null, scn: "p50", companies: null,
-                view: "annual", fw: "reformulated", tab: "company" };
+                view: "annual", fw: "reformulated", tab: "company", sector: null, sectorMeta: null,
+                secSort: { key: "revenue", dir: -1 } };
 
 // ---------------------------------------------------------------- storage
 
@@ -118,6 +119,7 @@ async function selectRun(asOf) {
       ? await getJSON(`data/${state.company.ticker}/${state.run.as_of}/model_results/comps.json`).catch(() => null) : null;
     state.dcf = state.run.models?.includes("dcf")
       ? await getJSON(`data/${state.company.ticker}/${state.run.as_of}/model_results/dcf.json`).catch(() => null) : null;
+    await loadSector();
   } catch (e) {
     banner(`Couldn't load results for ${state.company.ticker} as of ${asOf}: ${e.message}`);
     return;
@@ -271,6 +273,8 @@ function renderCompany() {
   renderReturnsChart();
   renderStatements();
   renderRatios();
+  renderBenchmarks();
+  renderSectorCard();
 }
 
 function latestAnalysis() {
@@ -563,6 +567,202 @@ function renderRatios() {
   $("ratio-note").textContent = `${spec.note} Marginal tax rate ${pct(state.detail.classification.marginal_tax_rate)}.`;
 }
 
+// ---------------------------------------------------------------- sector
+// A sector screen (L1 sector.json) gives every member the same few figures from
+// SEC frames. Company detail shows this company against the sector (benchmarks)
+// and the sector itself (charts and a table); Valuation uses it to pick comps peers.
+
+const SEC_METRICS = [
+  ["revenue_growth", "Revenue growth (1 yr)", pct, "pts"],
+  ["revenue_cagr", "Revenue CAGR (3 yr)", pct, "pts"],
+  ["gross_margin", "Gross margin", pct, "pts"],
+  ["operating_margin", "Operating margin", pct, "pts"],
+  ["ebitda_margin", "EBITDA margin", pct, "pts"],
+  ["net_margin", "Net margin", pct, "pts"],
+  ["fcf_margin", "FCF margin", pct, "pts"],
+  ["capex_to_sales", "Capex / sales", pct, "pts"],
+  ["roa", "Return on assets", pct, "pts"],
+  ["roe", "Return on equity", pct, "pts"],
+  ["debt_to_ebitda", "Debt / EBITDA", times, "x"],
+  ["liabilities_to_assets", "Liabilities / assets", pct, "pts"],
+];
+
+function sectorsFor(ticker) { return (state.index.sectors || []).filter((x) => x.members.includes(ticker)); }
+
+async function loadSector() {
+  const t = state.company.ticker, list = sectorsFor(t);
+  const want = store.get(`sector:${t}`);
+  state.sectorMeta = list.find((x) => x.id === want) || list[0] || null;
+  state.sector = state.sectorMeta ? await getJSON(`data/${state.sectorMeta.path}`).catch(() => null) : null;
+}
+
+function sectorMe() { return state.sector?.companies.find((c) => c.ticker === state.company.ticker) || null; }
+
+function sectorPicker() {
+  const list = sectorsFor(state.company.ticker);
+  if (list.length < 2) return `<span class="muted small">${esc(state.sectorMeta.label)}</span>`;
+  return `<select class="sector-pick" aria-label="Sector">${list.map((x) =>
+    `<option value="${esc(x.id)}"${x.id === state.sectorMeta.id ? " selected" : ""}>${esc(x.label)} (${x.count})</option>`).join("")}</select>`;
+}
+
+function wireSectorPicker(root) {
+  root.querySelectorAll(".sector-pick").forEach((sel) => sel.onchange = async () => {
+    store.set(`sector:${state.company.ticker}`, sel.value);
+    await loadSector();
+    renderBenchmarks(); renderSectorCard();
+    if (state.tab === "valuation") renderValuation();
+  });
+}
+
+function screenButtons() {
+  const e = state.detail.entity || {}, t = state.company.ticker;
+  const sic = e.sic ? `SIC ${e.sic}${e.sic_description ? ` · ${esc(e.sic_description)}` : ""}` : "its industry code";
+  return `<div class="actions"><button type="button" class="primary" data-screen="${e.sic ? `sic:${esc(e.sic)}` : `sic-of:${esc(t)}`}">Screen ${sic}</button>
+    <a href="#run" data-goto-run>Other sector options</a><span class="status" role="status"></span></div>`;
+}
+
+function wireScreenButtons(root) {
+  root.querySelectorAll("[data-screen]").forEach((b) => b.onclick = async () => {
+    const st = root.querySelector(".status");
+    st.className = "status"; st.textContent = "Starting…";
+    try { setStatus(st, await dispatchPipeline({ sector: b.dataset.screen, as_of: new Date().toISOString().slice(0, 10) })); }
+    catch (err) { setStatus(st, { ok: false, msg: err.message }); }
+  });
+  root.querySelectorAll("[data-goto-run]").forEach((a) => a.onclick = (ev) => {
+    ev.preventDefault();
+    document.querySelector('#r-mode [data-mode="sector"]').click();
+    document.querySelector('.tab[data-tab="run"]').click();
+  });
+}
+
+function renderBenchmarks() {
+  const card = $("bench-card");
+  if (!card) return;
+  const me = sectorMe();
+  if (!state.sector || !me) {
+    card.innerHTML = `<div class="card-head"><h2>Versus its sector</h2></div>
+      <p class="muted">No sector screen includes ${esc(state.company.ticker)} yet. Screening its sector pulls a few figures for every company
+      in it from SEC data, so each ratio here can be read against the sector's quartiles.</p>${state.company.demo ? "" : screenButtons()}`;
+    wireScreenButtons(card);
+    return;
+  }
+  const B = state.sector.benchmarks;
+  const vals = (k) => state.sector.companies.map((c) => c[k]).filter(fin);
+  const rows = SEC_METRICS.map(([k, name, f, unit]) => {
+    const b = B[k] || {}, v = me[k];
+    if (!fin(b.median)) return "";
+    const xs = vals(k), lo = Math.min(...xs), hi = Math.max(...xs), span = hi - lo || 1;
+    const at = (x) => `${(((Math.min(Math.max(x, lo), hi) - lo) / span) * 100).toFixed(1)}%`;
+    const d = fin(v) ? v - b.median : null;
+    const dTxt = !fin(d) ? NA : unit === "pts" ? `${d >= 0 ? "+" : "−"}${Math.abs(d * 100).toFixed(1)} pts` : `${d >= 0 ? "+" : "−"}${Math.abs(d).toFixed(2)}x`;
+    return `<tr><td>${esc(name)}</td><td>${f(b.q1)}</td><td>${f(b.median)}</td><td>${f(b.q3)}</td><td class="strong">${f(v)}</td>
+      <td class="${fin(d) && Math.abs(d) > 1e-9 ? (d > 0 ? "up" : "down") : ""}">${dTxt}</td>
+      <td class="posbar-cell"><div class="posbar" title="sector range ${f(lo)} to ${f(hi)}">
+        <span class="rng" style="left:${at(b.q1)};width:calc(${at(b.q3)} - ${at(b.q1)})"></span><span class="med" style="left:${at(b.median)}"></span>
+        ${fin(v) ? `<span class="me" style="left:${at(v)}"></span>` : ""}</div></td></tr>`;
+  }).join("");
+  card.innerHTML = `<div class="card-head"><h2>Versus its sector</h2>${sectorPicker()}</div>
+    <div class="table-wrap"><table class="list bench"><thead><tr><th>Metric</th><th>Q1</th><th>Median</th><th>Q3</th>
+      <th>${esc(state.company.ticker)}</th><th>vs median</th><th class="posbar-cell">Position <span class="muted small">bar = Q1–Q3 · line = median · dot = ${esc(state.company.ticker)}</span></th></tr></thead>
+      <tbody>${rows}</tbody></table></div>
+    <p class="legend-note">${state.sector.companies.length} companies · calendar ${state.sector.year}${me.stale ? ` (${esc(state.company.ticker)}: ${me.calendar_year})` : ""} · screened ${esc(state.sectorMeta.as_of)}.
+      Sector figures come from SEC frames, so they can differ a little from the statements above (calendar vs fiscal year, tag choice). "vs median" is coloured by direction, not by good or bad.</p>`;
+  wireSectorPicker(card);
+}
+
+const SEC_COLS = [
+  ["ticker", "Company"], ["revenue", "Revenue"], ["revenue_growth", "Growth"], ["revenue_cagr", "3-yr CAGR"],
+  ["gross_margin", "Gross m."], ["operating_margin", "Op. m."], ["fcf_margin", "FCF m."], ["roe", "ROE"],
+  ["debt_to_ebitda", "Debt/EBITDA"], ["stage", "Stage"], ["detail", "Detail"],
+];
+
+function inIndex(t) { return state.index.companies.some((c) => c.ticker === t); }
+
+function renderSectorCard() {
+  const card = $("sector-card");
+  if (!card) return;
+  if (!state.sector) { card.hidden = true; return; }
+  card.hidden = false;
+  const S = state.sector, me = state.company.ticker, demo = !!S.demo;
+  card.innerHTML = `<div class="card-head"><h2>Sector</h2>${sectorPicker()}</div>
+    <div class="grid-2">
+      <div><h3>Growth and profitability</h3><div id="sec-scatter"></div></div>
+      <div><h3>Revenue, latest year</h3><div id="sec-bars"></div></div>
+    </div>
+    <div class="sector-action" id="sec-action" hidden></div>
+    <div class="table-wrap" style="margin-top:12px"><table class="list sortable" id="sec-table"></table></div>
+    <p class="legend-note">Click a column to sort; click a company to open it. ${S.notes.map(esc).join(" · ")}</p>`;
+  wireSectorPicker(card);
+  const open = (t) => sectorOpen(t);
+  scatterChart($("sec-scatter"), {
+    points: S.companies.map((c) => ({ x: c.revenue_cagr, y: c.operating_margin, label: c.ticker, sub: c.name, highlight: c.ticker === me, t: c.ticker })),
+    xFormat: (v, ax) => pct(v, ax), yFormat: (v, ax) => pct(v, ax), xLabel: "Revenue CAGR, 3 yr", yLabel: "Operating margin",
+    onClick: (p) => open(p.t) });
+  const top = S.companies.slice(0, 15);
+  if (!top.some((c) => c.ticker === me) && sectorMe()) top.push(sectorMe());
+  barListChart($("sec-bars"), { items: top.map((c) => ({ label: c.ticker, title: c.name, value: c.revenue, highlight: c.ticker === me, t: c.ticker })),
+    format: money, onClick: (it) => open(it.t) });
+  drawSectorTable(demo);
+}
+
+function drawSectorTable(demo) {
+  const S = state.sector, me = state.company.ticker, { key, dir } = state.secSort;
+  const val = (c) => (key === "stage" ? c.traits.stage : key === "detail" ? (inIndex(c.ticker) ? 0 : 1) : c[key]);
+  const rows = [...S.companies].sort((a, b) => {
+    const x = val(a), y = val(b);
+    if (x == null) return 1; if (y == null) return -1;
+    return (x > y ? 1 : x < y ? -1 : 0) * dir;
+  });
+  const t = $("sec-table");
+  t.innerHTML = `<thead><tr>${SEC_COLS.map(([k, n]) => `<th data-k="${k}" class="${k === key ? "sorted" : ""}" aria-sort="${k === key ? (dir > 0 ? "ascending" : "descending") : "none"}">${n}${k === key ? (dir > 0 ? " ▲" : " ▼") : ""}</th>`).join("")}</tr></thead>
+    <tbody>${rows.map((c) => {
+      const has = inIndex(c.ticker), synth = demo && !has;
+      return `<tr data-t="${esc(c.ticker)}" class="${c.ticker === me ? "target" : ""} link">
+      <td><b>${esc(c.ticker)}</b> <span class="muted small">${esc(c.name || "")}</span>${c.stale ? ` <span class="pill" title="hasn't reported ${S.year} yet">${c.calendar_year}</span>` : ""}</td>
+      <td>${money(c.revenue)}</td><td class="${upClass(c.revenue_growth)}">${pct(c.revenue_growth)}</td><td>${pct(c.revenue_cagr)}</td>
+      <td>${pct(c.gross_margin)}</td><td>${pct(c.operating_margin)}</td><td>${pct(c.fcf_margin)}</td><td>${pct(c.roe)}</td>
+      <td>${times(c.debt_to_ebitda)}</td><td><span class="pill">${esc(c.traits.stage)}</span></td>
+      <td>${c.ticker === me ? '<span class="muted small">this company</span>' : has ? '<span class="pill ok">open</span>' : synth ? '<span class="muted small">synthetic</span>' : '<span class="pill">build</span>'}</td></tr>`;
+    }).join("")}</tbody>`;
+  t.querySelectorAll("th").forEach((th) => th.onclick = () => {
+    const k = th.dataset.k;
+    state.secSort = { key: k, dir: state.secSort.key === k ? -state.secSort.dir : (k === "ticker" || k === "stage" ? 1 : -1) };
+    drawSectorTable(demo);
+  });
+  t.querySelectorAll("tbody tr").forEach((tr) => tr.onclick = () => sectorOpen(tr.dataset.t));
+}
+
+// Open a sector company: switch to it when its detail is published; otherwise
+// offer to build it (a Pipeline run through company details).
+async function sectorOpen(ticker) {
+  if (ticker === state.company.ticker) return;
+  if (inIndex(ticker)) {
+    $("company").value = ticker;
+    await selectCompany(ticker);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    return;
+  }
+  const box = $("sec-action");
+  const c = state.sector.companies.find((x) => x.ticker === ticker);
+  box.hidden = false;
+  if (state.sector.demo) {
+    box.innerHTML = `<p class="muted"><b>${esc(ticker)}</b> is a synthetic peer in the demo sector; it has no filings to build.</p>`;
+    return;
+  }
+  box.innerHTML = `<p><b>${esc(ticker)}</b> · ${esc(c?.name || "")} has no company detail yet. Building it fetches its filings and
+    publishes statements, ratios and a profile here (a few minutes).</p>
+    <div class="actions"><button type="button" class="primary" id="sec-build">Build company detail for ${esc(ticker)}</button>
+    <span class="status" role="status"></span></div>`;
+  box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  $("sec-build").onclick = async () => {
+    const st = box.querySelector(".status");
+    st.className = "status"; st.textContent = "Starting…";
+    try {
+      setStatus(st, await dispatchPipeline({ ticker, as_of: new Date().toISOString().slice(0, 10), models: "dcf", stop_after: "L1" }));
+    } catch (err) { setStatus(st, { ok: false, msg: err.message }); }
+  };
+}
+
 // ---------------------------------------------------------------- valuation
 
 const MODEL_NAMES = { dcf: "DCF (standalone)", dcf_synergy: "DCF with synergies", just_synergy: "Just synergies",
@@ -582,16 +782,19 @@ function renderValuation() {
     body.innerHTML = `<div class="card empty"><h2>No model results for this run</h2>
       <p>Run the pipeline through <b>Models and reconcile</b> (with an assumptions file for each model) and the valuation appears here.</p></div>`;
     renderProfileCard(body);
+    body.insertAdjacentHTML("beforeend", '<div id="val-peers"></div>');
+    renderPeerPicker();
     renderSimilar(body);
     return;
   }
   state.scn = state.scn || "p50";
-  body.innerHTML = `<div id="val-head"></div><div id="val-ff"></div><div id="val-profile"></div><div id="val-comps"></div><div id="val-dcf"></div>
-    <div id="val-similar"></div><div id="val-diffs"></div>`;
+  body.innerHTML = `<div id="val-head"></div><div id="val-ff"></div><div id="val-profile"></div><div id="val-comps"></div><div id="val-peers"></div>
+    <div id="val-dcf"></div><div id="val-similar"></div><div id="val-diffs"></div>`;
   renderHeadline();
   renderField();
   renderProfileCard($("val-profile"));
   renderCompsCard();
+  renderPeerPicker();
   renderDcfCard();
   renderSimilar($("val-similar"));
   const diffs = c.assumption_differences || [];
@@ -806,6 +1009,104 @@ function renderCompsCard() {
   </div>`;
 }
 
+// ---- comps peer picker ------------------------------------------------------------
+// Ranks the sector's companies by closeness on screen figures (z-scores of growth,
+// margins, cash-flow stability, capex intensity, leverage and size) plus shared
+// traits. Saving writes the ticked tickers (and any prices typed) into
+// assumptions/{TICKER}/comps.json through the GitHub API. Peers the picker doesn't
+// show (entered by hand with "sec": false, or outside this sector) are kept.
+const PEER_KEYS = ["revenue_cagr", "operating_margin", "fcf_margin", "capex_to_sales", "debt_to_ebitda", "log_revenue"];
+
+function rankPeers(rows, me) {
+  const v = (c, k) => (k === "log_revenue" ? (c.revenue > 0 ? Math.log10(c.revenue) : null) : c[k]);
+  const stats = Object.fromEntries(PEER_KEYS.map((k) => {
+    const xs = rows.map((c) => v(c, k)).filter(fin);
+    const m = xs.reduce((a, b) => a + b, 0) / (xs.length || 1);
+    const sd = Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / (xs.length || 1)) || 1;
+    return [k, { m, sd }];
+  }));
+  return rows.filter((c) => c.ticker !== me.ticker).map((c) => {
+    let d2 = 0, n = 0;
+    for (const k of PEER_KEYS) {
+      const a = v(c, k), b = v(me, k);
+      if (fin(a) && fin(b)) { d2 += ((a - b) / stats[k].sd) ** 2; n++; }
+    }
+    const traits = Object.keys(me.traits).filter((k) => c.traits[k] === me.traits[k]).length;
+    const dist = n ? Math.sqrt(d2 / n) : Infinity;
+    return { c, dist, traits, score: n ? 1 / (1 + dist) * (0.8 + 0.05 * traits) : 0 };
+  }).sort((a, b) => b.score - a.score);
+}
+
+function renderPeerPicker() {
+  const root = $("val-peers");
+  if (!root) return;
+  const me = sectorMe();
+  if (!state.sector || !me) {
+    root.innerHTML = `<div class="card"><div class="card-head"><h2>Pick comps peers from a sector</h2></div>
+      <p class="muted">Screen ${esc(state.company.ticker)}'s sector first (Company detail → Versus its sector); its companies then show here, ranked by similarity, to tick as comps peers.</p></div>`;
+    return;
+  }
+  const current = new Map((state.comps?.details?.peers || []).map((p) => [p.ticker, p]));
+  const ranked = rankPeers(state.sector.companies, me);
+  const ticked = new Set(current.size ? ranked.filter((r) => current.has(r.c.ticker)).map((r) => r.c.ticker) : ranked.slice(0, 6).map((r) => r.c.ticker));
+  const demo = state.company.demo || state.sector.demo;
+  root.innerHTML = `<div class="card"><div class="card-head"><h2>Comps peers from ${esc(state.sector.label)}</h2>
+      ${sectorPicker()}<span class="muted small" id="pp-count"></span></div>
+    <p class="muted small">Ranked by closeness on growth, margins, cash-flow stability, capex intensity, leverage and size, plus shared traits.
+      ${current.size ? "Ticked = the peers in the current comps run." : "The six closest are ticked to start."}
+      A peer needs a share price until a market-data source is added; type one here or in comps.json.</p>
+    <div class="table-wrap"><table class="list" id="pp-table"><thead><tr><th>Use</th><th>Company</th><th>Similarity</th><th>Traits shared</th>
+      <th>Revenue</th><th>3-yr CAGR</th><th>Op. m.</th><th>Debt/EBITDA</th><th>Price</th></tr></thead><tbody>
+      ${ranked.map((r) => { const c = r.c, cur = current.get(c.ticker); return `<tr>
+        <td><input type="checkbox" value="${esc(c.ticker)}" ${ticked.has(c.ticker) ? "checked" : ""} aria-label="Use ${esc(c.ticker)}"></td>
+        <td><b>${esc(c.ticker)}</b> <span class="muted small">${esc(c.name || "")}</span></td>
+        <td>${pct(r.score, true)}</td><td title="${Object.entries(c.traits).map(([k, x]) => `${TRAIT_NAMES[k] || k}: ${x}`).join("\n")}">${r.traits} of 4</td>
+        <td>${money(c.revenue)}</td><td>${pct(c.revenue_cagr)}</td><td>${pct(c.operating_margin)}</td><td>${times(c.debt_to_ebitda)}</td>
+        <td><input type="number" class="pp-price" data-t="${esc(c.ticker)}" min="0" step="0.01" placeholder="$" value="${cur?.price ?? ""}" aria-label="${esc(c.ticker)} price"></td></tr>`; }).join("")}
+    </tbody></table></div>
+    <div class="actions">
+      <button type="button" class="primary" id="pp-save" ${demo ? "disabled" : ""}>Save to comps.json</button>
+      <button type="button" id="pp-run" ${demo ? "disabled" : ""}>Save and run comps</button>
+      <span class="status" role="status" id="pp-status">${demo ? "Demo data: saving is off." : ""}</span>
+    </div>
+    <p class="legend-note">Writes <code>assumptions/${esc(state.company.ticker)}/comps.json</code> in your repo with the token from the Run pipeline tab
+      (it needs Contents: read and write). Peers not listed here (entered by hand, or from outside this sector) are kept.</p></div>`;
+  wireSectorPicker(root);
+  const count = () => { $("pp-count").textContent = `${root.querySelectorAll("#pp-table input[type=checkbox]:checked").length} ticked`; };
+  root.querySelectorAll("#pp-table input[type=checkbox]").forEach((x) => x.onchange = count);
+  count();
+  $("pp-save").onclick = () => savePeers(false);
+  $("pp-run").onclick = () => savePeers(true);
+}
+
+async function savePeers(andRun) {
+  const st = $("pp-status"), t = state.company.ticker, path = `assumptions/${t}/comps.json`;
+  const picks = [...document.querySelectorAll("#pp-table input[type=checkbox]:checked")].map((x) => x.value);
+  const prices = Object.fromEntries([...document.querySelectorAll(".pp-price")].filter((x) => x.value !== "").map((x) => [x.dataset.t, Number(x.value)]));
+  if (!picks.length) { setStatus(st, { ok: false, msg: "Tick at least one peer." }); return; }
+  if (!gh().token) { setStatus(st, { ok: false, noToken: true, msg: "Add a token on the Run pipeline tab (Contents: read and write) to save from here." }); return; }
+  st.className = "status"; st.textContent = "Saving…";
+  try {
+    const { sha, doc } = await readRepoJSON(path);
+    const d = doc || { multiples: ["ev_ebitda", "ev_sales"], range: "min_max", peers: [] };
+    const old = new Map((d.peers || []).map((e) => (typeof e === "string" ? [e.toUpperCase(), { ticker: e.toUpperCase() }] : [String(e.ticker || "").toUpperCase(), e])));
+    // keep what this picker didn't show: hand-entered peers and peers outside this sector
+    const shown = new Set(state.sector.companies.map((c) => c.ticker));
+    const kept = [...old.values()].filter((e) => e.sec === false || !shown.has(String(e.ticker || "").toUpperCase()));
+    d.peers = [...kept, ...picks.map((p) => {
+      const e = { ...(old.get(p) || { ticker: p }) };
+      if (prices[p] != null) e.price = prices[p];
+      return e;
+    })];
+    d.sources = { ...(d.sources || {}), peers: `picked from ${state.sector.label} (screened ${state.sectorMeta.as_of}) on ${new Date().toISOString().slice(0, 10)}` };
+    await writeRepoJSON(path, d, sha, `assumptions: ${t} comps peers from ${state.sector.label}`);
+    if (!andRun) { setStatus(st, { ok: true, msg: `Saved ${picks.length} peers to ${path}. Run comps to use them.` }); return; }
+    const models = [...new Set([...(state.run.models || []).filter((m) => m === "dcf" || m === "comps"), "comps"])];
+    const r = await dispatchPipeline({ ticker: t, as_of: new Date().toISOString().slice(0, 10), models: models.join(","), stop_after: "L2" });
+    setStatus(st, r.ok ? { ok: true, html: `Saved ${picks.length} peers. ${r.html}` } : r);
+  } catch (err) { setStatus(st, { ok: false, msg: err.message }); }
+}
+
 function bridgeRows(b) {
   const excess = b.cash * (1 - b.operating_cash_pct);
   const other = b.debt - excess - b.net_debt;   // e.g. long-term investments, when included
@@ -876,11 +1177,66 @@ function renderDcfCard() {
 
 // ---------------------------------------------------------------- run pipeline
 
+// ---- GitHub: start a pipeline run, read and write a repo file -----------------
+// The token lives only in this browser (and only when "Remember" is ticked).
+function gh() {
+  const owner = ($("r-owner").value || store.get("gh_owner") || "").trim();
+  const repo = ($("r-repo").value || store.get("gh_repo") || "").trim();
+  const token = ($("r-token").value || store.get("gh_token") || "").trim();
+  return { owner, repo, token, base: `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}` };
+}
+const GH_HEADERS = (token) => ({ Accept: "application/vnd.github+json", Authorization: `Bearer ${token}`, "X-GitHub-Api-Version": "2022-11-28" });
+const actionsUrl = (g) => `https://github.com/${encodeURIComponent(g.owner)}/${encodeURIComponent(g.repo)}/actions`;
+
+async function dispatchPipeline(inputs) {
+  const g = gh();
+  if (!g.owner || !g.repo) return { ok: false, msg: "Fill in the owner and repository on the Run pipeline tab." };
+  if (!g.token) return { ok: false, noToken: true, msg: "No token: add one on the Run pipeline tab, or use the Actions page." };
+  const res = await fetch(`${g.base}/actions/workflows/pipeline.yml/dispatches`, {
+    method: "POST", headers: GH_HEADERS(g.token), body: JSON.stringify({ ref: "main", inputs }) });
+  if (res.status === 204) return { ok: true, html: `Started. <a href="${actionsUrl(g)}" target="_blank" rel="noopener">Follow it on GitHub</a>; reload this page when it finishes.` };
+  const msg = await res.json().catch(() => ({}));
+  return { ok: false, msg: `GitHub said ${res.status}: ${msg.message || "request failed"}` };
+}
+
+const b64encode = (str) => btoa(String.fromCharCode(...new TextEncoder().encode(str)));
+const b64decode = (b64) => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\s/g, "")), (c) => c.charCodeAt(0)));
+
+async function readRepoJSON(path) {
+  const g = gh();
+  const res = await fetch(`${g.base}/contents/${path}?ref=main`, { headers: GH_HEADERS(g.token) });
+  if (res.status === 404) return { sha: null, doc: null };
+  if (!res.ok) throw new Error(`GitHub said ${res.status} reading ${path}`);
+  const j = await res.json();
+  return { sha: j.sha, doc: JSON.parse(b64decode(j.content)) };
+}
+
+async function writeRepoJSON(path, doc, sha, message) {
+  const g = gh();
+  const res = await fetch(`${g.base}/contents/${path}`, {
+    method: "PUT", headers: GH_HEADERS(g.token),
+    body: JSON.stringify({ message, content: b64encode(JSON.stringify(doc, null, 2) + "\n"), branch: "main", ...(sha ? { sha } : {}) }) });
+  if (!res.ok) {
+    const msg = await res.json().catch(() => ({}));
+    throw new Error(res.status === 403
+      ? "GitHub said 403: the token needs Contents: read and write on this repository"
+      : `GitHub said ${res.status}: ${msg.message || "write failed"}`);
+  }
+}
+
+function setStatus(el, r) {
+  el.className = `status ${r.ok ? "ok" : r.noToken ? "" : "err"}`;
+  if (r.html) el.innerHTML = r.html; else el.textContent = r.msg;
+}
+
+// ---- Run pipeline tab ------------------------------------------------------------
 function repoGuess() {
   const h = location.hostname;
   if (h.endsWith(".github.io")) return { owner: h.split(".")[0], repo: location.pathname.split("/").filter(Boolean)[0] || `${h}` };
   return { owner: "", repo: "valuation" };
 }
+
+function runMode() { return document.querySelector("#r-mode [aria-pressed=true]")?.dataset.mode || "company"; }
 
 function setupRunForm() {
   const g = repoGuess();
@@ -888,48 +1244,77 @@ function setupRunForm() {
   $("r-repo").value = store.get("gh_repo") || g.repo;
   const tok = store.get("gh_token");
   if (tok) { $("r-token").value = tok; $("r-remember").checked = true; }
-  $("r-asof").value = new Date().toISOString().slice(0, 10);
+  const today = new Date().toISOString().slice(0, 10);
+  $("r-asof").value = today; $("r-sasof").value = today;
+
+  document.querySelectorAll("#r-mode button").forEach((b) => b.onclick = () => {
+    document.querySelectorAll("#r-mode button").forEach((x) => x.setAttribute("aria-pressed", x === b));
+    $("r-company").hidden = b.dataset.mode !== "company"; $("r-sector").hidden = b.dataset.mode !== "sector";
+    refresh();
+  });
+  $("r-skind").onchange = () => {
+    document.querySelectorAll("#r-sector [data-for]").forEach((f) => { f.hidden = f.dataset.for !== $("r-skind").value; });
+    refresh();
+  };
+  // models need company details, so picking one locks that box on
+  const syncDetail = () => {
+    const anyModel = !!document.querySelector("#r-models input:checked");
+    if (anyModel) $("r-detail").checked = true;
+    $("r-detail").disabled = anyModel;
+    $("r-run-hint").textContent = anyModel ? "Models use the company details, so those are rebuilt too." : "";
+  };
+  $("r-models").addEventListener("change", syncDetail);
+
   const refresh = () => {
-    const o = $("r-owner").value.trim(), r = $("r-repo").value.trim(), i = runInputs();
-    $("r-actions-link").href = o && r ? `https://github.com/${encodeURIComponent(o)}/${encodeURIComponent(r)}/actions/workflows/pipeline.yml` : "https://github.com";
-    $("r-cli").textContent = `gh workflow run pipeline.yml${o && r ? ` -R ${o}/${r}` : ""} \\\n  -f ticker=${i.ticker || "AAPL"} -f as_of=${i.as_of} -f stop_after=${i.stop_after} -f models=${i.models}`;
+    syncDetail();
+    const gg = gh(), i = runInputs();
+    $("r-actions-link").href = gg.owner && gg.repo ? `${actionsUrl(gg)}/workflows/pipeline.yml` : "https://github.com";
+    const flags = Object.entries(i).filter(([, v]) => v !== "").map(([k, v]) => `-f ${k}=${/\s|;/.test(v) ? `"${v}"` : v}`).join(" ");
+    $("r-cli").textContent = `gh workflow run pipeline.yml${gg.owner && gg.repo ? ` -R ${gg.owner}/${gg.repo}` : ""} \\\n  ${flags}`;
   };
   $("run-form").addEventListener("input", refresh);
+  $("run-form").addEventListener("change", refresh);
   refresh();
+
   $("run-form").onsubmit = async (e) => {
     e.preventDefault();
     const status = $("r-status");
-    const o = $("r-owner").value.trim(), r = $("r-repo").value.trim(), token = $("r-token").value.trim();
-    const inputs = runInputs();
-    store.set("gh_owner", o); store.set("gh_repo", r);
-    store.set("gh_token", $("r-remember").checked && token ? token : null);
-    if (!/^[A-Za-z][A-Za-z0-9.\-]{0,9}$/.test(inputs.ticker)) { status.className = "status err"; status.textContent = "Enter a valid ticker."; return; }
-    if (!o || !r) { status.className = "status err"; status.textContent = "Fill in the owner and repository."; return; }
-    if (!token) { status.className = "status"; status.textContent = "No token: use the Actions page link or the CLI command below."; return; }
+    store.set("gh_owner", $("r-owner").value.trim()); store.set("gh_repo", $("r-repo").value.trim());
+    store.set("gh_token", $("r-remember").checked && $("r-token").value.trim() ? $("r-token").value.trim() : null);
+    const i = runInputs();
+    const bad = runInputsError(i);
+    if (bad) { setStatus(status, { ok: false, msg: bad }); return; }
     status.className = "status"; status.textContent = "Starting…";
-    try {
-      const res = await fetch(`https://api.github.com/repos/${encodeURIComponent(o)}/${encodeURIComponent(r)}/actions/workflows/pipeline.yml/dispatches`, {
-        method: "POST",
-        headers: { Accept: "application/vnd.github+json", Authorization: `Bearer ${token}`, "X-GitHub-Api-Version": "2022-11-28" },
-        body: JSON.stringify({ ref: "main", inputs }),
-      });
-      if (res.status === 204) {
-        status.className = "status ok";
-        status.innerHTML = `Started. <a href="https://github.com/${esc(o)}/${esc(r)}/actions" target="_blank" rel="noopener">Follow it on GitHub</a>; reload this page when it finishes.`;
-      } else {
-        const msg = await res.json().catch(() => ({}));
-        status.className = "status err";
-        status.textContent = `GitHub said ${res.status}: ${msg.message || "request failed"}`;
-      }
-    } catch (err) {
-      status.className = "status err"; status.textContent = `Request failed: ${err.message}`;
-    }
+    try { setStatus(status, await dispatchPipeline(i)); } catch (err) { setStatus(status, { ok: false, msg: `Request failed: ${err.message}` }); }
   };
 }
 
+// Inputs for the Pipeline workflow. Company mode: company details alone = through L1;
+// any model ticked = through L2 with those models. Sector mode: one sector spec.
 function runInputs() {
-  const models = [...document.querySelectorAll("#r-models input:checked")].map((x) => x.value).join(",") || "dcf";
-  return { ticker: $("r-ticker").value.trim().toUpperCase(), as_of: $("r-asof").value, models, stop_after: $("r-stop").value };
+  if (runMode() === "sector") {
+    const kind = $("r-skind").value;
+    let spec = "";
+    if (kind === "sic") spec = `sic:${$("r-sic").value.trim()}`;
+    if (kind === "sic-of") spec = `sic-of:${$("r-sicof").value.trim().toUpperCase()}`;
+    if (kind === "list") spec = `list:${$("r-list").value.trim()}`;
+    if (kind === "traits") spec = "traits:" + [...document.querySelectorAll("#r-sector [data-trait]")]
+      .filter((x) => x.value).map((x) => `${x.dataset.trait}=${x.value}`).join(";");
+    return { sector: spec, as_of: $("r-sasof").value };
+  }
+  const models = [...document.querySelectorAll("#r-models input:checked")].map((x) => x.value);
+  return { ticker: $("r-ticker").value.trim().toUpperCase(), as_of: $("r-asof").value,
+           models: models.join(",") || "dcf", stop_after: models.length ? "L2" : "L1" };
+}
+
+function runInputsError(i) {
+  if (i.sector !== undefined) {
+    if (/^sic:\d{4}$|^sic-of:[A-Z][A-Z0-9.\-]{0,9}$|^list:[A-Za-z0-9_\-]{1,40}$|^traits:[a-z_]+=[a-z ]+(;[a-z_]+=[a-z ]+)*$/.test(i.sector)) return "";
+    return i.sector.startsWith("traits:") ? "Pick at least one trait." : "Fill in the sector field (SIC is 4 digits; a list name uses letters, digits, _ and -).";
+  }
+  if (!/^[A-Za-z][A-Za-z0-9.\-]{0,9}$/.test(i.ticker)) return "Enter a valid ticker.";
+  if (!$("r-detail").checked) return "Tick Company details or a model.";
+  return "";
 }
 
 init();

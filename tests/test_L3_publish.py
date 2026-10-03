@@ -37,6 +37,29 @@ def test_publish_copies_outputs_and_indexes(tmp_path):
     assert json.loads((site / "data" / "index.json").read_text())["companies"][0]["ticker"] == "ABC"
 
 
+def test_publish_sectors_and_skips_raw_screens(tmp_path):
+    data = tmp_path / "data"
+    run = data / "ABC" / "2026-09-30"
+    run.mkdir(parents=True)
+    (run / "company_detail.json").write_text(json.dumps({"entity": {"name": "ABC Inc.", "sic": "3674"}}))
+    for as_of in ("2026-09-30", "2026-10-02"):
+        d = data / "sectors" / "sic-3674" / as_of
+        d.mkdir(parents=True)
+        (d / "sector.json").write_text(json.dumps({"id": "sic-3674", "label": "SIC 3674", "kind": "sic", "year": 2025,
+                                                   "companies": [{"ticker": "ABC"}, {"ticker": "XYZ"}]}))
+    (data / "_screen" / "2026-10-02").mkdir(parents=True)
+    (data / "_screen" / "2026-10-02" / "raw_screen.json").write_text("{}")    # never published
+    site = tmp_path / "site"
+    out = publish(data, site)
+    assert "sectors/sic-3674/2026-10-02/sector.json" in out["copied"]
+    assert not any("_screen" in c for c in out["copied"]) and out["companies"] == ["ABC"]
+    (s,) = json.loads((site / "data" / "index.json").read_text())["sectors"]
+    assert s["as_of"] == "2026-10-02" and s["members"] == ["ABC", "XYZ"] and s["count"] == 2
+    assert s["path"] == "sectors/sic-3674/2026-10-02/sector.json" and s["as_of_all"] == ["2026-10-02", "2026-09-30"]
+    card = json.loads((site / "data" / "companies.json").read_text())["companies"][0]
+    assert card["sic"] == "3674"
+
+
 def test_demo_is_valid_and_flagged(tmp_path):
     out = write_demo(tmp_path)
     detail = json.loads((out / "company_detail.json").read_text())

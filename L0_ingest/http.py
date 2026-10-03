@@ -50,7 +50,7 @@ class HttpClient:
 
     def get_bytes(self, url: str) -> bytes:
         req = urllib.request.Request(
-            url, headers={"User-Agent": self.user_agent, "Accept": "application/json"}
+            url, headers={"User-Agent": self.user_agent, "Accept": "application/json, text/html;q=0.9, */*;q=0.5"}
         )
         for attempt in range(self.max_retries + 1):
             self._throttle()

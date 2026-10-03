@@ -6871,7 +6871,7 @@
     "traits": {
       "stage": {
         "label": "high growth",
-        "rule": "CAGR > 15% or not yet profitable",
+        "rule": "CAGR > 15%, or growing and not yet profitable",
         "measures": {
           "revenue_cagr": 0.32000000000000006,
           "operating_margin": 0.03000000000013385

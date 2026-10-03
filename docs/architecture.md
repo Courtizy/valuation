@@ -57,6 +57,8 @@ valuation/
   .github/workflows/  pipeline (dispatch), pages (deploy), tests       built
   pipeline.py         runner + CLI                                    built
   lineage.py          lineage block helper                            built
+  L0 sec_sector.py    SEC frames, EDGAR SIC lists                     built
+  L1 sector.py        sector screen: figures, traits, benchmarks      built
   packs/default.json  sector pack template                            built
   assumptions/        {TICKER}/{model}.json, _template/               built
   tests/  docs/
@@ -70,6 +72,10 @@ data/{TICKER}/{as_of}/canonical_statements.json       L1 stage 1
 data/{TICKER}/{as_of}/company_detail.json             L1 stage 2
 data/{TICKER}/{as_of}/model_results/{model}.json      L2 models
 data/{TICKER}/{as_of}/comparison.json                 L2 reconcile
+data/_screen/{as_of}/raw_screen.json                  L0 sector frames (all filers)
+data/_screen/{as_of}/sic_{code}.json                  L0 EDGAR company list for a SIC code
+data/sectors/{sector_id}/{as_of}/sector.json          L1 sector screen (docs/L1_sector.md)
+sectors/{name}.json                                   custom sector lists (in the repo)
 ```
 
 Everything from L1 onward is keyed by `as_of`, so a past valuation can be rerun and compared.

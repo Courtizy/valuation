@@ -14,6 +14,7 @@ from L0_ingest.http import HttpClient, HttpError
 from L0_ingest.schema import validate_raw_filing
 from L0_ingest.sec_companyfacts import (
     COMPANYFACTS_URL,
+    SUBMISSIONS_URL,
     TICKERS_URL,
     SecCompanyFactsAdapter,
     TickerNotFound,
@@ -33,6 +34,7 @@ class FakeClient:
             TICKERS_URL: FIXTURES / "company_tickers.json",
             COMPANYFACTS_URL.format(cik="0000320193"): FIXTURES
             / "companyfacts_CIK0000320193.json",
+            SUBMISSIONS_URL.format(cik="0000320193"): FIXTURES / "submissions_CIK0000320193.json",
         }
 
     def get_bytes(self, url: str) -> bytes:
@@ -114,7 +116,8 @@ def test_flatten_is_deterministic():
 def test_fetch_by_ticker_produces_valid_doc(client):
     doc = SecCompanyFactsAdapter(client=client).fetch(ticker="AAPL")
     assert validate_raw_filing(doc) == []
-    assert doc["entity"] == {"cik": "0000320193", "name": "Apple Inc.", "ticker": "AAPL"}
+    assert doc["entity"] == {"cik": "0000320193", "name": "Apple Inc.", "ticker": "AAPL",
+                             "sic": "3571", "sic_description": "Electronic Computers"}
     assert doc["from_cache"] is False
     assert len(doc["content_sha256"]) == 64
 
@@ -138,7 +141,7 @@ def test_cache_hit_avoids_network(client, tmp_path):
     adapter = SecCompanyFactsAdapter(client=client, cache=FileCache(tmp_path))
     first = adapter.fetch(cik="320193")
     second = adapter.fetch(cik="320193")
-    assert len(client.calls) == 1
+    assert len(client.calls) == 2   # companyfacts + submissions, each once
     assert second["from_cache"] is True
     assert first["content_sha256"] == second["content_sha256"]
     assert first["retrieved_at"] == second["retrieved_at"]
@@ -151,7 +154,13 @@ def test_cache_expiry_refetches(client, tmp_path):
     adapter.fetch(cik="320193")
     now[0] += 61
     adapter.fetch(cik="320193")
-    assert len(client.calls) == 2
+    assert len(client.calls) == 4   # both files fetched again after expiry
+
+
+def test_industry_lookup_failure_does_not_stop_ingest(client):
+    client.routes.pop(SUBMISSIONS_URL.format(cik="0000320193"))
+    doc = SecCompanyFactsAdapter(client=client).fetch(cik="320193")
+    assert doc["entity"]["sic"] is None and validate_raw_filing(doc) == []
 
 
 def test_cache_only_run_needs_no_user_agent(client, tmp_path, monkeypatch):

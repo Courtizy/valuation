@@ -42,9 +42,9 @@ Amounts: negatives in parentheses (positives reserve the ")" so digits align); c
 
 | Tab | Shows |
 |---|---|
-| Company detail | KPI tiles incl. projected revenue CAGR; revenue area chart (reported area from the TTM base, projection as a dashed line, Bear–Bull band = projected growth ± the DCF growth step, 1 pt for the trend case; tooltip shows growth); statements with derived quarters marked and, in the Annual view, a TTM base column plus five shaded estimate columns (DCF case, else trend case); a Growth and margins block (revenue growth, gross, EBITDA, operating, net margin) across history and estimates; projected unlevered FCF; ratios in five framework views |
-| Valuation | Value vs price headline; football field with each method's range, selected value, upside, weight and reason, plus a Bear / Base / Bull toggle; company profile card; DCF detail; similar companies ranked by profile with multiples and rates (`docs/L2_reconcile.md`) |
-| Run pipeline | Starts the Pipeline action. With a token it calls the GitHub API directly; without one it links to the Actions page and prints the `gh` command |
+| Company detail | KPI tiles incl. projected revenue CAGR; revenue area chart (reported area from the TTM base, projection as a dashed line, Bear–Bull band = projected growth ± the DCF growth step, 1 pt for the trend case; tooltip shows growth); statements with derived quarters marked and, in the Annual view, a TTM base column plus five shaded estimate columns (DCF case, else trend case); a Growth and margins block (revenue growth, gross, EBITDA, operating, net margin) across history and estimates; projected unlevered FCF; ratios in five framework views; **Versus its sector** benchmarks and a **Sector** card with charts and a sortable table (`docs/L1_sector.md`) |
+| Valuation | Value vs price headline; football field with each method's range, selected value, upside, weight and reason, plus a Bear / Base / Bull toggle; company profile card; DCF detail; comps peer picker from the company's sector (saves `comps.json`); similar companies ranked by profile with multiples and rates (`docs/L2_reconcile.md`) |
+| Run pipeline | **Company:** ticker, as-of, a *Company details* box and one box per model (built: DCF, Comps). Details alone runs through L1; ticking a model runs through L2 and locks details on, since models use them. **Sector:** SIC code, a company's code, trait group or list. Starts the Pipeline action with a token, or links to the Actions page and prints the `gh` command |
 
 Light and dark themes follow the OS, with a manual toggle. The layout works down to phone width.
 
@@ -64,11 +64,12 @@ Light and dark themes follow the OS, with a manual toggle. The layout works down
 
    ```bash
    gh workflow run pipeline.yml -f ticker=AAPL -f stop_after=L1
+   gh workflow run pipeline.yml -f sector=sic-of:AAPL
    ```
 
    The site redeploys when it finishes.
 
-For the Run tab's direct start button, create a **fine-grained personal access token** limited to this repository with **Actions: Read and write**. The token stays in your browser and is sent only to api.github.com. It's saved on the device only if you tick "Remember". Without a token, use the Actions page link.
+For the Run tab's direct start button, create a **fine-grained personal access token** limited to this repository with **Actions: Read and write**; add **Contents: Read and write** so the peer picker can save `comps.json`. The token stays in your browser and is sent only to api.github.com. It's saved on the device only if you tick "Remember". Without a token, use the Actions page link.
 
 ## Demo data
 
