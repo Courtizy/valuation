@@ -102,14 +102,24 @@ jobs:
         run: python -m L3_app.publish --data-dir data --site-dir site --market-data "$SITE_MARKET_DATA"
 
       - name: Commit results
+        # main can move during a run (you push files, or the site saves comps peers). If the push
+        # is rejected, take the latest main and publish again on top of it: data/ is gitignored, so
+        # this run's outputs survive the reset, and publish merges them into the newer site/data.
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add site/data
-          if git diff --cached --quiet; then
-            echo "nothing new to publish"
-          else
-            what="${TICKER^^}"; [[ "$MODE" == "sector" ]] && what="sector ${SECTOR}"
-            git commit -m "data: ${what} as of ${AS_OF}"
-            git push
-          fi
+          what="${TICKER^^}"; [[ "$MODE" == "sector" ]] && what="sector ${SECTOR}"
+          for attempt in 1 2 3 4; do
+            git add site/data
+            if git diff --cached --quiet; then
+              echo "nothing new to publish"; exit 0
+            fi
+            git commit -q -m "data: ${what} as of ${AS_OF}"
+            if git push; then exit 0; fi
+            echo "push rejected (main moved); republishing on the latest main, attempt ${attempt}"
+            sleep $((attempt * 5))
+            git fetch -q origin main
+            git reset -q --hard origin/main
+            python -m L3_app.publish --data-dir data --site-dir site --market-data "$SITE_MARKET_DATA"
+          done
+          echo "could not push after 4 attempts"; exit 1
