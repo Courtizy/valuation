@@ -10,9 +10,6 @@
       "price": 0
     },
     {
-      "ticker": "DELL"
-    },
-    {
       "ticker": "SMCI"
     },
     {
@@ -23,9 +20,24 @@
     },
     {
       "ticker": "ZEPP"
+    },
+    {
+      "ticker": "SNX"
+    },
+    {
+      "ticker": "DELL"
+    },
+    {
+      "ticker": "IBM"
+    },
+    {
+      "ticker": "HPQ"
+    },
+    {
+      "ticker": "INGM"
     }
   ],
   "sources": {
-    "peers": "picked from SIC 3571 · Electronic Computers (screened 2026-10-03) on 2026-10-03"
+    "peers": "picked from Technology (screened 2026-10-03) on 2026-10-03"
   }
 }
