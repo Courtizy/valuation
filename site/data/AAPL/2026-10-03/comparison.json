@@ -1,6 +1,122 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "ticker": "AAPL",
+  "profile": {
+    "as_of_period": "TTM 2026-06-27",
+    "history_years": 5,
+    "traits": {
+      "stage": {
+        "label": "mature grower",
+        "rule": "CAGR 3%\u201315% and profitable",
+        "measures": {
+          "revenue_cagr": 0.03275991627577457,
+          "operating_margin": 0.3317295848747812
+        }
+      },
+      "predictability": {
+        "label": "high",
+        "rule": "FCF > 0 in \u2265 80% of years and margin stdev \u2264 3 pts",
+        "measures": {
+          "fcf_positive_share": 1.0,
+          "fcf_margin_stdev": 0.016517646085819168,
+          "years": 5
+        }
+      },
+      "asset_intensity": {
+        "label": "light",
+        "rule": "capex/sales < 3% and NOAT > 3x",
+        "measures": {
+          "capex_to_sales": 0.021509222981729692,
+          "noa_turnover": 3.8640929389415657
+        }
+      },
+      "capital_structure": {
+        "label": "low leverage",
+        "rule": "debt/EBITDA < 2x",
+        "measures": {
+          "debt_to_ebitda": 0.5021701724825701,
+          "net_debt_to_equity": 0.2041015625,
+          "liabilities_to_assets": 0.7194637666790167
+        }
+      }
+    },
+    "vector": {
+      "revenue_cagr": 0.03275991627577457,
+      "operating_margin": 0.3317295848747812,
+      "fcf_margin_stdev": 0.016517646085819168,
+      "capex_to_sales": 0.021509222981729692,
+      "noa_turnover": 3.8640929389415657,
+      "debt_to_ebitda": 0.5021701724825701,
+      "revenue": 466823000000,
+      "rnoa": 1.067208562169679
+    }
+  },
+  "plan": {
+    "context": "standalone",
+    "summary": "Mature grower, predictable cash flows (light assets, low leverage) \u2192 DCF primary, comps cross-check.",
+    "methods": [
+      {
+        "model": "dcf",
+        "name": "DCF (standalone)",
+        "role": "primary",
+        "default_weight": 0.6,
+        "reason": "predictable, positive free cash flow makes cash flows the most direct measure",
+        "ran": true,
+        "weight": 1.0,
+        "value_per_share": {
+          "p10": 303.9434251049585,
+          "p50": 333.6900000180532,
+          "p90": 368.9717709056624,
+          "mean": 333.6900000180532
+        }
+      },
+      {
+        "model": "comps",
+        "name": "Public comps",
+        "role": "cross-check",
+        "default_weight": 0.4,
+        "reason": "mature grower with low leverage: enterprise multiples compare cleanly",
+        "ran": false,
+        "weight": 0.0,
+        "value_per_share": null
+      },
+      {
+        "model": "lbo",
+        "name": "LBO",
+        "role": "reference",
+        "default_weight": 0.0,
+        "reason": "what a financial buyer could pay given the cash flows and debt capacity",
+        "ran": false,
+        "weight": 0.0,
+        "value_per_share": null
+      },
+      {
+        "model": "precedents",
+        "name": "Precedent transactions",
+        "role": "reference",
+        "default_weight": 0.0,
+        "reason": "includes a control premium; not a standalone value",
+        "ran": false,
+        "weight": 0.0,
+        "value_per_share": null
+      }
+    ],
+    "notes": [
+      "Public comps has weight but didn't run; its weight was spread over the others"
+    ]
+  },
+  "blend": {
+    "p10": 303.9434251049585,
+    "p50": 333.6900000180532,
+    "p90": 368.9717709056624
+  },
+  "price": 333.69,
+  "price_source": "dcf assumptions",
+  "upside": {
+    "p10": -0.08914434024106643,
+    "p50": 5.410161207919373e-11,
+    "p90": 0.10573217928515222
+  },
   "as_of": "2026-10-03",
   "football_field": [
     {
