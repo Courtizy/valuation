@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-03T08:06:20+00:00",
+  "generated_at": "2026-10-03T08:12:24+00:00",
   "companies": [
     {
       "ticker": "AAPL",
@@ -138,8 +138,10 @@
           "as_of": "2026-10-03",
           "detail": "KO/2026-10-03/company_detail.json",
           "full": "KO/2026-10-03/company_detail_full.json",
-          "comparison": null,
-          "models": [],
+          "comparison": "KO/2026-10-03/comparison.json",
+          "models": [
+            "dcf"
+          ],
           "latest": {
             "annual": "FY2025",
             "ttm": "TTM 2026-04-03"
