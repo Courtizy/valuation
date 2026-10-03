@@ -6,7 +6,8 @@
   "range": "min_max",
   "peers": [
     {
-      "ticker": "OMCL"
+      "ticker": "OMCL",
+      "price": 0
     },
     {
       "ticker": "DELL"
