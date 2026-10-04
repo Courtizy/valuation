@@ -106,7 +106,7 @@ export function projection() {
     return { kind: "dcf", rows: d.statements.slice(0, 10), base: d.base_period, name: "DCF Case",
       note: state.dcf.details?.default_case
         ? "Estimates: DCF default case (no dcf.json: growth from the company's history, rates from the data; Year 1 is the undiscounted closing year)."
-        : `Estimates: DCF case from inputs/assumptions/${state.company.ticker}/dcf.json (Year 1 is the undiscounted closing year).` };
+        : `Estimates: DCF case from configs/public/assumptions/${state.company.ticker}/dcf.json (Year 1 is the undiscounted closing year).` };
   }
   const p = state.detail.projection;
   if (!p?.years?.length) return null;

@@ -1,6 +1,6 @@
 # L2 DCF (standalone)
 
-*Status: built. `L2_models/dcf` uses `core/projection`, `core/cost_of_capital`, `core/dcf` and `core/shares`. Inputs are `company_detail.json` and `inputs/assumptions/{TICKER}/dcf.json` (see `inputs/assumptions/README.md`).*
+*Status: built. `L2_models/dcf` uses `core/projection`, `core/cost_of_capital`, `core/dcf` and `core/shares`. Inputs are `company_detail.json` and `configs/public/assumptions/{TICKER}/dcf.json` (see `configs/public/assumptions/README.md`).*
 
 ## Steps
 
@@ -34,9 +34,25 @@
 
 `model_results/dcf.json` holds:
 
-- `value_per_share`: p10 = conservative, p50 = expected, p90 = aggressive, mean = expected. These are scenario values, not simulated percentiles; Monte Carlo comes later.
+- `value_per_share`: p10 and p90 = the 10th and 90th percentiles of the simulation, p50 = the stated (expected) case, mean = the simulation mean. p50 stays deterministic so it matches the course workbooks.
 - `assumptions_used`: the standard block (forecast path, cost of capital including both WACCs, terminal).
-- `details`: rates, bridge, terminal (FCF_T, TV, EV/EBITDA, ROIC), scenarios, projection rows and drivers. The site's Valuation tab shows these.
+- `details`: rates, bridge, terminal (FCF_T, TV, EV/EBITDA, ROIC), `scenarios` (the course's conservative / expected / aggressive method, kept for parity), `simulation`, projection rows, drivers and the sensitivity grid. The site's Results → Valuation view shows these.
+
+## Simulation
+
+`DCFModel.simulate` reruns the firm DCF many times with three inputs drawn from triangular distributions centred on the stated case. Draws go through `_core/simulation.py` (`rng(seed)`, `sample`, `summarize`, `histogram`), pure Python with the same interface as the Shared Core numpy version, so the same inputs and seed give the same numbers everywhere.
+
+| Input | Default range | Note |
+|---|---|---|
+| Near-term growth (g0) | ±3 pts | the fade path shifts with it |
+| WACC | ±1.5 pts | the terminal WACC shifts by the same amount |
+| Terminal growth | ±0.75 pt | |
+
+- 2,000 runs, seed 7 (500 runs for demo peers to keep the deploy fast).
+- A run is dropped when the terminal WACC is not at least 0.5 pt above terminal growth; `runs_used` reports what's left.
+- Override per ticker in `dcf.json`: `{"simulation": {"runs": 5000, "seed": 11, "wacc": {"dist": "triangular", "low": 0.08, "mode": 0.09, "high": 0.11}}}` (`growth`, `wacc`, `terminal_growth` take a full spec; `growth_spread` etc. take a width).
+- `details.simulation` = `{runs, runs_used, seed, inputs, per_share (mean, p5…p95), middle_90, terminal_value_share, histogram {counts, edges, below, above}, base_per_share}`. The histogram spans p0.5–p99.5; runs outside it are counted in `below` / `above`.
+- The site's headline range is `middle_90` (5th–95th percentile); the football field's DCF Bear / Bull are p10 / p90.
 
 ## Parity (local workbooks)
 
@@ -51,12 +67,11 @@ Checked against the three course cases:
 
 ## Not yet
 
-- **Data-driven market inputs:** price, Treasury rates and beta are typed into the assumptions file until the market-data adapter exists.
 - **Synergy models:** the DCF with synergies and the just-synergies model are next.
 
 ## Default case (no dcf.json)
 
-When `inputs/assumptions/{TICKER}/dcf.json` doesn't exist, the runner values the company on `default_assumptions(detail)` instead of skipping the DCF:
+When `configs/public/assumptions/{TICKER}/dcf.json` doesn't exist, the runner values the company on `default_assumptions(detail)` instead of skipping the DCF:
 
 | Input | Default |
 |---|---|

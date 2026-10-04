@@ -5,9 +5,9 @@
 ## Usage
 
 ```bash
-python -m L1_detail build data/AAPL/2026-09-30/canonical_statements.json --as-of 2026-09-30 \
-    --out data/AAPL/2026-09-30/company_detail.json [--market raw_market.json] [--pack inputs/packs/default.json]
-python -m L1_detail validate-detail data/AAPL/2026-09-30/company_detail.json
+python -m valuation.L1_detail build data/AAPL/2026-09-30/canonical_statements.json --as-of 2026-09-30 \
+    --out data/AAPL/2026-09-30/company_detail.json [--market raw_market.json] [--pack configs/public/packs/default.json]
+python -m valuation.L1_detail validate-detail data/AAPL/2026-09-30/company_detail.json
 ```
 
 The pipeline runs the same function as its "build detail" step.

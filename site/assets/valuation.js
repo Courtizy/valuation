@@ -1,4 +1,6 @@
 import { $M } from "./company.js";
+import { histogramChart } from "./charts.js";
+import { simulationSummary } from "./pages.js";
 import { NA, NM, esc, estLabel, fin, label, millions, money, mult, num, pct, periodLabel, price, sentence, sourceLine, times, titleCase } from "./format.js";
 import { dispatchPipeline, gh, readRepoJSON, setStatus, writeRepoJSON } from "./github.js";
 import { levelBar, levelOptions, levelRows, sectorMe, sectorPicker, wireLevelBar, wireSectorPicker } from "./sector.js";
@@ -7,22 +9,25 @@ import { acct, cellOf, finRow } from "./tables.js";
 
 // ---------------------------------------------------------------- valuation
 
-export const MODEL_NAMES = { dcf: "DCF (Standalone)", dcf_synergy: "DCF with Synergies", just_synergy: "Just Synergies",
+export const MODEL_NAMES = { dcf: "DCF (Simulated)", dcf_synergy: "DCF with Synergies", just_synergy: "Just Synergies",
   comps: "Public Comps", precedents: "Precedent Transactions", lbo: "LBO", ipo: "IPO" };
 
 export const SCENARIOS = { p10: "Bear", p50: "Base", p90: "Bull" };
 export const TRAIT_NAMES = { stage: "Stage", predictability: "Cash-Flow Predictability", asset_intensity: "Asset Intensity",
   capital_structure: "Capital Structure" };
 
+export const methodName = (m) => (m.model === "dcf" ? MODEL_NAMES.dcf : titleCase(m.name));
 export function signed(v) { return fin(v) ? `${v >= 0 ? "+" : "−"}${Math.abs(v * 100).toFixed(1)}%` : NA; }
 export function upClass(v, band = 0.005) { return !fin(v) || Math.abs(v) < band ? "" : v > 0 ? "up" : "down"; }
 
 export function renderValuation() {
   if (!state.detail || state.tab !== "valuation") return;
+  renderSide();
+  renderKpis();
   const c = state.comparison, body = $("val-body");
   if (!c || !c.football_field?.length) {
     body.innerHTML = `<div class="card empty"><h2>No Model Results for This Run</h2>
-      <p>Tick <b>DCF</b> under Models on the Run Pipeline tab and run this ticker. Without a <code>dcf.json</code> the DCF uses default assumptions from the data; Comps needs a <code>comps.json</code> with peers.</p></div>`;
+      <p>Tick <b>DCF</b> under Models on the Run page and run this ticker. Without a <code>dcf.json</code> the DCF uses default assumptions from the data; Comps needs a <code>comps.json</code> with peers.</p></div>`;
     renderProfileCard(body);
     body.insertAdjacentHTML("beforeend", '<div id="val-peers"></div>');
     renderPeerPicker();
@@ -30,10 +35,13 @@ export function renderValuation() {
     return;
   }
   state.scn = state.scn || "p50";
-  body.innerHTML = `<div id="val-head"></div><div id="val-ff"></div><div id="val-profile"></div><div id="val-comps"></div><div id="val-peers"></div>
+  body.innerHTML = `<div id="val-ff"></div><div id="val-spread"></div><div id="val-sens"></div>
+    <div id="val-head"></div><div id="val-profile"></div><div id="val-comps"></div><div id="val-peers"></div>
     <div id="val-dcf"></div><div id="val-similar"></div><div id="val-diffs"></div>`;
-  renderHeadline();
   renderField();
+  renderSpread();
+  renderSensitivity();
+  renderHeadline();
   renderProfileCard($("val-profile"));
   renderCompsCard();
   renderPeerPicker();
@@ -71,7 +79,7 @@ export function renderHeadline() {
       <div><div class="label">Upside / Downside</div><div class="big num ${upClass(up, 0.05)}">${signed(up)}</div>
         <div class="muted small">${!fin(up) ? (showcase() ? "Needs a market price" : "") : Math.abs(up) < 0.05 ? "Within 5% of price: fairly valued" : up > 0 ? "Undervalued on this blend" : "Overvalued on this blend"}</div></div>
     </div>
-    <p class="small" style="margin:12px 0 0">${primary.map((m) => `${m.role === "primary" ? "Primary" : "Cross-Check"} <b>${esc(titleCase(m.name))}</b> ${pct(m.weight, true)}`).join(" · ") || "No weighted methods yet"}.
+    <p class="small" style="margin:12px 0 0">${primary.map((m) => `${m.role === "primary" ? "Primary" : "Cross-Check"} <b>${esc(methodName(m))}</b> ${pct(m.weight, true)}`).join(" · ") || "No weighted methods yet"}.
       <span class="muted">${esc(c.plan?.summary || "")}</span></p>
   </div>`;
 }
@@ -92,7 +100,7 @@ export function renderField() {
   const row = (m) => {
     const v = m.value_per_share, u = fin(c.price) ? v[k] / c.price - 1 : null;
     return `<div class="ff-row ${m.weight > 0 ? "" : "ref"}">
-      <div class="ff-name"><b>${esc(titleCase(m.name))}</b><div class="muted small">${esc(titleCase(m.role))}${m.weight > 0 ? ` · ${pct(m.weight, true)}` : ""}${m.illustrative ? " · Illustrative" : ""}</div></div>
+      <div class="ff-name"><b>${esc(methodName(m))}</b><div class="muted small">${esc(titleCase(m.role))}${m.weight > 0 ? ` · ${pct(m.weight, true)}` : ""}${m.illustrative ? " · Illustrative" : ""}</div></div>
       ${bar(v, "")}
       <div class="ff-num">${price(v.p10)} – ${price(v.p90)}</div>
       <div class="ff-num"><b>${price(v[k])}</b></div>
@@ -101,7 +109,7 @@ export function renderField() {
   };
   const b = c.blend;
   $("val-ff").innerHTML = `<div class="card">
-    <div class="card-head"><h2>Football Field</h2><span class="muted small">Value per share: bar = Bear to Bull, tick = ${SCENARIOS[k]}, line = share price</span>
+    <div class="card-head"><h2>Where the Methods Agree</h2><span class="muted small">Value per share: bar = Bear to Bull, tick = ${SCENARIOS[k]}, line = share price</span>
       <div class="spacer">${scenarioToggle()}</div></div>
     <div class="ff">
       <div class="ff-row ff-head"><div></div>
@@ -112,9 +120,10 @@ export function renderField() {
         <div class="ff-num">${price(b.p10)} – ${price(b.p90)}</div><div class="ff-num"><b>${price(b[k])}</b></div>
         <div class="ff-num ${upClass(c.upside?.[k])}">${signed(c.upside?.[k])}</div></div>` : ""}
     </div>
-    <p class="legend-note"><b>Bear / Bull by model:</b> DCF moves near-term growth and WACC by ±1 pt and terminal growth and terminal WACC by ±0.5 pt, weighted by the terminal value's share; Comps uses the peer range (Q1–Q3 with 4+ peers, else lowest–highest); the Blended row weights each model's Bear, Base and Bull.</p>
+    ${whyTheyDiffer(methods)}
+    <p class="legend-note"><b>Bear / Bull by model:</b> DCF = 10th and 90th percentiles of ${simulationSummary() ? simulationSummary().used.toLocaleString() : "the"} simulated runs, Base = the stated case; Comps uses the peer range (Q1–Q3 with 4+ peers, else lowest–highest); the Blended row weights each model's Bear, Base and Bull.</p>
     ${c.plan?.notes?.length ? `<p class="legend-note">${c.plan.notes.map((n) => esc(sentence(n))).join(" ")}</p>` : ""}
-    <p class="legend-note">Weights: inputs/assumptions/${esc(state.company.ticker)}/reconcile.json can override them (<code>{"weights": {"dcf": 0.7, "comps": 0.3}}</code>) or switch to <code>"context": "acquisition"</code> for an offer-price view.</p>
+    <p class="legend-note">Weights: configs/public/assumptions/${esc(state.company.ticker)}/reconcile.json can override them (<code>{"weights": {"dcf": 0.7, "comps": 0.3}}</code>) or switch to <code>"context": "acquisition"</code> for an offer-price view.</p>
   </div>`;
   wireToggle($("val-ff"));
   drawPriceLine(fin(c.price) ? (c.price - lo) / (hi - lo) : null, c.price);
@@ -285,7 +294,7 @@ export function renderCompsCard() {
 // Ranks the sector's companies by closeness on screen figures (z-scores of growth,
 // margins, cash-flow stability, capex intensity, leverage and size) plus shared
 // traits. Saving writes the ticked tickers (and any prices typed) into
-// inputs/assumptions/{TICKER}/comps.json through the GitHub API. Peers the picker doesn't
+// configs/public/assumptions/{TICKER}/comps.json through the GitHub API. Peers the picker doesn't
 // show (entered by hand with "sec": false, or outside this sector) are kept.
 export function renderPeerPicker() {
   const root = $("val-peers");
@@ -331,7 +340,7 @@ export function renderPeerPicker() {
       <button type="button" id="pp-run" ${demo ? "disabled" : ""}>Run Comps</button>
       <span class="status" role="status" id="pp-status">${demo ? "Demo data: saving is off." : ""}</span>
     </div>
-    <p class="legend-note">Writes <code>inputs/assumptions/${esc(state.company.ticker)}/comps.json</code> in your repo with the token from the Run Pipeline tab
+    <p class="legend-note">Writes <code>configs/public/assumptions/${esc(state.company.ticker)}/comps.json</code> in your repo with the token from the Run page
       (it needs Contents: read and write). Run Comps fetches each peer's price from market data; type a price only to override it.
       Peers not listed here (entered by hand, or from outside this sector) are kept.</p></div>`;
   wireSectorPicker(root);
@@ -344,11 +353,11 @@ export function renderPeerPicker() {
 }
 
 export async function savePeers() {
-  const st = $("pp-status"), t = state.company.ticker, path = `inputs/assumptions/${t}/comps.json`;
+  const st = $("pp-status"), t = state.company.ticker, path = `configs/public/assumptions/${t}/comps.json`;
   const picks = [...document.querySelectorAll("#pp-table input[type=checkbox]:checked")].map((x) => x.value);
   const prices = Object.fromEntries([...document.querySelectorAll(".pp-price")].filter((x) => x.value !== "").map((x) => [x.dataset.t, Number(x.value)]));
   if (!picks.length) { setStatus(st, { ok: false, msg: "Tick at least one peer." }); return; }
-  if (!gh().token) { setStatus(st, { ok: false, noToken: true, msg: "Add a token on the Run Pipeline tab (Contents: read and write) to save from here." }); return; }
+  if (!gh().token) { setStatus(st, { ok: false, noToken: true, msg: "Add a token on the Run page (Contents: read and write) to save from here." }); return; }
   st.className = "status"; st.textContent = "Saving…";
   // keep what this picker didn't show: hand-entered peers and peers outside the level in view
   const shown = new Set([...document.querySelectorAll("#pp-table input[type=checkbox]")].map((x) => x.value.toUpperCase()));
@@ -425,13 +434,12 @@ function sensitivityTable(d, base) {
   const g = d.sensitivity;
   if (!g?.values?.length) return '<p class="muted small">Rerun the DCF to add the sensitivity grid.</p>';
   const flat = g.values.flat().filter(fin), lo = Math.min(...flat), hi = Math.max(...flat);
-  const tone = (v) => (!fin(v) ? "" : v >= base ? `background-color: color-mix(in srgb, var(--good) ${Math.round(28 * (v - base) / ((hi - base) || 1))}%, var(--surface))`
-    : `background-color: color-mix(in srgb, var(--critical) ${Math.round(28 * (base - v) / ((base - lo) || 1))}%, var(--surface))`);
+  const tone = (v) => (!fin(v) ? "" : `background-color: color-mix(in srgb, var(--series-1) ${Math.round(6 + 44 * (hi - v) / ((hi - lo) || 1))}%, var(--surface))`);
   return `<div class="table-wrap"><table class="sens">
-      <thead><tr><th>WACC ↓ · Terminal Growth →</th>${g.terminal_growth.map((t) => `<th>${pct(t)}</th>`).join("")}</tr></thead>
+      <thead><tr><th>Discount Rate ↓ · Terminal Growth →</th>${g.terminal_growth.map((t) => `<th>${pct(t)}</th>`).join("")}</tr></thead>
       <tbody>${g.values.map((row, i) => `<tr><td>${pct(g.wacc[i])} <span class="muted small">(terminal ${pct(g.wacc_terminal[i])})</span></td>${row.map((v, j) =>
         `<td class="${i === 2 && j === 2 ? "base" : ""}" style="${tone(v)}">${fin(v) ? price(v) : NM}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
-    <p class="legend-note">WACC shifts move the pre-terminal and terminal rates together. Outlined cell = base case; green above it, red below.</p>`;
+    <p class="legend-note">Rows: discount rate (WACC), low to high; the pre-terminal and terminal rates move together. Columns: terminal growth, low to high. Darker = lower value; outlined cell = the stated case.</p>`;
 }
 
 export function renderDcfCard() {
@@ -442,11 +450,11 @@ export function renderDcfCard() {
   card.className = "card";
   const tile = (l, v, sub = "") => `<div class="tile"><div class="label">${esc(l)}</div><div class="value">${v}</div>${sub ? `<div class="delta">${esc(sub)}</div>` : ""}</div>`;
   card.innerHTML = `
-    <div class="card-head"><h2>DCF (Standalone)</h2>
+    <div class="card-head"><h2>DCF Detail</h2>
       <span class="muted small">${esc(d.mode === "implied" ? "Implied Mode: growth solved to match the price" : "Forecast Mode")} · Base ${esc(d.base_period.kind === "fiscal" ? String(d.base_period.fiscal_year) : d.base_period.label)}${d.default_case
-        ? ` · <span class="tile-tag" title="No inputs/assumptions/${esc(state.company.ticker)}/dcf.json: growth from the company's history, rates from the data. Add a dcf.json to set your own.">Default Assumptions</span>` : ""}</span></div>
+        ? ` · <span class="tile-tag" title="No configs/public/assumptions/${esc(state.company.ticker)}/dcf.json: growth from the company's history, rates from the data. Add a dcf.json to set your own.">Default Assumptions</span>` : ""}</span></div>
     <div class="tiles">
-      ${tile("Value per Share", price(b.value_per_share), `Bear ${price(sc.conservative)} – Bull ${price(sc.aggressive)}`)}
+      ${tile("Value per Share", price(b.value_per_share), `Simulated Bear ${price(r.value_per_share.p10)} – Bull ${price(r.value_per_share.p90)}`)}
       ${d.implied_growth != null ? tile("Implied Near-Term Growth", pct(d.implied_growth), `At price ${price(d.market_price)}`) : tile("Share Price", price(d.market_price), state.detail.market?.price === d.market_price ? marketLine(state.detail.market).replace(/<[^>]+>/g, "") : "From the DCF assumptions")}
       ${tile("WACC", pct(rt.wacc), `Terminal year ${pct(rt.wacc_terminal)}`)}
       ${tile("Terminal Value Share", pct(d.terminal_value_share), `Terminal EV/EBITDA ${mult(t.ev_to_ebitda)}`)}
@@ -472,9 +480,86 @@ export function renderDcfCard() {
     </div>
     <h3 style="margin-top:16px">Projection ($M)</h3>
     ${dcfProjectionTable(d)}
-    <h3 style="margin-top:16px">Sensitivity: Value per Share</h3>
-    ${sensitivityTable(d, b.value_per_share)}
     <p class="legend-note">Free cash flow = EBITDA × (1 − t) + D&amp;A × t − capex − ΔNWC, so it isn't the simple sum of the lines above.</p>
-    <p class="legend-note">Year 1 is the closing year (not discounted). Range: conservative and aggressive move near-term growth with WACC and terminal growth with terminal WACC, blended by the terminal value's share.${r.notes?.length ? " " + esc(r.notes.filter((n) => !n.startsWith("range =")).join(" ")) : ""}</p>`;
+    <p class="legend-note">Year 1 is the closing year (not discounted). The values above are the stated case; the range comes from the simulation (Spread of Simulated Outcomes).${r.notes?.length ? " " + esc(r.notes.filter((n) => !n.startsWith("range =")).join(" ")) : ""}</p>`;
   ($("val-dcf") || $("val-body")).appendChild(card);
+}
+
+// ---------------------------------------------------------------- results frame
+
+const METHOD_GAP = {
+  comps: "prices peers on today's multiples, so it moves with the market; the DCF rests on this company's own cash-flow forecast",
+  precedents: "includes the control premium buyers paid in past deals",
+  lbo: "is capped by what a financial buyer can finance",
+};
+
+/** One line on why the ranges differ: each method's median against the DCF's, with the method reason. */
+function whyTheyDiffer(methods) {
+  const dcf = methods.find((m) => m.model === "dcf");
+  if (!dcf) return "";
+  const parts = methods.filter((m) => m !== dcf && METHOD_GAP[m.model]).map((m) => {
+    const gap = m.value_per_share.p50 / dcf.value_per_share.p50 - 1;
+    const where = Math.abs(gap) < 0.02 ? "in line with" : `${Math.abs(gap * 100).toFixed(0)}% ${gap > 0 ? "above" : "below"}`;
+    return `${esc(methodName(m))} sits ${where} the DCF: it ${METHOD_GAP[m.model]}`;
+  });
+  return parts.length ? `<p class="why"><b>Why they differ.</b> ${parts.join(". ")}.</p>` : "";
+}
+
+/** Left column: company, key assumptions (simulated ranges), run info and downloads. */
+function renderSide() {
+  const side = $("val-side");
+  if (!side) return;
+  const co = state.company, e = state.detail.entity || {}, s = simulationSummary(), base = `${state.root}${co.ticker}/${state.run.as_of}`;
+  const rng = (spec, f) => (spec?.dist === "triangular" ? `${f(spec.low)}–${f(spec.high)}` : spec?.dist ? esc(spec.dist) : NA);
+  side.innerHTML = `
+    <div class="side-block"><div class="eyebrow">Company</div>
+      <b>${esc(co.name)}</b><div class="muted small">${esc(co.ticker)}${e.sic ? ` · SIC ${esc(e.sic)}` : ""} · ${co.demo ? "synthetic" : "public filings"}</div></div>
+    <div class="side-block"><div class="eyebrow">Key Assumptions</div>
+      ${s ? `<dl class="kv"><dt>Near-term growth</dt><dd class="num">${rng(s.inputs.growth, pct)}</dd>
+        <dt>Discount rate</dt><dd class="num">${rng(s.inputs.wacc, pct)}</dd>
+        <dt>Terminal growth</dt><dd class="num">${rng(s.inputs.terminal_growth, pct)}</dd></dl>`
+        : '<p class="muted small">No DCF simulation for this run.</p>'}</div>
+    <div class="side-block"><div class="eyebrow">Run</div>
+      <p class="small num">${s ? `${s.runs.toLocaleString()} runs · seed ${s.seed} · ` : ""}as of ${esc(state.run.as_of)}<br>
+        <span class="muted">Latest filing ${esc(state.detail.latest?.annual || "")}${state.detail.latest?.ttm ? ` · ${esc(state.detail.latest.ttm.replace("TTM", "LTM"))}` : ""}</span></p></div>
+    <div class="side-block"><div class="eyebrow">Downloads</div>
+      <ul class="downloads">
+        ${state.dcf ? `<li><a href="${base}/model_results/dcf.json" download>DCF results (JSON)</a></li>` : ""}
+        ${state.run.comparison ? `<li><a href="${state.root}${esc(state.run.comparison)}" download>Reconciliation (JSON)</a></li>` : ""}
+        ${state.run.full ? `<li><a href="${state.root}${esc(state.run.full)}" download>Company detail, full history (JSON)</a></li>` : ""}
+      </ul></div>`;
+}
+
+function renderKpis() {
+  const box = $("val-kpis");
+  if (!box) return;
+  const s = simulationSummary();
+  const tile = (l, v, sub, main = false) => `<div class="kpi ${main ? "kpi--main" : ""}"><div class="label">${l}</div><div class="kpi__value num">${v}</div><div class="muted small">${sub}</div></div>`;
+  box.innerHTML = `<div class="kpis">
+    ${tile("Median per Share", s ? price(s.median) : NA, s ? `Stated case ${price(state.dcf.details.simulation.base_per_share)}` : "Run the DCF", true)}
+    ${tile("Middle 90%", s ? `${price(s.low)}–${price(s.high)}` : NA, "5th to 95th percentile")}
+    ${tile("Terminal Value Share", s ? pct(s.tv) : NA, "Of enterprise value, average run")}
+    ${tile("Runs Used", s ? s.used.toLocaleString() : NA, s ? `of ${s.runs.toLocaleString()} · seed ${s.seed}` : "")}
+  </div>`;
+}
+
+function renderSpread() {
+  const box = $("val-spread"), sim = state.dcf?.details?.simulation;
+  if (!box) return;
+  if (!sim?.histogram) { box.innerHTML = ""; return; }
+  const h = sim.histogram, ps = sim.per_share, px = state.comparison?.price;
+  box.innerHTML = `<div class="card"><div class="card-head"><h2>Spread of Simulated Outcomes</h2>
+      <span class="muted small">DCF value per share, share of ${sim.runs_used.toLocaleString()} runs</span></div>
+    <div id="spread-chart"></div>
+    <p class="legend-note">Solid bars = middle 90% (${price(ps.p5)}–${price(ps.p95)}); faded = tails.${h.below + h.above ? ` ${h.below + h.above} extreme runs fall outside the axis.` : ""}
+      Draws: near-term growth, discount rate and terminal growth, each triangular around the stated case.</p></div>`;
+  histogramChart($("spread-chart"), { counts: h.counts, edges: h.edges, band: [ps.p5, ps.p95], format: price, label: "Spread of simulated outcomes",
+    markers: [{ label: "Median", value: ps.p50 }, ...(fin(px) ? [{ label: "Price", value: px, dash: true }] : [])] });
+}
+
+function renderSensitivity() {
+  const box = $("val-sens"), d = state.dcf?.details;
+  if (!box) return;
+  box.innerHTML = d?.bridge ? `<div class="card"><div class="card-head"><h2>Sensitivity</h2><span class="muted small">Discount rate × terminal growth, value per share</span></div>
+    ${sensitivityTable(d, d.bridge.value_per_share)}</div>` : "";
 }

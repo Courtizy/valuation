@@ -1,0 +1,6 @@
+{
+  "tickers": ["AAPL"],
+  "models": ["dcf", "comps"],
+  "as_of": null,
+  "market": "all"
+}

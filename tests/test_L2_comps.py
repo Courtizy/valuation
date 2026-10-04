@@ -5,9 +5,9 @@ import json
 
 import pytest
 
-from L2_models.base import get_model
-from L2_models.comps import CompsError, implied_price, peer_row
-from L3_app.demo import write_demo
+from valuation.L2_models.base import get_model
+from valuation.L2_models.comps import CompsError, implied_price, peer_row
+from valuation.L3_app.demo import write_demo
 
 A = pytest.approx
 
@@ -73,7 +73,7 @@ def test_comps_errors(details):
 
 
 def test_target_shares_from_the_filed_count_and_missing_prices_are_a_warning(details):
-    from L2_models.comps import NoPeerPrices, company_figures
+    from valuation.L2_models.comps import NoPeerPrices, company_figures
     d = {**details["DEMO"], "market": None, "shares_outstanding": 123e6}   # showcase: no market block
     assert company_figures(d)["shares"] == 123e6               # cover-page count wins over the statements
     no_market = {**details["DEMOG"], "market": None}

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from L1_detail.analysis import (altman_z, analyze_view, credit_metrics, load_classification,
+from valuation.L1_detail.analysis import (altman_z, analyze_view, credit_metrics, load_classification,
                                 managerial_balance_sheet, managerial_ratios, mbs_free_cash_flow,
                                 reformulated_balance_sheet, reformulated_ratios, signals,
                                 total_liabilities, traditional_ratios)

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from core.projection import ProjectionError, base_from_detail, project, revenue_path
+from valuation._core.projection import ProjectionError, base_from_detail, project, revenue_path
 
 A = pytest.approx
 

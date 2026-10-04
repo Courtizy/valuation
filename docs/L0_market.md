@@ -1,6 +1,6 @@
 # Market Data
 
-Share prices, beta and the risk-free rate, point-in-time at `as_of`. Code: `model/L0_ingest/market.py` (fetch), `model/core/market.py` (beta, WACC estimate), `model/L1_detail/build.py` (market block).
+Share prices, beta and the risk-free rate, point-in-time at `as_of`. Code: `src/valuation/L0_ingest/market.py` (fetch), `src/valuation/_core/market.py` (beta, WACC estimate), `src/valuation/L1_detail/build.py` (market block).
 
 ## Sources
 
@@ -22,7 +22,7 @@ Share prices, beta and the risk-free rate, point-in-time at `as_of`. Code: `mode
 
 ## Yahoo as the backup after SEC filings (private runs)
 
-With prices allowed (`--market all`), the market step also pulls Yahoo's fundamentals timeseries (`query1.finance.yahoo.com/ws/fundamentals-timeseries`, no key) into `raw_market.json` → `fundamentals`. L1 (`model/L1_detail/backfill.py`) then fills gaps:
+With prices allowed (`--market all`), the market step also pulls Yahoo's fundamentals timeseries (`query1.finance.yahoo.com/ws/fundamentals-timeseries`, no key) into `raw_market.json` → `fundamentals`. L1 (`src/valuation/L1_detail/backfill.py`) then fills gaps:
 
 - **Only gaps:** a Yahoo value is added only where no filed record exists for the same concept and period. Filed values always win.
 - **Only filed periods:** the fiscal year and quarter labels come from the SEC record with the same end date (within 7 days, for 52/53-week years), so Yahoo can never add or relabel a period. A company the filings don't cover (a 20-F filer in IFRS) stays unsupported.
@@ -56,13 +56,13 @@ company_detail.json → market              L1: price, date, source, check, shar
 Yahoo's terms bar automated collection and commercial reuse, and Alpha Vantage's free key covers private, individual use only. A public showcase goes beyond both, so by default **no real market figures are published**:
 
 - The Pipeline action runs with `--market risk-free`: only the FRED rate is fetched, no prices.
-- The DCF then runs without a price: beta = the sector's illustrative beta (`inputs/sectors/taxonomy.json` → `typical_beta`, carried in company detail as `sector_beta`), today's D/E = the target D/E or book D/E, and implied mode falls back to forecast mode. Values are intrinsic only; there is no upside against a price.
+- The DCF then runs without a price: beta = the sector's illustrative beta (`configs/public/sectors/taxonomy.json` → `typical_beta`, carried in company detail as `sector_beta`), today's D/E = the target D/E or book D/E, and implied mode falls back to forecast mode. Values are intrinsic only; there is no upside against a price.
 - Comps runs only with prices you typed into `comps.json`.
 - `publish --market-data showcase` also strips any real market block, market-based price and upside, and any comps result built on market prices, in case a run with prices is published by mistake.
 - The synthetic examples (DEMO, DEMOG, DEMOU) keep made-up but reproducible market figures: their demo price, the sector beta, a WACC at a fixed 4.5% risk-free rate, all labelled "Synthetic Example".
 - The footer carries FRED's required notice.
 
-**Real mode:** set the repository variable `SITE_MARKET_DATA` to `real` (Settings → Secrets and variables → Actions → Variables) only for a private site or with licensed data. Runs then fetch prices (`--market all`) and publish real figures. Locally, `python pipeline.py run …` fetches prices by default; `--market risk-free` mirrors the public site.
+**Real mode:** set the repository variable `SITE_MARKET_DATA` to `real` (Settings → Secrets and variables → Actions → Variables) only for a private site or with licensed data. Runs then fetch prices (`--market all`) and publish real figures. Locally, `python -m valuation run …` fetches prices by default; `--market risk-free` mirrors the public site.
 
 ## Setup
 

@@ -1,7 +1,7 @@
 """One similarity ranking for Similar Companies and the peer picker. Run: pytest tests/test_L3_similar.py"""
 from __future__ import annotations
 
-from L3_app.similar import rank
+from valuation.L3_app.similar import rank
 
 
 def co(t, **kw):

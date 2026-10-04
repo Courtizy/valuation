@@ -13,13 +13,13 @@ from pathlib import Path
 
 import pytest
 
-from core.market import beta, monthly_returns, wacc_estimate
+from valuation._core.market import beta, monthly_returns, wacc_estimate
 from fakes import FakeSecClient
-from L0_ingest.market import MarketAdapter, MarketDataError, parse_alphavantage, parse_fred, parse_yahoo
-from L0_ingest.sec_companyfacts import SecCompanyFactsAdapter
-from L1_detail.build import _market_block
-from L2_models.comps import company_figures
-from runner import Paths, execute, plan
+from valuation.L0_ingest.market import MarketAdapter, MarketDataError, parse_alphavantage, parse_fred, parse_yahoo
+from valuation.L0_ingest.sec_companyfacts import SecCompanyFactsAdapter
+from valuation.L1_detail.build import _market_block
+from valuation.L2_models.comps import company_figures
+from valuation.runner import Paths, execute, plan
 
 FIXTURES = Path(__file__).parent / "fixtures"
 FX = json.loads((FIXTURES / "yahoo_chart.json").read_text())
@@ -96,7 +96,7 @@ def test_alphavantage_notices_and_key_redaction():
         parse_alphavantage({"Information": "rate limit reached"})
     capped = adapter(notice="25 requests per day reached").fetch("AAPL", AS_OF, cross_check=True)["check"]
     assert capped["status"] == "unavailable" and "25 requests" in capped["note"]
-    from L0_ingest.http import HttpError
+    from valuation.L0_ingest.http import HttpError
 
     class Boom:
         def get_bytes(self, url):
@@ -154,8 +154,8 @@ def test_comps_peer_price_from_market_data_unless_typed():
 
 
 def test_dcf_fills_blank_price_beta_and_risk_free_from_market_data(tmp_path):
-    from L2_models.base import get_model
-    from L3_app.demo import write_demo
+    from valuation.L2_models.base import get_model
+    from valuation.L3_app.demo import write_demo
     detail = json.loads((write_demo(tmp_path) / "company_detail.json").read_text())
     detail["market"] = {"price": 41.0, "price_date": AS_OF, "source": "yahoo",
                         "beta": {"value": 1.2, "months": 60, "index": "^GSPC"}, "wacc": {"risk_free": 0.045, "risk_free_date": "2026-10-01"}}
@@ -203,7 +203,7 @@ def test_showcase_runs_fetch_only_the_risk_free_rate(tmp_path):
 
 
 def test_showcase_filter_keeps_synthetic_and_strips_real_market_figures():
-    from L3_app.publish import showcase_filter
+    from valuation.L3_app.publish import showcase_filter
     real = {"market": {"price": 333.69, "source": "yahoo"}}
     assert showcase_filter("company_detail.json", real)["market"] is None
     synthetic = {"market": {"price": 45.0, "source": "synthetic"}}
@@ -221,7 +221,7 @@ def test_showcase_filter_keeps_synthetic_and_strips_real_market_figures():
 
 
 def test_publish_records_the_market_mode(tmp_path):
-    from L3_app.publish import publish
+    from valuation.L3_app.publish import publish
     site = tmp_path / "site"
     publish(tmp_path / "data", site)
     assert json.loads((site / "data" / "index.json").read_text())["market_data"] == "showcase"
@@ -234,7 +234,7 @@ def test_publish_records_the_market_mode(tmp_path):
 # ---------------------------------------------------------------- Yahoo backfill (private runs)
 
 def test_fundamentals_parsed_and_cut_at_as_of():
-    from L0_ingest.market import parse_fundamentals
+    from valuation.L0_ingest.market import parse_fundamentals
     s = parse_fundamentals(json.loads(FUND))
     assert s["annualCapitalExpenditure"][-1] == {"end": "2025-09-30", "value": -12715000000, "period": "12M", "currency": "USD"}
     f = adapter().fundamentals("AAPL", "2026-01-15")
@@ -258,8 +258,8 @@ def test_backfill_fills_only_gaps_in_periods_the_filings_define(tmp_path):
 
 
 def test_backfill_respects_filing_lag():
-    from L1_detail.backfill import backfill_records
-    from L1_detail.registry import load_registry
+    from valuation.L1_detail.backfill import backfill_records
+    from valuation.L1_detail.registry import load_registry
     recs = [{"concept": "revenue", "period_type": "duration", "months": 3, "end": "2026-06-30", "start": "2026-04-01",
              "fiscal_year": 2026, "fiscal_period": "Q3"}]
     fund = {"series": {"quarterlyReconciledDepreciation": [{"end": "2026-06-30", "value": 5, "period": "3M", "currency": "USD"}]}}
@@ -268,7 +268,7 @@ def test_backfill_respects_filing_lag():
 
 
 def test_showcase_publish_skips_runs_with_backfill(tmp_path):
-    from L3_app.publish import publish
+    from valuation.L3_app.publish import publish
     run = tmp_path / "data" / "DELL" / "2026-10-02"
     run.mkdir(parents=True)
     (run / "company_detail.json").write_text(json.dumps({"backfill": [{"concept": "ebitda"}], "views": {}, "analysis": {}}))

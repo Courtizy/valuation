@@ -3,10 +3,10 @@
 import { $, state } from "./state.js";
 import { esc } from "./format.js";
 
-let selectCompany = null;          // injected by main.js (avoids a circular import)
-export function setTourHooks(hooks) { ({ selectCompany } = hooks); }
+let selectCompany = null, route = null;    // injected by main.js (avoids a circular import)
+export function setTourHooks(hooks) { ({ selectCompany, route } = hooks); }
 
-const tab = (name) => document.querySelector(`.tab[data-tab="${name}"]`)?.click();
+const tab = (name) => route(name);          // overview, valuation, company, method, run
 const open = (key) => {
   const card = document.querySelector(`.card[data-collapse="${key}"]`);
   if (card?.classList.contains("collapsed")) card.querySelector(".collapse-btn").click();
@@ -20,6 +20,8 @@ const company = async (t) => {
 const view = (v) => document.querySelector(`#view-seg [data-view="${v}"]`)?.click();
 
 const STEPS = [
+  { at: ".ov-card", title: "The Answer First", go: async () => { await company("DEMO"); tab("overview"); },
+    text: "Overview leads with the headline: the middle 90% of simulated values per share, the median and how much of the value sits in the terminal year. Results and Method hold the detail." },
   { at: "#company", title: "Pick a Company", go: async () => { tab("company"); await company("DEMO"); view("annual"); },
     text: "Three featured companies show contrasting cases: <b>DEMO</b> (mature manufacturer), <b>DEMOG</b> (high-growth software) and <b>DEMOU</b> (leveraged utility). <b>ZZA–ZZF</b> are DEMO's comps peers. All synthetic, all run through the real pipeline." },
   { at: "#tiles", title: "Key Figures", text: "Latest twelve months from the filings, plus projected revenue growth over 5 and 10 years from the DCF case." },
@@ -35,20 +37,26 @@ const STEPS = [
     text: "The company's whole sector is screened from SEC data, then narrowed by level. Counts show how many companies each level holds; the benchmarks and charts below follow your choice." },
   { at: "#bench-card", title: "Relative Performance", text: "Each figure against the sector's quartiles: the bar is Q1–Q3, the line the median, the dot this company. Green and red mark favourable and unfavourable gaps." },
   { at: "#sector-card", title: "Companies", text: "Growth vs margin scatter (dot size = revenue), a revenue ranking and a sortable table. Click a company to open it, or build its detail if it only has screen figures." },
-  { at: "#val-head", title: "Value vs. Price", go: async () => { await company("DEMO"); tab("valuation"); },
-    text: "The blended value for the scenario you pick, against the share price. The line under the price says where it came from and whether the backup source agreed (<i>Checked against Alpha Vantage</i>)." },
-  { at: "#val-ff", title: "Football Field", text: "Each method's Bear–Base–Bull range, weight and reason, plus the blend. Switch Bear / Base / Bull at the top right. Precedents is tagged Illustrative until that model is built." },
+  { at: "#val-kpis", title: "Key Figures", go: async () => { await company("DEMO"); tab("valuation"); },
+    text: "Results opens on the Valuation view. The four tiles summarize the simulated DCF: median, middle 90%, terminal value share and how many of the runs were usable." },
+  { at: "#val-side", title: "Assumptions and Run", text: "The ranges each run draws from (near-term growth, discount rate, terminal growth), the run count and seed, the as-of date and the JSON downloads." },
+  { at: "#val-ff", title: "Where the Methods Agree", text: "Football field: each method's Bear–Base–Bull range, weight and reason, plus the blend, with a line on why they differ. DCF Bear and Bull are the 10th and 90th percentiles of the runs. Precedents is tagged Illustrative until that model is built." },
+  { at: "#val-spread", title: "Spread of Simulated Outcomes", text: "Every run's value per share. Solid bars hold the middle 90%; the faded tails are the runs outside it." },
+  { at: "#val-sens", title: "Sensitivity", text: "Discount rate against terminal growth, holding everything else at the stated case. Darker cells are lower values; the outlined cell is the stated case." },
+  { at: "#val-head", title: "Value vs. Price", text: "The blended value for the scenario you pick, against the share price. The line under the price says where it came from and whether the backup source agreed (<i>Checked against Alpha Vantage</i>)." },
   { at: "#val-profile", title: "Company Profile", text: "Four measured traits (stage, cash-flow predictability, asset intensity, capital structure) decide which method leads and the default weights, with the reason spelled out." },
   { at: "#val-comps", title: "Public Comps", text: "Every peer's implied price on each multiple as a dot, with the range and median. DEMO is compared with six detailed peers and one hand-entered company." },
   { at: "#val-peers", title: "Peer Picker", text: "Peers ranked by similarity within the sector level you choose. On your own data, Save Peers writes comps.json to your repo and Run Comps starts the pipeline (saving is off in the demo)." },
-  { at: "#val-dcf", title: "DCF", text: "Enterprise-to-equity bridge, discount rates (beta unlevered and relevered, WACC now and in the terminal year), the projection and a WACC × terminal-growth sensitivity grid." },
+  { at: "#val-dcf", title: "DCF", text: "Enterprise-to-equity bridge, discount rates (beta unlevered and relevered, WACC now and in the terminal year) and the projection behind the stated case." },
   { at: "#val-head", title: "Implied Mode and a Price Flag", go: async () => { await company("DEMOG"); tab("valuation"); },
     text: "DEMOG runs in <b>implied mode</b>: the DCF solves the growth the price implies. Its price line shows a <b>red flag</b>: the backup source's close differs by more than 2%." },
   { at: "#val-dcf", title: "Default Assumptions", go: async () => { await company("DEMOU"); tab("valuation"); },
     text: "DEMOU has no dcf.json, so the DCF runs on the <b>default case</b> from its own data (tagged on the card). Its price came from the backup source because the primary was unavailable." },
   { at: "#val-similar", title: "Similar Companies", text: "Every published company ranked by closeness on growth, margins, cash-flow stability, capital intensity, leverage and size; weak matches are hidden." },
+  { at: "#m-validation", title: "Method", go: async () => { tab("method"); },
+    text: "Inputs and their sources, how the model works, what has been checked (and what is still planned), the limits and the changelog." },
   { at: "#run-form", title: "Run It on a Real Company", go: async () => { tab("run"); },
-    text: "Pick a ticker, tick Company Details and the models, and the GitHub action runs the pipeline and publishes the results here. Press <b>Exit Demo</b> at the top to see your own data." },
+    text: "The owner's <b>Run ▸</b> page: pick a ticker, tick Company Details and the models, and the GitHub action runs the pipeline and publishes the results here. Press <b>Exit Demo</b> at the top to see your own data." },
 ];
 
 let i = -1, box = null, focused = null;

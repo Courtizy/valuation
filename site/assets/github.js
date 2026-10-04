@@ -13,8 +13,8 @@ export const actionsUrl = (g) => `https://github.com/${encodeURIComponent(g.owne
 
 export async function dispatchPipeline(inputs) {
   const g = gh();
-  if (!g.owner || !g.repo) return { ok: false, msg: "Fill in the owner and repository on the Run Pipeline tab." };
-  if (!g.token) return { ok: false, noToken: true, msg: "No token: add one on the Run Pipeline tab, or use the Actions page." };
+  if (!g.owner || !g.repo) return { ok: false, msg: "Fill in the owner and repository on the Run page." };
+  if (!g.token) return { ok: false, noToken: true, msg: "No token: add one on the Run page, or use the Actions page." };
   const res = await fetch(`${g.base}/actions/workflows/pipeline.yml/dispatches`, {
     method: "POST", headers: GH_HEADERS(g.token), body: JSON.stringify({ ref: "main", inputs }) });
   if (res.status === 204) return { ok: true, html: `Started. <a href="${actionsUrl(g)}" target="_blank" rel="noopener">Follow it on GitHub</a>; reload this page when it finishes.` };

@@ -6,10 +6,10 @@ from pathlib import Path
 
 import pytest
 
-from L1_detail.normalize import apply_pack, normalize, run
-from L1_detail.registry import load_registry
-from L1_detail.schema import validate_canonical
-from lineage import sha256_file
+from valuation.L1_detail.normalize import apply_pack, normalize, run
+from valuation.L1_detail.registry import load_registry
+from valuation.L1_detail.schema import validate_canonical
+from valuation.lineage import sha256_file
 
 FY23 = ("2022-10-01", "2023-09-30")
 FY22 = ("2021-10-01", "2022-09-30")

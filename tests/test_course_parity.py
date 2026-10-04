@@ -22,8 +22,8 @@ from pathlib import Path
 
 import pytest
 
-from core.projection import project
-from L1_detail.analysis import load_classification, managerial_ratios, mbs_free_cash_flow, reformulated_ratios
+from valuation._core.projection import project
+from valuation.L1_detail.analysis import load_classification, managerial_ratios, mbs_free_cash_flow, reformulated_ratios
 
 COURSE = os.environ.get("VALUATION_COURSE_DIR")
 _CONVERTED = Path(tempfile.gettempdir()) / "valuation_course_xlsx"
@@ -232,8 +232,8 @@ def test_789_firm_dcf_projection_rows(case):
 
 # ------------------------------------------- 789: discount rates and DCF value
 
-from core.cost_of_capital import discount_rates  # noqa: E402
-from core.dcf import scenario_range, solve, value_firm  # noqa: E402
+from valuation._core.cost_of_capital import discount_rates  # noqa: E402
+from valuation._core.dcf import scenario_range, solve, value_firm  # noqa: E402
 
 
 def _rates(wb):
@@ -338,7 +338,7 @@ def test_789_implied_growth_recovers_market_price(case):
 
 # ------------------------------------------------- 789: public comparables
 
-from L2_models.comps import implied_price, peer_row  # noqa: E402
+from valuation.L2_models.comps import implied_price, peer_row  # noqa: E402
 
 
 @pytest.mark.parametrize("case", sorted(FIRM_DCF_CASES))

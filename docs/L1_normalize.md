@@ -5,9 +5,9 @@
 ## Usage
 
 ```bash
-python -m L1_detail normalize data/AAPL/raw/raw_filing.json --as-of 2026-09-30 \
-    --out data/AAPL/2026-09-30/canonical_statements.json [--pack inputs/packs/default.json]
-python -m L1_detail validate data/AAPL/2026-09-30/canonical_statements.json
+python -m valuation.L1_detail normalize data/AAPL/raw/raw_filing.json --as-of 2026-09-30 \
+    --out data/AAPL/2026-09-30/canonical_statements.json [--pack configs/public/packs/default.json]
+python -m valuation.L1_detail validate data/AAPL/2026-09-30/canonical_statements.json
 ```
 
 The pipeline runner calls the same function as its "normalize" step.

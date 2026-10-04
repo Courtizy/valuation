@@ -3,14 +3,14 @@
 A sector screen gives every company in a sector the same dozen figures, cheaply, so a company can be read against its sector and comps peers can be picked from it. Full company detail (statements, ratios, profile) is still built per company, when you open one.
 
 ```
-python pipeline.py sector sic-of:AAPL                                # the whole sector a company belongs to (Technology)
-python pipeline.py sector sector:technology                          # a sector of inputs/sectors/taxonomy.json
-python pipeline.py sector sic:3674                                   # one SEC industry code
-python pipeline.py sector "traits:stage=high growth;asset_intensity=light"
-python pipeline.py sector list:example_chips                         # inputs/sectors/example_chips.json
+python -m valuation sector sic-of:AAPL                                # the whole sector a company belongs to (Technology)
+python -m valuation sector sector:technology                          # a sector of configs/public/sectors/taxonomy.json
+python -m valuation sector sic:3674                                   # one SEC industry code
+python -m valuation sector "traits:stage=high growth;asset_intensity=light"
+python -m valuation sector list:example_chips                         # configs/public/sectors/example_chips.json
 ```
 
-From the site: **Run Pipeline → Sector**, or the **Screen {Sector}** button on Company Detail.
+From the site: **Run ▸ → Sector**, or the **Screen {Sector}** button on Company Detail.
 
 ## Classification: sector › industry group › industry
 
@@ -75,4 +75,4 @@ Checked against real frames for NVDA, AMD, INTC, TXN, MU, QCOM, ADI and AAPL (`t
 | Company Detail → **Sector** (collapsible; one breadcrumb Sector › Group › Industry with member counts drives both parts) | **Relative Performance:** each figure's Q1 / median / Q3, this company's value, gap to median (green favourable, red unfavourable, tiny gaps neutral) and a position bar; "Screen {Sector}" when no screen covers the company |
 | | **Companies:** growth vs operating margin scatter (median crosshairs, dot size = revenue), revenue ranking, sortable table with an Industry column. Clicking a company opens it, or offers **Build Company Detail** (a Pipeline run through company details) |
 | Valuation → **Comps Peers from …** | ranked by the one similarity score (`L3_app/similar.py`, computed at publish). Opens at the company's industry if it has 6+ members, else widens. Tick peers, type prices, **Save Peers**, then **Run Comps** (GitHub contents API; token needs Contents: Read and write). Peers the picker didn't show (hand-entered, or outside the level in view) are kept |
-| Run Pipeline → **Sector** | a company's sector (default), a taxonomy sector, a SIC code, a trait group, or a list |
+| Run ▸ → **Sector** | a company's sector (default), a taxonomy sector, a SIC code, a trait group, or a list |

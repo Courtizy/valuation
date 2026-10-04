@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 
 from fakes import FakeSecClient
-from L0_ingest.sec_companyfacts import SecCompanyFactsAdapter
-from runner import Paths, execute, main, plan
+from valuation.L0_ingest.sec_companyfacts import SecCompanyFactsAdapter
+from valuation.runner import Paths, execute, main, plan
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -80,7 +80,7 @@ def test_execute_runs_l0_and_l1_then_the_dcf_default_case(tmp_path):
 
 
 def test_execute_reports_failures_without_raising(tmp_path):
-    from runner import Step
+    from valuation.runner import Step
 
     def boom():
         raise RuntimeError("bad data")
@@ -108,7 +108,7 @@ def test_peer_detail_built_for_the_same_date_is_reused(tmp_path):
 
 
 def test_expected_gaps_are_warnings_not_failures():
-    from runner import Step
+    from valuation.runner import Step
 
     class Gap(ValueError):
         is_warning = True

@@ -163,7 +163,7 @@ export function wireScreenButtons(root) {
   root.querySelectorAll("[data-goto-run]").forEach((a) => a.onclick = (ev) => {
     ev.preventDefault();
     document.querySelector('#r-mode [data-mode="sector"]').click();
-    document.querySelector('.tab[data-tab="run"]').click();
+    location.hash = "run";
   });
 }
 

@@ -1,7 +1,13 @@
 # pipeline outputs (published copies live in site/data)
 /data/
-# the demo is rebuilt on every Pages deploy (python -m L3_app.demo)
+# built by scripts/export_site.py on every deploy
 /site/demo/
+/site/brand/
+/site/data/changelog.json
+# private inputs and outputs never leave your machine
+/private/*
+!/private/README.md
+!/private/inputs.example.json
 /.cache/
 # local-only course material references
 notes_local/

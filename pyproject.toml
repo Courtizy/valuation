@@ -13,17 +13,13 @@ dev = ["pytest>=8"]
 export = ["openpyxl"]   # per-model Excel templates, memo; course parity tests
 # The app is a static site (site/) deployed to GitHub Pages; it needs no Python extra.
 
-[tool.setuptools]
-package-dir = {"" = "model"}
-py-modules = ["lineage"]
-
 [tool.setuptools.packages.find]
-where = ["model"]
-include = ["L0_ingest*", "L1_detail*", "L2_models*", "L3_app*", "core*", "runner*"]
+where = ["src"]
+include = ["valuation*"]
 
 [tool.setuptools.package-data]
-L1_detail = ["*.json"]
+"valuation.L1_detail" = ["*.json"]
 
 [tool.pytest.ini_options]
-pythonpath = ["model", "tests"]
+pythonpath = ["src", "tests"]
 testpaths = ["tests"]

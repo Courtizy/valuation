@@ -5,6 +5,7 @@ import { loadSector } from "./sector.js";
 import { $, banner, getJSON, state, store } from "./state.js";
 import { renderValuation } from "./valuation.js";
 import { setTourHooks, startTour } from "./tour.js";
+import { renderMethod, renderOverview } from "./pages.js";
 
 // Demo mode: the pre-loaded demo (site/demo/data, rebuilt on every deploy) instead of the real data.
 // Chosen by ?demo=1 / ?demo=0, else the viewer's last choice, else demo when there's no real data yet.
@@ -29,7 +30,7 @@ async function chooseMode() {
   };
   $("mode-strip").hidden = !state.demoMode;
   $("tour-start").onclick = startTour;
-  setTourHooks({ selectCompany });
+  setTourHooks({ selectCompany, route });
 }
 
 async function init() {
@@ -44,7 +45,7 @@ async function init() {
       getJSON(`${state.root}concepts.json`).catch(() => ({})), getJSON(`${state.root}companies.json`).catch(() => ({ companies: [] })),
       getJSON(`${state.root}taxonomy.json`).catch(() => null)]);
   } catch (e) {
-    banner(`Couldn't load ${state.root}index.json (${e.message}). Run the pipeline, or "python -m L3_app.publish", then reload.`);
+    banner(`Couldn't load ${state.root}index.json (${e.message}). Run the pipeline, or "python scripts/export_site.py", then reload.`);
     state.index = { companies: [] };
   }
   fillSectorList();
@@ -100,43 +101,65 @@ export async function selectRun(asOf) {
   else if (state.detail.warnings?.length) banner(`Build warnings: ${state.detail.warnings.join("; ")}`);
   renderCompany();
   renderValuation();
+  renderOverview();
   $("r-ticker").value = state.company.demo ? "" : state.company.ticker;
 }
 
 function renderEmptyEverywhere() {
   const msg = `<div class="card empty"><h2>No Published Results Yet</h2>
-    <p>Use <b>Run Pipeline</b> to fetch a company, or press <b>Demo</b> at the top to explore every feature on synthetic companies.</p></div>`;
+    <p>Use <b>Run ▸</b> to fetch a company, or press <b>Demo</b> at the top to explore every feature on synthetic companies.</p></div>`;
   for (const id of ["panel-company", "panel-valuation"]) $(id).innerHTML = msg;
+  renderOverview();
 }
 
 // ---------------------------------------------------------------- tabs, theme
 
+// Pages: Overview · Results · Method, plus the owner's Run page. Results holds two views,
+// Valuation (default) and Company Detail. The hash names the page or view: #overview, #valuation,
+// #company, #method, #run (#results opens the last view used).
+const PAGES = { overview: "overview", results: "results", valuation: "results", company: "results", method: "method", run: "run" };
+
+export function route(name) {
+  if (!PAGES[name]) name = "overview";
+  if (name === "results") name = store.get("rv") || "valuation";
+  const page = PAGES[name];
+  state.tab = page === "results" ? name : page;
+  for (const t of document.querySelectorAll(".tab")) {
+    const on = t.dataset.tab === page;
+    t.setAttribute("aria-selected", on);
+    t.tabIndex = on ? 0 : -1;
+  }
+  for (const id of ["overview", "results", "method", "run"]) $(`panel-${id}`).hidden = id !== page;
+  $("run-link").classList.toggle("active", page === "run");
+  if (page === "results") {
+    store.set("rv", name);
+    $("panel-valuation").hidden = name !== "valuation";
+    $("panel-company").hidden = name !== "company";
+    for (const b of $("results-view").querySelectorAll("button")) b.setAttribute("aria-pressed", b.dataset.rv === name);
+  }
+  if (location.hash !== `#${name}`) history.replaceState(null, "", `#${name}`);
+  // charts measure their container, so draw after the panel is visible
+  if (name === "overview") renderOverview();
+  if (name === "method") renderMethod();
+  if (name === "company" && state.detail) renderCompany();
+  if (name === "valuation" && state.detail) renderValuation();
+}
+
 export function setupTabs() {
   const tabs = [...document.querySelectorAll(".tab")];
-  const show = (name) => {
-    state.tab = name;
-    for (const t of tabs) {
-      const on = t.dataset.tab === name;
-      t.setAttribute("aria-selected", on);
-      t.tabIndex = on ? 0 : -1;
-      $(`panel-${t.dataset.tab}`).hidden = !on;
-    }
-    if (location.hash !== `#${name}`) history.replaceState(null, "", `#${name}`);
-    // charts measure their container, so draw after the panel is visible
-    if (name === "company" && state.detail) renderCompany();
-    if (name === "valuation" && state.detail) renderValuation();
-  };
   tabs.forEach((t, i) => {
-    t.onclick = () => show(t.dataset.tab);
+    t.onclick = () => route(t.dataset.tab);
     t.onkeydown = (e) => {
       const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
-      if (d) { const n = tabs[(i + d + tabs.length) % tabs.length]; n.focus(); show(n.dataset.tab); }
+      if (d) { const n = tabs[(i + d + tabs.length) % tabs.length]; n.focus(); route(n.dataset.tab); }
     };
   });
-  const fromHash = () => {
-    const h = location.hash.slice(1);
-    show(tabs.some((t) => t.dataset.tab === h) ? h : "company");
-  };
+  $("results-view").onclick = (e) => { const b = e.target.closest("button"); if (b) route(b.dataset.rv); };
+  document.addEventListener("click", (e) => {     // in-page links such as "See results" and "How it works"
+    const a = e.target.closest('a[href^="#"]');
+    if (a && PAGES[a.getAttribute("href").slice(1)]) { e.preventDefault(); route(a.getAttribute("href").slice(1)); window.scrollTo(0, 0); }
+  });
+  const fromHash = () => route(location.hash.slice(1));
   window.addEventListener("hashchange", fromHash);
   fromHash();
 }
@@ -154,7 +177,7 @@ function setupTheme() {
     const next = order[(order.indexOf(store.get("theme")) + 1) % 3];
     store.set("theme", next);
     apply(next);
-    if (state.detail) { renderCompany(); renderValuation(); }
+    if (state.detail) { renderCompany(); renderValuation(); renderOverview(); }
   };
 }
 

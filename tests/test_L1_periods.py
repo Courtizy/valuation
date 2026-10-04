@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from L1_detail.periods import build_views, calendar_label
-from L1_detail.registry import load_registry
+from valuation.L1_detail.periods import build_views, calendar_label
+from valuation.L1_detail.registry import load_registry
 
 
 @pytest.fixture
@@ -13,7 +13,7 @@ def reg():
 
 
 def rec(concept, start, end, value, months=None, fy=2023, fp="FY", restated=False):
-    from L1_detail.normalize import _months
+    from valuation.L1_detail.normalize import _months
     return {"concept": concept, "start": start, "end": end, "value": value,
             "months": _months(start, end) if start else None, "fiscal_year": fy, "fiscal_period": fp,
             "restated": restated, "method": "reported", "value_as_filed": value,

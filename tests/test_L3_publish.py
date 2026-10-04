@@ -7,10 +7,10 @@ from pathlib import Path
 
 import pytest
 
-from L1_detail.build import validate_detail
-from L3_app.demo import write_demo
-from L3_app.publish import publish
-from runner import Paths, plan
+from valuation.L1_detail.build import validate_detail
+from valuation.L3_app.demo import write_demo
+from valuation.L3_app.publish import publish
+from valuation.runner import Paths, plan
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -109,3 +109,19 @@ def test_site_references_exist():
     html = (ROOT / "site" / "index.html").read_text()
     for ref in re.findall(r'(?:src|href)="(assets/[^"]+)"', html):
         assert (ROOT / "site" / ref).exists(), ref
+
+
+def test_brand_references_come_from_the_repo_brand_folder():
+    """site/brand is copied from brand/ by scripts/export_site.py, so check the source."""
+    html = (ROOT / "site" / "index.html").read_text()
+    refs = re.findall(r'(?:src|href)="brand/([^"]+)"', html)
+    assert refs and all((ROOT / "brand" / r).exists() for r in refs), refs
+
+
+def test_export_changelog_parses():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("export_site", ROOT / "scripts" / "export_site.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    releases = mod.changelog()
+    assert releases[0]["version"] == "0.2.0" and releases[0]["items"]

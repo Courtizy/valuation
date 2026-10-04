@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-from L1_detail.registry import DEFAULT_PATH, load_registry, validate_registry
+from valuation.L1_detail.registry import DEFAULT_PATH, load_registry, validate_registry
 
 EDGARTOOLS_SPOT_CHECK = [
     "CashAndMarketableSecurities", "Assets", "LiabilitiesAndEquity", "Revenue",

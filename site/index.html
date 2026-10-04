@@ -15,6 +15,9 @@
   </script>
 </head>
 <body>
+  <div class="hub-bar"><div class="hub-bar__inner">
+    <a href="https://courtizy.github.io/">← Decision Models</a><span>Jason C. Courtoy</span>
+  </div></div>
   <header class="topbar brand-header">
     <div class="topbar-inner">
       <div class="brand">
@@ -24,14 +27,10 @@
         <div class="brand-header__text">
           <h1 class="brand-header__name">Valuation Model <span id="demo-badge" class="badge" hidden>Synthetic Demo Data</span></h1>
           <p class="brand-header__question">What is the business worth, and how sure are we?</p>
-          <span class="brand-header__by">by Jason C. Courtoy</span>
         </div>
       </div>
-      <div class="picker">
-        <label class="small muted" for="company">Company</label>
-        <select id="company" aria-label="Company"></select>
-        <label class="small muted" for="asof">As Of</label>
-        <select id="asof" aria-label="As-of date"></select>
+      <span class="app-status"><span class="app-status__dot" aria-hidden="true"></span>In development</span>
+      <div class="header-actions">
         <button id="theme" type="button" aria-label="Toggle theme" title="Theme">Theme: auto</button>
         <button id="demo-toggle" type="button" aria-pressed="false" title="Switch between the demo and the real data">Demo</button>
       </div>
@@ -40,23 +39,42 @@
   <div id="mode-strip" class="mode-strip" hidden>
     <div class="mode-strip__inner">
       <span class="tile-tag">Demo</span>
-      <span>Synthetic companies run through the real pipeline: every feature of the tool, no real data.</span>
+      <span>Synthetic companies run through the real pipeline: every feature, no real data.</span>
       <button type="button" class="primary" id="tour-start">Take the Tour</button>
     </div>
   </div>
   <div class="tabbar">
-    <nav class="tabs" role="tablist" aria-label="Sections">
-      <button class="tab" role="tab" id="tab-company" aria-controls="panel-company" data-tab="company">Company Detail</button>
-      <button class="tab" role="tab" id="tab-valuation" aria-controls="panel-valuation" data-tab="valuation">Valuation</button>
-      <button class="tab" role="tab" id="tab-run" aria-controls="panel-run" data-tab="run">Run Pipeline</button>
+    <nav class="tabs" role="tablist" aria-label="Pages">
+      <button class="tab" role="tab" id="tab-overview" aria-controls="panel-overview" data-tab="overview">Overview</button>
+      <button class="tab" role="tab" id="tab-results" aria-controls="panel-results" data-tab="results">Results</button>
+      <button class="tab" role="tab" id="tab-method" aria-controls="panel-method" data-tab="method">Method</button>
+      <a class="run-link" href="#run" id="run-link" title="Owner tool: start a pipeline run on GitHub">Run ▸</a>
     </nav>
   </div>
 
   <main>
     <div id="banner" class="banner" hidden></div>
 
-    <!-- Company detail -->
-    <section id="panel-company" class="panel" role="tabpanel" aria-labelledby="tab-company" hidden>
+    <!-- Overview -->
+    <section id="panel-overview" class="panel" role="tabpanel" aria-labelledby="tab-overview" hidden>
+      <div id="ov-body"></div>
+    </section>
+
+    <!-- Results: Valuation (default) and Company Detail views -->
+    <section id="panel-results" class="panel" role="tabpanel" aria-labelledby="tab-results" hidden>
+      <div class="results-bar">
+        <div class="picker">
+          <label class="small muted" for="company">Company</label>
+          <select id="company" aria-label="Company"></select>
+          <label class="small muted" for="asof">As Of</label>
+          <select id="asof" aria-label="As-of date"></select>
+        </div>
+        <div class="seg" id="results-view" role="group" aria-label="Results view">
+          <button type="button" data-rv="valuation" aria-pressed="true">Valuation</button>
+          <button type="button" data-rv="company" aria-pressed="false">Company Detail</button>
+        </div>
+      </div>
+    <div id="panel-company" class="view" hidden>
       <div id="tiles" class="tiles"></div>
       <div class="grid-2">
         <div class="card">
@@ -121,15 +139,24 @@
           <div id="sector-card" class="subsection"></div>
         </div>
       </div>
+    </div>
+
+    <!-- Valuation view -->
+    <div id="panel-valuation" class="view" hidden>
+      <div class="results-grid">
+        <aside id="val-side" class="results-side" aria-label="Run details"></aside>
+        <div class="results-main"><div id="val-kpis"></div><div id="val-body"></div></div>
+      </div>
+    </div>
     </section>
 
-    <!-- Valuation -->
-    <section id="panel-valuation" class="panel" role="tabpanel" aria-labelledby="tab-valuation" hidden>
-      <div id="val-body"></div>
+    <!-- Method -->
+    <section id="panel-method" class="panel" role="tabpanel" aria-labelledby="tab-method" hidden>
+      <div id="method-body"></div>
     </section>
 
     <!-- Run pipeline -->
-    <section id="panel-run" class="panel" role="tabpanel" aria-labelledby="tab-run" hidden>
+    <section id="panel-run" class="panel" aria-label="Run the pipeline" hidden>
       <div class="card">
         <div class="card-head"><h2>Run the Pipeline</h2></div>
         <p class="muted">Starts the <code>Pipeline</code> GitHub Action. It fetches SEC filings, builds company detail, publishes the results here and redeploys the site. That usually takes a few minutes.</p>
@@ -204,8 +231,9 @@
     </section>
   </main>
   <footer class="brand-footer">
-    Personal project · public or synthetic data only · not investment advice. Built from SEC filings. <span id="footer-market"></span>
-    This product uses the FRED® API but is not endorsed or certified by the Federal Reserve Bank of St. Louis. <span id="generated"></span>
+    <p>Personal project · public or synthetic data only · not investment advice · not endorsed by DoD or the U.S. Air Force</p>
+    <p class="small">Built from SEC filings. <span id="footer-market"></span>
+    This product uses the FRED® API but is not endorsed or certified by the Federal Reserve Bank of St. Louis. <span id="generated"></span></p>
   </footer>
   <script type="module" src="assets/main.js"></script>
 </body>

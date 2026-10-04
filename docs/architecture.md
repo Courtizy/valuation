@@ -24,7 +24,7 @@
                        reconcile/  reads model_results/*.json only
                          → comparison.json, football field, memo, scenario_result.json
       |
- L3  App               static site on GitHub Pages (site/); Actions run pipeline.py
+ L3  App               static site on GitHub Pages (site/); Actions run python -m valuation
                        and publish JSON; the page renders it and holds no model logic
                        (projections come from L1's trend case or the DCF)
 ```
@@ -43,22 +43,26 @@
 
 ```
 valuation/
-  model/                         all Python (on the path via pip install -e . or PYTHONPATH=model)
+  src/valuation/                 the engine (pip install -e . puts it on the path); python -m valuation run|sector
     L0_ingest/                   adapters (companyfacts, sector frames, market data), cache, raw schema, CLI
     L1_detail/                   registry, normalize, periods, analysis, build, profile, forecast,
                                  sector screen, taxonomy
-    L2_models/                   base, dcf, comps, reconcile; lbo/ ipo/ precedents scaffolded
+    L2_models/                   base, dcf (simulated), comps, reconcile; lbo/ ipo/ precedents scaffolded
     L3_app/                      publish (outputs -> site/data), similar, demo/
-    core/                        projection, cost_of_capital, dcf, shares, num, market (beta, WACC estimate)
+    _core/                       projection, cost_of_capital, dcf, simulation, shares, num, market;
+                                 imports nothing else from the package (test enforced) until it moves to courtoy-core
     runner/                      paths, company plan/execute, sector, cli
     lineage.py                   lineage block helper
-  inputs/                        everything edited by hand
+  configs/public/                everything edited by hand for the public site
     assumptions/                 {TICKER}/{model}.json, _template/
     packs/                       sector packs (default.json)
     sectors/                     taxonomy.json, sic_codes.json, custom ticker lists
-  site/                          GitHub Pages app: index.html, assets/, data/
-  tests/  docs/  .github/workflows/
-  pipeline.py                    entry point: python pipeline.py run|sector
+  scripts/export_site.py         public door: brand → site/brand, demo, changelog.json, index refresh
+  app/run_private.py             private door: private/inputs.json → private/data, private/site
+  private/                       gitignored (README and example only); personal-time data only
+  brand/                         Decision Models brand kit (copied into site/brand at export)
+  site/                          GitHub Pages app: index.html, assets/, data/ (brand/ and demo/ generated)
+  tests/  docs/  CHANGELOG.md  .github/workflows/
 ```
 
 ## Data layout
@@ -74,17 +78,17 @@ data/{TICKER}/{as_of}/comparison.json                 L2 reconcile
 data/_screen/{as_of}/raw_screen.json                  L0 sector frames (all filers)
 data/_screen/{as_of}/sic_{code}.json                  L0 EDGAR company list for a SIC code
 data/sectors/{sector_id}/{as_of}/sector.json          L1 sector screen (docs/L1_sector.md)
-inputs/sectors/{name}.json                                   custom sector lists (in the repo)
+configs/public/sectors/{name}.json                                   custom sector lists (in the repo)
 ```
 
 Everything from L1 onward is keyed by `as_of`, so a past valuation can be rerun and compared.
 
 ## Cross-cutting rules
 
-**Runner.** `runner/` holds sequencing only (`pipeline.py` is its entry point) (`--stop-after L1` skips models): ingest and build for the target and any peers, then models, then reconcile. It stops at the first step that isn't built or fails and marks the rest skipped. Peers whose company detail already exists for the same `as_of` are reused, not rebuilt. `--dry-run` prints the plan. The app starts the runner through the Pipeline GitHub Action; every layer still runs on its own.
+**Runner.** `runner/` holds sequencing only (`python -m valuation` is its entry point) (`--stop-after L1` skips models): ingest and build for the target and any peers, then models, then reconcile. It stops at the first step that isn't built or fails and marks the rest skipped. Peers whose company detail already exists for the same `as_of` are reused, not rebuilt. `--dry-run` prints the plan. The app starts the runner through the Pipeline GitHub Action; every layer still runs on its own.
 
 ```bash
-python pipeline.py run AAPL --models dcf,comps --as-of 2026-09-30 --dry-run
+python -m valuation run AAPL --models dcf,comps --as-of 2026-09-30 --dry-run
 ```
 
 **Shared helpers.** `core/num.py` (`div`, None-safe division) is used across L1; `profile.py` holds the trait classifiers used by both full profiles and sector screens; `L3_app/similar.py` is the one similarity ranking behind Similar Companies and the peer picker.
@@ -95,11 +99,11 @@ python pipeline.py run AAPL --models dcf,comps --as-of 2026-09-30 --dry-run
 
 **Point-in-time.** L1 normalize keeps only facts with `filed <= as_of`. Without this, back-testing a past forecast silently uses later restatements. L0 already stores `filed` on every fact.
 
-**Sector packs.** Data files in `inputs/packs/`. In L1 they override tag priorities, concepts and profile thresholds (banks have no gross profit). In L2 they set default assumptions. They do **not** decide which models apply: that comes from the company profile.
+**Sector packs.** Data files in `configs/public/packs/`. In L1 they override tag priorities, concepts and profile thresholds (banks have no gross profit). In L2 they set default assumptions. They do **not** decide which models apply: that comes from the company profile.
 
-**Triangulation by company profile.** L1 measures four traits (stage, cash-flow predictability, asset intensity, capital structure). Reconcile turns them into a primary method, a cross-check and default weights, each with a reason (`docs/L2_reconcile.md`). `inputs/assumptions/{TICKER}/reconcile.json` can override the weights or switch to the acquisition context.
+**Triangulation by company profile.** L1 measures four traits (stage, cash-flow predictability, asset intensity, capital structure). Reconcile turns them into a primary method, a cross-check and default weights, each with a reason (`docs/L2_reconcile.md`). `configs/public/assumptions/{TICKER}/reconcile.json` can override the weights or switch to the acquisition context.
 
-**Peers.** `inputs/assumptions/{TICKER}/comps.json` lists peers. The runner adds L0 and L1 steps for each peer only when a selected model has `needs_peers` (comps, ipo). All L1 work finishes before any model runs.
+**Peers.** `configs/public/assumptions/{TICKER}/comps.json` lists peers. The runner adds L0 and L1 steps for each peer only when a selected model has `needs_peers` (comps, ipo). All L1 work finishes before any model runs.
 
 ## L0 rules
 
@@ -160,7 +164,7 @@ Fields a model doesn't use are omitted, not zeroed. Reconcile flags fields prese
 
 ## Testing
 
-- Tests per layer, runnable alone (`tests/test_L0_*`, `test_L1_*`, `test_L2_*`, `test_pipeline.py`).
+- Tests per layer, runnable alone (`tests/test_L0_*`, `test_L1_*`, `test_L2_*`, `test_pipeline.py` (the runner)).
 - Isolation rules are tests, not conventions.
 - Planned in `core.validate`: Excel parity tests per model, and a forecast back-test harness every model uses the same way.
 

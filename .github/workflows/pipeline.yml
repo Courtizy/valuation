@@ -53,7 +53,7 @@ jobs:
       STOP_AFTER: ${{ inputs.stop_after }}
       SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
       ALPHAVANTAGE_API_KEY: ${{ secrets.ALPHAVANTAGE_API_KEY }}   # optional: backup prices and the cross-check
-      PYTHONPATH: model          # code lives in model/
+      PYTHONPATH: src            # the package lives in src/valuation
       SITE_MARKET_DATA: ${{ vars.SITE_MARKET_DATA || 'showcase' }}
       MARKET: ${{ vars.SITE_MARKET_DATA == 'real' && 'all' || 'risk-free' }}
     steps:
@@ -92,14 +92,14 @@ jobs:
         continue-on-error: ${{ inputs.stop_after == 'L2' }}
         # Showcase mode (default): no price data, so nothing price-derived is published (data terms).
         # Set the repository variable SITE_MARKET_DATA=real only for a private site or licensed data.
-        run: python pipeline.py run "$TICKER" --as-of "$AS_OF" --models "$MODELS" --stop-after "$STOP_AFTER" --market "$MARKET"
+        run: python -m valuation run "$TICKER" --as-of "$AS_OF" --models "$MODELS" --stop-after "$STOP_AFTER" --market "$MARKET"
 
       - name: Screen sector
         if: env.MODE == 'sector'
-        run: python pipeline.py sector "$SECTOR" --as-of "$AS_OF"
+        run: python -m valuation sector "$SECTOR" --as-of "$AS_OF"
 
       - name: Publish to site/data
-        run: python -m L3_app.publish --data-dir data --site-dir site --market-data "$SITE_MARKET_DATA"
+        run: python -m valuation.L3_app.publish --data-dir data --site-dir site --market-data "$SITE_MARKET_DATA"
 
       - name: Commit results
         # main can move during a run (you push files, or the site saves comps peers). If the push
@@ -120,6 +120,6 @@ jobs:
             sleep $((attempt * 5))
             git fetch -q origin main
             git reset -q --hard origin/main
-            python -m L3_app.publish --data-dir data --site-dir site --market-data "$SITE_MARKET_DATA"
+            python -m valuation.L3_app.publish --data-dir data --site-dir site --market-data "$SITE_MARKET_DATA"
           done
           echo "could not push after 4 attempts"; exit 1

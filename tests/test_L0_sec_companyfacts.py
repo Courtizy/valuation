@@ -8,12 +8,12 @@ from pathlib import Path
 
 import pytest
 
-from L0_ingest.__main__ import main
-from L0_ingest.cache import FileCache
-from L0_ingest.http import HttpClient, HttpError
-from L0_ingest.schema import validate_raw_filing
+from valuation.L0_ingest.__main__ import main
+from valuation.L0_ingest.cache import FileCache
+from valuation.L0_ingest.http import HttpClient, HttpError
+from valuation.L0_ingest.schema import validate_raw_filing
 from fakes import FakeSecClient
-from L0_ingest.sec_companyfacts import (
+from valuation.L0_ingest.sec_companyfacts import (
     COMPANYFACTS_URL,
     SUBMISSIONS_URL,
     TICKERS_URL,

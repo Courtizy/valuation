@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Callable
 
-from L0_ingest.http import HttpError
+from valuation.L0_ingest.http import HttpError
 
 FIXTURES = Path(__file__).parent / "fixtures"
 Body = "Path | bytes | str | None"

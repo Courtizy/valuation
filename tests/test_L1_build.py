@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from L1_detail.__main__ import main as l1_main
-from L1_detail.build import build_detail, run, validate_detail
+from valuation.L1_detail.__main__ import main as l1_main
+from valuation.L1_detail.build import build_detail, run, validate_detail
 from test_L1_periods import rec, year_records
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -86,17 +86,19 @@ def test_validator_flags_problems():
     assert validate_detail({}) != []
 
 
-def test_core_imports_no_layer():
-    layers = ("L0_ingest", "L1_detail", "L2_models", "L3_app", "pipeline")
-    for py in (ROOT / "model" / "core").rglob("*.py"):
+def test_core_imports_nothing_else_from_the_package():
+    """_core moves to courtoy-core later, so it may import only itself (relative or valuation._core)."""
+    for py in (ROOT / "src" / "valuation" / "_core").rglob("*.py"):
         for node in ast.walk(ast.parse(py.read_text())):
             names = [a.name for a in node.names] if isinstance(node, ast.Import) else \
-                [node.module or ""] if isinstance(node, ast.ImportFrom) else []
-            assert not any(n.split(".")[0] in layers for n in names), f"{py.name} imports {names}"
+                [node.module or ""] if isinstance(node, ast.ImportFrom) and not node.level else []
+            bad = [n for n in names if n.startswith("valuation") and not n.startswith("valuation._core")]
+            bad += [n for n in names if n.split(".")[0] in ("L0_ingest", "L1_detail", "L2_models", "L3_app", "runner")]
+            assert not bad, f"{py.name} imports {bad}"
 
 
 def test_foreign_ifrs_filer_fails_clearly():
-    from L1_detail.normalize import normalize
+    from valuation.L1_detail.normalize import normalize
     fact = lambda tag, val, start, end: {"taxonomy": "ifrs-full", "tag": tag, "label": tag, "description": None,  # noqa: E731
                                           "unit": "TWD", "value": val, "start": start, "end": end, "fy": 2025,
                                           "fp": "FY", "form": "20-F", "filed": "2026-04-15", "accn": "x", "frame": None}
@@ -109,7 +111,7 @@ def test_foreign_ifrs_filer_fails_clearly():
 
 
 def test_trend_case_projection_is_calculated_from_history():
-    from L1_detail.forecast import TERMINAL_GROWTH, trend_case
+    from valuation.L1_detail.forecast import TERMINAL_GROWTH, trend_case
     d = build_detail(two_years(), "2026-09-30")
     p = d["projection"]
     assert p is not None and p == trend_case(d)
@@ -127,5 +129,5 @@ def test_trend_case_projection_is_calculated_from_history():
 
 
 def test_trend_case_none_without_revenue():
-    from L1_detail.forecast import trend_case
+    from valuation.L1_detail.forecast import trend_case
     assert trend_case({"views": {"ttm": [], "annual": []}, "analysis": {}}) is None

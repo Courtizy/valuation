@@ -104,8 +104,8 @@ Stdlib-only at runtime. `pytest` is the only dev dependency.
 ```bash
 export SEC_USER_AGENT="Your Name you@example.com"
 cd valuation
-python -m L0_ingest sec-companyfacts --ticker AAPL --out data/raw/AAPL/raw_filing.json
-python -m L0_ingest validate data/raw/AAPL/raw_filing.json
+python -m valuation.L0_ingest sec-companyfacts --ticker AAPL --out data/raw/AAPL/raw_filing.json
+python -m valuation.L0_ingest validate data/raw/AAPL/raw_filing.json
 pytest
 ```
 

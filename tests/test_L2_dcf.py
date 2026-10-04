@@ -5,14 +5,14 @@ import json
 
 import pytest
 
-from core.cost_of_capital import discount_rates, relever_beta, unlever_beta, wacc
-from core.dcf import solve, terminal_value, value_firm
-from core.projection import project
-from core.shares import treasury_stock_method
-from L2_models.base import get_model
-from L2_models.dcf import AssumptionError
-from L2_models.reconcile import build_comparison
-from L3_app.demo import write_demo
+from valuation._core.cost_of_capital import discount_rates, relever_beta, unlever_beta, wacc
+from valuation._core.dcf import solve, terminal_value, value_firm
+from valuation._core.projection import project
+from valuation._core.shares import treasury_stock_method
+from valuation.L2_models.base import get_model
+from valuation.L2_models.dcf import AssumptionError
+from valuation.L2_models.reconcile import build_comparison
+from valuation.L3_app.demo import write_demo
 
 A = pytest.approx
 
@@ -195,7 +195,7 @@ def test_sensitivity_grid_centre_is_base_and_slopes_right(detail):
 
 
 def test_default_case_values_a_company_without_a_dcf_json(detail):
-    from L2_models.dcf import default_assumptions
+    from valuation.L2_models.dcf import default_assumptions
     d = {**detail, "market": None, "shares_outstanding": 330e6,
          "risk_free": {"value": 0.045, "date": "2026-09-30", "series": "DGS10"}}
     a = default_assumptions(d)
@@ -210,7 +210,7 @@ def test_default_case_values_a_company_without_a_dcf_json(detail):
 def test_default_case_handles_negative_book_equity(detail):
     """Dell-like: buybacks leave book equity negative, and there's no price in showcase mode."""
     from copy import deepcopy
-    from L2_models.dcf import default_assumptions
+    from valuation.L2_models.dcf import default_assumptions
     d = deepcopy({**detail, "market": None, "shares_outstanding": 330e6,
                   "risk_free": {"value": 0.045, "date": "2026-09-30", "series": "DGS10"}})
     for view in ("annual", "ttm", "quarterly"):
@@ -221,3 +221,42 @@ def test_default_case_handles_negative_book_equity(detail):
     assert rates["debt_to_equity_basis"] == "model equity value" and 0 < rates["current_debt_to_equity"] < 4
     eq = r["details"]["bridge"]["equity_value"]
     assert rates["current_debt_to_equity"] == A(r["details"]["bridge"]["debt"] / eq, rel=1e-3)   # converged
+
+
+# ---------------------------------------------------------------- Monte Carlo
+
+def test_simulation_is_seeded_and_summarized(detail):
+    a = assumptions(simulation={"runs": 800, "seed": 11})
+    r1 = get_model("dcf").run(detail, a).to_dict()
+    r2 = get_model("dcf").run(detail, assumptions(simulation={"runs": 800, "seed": 11})).to_dict()
+    s = r1["details"]["simulation"]
+    assert s == r2["details"]["simulation"]                                   # same seed, same numbers
+    ps = s["per_share"]
+    assert ps["p5"] < ps["p10"] < ps["p50"] < ps["p90"] < ps["p95"] and s["middle_90"] == [ps["p5"], ps["p95"]]
+    h = s["histogram"]
+    assert sum(h["counts"]) + h["below"] + h["above"] == s["runs_used"] <= 800
+    assert r1["value_per_share"]["p10"] == ps["p10"] and r1["value_per_share"]["p90"] == ps["p90"]
+    assert r1["value_per_share"]["p50"] == r1["details"]["scenarios"]["expected"]  # base stays the course case
+    assert 0 < s["terminal_value_share"] < 1
+    other = get_model("dcf").run(detail, assumptions(simulation={"runs": 800, "seed": 12})).to_dict()
+    assert other["details"]["simulation"]["per_share"] != ps
+
+
+def test_simulation_ranges_can_be_set_and_bad_runs_dropped(detail):
+    tight = {"runs": 300, "growth": 0.05, "wacc": {"dist": "uniform", "low": 0.08, "high": 0.081},
+             "terminal_growth": {"dist": "triangular", "low": 0.02, "mode": 0.03, "high": 0.035}}
+    s = get_model("dcf").run(detail, assumptions(simulation=tight)).to_dict()["details"]["simulation"]
+    assert s["inputs"]["growth"] == 0.05 and s["per_share"]["p95"] - s["per_share"]["p5"] < 30
+    wild = {"runs": 300, "terminal_growth": {"dist": "uniform", "low": 0.0, "high": 0.2}}
+    s = get_model("dcf").run(detail, assumptions(simulation=wild)).to_dict()["details"]["simulation"]
+    assert s["runs_used"] < 300                                                # terminal growth above WACC dropped
+
+
+def test_core_simulation_helpers():
+    from valuation._core.simulation import histogram, percentile, rng, sample, summarize
+    xs = sample({"dist": "triangular", "low": 0, "mode": 1, "high": 2}, 1000, rng(3))
+    assert min(xs) >= 0 and max(xs) <= 2 and abs(summarize(xs)["p50"] - 1) < 0.1
+    assert percentile([1, 2, 3, 4], 50) == 2.5 and sample(4.0, 3, rng(1)) == [4.0, 4.0, 4.0]
+    assert sum(histogram(xs, bins=10, trim=0)["counts"]) == 1000
+    with pytest.raises(ValueError):
+        sample({"dist": "lognormal"}, 1, rng(1))

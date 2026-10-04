@@ -2,7 +2,7 @@ import { actionsUrl, dispatchPipeline, gh, setStatus } from "./github.js";
 import { esc } from "./format.js";
 import { $, state, store } from "./state.js";
 
-// ---- Run Pipeline tab ------------------------------------------------------------
+// ---- Run page (owner) -------------------------------------------------------------
 export function repoGuess() {
   const h = location.hostname;
   if (h.endsWith(".github.io")) return { owner: h.split(".")[0], repo: location.pathname.split("/").filter(Boolean)[0] || `${h}` };

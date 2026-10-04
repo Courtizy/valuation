@@ -7,10 +7,10 @@ from pathlib import Path
 
 import pytest
 
-from L2_models.base import MODEL_NAMES, ModelResult, get_model
-from L2_models.reconcile import build_comparison
+from valuation.L2_models.base import MODEL_NAMES, ModelResult, get_model
+from valuation.L2_models.reconcile import build_comparison
 
-L2 = Path(__file__).resolve().parent.parent / "model" / "L2_models"
+L2 = Path(__file__).resolve().parent.parent / "src" / "valuation" / "L2_models"
 
 
 def _imports(pkg_dir: Path) -> set[str]:
@@ -21,7 +21,9 @@ def _imports(pkg_dir: Path) -> set[str]:
                 found.update(a.name for a in node.names)
             elif isinstance(node, ast.ImportFrom) and node.module:
                 found.add(node.module)
-    return found
+    # compare without the package prefix: valuation.L2_models.dcf -> L2_models.dcf, valuation._core.x -> core.x
+    return {n.removeprefix("valuation.").replace("_core", "core", 1) if n.startswith("valuation._core") else n.removeprefix("valuation.")
+            for n in found}
 
 
 @pytest.mark.parametrize("model", MODEL_NAMES)

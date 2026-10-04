@@ -484,3 +484,48 @@ export function groupedBarChart(container, { categories, series, format, label =
     });
   });
 }
+
+/** Histogram of simulated outcomes: contiguous bins in series 1, the middle band (e.g. p5–p95)
+ * at full strength and the tails faded, plus labelled vertical markers (median, base, price). */
+export function histogramChart(container, { counts, edges, band = null, markers = [], format, label = "", height = 220 }) {
+  observe(container, () => {
+    const { svg, tip, width } = setup(container, height);
+    svg.setAttribute("aria-label", label);
+    if (!counts?.length) { container.innerHTML = '<p class="muted small">No simulation for this run.</p>'; return; }
+    const m = { t: 34, r: 12, b: 26, l: 44 };
+    const ih = height - m.t - m.b, iw = width - m.l - m.r;
+    const lo = edges[0], hi = edges[edges.length - 1];
+    const x = (v) => m.l + ((v - lo) / (hi - lo)) * iw;
+    const total = counts.reduce((a, b) => a + b, 0) || 1;
+    const shares = counts.map((c) => c / total);
+    const ticks = niceTicks(0, Math.max(...shares), 3);
+    const top = ticks[ticks.length - 1];
+    const y = (s) => m.t + ih - (s / top) * ih;
+    for (const t of ticks) {
+      el("line", { x1: m.l, x2: width - m.r, y1: y(t), y2: y(t), class: t === 0 ? "baseline" : "gridline" }, svg);
+      el("text", { x: m.l - 6, y: y(t) + 4, "text-anchor": "end", class: "tick" }, svg).textContent = `${+(t * 100).toFixed(1)}%`;
+    }
+    for (const t of niceTicks(lo, hi, 5).filter((v) => v >= lo && v <= hi)) {
+      el("text", { x: x(t), y: height - 8, "text-anchor": "middle", class: "tick" }, svg).textContent = format(t, true);
+    }
+    counts.forEach((c, i) => {
+      const x0 = x(edges[i]), x1 = x(edges[i + 1]), mid = (edges[i] + edges[i + 1]) / 2;
+      const inBand = !band || (mid >= band[0] && mid <= band[1]);
+      if (c) el("rect", { x: x0 + 0.5, y: y(shares[i]), width: Math.max(1, x1 - x0 - 1), height: y(0) - y(shares[i]),
+        fill: "var(--series-1)", "fill-opacity": inBand ? 1 : 0.35, class: "bar" }, svg);
+      const hit = el("rect", { x: x0, y: m.t, width: x1 - x0, height: ih, class: "hit" }, svg);
+      hit.addEventListener("mousemove", (e) => {
+        const r = container.getBoundingClientRect();
+        showTip(tip, container, e.clientX - r.left, e.clientY - r.top, `${format(edges[i])} – ${format(edges[i + 1])}`,
+          [{ label: "Share of runs", value: `${(shares[i] * 100).toFixed(1)}%`, color: "var(--series-1)" }, { label: "Runs", value: String(c) }]);
+      });
+      hit.addEventListener("mouseleave", () => hideTip(tip));
+    });
+    markers.filter((mk) => Number.isFinite(mk.value) && mk.value >= lo && mk.value <= hi).forEach((mk, i) => {
+      const xv = x(mk.value);
+      el("line", { x1: xv, x2: xv, y1: m.t - 4, y2: y(0), class: "ref-line", style: `stroke-dasharray:${mk.dash ? "4 3" : "none"};opacity:1` }, svg);
+      el("text", { x: xv, y: m.t - 8 - (i % 2) * 14, "text-anchor": xv > width - 80 ? "end" : xv < m.l + 60 ? "start" : "middle", class: "dlabel" }, svg)
+        .textContent = `${mk.label} ${format(mk.value)}`;
+    });
+  });
+}

@@ -5,13 +5,13 @@
 ## How it fits together
 
 ```
- Run Pipeline tab ──► Pipeline action (workflow_dispatch)
-   (or Actions page,       pipeline.py run TICKER --stop-after L1|L2
-    or gh CLI)             python -m L3_app.publish  → commits site/data/
+ Run page (Run ▸) ──► Pipeline action (workflow_dispatch)
+   (or Actions page,       python -m valuation run TICKER --stop-after L1|L2
+    or gh CLI)             python -m valuation.L3_app.publish  → commits site/data/
                                    │
                                    ▼
                        Pages action (on push, or after Pipeline)
-                           uploads site/ → GitHub Pages
+                           pytest → scripts/export_site.py → uploads site/
                                    │
                                    ▼
                        Browser: index.html reads data/index.json,
@@ -20,7 +20,7 @@
 
 GitHub Pages only serves static files, and the SEC API can't be called from a browser (no CORS, and it needs a contact User-Agent). So all fetching and computation runs in Actions; the page only renders.
 
-The page does no valuation math. Projections are calculated in Python and published with the data: the DCF's projection when a DCF has run, otherwise the L1 trend case (`company_detail.json` → `projection`). There are no driver selectors on the site; to change a projection, edit `inputs/assumptions/{TICKER}/dcf.json` and rerun.
+The page does no valuation math. Projections are calculated in Python and published with the data: the DCF's projection when a DCF has run, otherwise the L1 trend case (`company_detail.json` → `projection`). There are no driver selectors on the site; to change a projection, edit `configs/public/assumptions/{TICKER}/dcf.json` and rerun.
 
 ## Code layout (site/assets)
 
@@ -28,21 +28,22 @@ Plain ES modules, no build step. `main.js` loads `index.json`, concepts, compani
 
 | Module | Holds |
 |---|---|
-| `main.js` | start-up, company and run selection, tabs, theme |
+| `main.js` | start-up, company and run selection, page routing (`route`), theme, Demo switch |
+| `pages.js` | Overview and Method pages |
 | `state.js` | shared state, `$`, `getJSON`, banners |
 | `format.js` | the presentation standard (below): numbers, periods, Title Case, labels |
 | `tables.js` | statement rows (`finRow`, `acct`) |
-| `charts.js` | SVG charts: column, line (dashed estimates), area, range, scatter, bar list, spread, grouped bars |
+| `charts.js` | SVG charts: column, line (dashed estimates), area, range, scatter, bar list, spread, grouped bars, histogram |
 | `company.js` | Company Detail: tiles, Revenue, Returns, Margins, Cash Conversion, statements, ratios |
 | `sector.js` | Versus Sector and Sector cards, level switch |
-| `valuation.js` | headline, football field, profile, comps, peer picker, DCF, similar companies |
-| `run.js`, `github.js` | Run Pipeline form; GitHub API (dispatch, read/write repo JSON) |
+| `valuation.js` | Results side column, KPI row, football field with why they differ, spread of simulated outcomes, sensitivity, value vs price, profile, comps, peer picker, DCF detail, similar companies |
+| `run.js`, `github.js` | Run page form; GitHub API (dispatch, read/write repo JSON) |
 
 The Pages workflow stamps every stylesheet and module import with `?v=<commit>`, so a deploy is never hidden by the browser cache.
 
 ## Brand
 
-The site uses the Decision Models brand kit in `site/brand/` (the same folder as the other portfolio apps; edit colors only in `brand/palette.py`, then run `python brand/build.py`). `data-app="valuation"` on `<html>` picks the indigo brand fill and the series order (indigo, teal, orange, sky, plum). `brand/css/brand.css` owns colors, Space Grotesk / JetBrains Mono, square corners and light/dark (dark by default, light follows the OS, the Theme button forces one); `assets/styles.css` maps the site's own token names onto it and hard-codes no colors. Header: brand tile, name, the app's question and byline; footer: the brand disclaimer plus the FRED notice.
+The site uses the Decision Models brand kit in `brand/` at the repo root, copied to `site/brand/` by `scripts/export_site.py` (the same folder as the other portfolio apps; edit colors only in `brand/palette.py`, then run `python brand/build.py`). `data-app="valuation"` on `<html>` picks the indigo brand fill and the series order (indigo, teal, orange, sky, plum). `brand/css/brand.css` owns colors, Space Grotesk / JetBrains Mono, square corners and light/dark (dark by default, light follows the OS, the Theme button forces one); `assets/styles.css` maps the site's own token names onto it and hard-codes no colors. Hub bar first (← Decision Models, Jason C. Courtoy), then the header: 6px brand stripe, tile, name, the question and the status (In development). Footer: the brand disclaimer (personal project · public or synthetic data only · not investment advice · not endorsed by DoD or the U.S. Air Force) plus the market line and the FRED notice.
 
 ## Presentation standard
 
@@ -68,13 +69,19 @@ Financial tables use a hybrid statement look (`finRow` / `acct` in `tables.js`, 
 
 Amounts: negatives in parentheses (positives reserve the ")" so digits align); costs, capex, buybacks and dividends shown as deductions. No row lines; rows highlight on hover. Number columns hug their figures and the label column takes the slack. Lists of companies (`table.list`) keep faint row lines and tint the target row. (Classic rules/double underlines and a fully modern style were compared; hybrid was chosen.)
 
-## Tabs
+## Pages
 
-| Tab | Shows |
+Overview · Results · Method, plus an owner's **Run ▸** link. The hash names the page or view: `#overview` (default), `#valuation`, `#company`, `#method`, `#run`; `#results` opens the last view used.
+
+| Page | Shows |
 |---|---|
-| Company Detail | KPI tiles (Revenue CAGR 5Y / 10Y projected); **Revenue** area chart (reported area, projection dashed, Bear–Bull band); **Returns**: RNOA and ROCE lines with the spread shaded green (leverage adds) or red (leverage subtracts), plus WACC; legend only, no definitions; **Margins** (gross, EBITDA, operating; estimates dashed); **Cash Conversion** (net income vs FCF, conversion in the tooltip); the four charts follow the Statements switch: Annual (with estimates), Quarterly (Returns as rolling LTM at each quarter end) or LTM; statements: five fiscal years, LTM reference, Years 1–4, 5 and 10 (DCF case, else the 10-year trend case), with a full-history download; ratios in five framework views; one **Sector** section: picker and Sector › Group › Industry switch, then **Relative Performance** (quartiles and gap to median) and **Companies** (charts and table) (`docs/L1_sector.md`). Statements, Ratios and Sector are collapsible: Statements open and the others closed on a first visit, then each viewer's choice is remembered in the browser |
-| Valuation | Value vs price headline; football field (range, base, upside, weight; the reason on its own line; Bear / Base / Bull toggle; precedents tagged Illustrative); company profile; comps card with a dot plot of each peer's implied price (range = IQR with 4+ peers, else min–max); peer picker; DCF with EV bridge, discount rates, projection (Years 1–4, 5, 10, terminal) and a WACC × terminal growth sensitivity grid; similar companies (`docs/L2_reconcile.md`) |
-| Run Pipeline | **Company:** ticker, as-of, a *Company Details* box and one box per model (built: DCF, Comps). Details alone runs through L1; ticking a model runs through L2 and locks details on. **Sector:** a company's sector (default), a taxonomy sector, SIC code, trait group or list. Starts the Pipeline action with a token, or links to the Actions page and prints the `gh` command |
+| Overview | 03 · Deals, the one-line insight, a short explanation, See results / How it works, the headline card (middle 90% of simulated values per share, median, terminal value share, from the selected company's `dcf.json` → `details.simulation`), How it works in three steps, What it can't tell you, Built on |
+| Results → Valuation (default) | Company picker, as-of and the view switch on top. Left column: company, key assumptions (the simulated ranges), run info (runs, seed, as-of, latest filing), JSON downloads. Right: KPI row (median per share, middle 90%, terminal value share, runs used); **Where the Methods Agree** football field (DCF (Simulated), comps, precedents, blend; Bear / Base / Bull toggle) with a *why they differ* line; **Spread of Simulated Outcomes** histogram (middle 90% solid, tails faded, median and price markers); **Sensitivity** (discount rate × terminal growth, darker = lower value); value vs price; company profile; comps; peer picker; DCF detail (bridge, discount rates, projection); similar companies (`docs/L2_reconcile.md`) |
+| Results → Company Detail | KPI tiles; **Revenue**, **Returns**, **Margins**, **Cash Conversion** charts following the Annual / Quarterly / LTM switch; statements (five fiscal years, LTM, Years 1–4, 5 and 10, full-history download); ratios in five framework views; one **Sector** section (Sector › Group › Industry, Relative Performance, Companies; `docs/L1_sector.md`). Statements, Ratios and Sector are collapsible and remembered per browser |
+| Method | On-page nav; Problem; Inputs and sources (a source per row); The model (Normalize, Value, Simulate, Reconcile); Validation checklist (Done / Done locally / Planned, matching what the tests actually cover); Limits; Changelog from `site/data/changelog.json` (parsed from `CHANGELOG.md`) |
+| Run ▸ | **Company:** ticker, as-of, a *Company Details* box and one box per model (built: DCF, Comps). **Sector:** a company's sector (default), a taxonomy sector, SIC code, trait group or list. Starts the Pipeline action with a token, or links to the Actions page and prints the `gh` command |
+
+On a phone the same content stacks: the KPI tiles become a 2×2 grid, the Method nav a horizontal scroller, touch targets ≥ 44px.
 
 Light and dark themes follow the OS, with a manual toggle. The layout works down to phone width.
 
@@ -91,7 +98,7 @@ Light and dark themes follow the OS, with a manual toggle. The layout works down
 3. **Settings → Secrets and variables → Actions → New repository secret:** `SEC_USER_AGENT` = `Your Name you@example.com`.
 4. **Settings → Actions → General → Workflow permissions:** read and write (the Pipeline job commits `site/data`).
    Optional: secret `ALPHAVANTAGE_API_KEY` (free key) for backup prices and the price cross-check (`docs/L0_market.md`).
-5. Run a ticker from the **Run Pipeline** tab, or run:
+5. Run a ticker from the **Run ▸** page, or run:
 
    ```bash
    gh workflow run pipeline.yml -f ticker=AAPL -f stop_after=L1
@@ -107,17 +114,17 @@ For the Run tab's direct start button, create a **fine-grained personal access t
 A pre-loaded demo shows every feature on synthetic companies run through the real pipeline code (L1 build, market block, DCF, comps, reconcile, sector screen, publish). It lives in its own data root, `site/demo/data`, so it never mixes with real tickers.
 
 - **Demo button** (header) switches between the demo and your data; the choice is remembered per browser. `?demo=1` / `?demo=0` in the URL forces it (handy for sharing). A first visit to a site with no real data opens the demo.
-- **Take the Tour** (strip under the header, demo only): 20 steps that switch tab and company, open the section and highlight it: tiles, Revenue, Returns, the period switch, statements and their `d` / `y` marks, ratios, sector levels, relative performance, the sector table, value vs. price, football field, profile, comps, peer picker, DCF, implied mode, the default case, similar companies and the Run tab. ← → move, Esc closes.
+- **Take the Tour** (strip under the header, demo only): 26 steps that switch page and company, open the section and highlight it: the Overview headline, tiles, Revenue, Returns, the period switch, statements and their `d` / `y` marks, ratios, sector levels, relative performance, the sector table, the KPI row, assumptions and run column, football field, spread of outcomes, sensitivity, value vs. price, profile, comps, peer picker, DCF, implied mode, the default case, similar companies, the Method page and the Run page. ← → move, Esc closes.
 - **What's in it:** DEMO (mature manufacturer: your own dcf.json, comps against six detailed peers plus a hand-entered one, an illustrative precedents row, price checked against the backup source), DEMOG (high-growth software: implied mode, a price-mismatch flag), DEMOU (leveraged utility: default-case DCF, backup price source, two years of D&A filled from Yahoo-style fundamentals), ZZA–ZZF (detailed peers with default-case DCFs) and Demo Industrials (Synthetic): 23 companies across Capital Goods (Machinery, Electrical Equipment) and Transportation (Ground Transportation). All seeded, so every rebuild is identical; every name says "(synthetic)".
-- **Always current:** the Pages workflow runs `python -m L3_app.demo --site-dir site` on every deploy (and deploys when `model/` changes), so new features appear in the demo automatically. `site/demo/` is not committed.
+- **Always current:** the Pages workflow runs `python scripts/export_site.py` (which rebuilds the demo) on every deploy (and deploys when `src/valuation/` changes), so new features appear in the demo automatically. `site/demo/` is not committed.
 - **Kept out of real data:** `publish` removes any demo-flagged company or sector from `site/data` (left there by older versions).
 
-Locally: `PYTHONPATH=model python -m L3_app.demo` then `python -m http.server -d site 8000` and open `http://localhost:8000/?demo=1`.
+Locally: `python scripts/export_site.py` then `python -m http.server -d site 8000` and open `http://localhost:8000/?demo=1`.
 
 ## Local preview
 
 ```bash
-python -m L3_app.publish            # (after pip install -e ., or with PYTHONPATH=model) data/ → site/data, rebuild index.json, concepts.json and companies.json
+python scripts/export_site.py       # brand, demo, changelog; publishes data/ → site/data and rebuilds the index
 python -m http.server -d site 8000  # open http://localhost:8000
 ```
 
@@ -125,7 +132,7 @@ python -m http.server -d site 8000  # open http://localhost:8000
 
 - `company_detail.json` is a site slice (11 years annual, 16 quarters and LTM points, recent analysis); `company_detail_full.json` keeps everything and is linked from the statements card.
 - JSON is compact. Each ticker keeps its latest 3 runs; older ones are removed from `site/data`.
-- `companies.json` holds one card per company, with its classification, the top 10 similar companies and the top 25 ranked peers within each sector screen (`L3_app/similar.py`).
+- `companies.json` holds one card per company, with its classification, the top 10 similar companies and the top 25 ranked peers within each sector screen (`src/valuation/L3_app/similar.py`).
 - `taxonomy.json` is copied for the level switch.
 
 ## What's public

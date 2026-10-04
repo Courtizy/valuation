@@ -13,11 +13,11 @@ from pathlib import Path
 import pytest
 
 from fakes import FakeSecClient as _FakeSecClient
-from L0_ingest.sec_companyfacts import TICKERS_URL
-from L0_ingest.sec_sector import FRAMES_URL, SecSectorAdapter, frame_plan, parse_sic_page, screen_year
-from L1_detail.profile import classify_stage, load_rules
-from L1_detail.sector import build_sector, parse_traits, quartiles
-from runner import Paths, main, parse_sector_spec, run_sector
+from valuation.L0_ingest.sec_companyfacts import TICKERS_URL
+from valuation.L0_ingest.sec_sector import FRAMES_URL, SecSectorAdapter, frame_plan, parse_sic_page, screen_year
+from valuation.L1_detail.profile import classify_stage, load_rules
+from valuation.L1_detail.sector import build_sector, parse_traits, quartiles
+from valuation.runner import Paths, main, parse_sector_spec, run_sector
 
 FIXTURES = Path(__file__).parent / "fixtures"
 FX = json.loads((FIXTURES / "sec_frames_semis.json").read_text())
@@ -234,9 +234,9 @@ def test_cli_sector(tmp_path):
 
 
 def test_taxonomy_covers_every_sec_code_once():
-    from L1_detail.taxonomy import load
+    from valuation.L1_detail.taxonomy import load
     tax = load()
-    codes = {c[0] for c in json.loads((Path(__file__).parent.parent / "inputs" / "sectors" / "sic_codes.json").read_text())["codes"]}
+    codes = {c[0] for c in json.loads((Path(__file__).parent.parent / "configs" / "public" / "sectors" / "sic_codes.json").read_text())["codes"]}
     assert codes - set(tax.by_sic) == tax.excluded            # all mapped except the non-operating codes
     assert set(tax.by_sic) <= codes                            # nothing invented
     assert tax.classify("7370")["sector"] == "communication_services"   # GICS: interactive media
