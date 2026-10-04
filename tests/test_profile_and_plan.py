@@ -95,11 +95,35 @@ def test_comparison_without_detail_still_works(tmp_path):
 
 def test_publish_writes_company_cards(tmp_path):
     write_demo(tmp_path / "site")
-    publish(tmp_path / "nodata", tmp_path / "site")
     cards = {c["ticker"]: c for c in json.loads((tmp_path / "site" / "data" / "companies.json").read_text())["companies"]}
-    assert set(cards) == {"DEMO", "DEMOG", "DEMOU"}
+    assert set(cards) == {"DEMO", "DEMOG", "DEMOU", "ZZA", "ZZB", "ZZC", "ZZD", "ZZE", "ZZF"}
     d = cards["DEMO"]
     assert d["traits"]["predictability"] == "high"
     ttm = json.loads((tmp_path / "site" / "data" / "DEMO" / AS_OF / "company_detail.json").read_text())["views"]["ttm"][-1]["values"]
     assert d["multiples"]["pe"] == A(d["market"]["market_cap"] / ttm["net_income"])
     assert d["rates"]["wacc"] is not None
+
+
+def test_demo_covers_every_feature_and_stays_out_of_real_data(tmp_path):
+    out = write_demo(tmp_path / "demo")
+    root = tmp_path / "demo" / "data"
+    index = json.loads((root / "index.json").read_text())
+    assert index["demo"] and index["market_data"] == "demo"
+    load = lambda t, f="company_detail.json": json.loads((root / t / AS_OF / f).read_text())  # noqa: E731
+    assert load("DEMO")["market"]["check"]["status"] == "ok"
+    assert load("DEMOG")["market"]["check"]["status"] == "mismatch"
+    assert load("DEMOU")["market"]["fallback"] and load("DEMOU")["backfill"]           # backup source + y cells
+    assert load("DEMOU", "model_results/dcf.json")["details"]["default_case"]          # default assumptions
+    assert load("DEMOG", "model_results/dcf.json")["details"]["implied_growth"] is not None
+    comps = load("DEMO", "model_results/comps.json")
+    assert {p["ticker"] for p in comps["details"]["peers"]} >= {"ZZA", "ZZF", "MANUALCO"}
+    (sector,) = index["sectors"]
+    doc = json.loads((root / sector["path"]).read_text())
+    assert sector["count"] >= 20 and len(doc["levels"]["groups"]) >= 2 and len(doc["levels"]["industries"]) >= 3
+    assert 0.8 < load("DEMO")["market"]["beta"]["value"] < 1.3                          # beta from the synthetic series
+    # a real site's data/ never keeps the demo
+    import shutil
+    shutil.copytree(root / "DEMO", tmp_path / "site" / "data" / "DEMO")
+    publish(tmp_path / "nodata", tmp_path / "site")
+    assert not (tmp_path / "site" / "data" / "DEMO").exists()
+    assert out == root / "DEMO" / AS_OF

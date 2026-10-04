@@ -102,13 +102,17 @@ Light and dark themes follow the OS, with a manual toggle. The layout works down
 
 For the Run tab's direct start button, create a **fine-grained personal access token** limited to this repository with **Actions: Read and write**; add **Contents: Read and write** so the peer picker can save `comps.json`. The token stays in your browser and is sent only to api.github.com. It's saved on the device only if you tick "Remember". Without a token, use the Actions page link.
 
-## Demo data
+## Demo
 
-```bash
-python -m L3_app.demo
-```
+A pre-loaded demo shows every feature on synthetic companies run through the real pipeline code (L1 build, market block, DCF, comps, reconcile, sector screen, publish). It lives in its own data root, `site/demo/data`, so it never mixes with real tickers.
 
-This writes three synthetic companies (`DEMO` manufacturing, `DEMOG` high-growth software, `DEMOU` leveraged utility), built by the real L1 build from made-up records, so the profile, method plan and similar-companies table have contrasting cases. Each gets a real DCF on made-up market inputs plus synthetic comps and precedents. Everything is flagged `demo: true`, and the site shows a banner. Delete `site/data/DEMO*` once real tickers are published, then run `python -m L3_app.publish`.
+- **Demo button** (header) switches between the demo and your data; the choice is remembered per browser. `?demo=1` / `?demo=0` in the URL forces it (handy for sharing). A first visit to a site with no real data opens the demo.
+- **Take the Tour** (strip under the header, demo only): 20 steps that switch tab and company, open the section and highlight it: tiles, Revenue, Returns, the period switch, statements and their `d` / `y` marks, ratios, sector levels, relative performance, the sector table, value vs. price, football field, profile, comps, peer picker, DCF, implied mode, the default case, similar companies and the Run tab. ← → move, Esc closes.
+- **What's in it:** DEMO (mature manufacturer: your own dcf.json, comps against six detailed peers plus a hand-entered one, an illustrative precedents row, price checked against the backup source), DEMOG (high-growth software: implied mode, a price-mismatch flag), DEMOU (leveraged utility: default-case DCF, backup price source, two years of D&A filled from Yahoo-style fundamentals), ZZA–ZZF (detailed peers with default-case DCFs) and Demo Industrials (Synthetic): 23 companies across Capital Goods (Machinery, Electrical Equipment) and Transportation (Ground Transportation). All seeded, so every rebuild is identical; every name says "(synthetic)".
+- **Always current:** the Pages workflow runs `python -m L3_app.demo --site-dir site` on every deploy (and deploys when `model/` changes), so new features appear in the demo automatically. `site/demo/` is not committed.
+- **Kept out of real data:** `publish` removes any demo-flagged company or sector from `site/data` (left there by older versions).
+
+Locally: `PYTHONPATH=model python -m L3_app.demo` then `python -m http.server -d site 8000` and open `http://localhost:8000/?demo=1`.
 
 ## Local preview
 

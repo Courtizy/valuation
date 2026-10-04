@@ -1,26 +1,35 @@
-"""Synthetic demo sector: the three demo companies plus ten made-up peers, built by the real screen code."""
+"""Synthetic demo sector: DEMO and its six detailed peers plus sixteen screen-only companies,
+across Capital Goods (Machinery, Electrical Equipment) and Transportation (Ground Transportation),
+so the Sector > Group > Industry switch has real levels. Built by the real screen code."""
 from __future__ import annotations
 
 import json
+import random
 from pathlib import Path
 
 from L3_app.demo.companies import AS_OF, DEMO_SIC
 
-# Synthetic sector peers (screen figures only, no company detail). Tickers start with
-# "ZZ" so they can't be mistaken for real listings.
-SECTOR_PEERS = [
-    # ticker, revenue (CY2025), 3-yr growth, gross m., op. m., net m., D&A/s, capex/s, FCF wobble, assets/s, equity/assets, debt/assets
-    ("ZZA", 9.2e9, 0.06, 0.40, 0.17, 0.12, 0.05, 0.06, 0.01, 1.1, 0.55, 0.18),
-    ("ZZB", 7.5e9, 0.11, 0.47, 0.21, 0.15, 0.04, 0.04, 0.02, 0.9, 0.60, 0.12),
-    ("ZZC", 6.1e9, 0.03, 0.33, 0.11, 0.07, 0.05, 0.07, 0.01, 1.2, 0.45, 0.28),
-    ("ZZD", 4.8e9, 0.19, 0.52, 0.09, 0.05, 0.03, 0.03, 0.05, 0.8, 0.65, 0.05),
-    ("ZZE", 3.9e9, -0.02, 0.29, 0.06, 0.03, 0.06, 0.08, 0.03, 1.4, 0.40, 0.33),
-    ("ZZF", 3.1e9, 0.08, 0.44, 0.19, 0.14, 0.04, 0.05, 0.01, 1.0, 0.58, 0.15),
-    ("ZZG", 2.4e9, 0.25, 0.61, -0.04, -0.07, 0.02, 0.02, 0.09, 0.7, 0.70, 0.00),
-    ("ZZH", 1.8e9, 0.05, 0.38, 0.14, 0.10, 0.05, 0.06, 0.02, 1.1, 0.50, 0.20),
-    ("ZZI", 1.2e9, 0.14, 0.49, 0.16, 0.12, 0.03, 0.04, 0.03, 0.9, 0.62, 0.08),
-    ("ZZJ", 0.7e9, 0.01, 0.31, 0.08, 0.05, 0.06, 0.09, 0.02, 1.3, 0.48, 0.25),
-]
+# Screen-only members (figures only, no company detail): seeded, so every rebuild is identical.
+# ticker, SIC; tickers start ZZ so they can't be mistaken for real listings.
+SCREEN_ONLY = [("ZZG", "3560"), ("ZZH", "3561"), ("ZZI", "3564"), ("ZZJ", "3569"), ("ZZK", "3530"), ("ZZL", "3560"),
+               ("ZZM", "3612"), ("ZZN", "3620"), ("ZZO", "3621"), ("ZZP", "3612"),
+               ("ZZQ", "4213"), ("ZZR", "4210"), ("ZZS", "4213"), ("ZZT", "4213"), ("ZZU", "4210"), ("ZZV", "4213")]
+
+
+def _screen_peer(t: str, sic: str) -> tuple:
+    """revenue, 3-yr growth, gross m., op. m., net m., D&A/s, capex/s, FCF wobble, assets/s, equity/assets, debt/assets"""
+    rng = random.Random(sum(map(ord, t)) * 7)
+    truck = sic.startswith("42")
+    rev = rng.uniform(0.6e9, 9.5e9)
+    g = rng.uniform(-0.03, 0.16)
+    gm = rng.uniform(0.18, 0.30) if truck else rng.uniform(0.28, 0.52)
+    om = gm - rng.uniform(0.10, 0.22)
+    return (t, rev, g, gm, om, om * 0.72, rng.uniform(0.03, 0.09), rng.uniform(0.03, 0.12), rng.uniform(0.0, 0.05),
+            rng.uniform(0.7, 1.5), rng.uniform(0.35, 0.70), rng.uniform(0.0, 0.35))
+
+
+SECTOR_PEERS = [_screen_peer(t, sic) for t, sic in SCREEN_ONLY]
+SECTOR_SIC = {**DEMO_SIC, **dict(SCREEN_ONLY)}
 
 
 def _demo_frames(details: dict) -> tuple[dict, list[dict]]:
@@ -52,7 +61,7 @@ def _demo_frames(details: dict) -> tuple[dict, list[dict]]:
             put("LongTermDebtNoncurrent", f"CY{y}Q4I", cik, name, v.get("long_term_debt"))
             put("ShortTermBorrowings", f"CY{y}Q4I", cik, name, v.get("short_term_debt"))
     for j, (t, rev, g, gm, om, nm, da, cx, wob, a_s, e_a, d_a) in enumerate(SECTOR_PEERS):
-        cik, name = 9_910_001 + j, f"Synthetic peer {t[-1]} (synthetic)"
+        cik, name = 9_910_001 + j, f"Synthetic Industrials {t[-1]} (synthetic)"
         tickers.append({"cik": str(cik).zfill(10), "ticker": t, "name": name})
         for k, y in enumerate(range(2022, 2026)):
             r = rev / (1 + g) ** (2025 - y)
@@ -72,16 +81,17 @@ def _demo_frames(details: dict) -> tuple[dict, list[dict]]:
     return {"year": 2025, "frames": frames}, tickers
 
 
-def write_demo_sector(site_dir: Path, details: dict) -> Path:
+def write_demo_sector(data_dir: Path, details: dict) -> Path:
+    """details: the detailed companies that belong to the sector (DEMO and its peers)."""
     from L1_detail.sector import build_sector
     from L1_detail.taxonomy import load
     raw, tickers = _demo_frames(details)
-    doc = build_sector(raw, kind="list", value="demo", as_of=AS_OF, tickers=tickers,
-                       members=[t["cik"] for t in tickers], label="Demo Sector (Synthetic)",
-                       member_sic={t["cik"]: DEMO_SIC[t["ticker"]] for t in tickers}, taxonomy=load())
+    doc = build_sector(raw, kind="list", value="demo-industrials", as_of=AS_OF, tickers=tickers,
+                       members=[t["cik"] for t in tickers], label="Demo Industrials (Synthetic)",
+                       member_sic={t["cik"]: SECTOR_SIC[t["ticker"]] for t in tickers}, taxonomy=load())
     doc["demo"] = True
-    doc["notes"].insert(0, "synthetic demo sector: three demo companies plus ten made-up peers (tickers ZZA–ZZJ)")
-    out = site_dir / "data" / "sectors" / doc["id"] / AS_OF / "sector.json"
+    doc["notes"].insert(0, "synthetic demo sector: DEMO, six detailed peers (ZZA–ZZF) and sixteen screen-only companies (ZZG–ZZV)")
+    out = data_dir / "sectors" / doc["id"] / AS_OF / "sector.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(doc, indent=2))
     return out

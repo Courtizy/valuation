@@ -1,5 +1,7 @@
 # pipeline outputs (published copies live in site/data)
 /data/
+# the demo is rebuilt on every Pages deploy (python -m L3_app.demo)
+/site/demo/
 /.cache/
 # local-only course material references
 notes_local/

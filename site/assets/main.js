@@ -4,24 +4,53 @@ import { fillSectorList, setupRunForm } from "./run.js";
 import { loadSector } from "./sector.js";
 import { $, banner, getJSON, state, store } from "./state.js";
 import { renderValuation } from "./valuation.js";
+import { setTourHooks, startTour } from "./tour.js";
+
+// Demo mode: the pre-loaded demo (site/demo/data, rebuilt on every deploy) instead of the real data.
+// Chosen by ?demo=1 / ?demo=0, else the viewer's last choice, else demo when there's no real data yet.
+async function chooseMode() {
+  const q = new URLSearchParams(location.search).get("demo");
+  if (q === "1" || q === "0") store.set("mode", q === "1" ? "demo" : "live");
+  let mode = store.get("mode");
+  if (!mode) {
+    const live = await getJSON("data/index.json").catch(() => null);
+    mode = live?.companies?.length ? "live" : "demo";
+  }
+  state.demoMode = mode === "demo";
+  state.root = state.demoMode ? "demo/data/" : "data/";
+  const btn = $("demo-toggle");
+  btn.setAttribute("aria-pressed", String(state.demoMode));
+  btn.textContent = state.demoMode ? "Exit Demo" : "Demo";
+  btn.onclick = () => {
+    store.set("mode", state.demoMode ? "live" : "demo");
+    const url = new URL(location.href);
+    if (url.searchParams.has("demo")) { url.searchParams.delete("demo"); location.replace(url.toString()); }
+    else location.reload();
+  };
+  $("mode-strip").hidden = !state.demoMode;
+  $("tour-start").onclick = startTour;
+  setTourHooks({ selectCompany });
+}
 
 async function init() {
+  await chooseMode();
   setupTheme();
   setupTabs();
   setupSegments();
   setupCollapsibles();
   setupRunForm();
   try {
-    [state.index, state.concepts, state.companies, state.taxonomy] = await Promise.all([getJSON("data/index.json"),
-      getJSON("data/concepts.json").catch(() => ({})), getJSON("data/companies.json").catch(() => ({ companies: [] })),
-      getJSON("data/taxonomy.json").catch(() => null)]);
+    [state.index, state.concepts, state.companies, state.taxonomy] = await Promise.all([getJSON(`${state.root}index.json`),
+      getJSON(`${state.root}concepts.json`).catch(() => ({})), getJSON(`${state.root}companies.json`).catch(() => ({ companies: [] })),
+      getJSON(`${state.root}taxonomy.json`).catch(() => null)]);
   } catch (e) {
-    banner(`Couldn't load data/index.json (${e.message}). Run the pipeline, or "python -m L3_app.publish", then reload.`);
+    banner(`Couldn't load ${state.root}index.json (${e.message}). Run the pipeline, or "python -m L3_app.publish", then reload.`);
     state.index = { companies: [] };
   }
   fillSectorList();
   $("footer-market").textContent = state.index.market_data === "real" ? "Market prices: Yahoo, checked against Alpha Vantage."
-    : "Market prices aren't published here; the example companies use synthetic market figures.";
+    : state.index.market_data === "demo" ? "Demo: synthetic companies and synthetic market data, run through the real pipeline."
+      : "Market prices aren't published here (data terms); the Demo uses synthetic market figures.";
   $("generated").textContent = state.index.generated_at ? `Data index updated ${state.index.generated_at.replace("T", " ").replace("+00:00", " UTC")}.` : "";
   const sel = $("company");
   sel.innerHTML = state.index.companies.map((c) =>
@@ -32,7 +61,7 @@ async function init() {
     renderEmptyEverywhere();
     return;
   }
-  const remembered = store.get("ticker");
+  const remembered = store.get(state.demoMode ? "ticker:demo" : "ticker");
   const first = state.index.companies.find((c) => c.ticker === remembered) || state.index.companies[0];
   sel.value = first.ticker;
   await selectCompany(first.ticker);
@@ -41,7 +70,7 @@ async function init() {
 export async function selectCompany(ticker) {
   state.secLevel = state.peerLevel = undefined;   // each company starts at its default comparison level
   state.company = state.index.companies.find((c) => c.ticker === ticker);
-  store.set("ticker", ticker);
+  store.set(state.demoMode ? "ticker:demo" : "ticker", ticker);
   $("asof").innerHTML = state.company.runs.map((r) => `<option>${esc(r.as_of)}</option>`).join("");
   await selectRun(state.company.runs[0].as_of);
 }
@@ -52,11 +81,11 @@ export async function selectRun(asOf) {
   banner("");
   try {
     // one round trip: every file this run needs, fetched together
-    const base = `data/${state.company.ticker}/${state.run.as_of}/model_results`;
+    const base = `${state.root}${state.company.ticker}/${state.run.as_of}/model_results`;
     const opt = (cond, path) => (cond ? getJSON(path).catch(() => null) : Promise.resolve(null));
     [state.detail, state.comparison, state.comps, state.dcf] = await Promise.all([
-      getJSON(`data/${state.run.detail}`),
-      opt(state.run.comparison, `data/${state.run.comparison}`),
+      getJSON(`${state.root}${state.run.detail}`),
+      opt(state.run.comparison, `${state.root}${state.run.comparison}`),
       opt(state.run.models?.includes("comps"), `${base}/comps.json`),
       opt(state.run.models?.includes("dcf"), `${base}/dcf.json`),
       loadSector(),
@@ -67,7 +96,7 @@ export async function selectRun(asOf) {
   }
   const demo = state.company.demo || state.detail.demo;
   $("demo-badge").hidden = !demo;
-  if (demo) banner("This company is synthetic demo data, made up to preview the pages. Run the pipeline for a real ticker.");
+  if (demo && !state.demoMode) banner("This company is synthetic demo data, made up to preview the pages. Run the pipeline for a real ticker.");
   else if (state.detail.warnings?.length) banner(`Build warnings: ${state.detail.warnings.join("; ")}`);
   renderCompany();
   renderValuation();
@@ -76,7 +105,7 @@ export async function selectRun(asOf) {
 
 function renderEmptyEverywhere() {
   const msg = `<div class="card empty"><h2>No Published Results Yet</h2>
-    <p>Use <b>Run Pipeline</b> to fetch a company, or run <code>python -m L3_app.demo</code> for a synthetic preview.</p></div>`;
+    <p>Use <b>Run Pipeline</b> to fetch a company, or press <b>Demo</b> at the top to explore every feature on synthetic companies.</p></div>`;
   for (const id of ["panel-company", "panel-valuation"]) $(id).innerHTML = msg;
 }
 

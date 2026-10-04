@@ -1,22 +1,12 @@
-"""Synthetic demo companies for previewing the site. Not real data.
-
-  python -m L3_app.demo --site-dir site
-
-Writes site/data/DEMO/{as_of}/company_detail.json (built by the real L1 build
-from synthetic canonical records, in the usual 10-Q/10-K pattern: income
-statement by quarter and full year, cash flow year-to-date only) plus a real DCF run on made-up
-market inputs and two synthetic model results and their comparison, so every tab has something to
-show before the first real pipeline run. Every file is flagged demo: true.
-"""
+"""Synthetic companies for the demo: canonical records in the usual 10-Q/10-K pattern
+(income statement by quarter and full year, cash flow year-to-date only), from a few
+parameters per company. Not real data; every name says "(synthetic)" and every ticker
+starting ZZ is made up."""
 from __future__ import annotations
 
-import json
 from datetime import date, timedelta
-from pathlib import Path
 
-from L1_detail.build import build_detail
 from L1_detail.normalize import _months
-from L2_models.reconcile import build_comparison
 
 AS_OF = "2026-09-30"
 SEASON = (0.23, 0.24, 0.25, 0.28)
@@ -34,8 +24,8 @@ def _nd(s):
 
 
 DEMO_SIC = {"DEMO": "3569", "DEMOG": "7372", "DEMOU": "4911",
-            "ZZA": "3569", "ZZB": "3560", "ZZC": "3561", "ZZD": "3620", "ZZE": "3530", "ZZF": "3569", "ZZG": "7372",
-            "ZZH": "3612", "ZZI": "3564", "ZZJ": "3440"}
+            # peers with full company detail: machinery, electrical equipment, trucking
+            "ZZA": "3560", "ZZB": "3561", "ZZC": "3564", "ZZD": "3612", "ZZE": "3620", "ZZF": "4213"}
 
 SPECS = {
     # ticker: name, first-year revenue, growth, margins (share of revenue), balance sheet scale
@@ -45,7 +35,22 @@ SPECS = {
                   rnd=0.22, da=0.02, capex=0.02, wc=-0.03, nca=0.25, ltd=0.0, std=0.0, noise=0.06),
     "DEMOU": dict(name="Demo Regional Utility (synthetic)", rev0=6.0e9, growth=0.02, cogs=0.52, sga=0.10,
                   rnd=0.0, da=0.10, capex=0.17, wc=0.01, nca=3.0, ltd=14e9, std=1.0e9, noise=0.01),
+    # comps peers for DEMO, with full company detail
+    "ZZA": dict(name="Synthetic Pumps Inc. (synthetic)", rev0=6.5e9, growth=0.06, cogs=0.60, sga=0.17,
+                rnd=0.04, da=0.045, capex=0.05, wc=0.02, nca=0.60, ltd=1.6e9, std=0.2e9, noise=0.01),
+    "ZZB": dict(name="Synthetic Flow Controls (synthetic)", rev0=5.2e9, growth=0.10, cogs=0.53, sga=0.19,
+                rnd=0.05, da=0.04, capex=0.04, wc=0.02, nca=0.50, ltd=0.8e9, std=0.1e9, noise=0.02),
+    "ZZC": dict(name="Synthetic Air Systems (synthetic)", rev0=3.6e9, growth=0.04, cogs=0.64, sga=0.16,
+                rnd=0.03, da=0.05, capex=0.06, wc=0.03, nca=0.70, ltd=1.4e9, std=0.3e9, noise=0.02),
+    "ZZD": dict(name="Synthetic Grid Equipment (synthetic)", rev0=4.4e9, growth=0.12, cogs=0.57, sga=0.15,
+                rnd=0.07, da=0.035, capex=0.05, wc=0.03, nca=0.45, ltd=1.0e9, std=0.1e9, noise=0.03),
+    "ZZE": dict(name="Synthetic Motors & Drives (synthetic)", rev0=2.3e9, growth=0.07, cogs=0.62, sga=0.17,
+                rnd=0.05, da=0.04, capex=0.05, wc=0.02, nca=0.55, ltd=0.5e9, std=0.05e9, noise=0.02),
+    "ZZF": dict(name="Synthetic Freight Lines (synthetic)", rev0=5.8e9, growth=0.03, cogs=0.78, sga=0.09,
+                rnd=0.0, da=0.08, capex=0.11, wc=0.01, nca=1.10, ltd=2.6e9, std=0.3e9, noise=0.03),
 }
+FEATURED = ("DEMO", "DEMOG", "DEMOU")          # the three companies the tour walks through
+PEERS = ("ZZA", "ZZB", "ZZC", "ZZD", "ZZE", "ZZF")
 
 
 def synthetic_records(spec: dict | None = None) -> list[dict]:
@@ -111,94 +116,15 @@ def synthetic_records(spec: dict | None = None) -> list[dict]:
     return recs
 
 
-# Made-up market inputs for the synthetic companies (the real DCF model runs on them).
-DEMO_DCF_ASSUMPTIONS = {
-    "mode": "forecast",
-    "market": {"price": 45.0, "price_date": AS_OF, "basic_shares": 330e6},
-    "forecast": {"years_to_terminal": 10, "revenue_growth": 0.08, "terminal_growth": 0.03, "tax_rate": 0.21},
-    "cost_of_capital": {"risk_free": 0.042, "risk_free_terminal": 0.05, "equity_risk_premium": 0.05,
-                        "beta": 1.1, "pre_tax_cost_of_debt": 0.06},
-    "sources": {"all": "synthetic demo values"},
+
+# price, shares, "true" beta used to generate the synthetic monthly returns
+DEMO_PRICES = {"DEMO": (45.0, 330e6), "DEMOG": (18.0, 100e6), "DEMOU": (130.0, 250e6)}
+MARKET = {
+    "DEMO": (45.0, 330e6, 1.05), "DEMOG": (18.0, 100e6, 1.45), "DEMOU": (130.0, 250e6, 0.55),
+    # peer prices set so EV/EBITDA lands at 8.5x-14x, a realistic spread around DEMO's 12x
+    "ZZA": (85.5, 260e6, 1.10), "ZZB": (159.0, 180e6, 1.20), "ZZC": (34.5, 240e6, 1.00),
+    "ZZD": (212.5, 120e6, 1.30), "ZZE": (61.4, 110e6, 1.15), "ZZF": (32.3, 300e6, 0.95),
 }
-OTHER_ASSUMPTIONS = {
-    "DEMOG": {"market": {"price": 18.0, "price_date": AS_OF, "basic_shares": 100e6},
-              "forecast": {"revenue_growth": 0.25, "terminal_growth": 0.03, "tax_rate": 0.21},
-              "cost_of_capital": {"beta": 1.4}},
-    "DEMOU": {"market": {"price": 98.0, "price_date": AS_OF, "basic_shares": 250e6},
-              "forecast": {"revenue_growth": 0.02, "terminal_growth": 0.02, "tax_rate": 0.21},
-              "cost_of_capital": {"beta": 0.6}},
-}
-
-
-def _assumptions(ticker: str) -> dict:
-    a = json.loads(json.dumps(DEMO_DCF_ASSUMPTIONS))
-    for k, v in OTHER_ASSUMPTIONS.get(ticker, {}).items():
-        a[k] = {**a[k], **v}
-    return a
-
-
-def _model_result(model, ticker, p10, p50, p90, assumptions):
-    return {"schema_version": "0.1.0", "model": model, "ticker": ticker, "as_of": AS_OF,
-            "value_per_share": {"p10": p10, "p50": p50, "p90": p90, "mean": (p10 + p50 + p90) / 3},
-            "assumptions_used": assumptions, "lineage": {"as_of": AS_OF, "inputs": []},
-            "samples_ref": None, "notes": ["synthetic demo result, not a valuation"], "demo": True}
-
-
-SYNTHETIC_RISK_FREE = 0.045   # fixed so the examples are reproducible
-
-
-def synthetic_market(detail: dict, ticker: str) -> dict:
-    """Made-up but plausible market figures for a synthetic example: its demo price, the
-    sector's illustrative beta and a WACC from them. Labelled source "synthetic" everywhere."""
-    from core.market import wacc_estimate
-    price, shares = DEMO_PRICES[ticker]
-    ttm = (detail["views"].get("ttm") or detail["views"]["annual"])[-1]["values"]
-    debt = (ttm.get("short_term_debt") or 0) + (ttm.get("long_term_debt") or 0)
-    sb = detail.get("sector_beta") or {"value": 1.0}
-    mcap = price * shares
-    return {"price": price, "price_date": AS_OF, "currency": "USD", "shares_outstanding": shares, "market_cap": mcap,
-            "beta": {"value": sb["value"], "months": None, "index": None, "basis": sb.get("basis")},
-            "source": "synthetic", "fallback": False, "check": None,
-            "wacc": {**wacc_estimate(beta_value=sb["value"], risk_free=SYNTHETIC_RISK_FREE, market_cap=mcap, debt=debt,
-                                     interest_expense=ttm.get("interest_expense"), tax_rate=ttm.get("effective_tax_rate")),
-                     "risk_free_date": AS_OF, "risk_free_series": "synthetic"}}
-
-
-def write_company(site_dir: Path, ticker: str) -> Path:
-    from L2_models.base import get_model
-    spec = SPECS[ticker]
-    out = site_dir / "data" / ticker / AS_OF
-    (out / "model_results").mkdir(parents=True, exist_ok=True)
-    canonical = {"stage": "L1.normalize", "as_of": AS_OF,
-                 "entity": {"ticker": ticker, "name": spec["name"], "cik": None, "sic": DEMO_SIC[ticker]},
-                 "records": synthetic_records(spec)}
-    detail = build_detail(canonical, AS_OF)
-    detail["demo"] = True
-    detail["market"] = synthetic_market(detail, ticker)
-    (out / "company_detail.json").write_text(json.dumps(detail, indent=2))
-    dcf = get_model("dcf").run(detail, _assumptions(ticker)).to_dict()
-    dcf["lineage"] = {"as_of": AS_OF, "inputs": []}
-    dcf["demo"] = True
-    dcf["notes"].insert(0, "synthetic demo company; market inputs are made up")
-    mid = dcf["value_per_share"]["p50"]
-    results = {
-        "dcf": dcf,
-        "comps": _model_result("comps", ticker, mid * 0.86, mid * 1.02, mid * 1.18, {"forecast": {"tax_rate": 0.21}}),
-        # precedents isn't built yet: an illustrative placeholder so the football field shows a reference row
-        "precedents": {**_model_result("precedents", ticker, mid * 1.04, mid * 1.24, mid * 1.42, {}), "illustrative": True},
-    }
-    paths = []
-    for m, r in results.items():
-        p = out / "model_results" / f"{m}.json"
-        p.write_text(json.dumps(r, indent=2))
-        paths.append(p)
-    comparison = build_comparison(paths, detail)
-    comparison["demo"] = True
-    (out / "comparison.json").write_text(json.dumps(comparison, indent=2))
-    return out
-
-
-DEMO_PRICES = {"DEMO": (45.0, 330e6), "DEMOG": (18.0, 100e6), "DEMOU": (98.0, 250e6)}
 # One made-up peer without SEC data, to show manual figures alongside filed ones.
 MANUAL_PEER = {"ticker": "MANUALCO", "sec": False, "name": "Manual peer (synthetic)", "price": 30.0, "shares": 2.0e8,
-               "debt": 4.0e8, "cash": 2.0e8, "sales": 3.0e9, "ebitda": 5.5e8, "net_income": 3.0e8}
+               "debt": 4.0e8, "cash": 2.0e8, "sales": 2.4e9, "ebitda": 4.4e8, "net_income": 2.4e8}

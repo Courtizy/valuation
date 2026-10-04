@@ -117,7 +117,7 @@ export async function loadSector() {
   const t = state.company.ticker, list = sectorsFor(t);
   const want = store.get(`sector:${t}`);
   state.sectorMeta = list.find((x) => x.id === want) || list[0] || null;
-  state.sector = state.sectorMeta ? await getJSON(`data/${state.sectorMeta.path}`).catch(() => null) : null;
+  state.sector = state.sectorMeta ? await getJSON(`${state.root}${state.sectorMeta.path}`).catch(() => null) : null;
 }
 
 export function sectorMe() { return state.sector?.companies.find((c) => c.ticker === state.company.ticker) || null; }

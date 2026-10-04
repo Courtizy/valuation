@@ -250,13 +250,27 @@ def add_rankings(site_data: Path, cards: list[dict], sectors: list[dict]) -> Non
             c["peers"][sec["id"]] = rank(own, rows, 25)
 
 
-def publish(data_dir: Path, site_dir: Path, market_data: str = "showcase") -> dict:
+def remove_demo(site_data: Path) -> list[str]:
+    """The demo lives in site/demo/data (python -m L3_app.demo); drop any demo company or sector
+    left in the real site/data by older versions."""
+    removed = []
+    for root in list(_ticker_dirs(site_data)) + ([p for p in (site_data / "sectors").iterdir() if p.is_dir()]
+                                                 if (site_data / "sectors").exists() else []):
+        docs = list(root.glob("*/company_detail.json")) + list(root.glob("*/sector.json"))
+        if docs and all(json.loads(d.read_text()).get("demo") for d in docs):
+            shutil.rmtree(root)
+            removed.append(str(root.relative_to(site_data)))
+    return removed
+
+
+def publish(data_dir: Path, site_dir: Path, market_data: str = "showcase", keep_demo: bool = False) -> dict:
     if market_data not in MARKET_MODES:
         raise ValueError(f"market_data must be one of {MARKET_MODES}")
     site_data = site_dir / "data"
     site_data.mkdir(parents=True, exist_ok=True)
+    demo_removed = [] if keep_demo else remove_demo(site_data)
     copied = (copy_outputs(data_dir, site_data, market_data) + copy_sectors(data_dir, site_data)) if data_dir.exists() else []
-    removed = prune(site_data)
+    removed = prune(site_data) + demo_removed
     index = build_index(site_data)
     index["market_data"] = market_data
     (site_data / "index.json").write_text(json.dumps(index, indent=2))

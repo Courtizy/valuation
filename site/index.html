@@ -33,9 +33,17 @@
         <label class="small muted" for="asof">As Of</label>
         <select id="asof" aria-label="As-of date"></select>
         <button id="theme" type="button" aria-label="Toggle theme" title="Theme">Theme: auto</button>
+        <button id="demo-toggle" type="button" aria-pressed="false" title="Switch between the demo and the real data">Demo</button>
       </div>
     </div>
   </header>
+  <div id="mode-strip" class="mode-strip" hidden>
+    <div class="mode-strip__inner">
+      <span class="tile-tag">Demo</span>
+      <span>Synthetic companies run through the real pipeline: every feature of the tool, no real data.</span>
+      <button type="button" class="primary" id="tour-start">Take the Tour</button>
+    </div>
+  </div>
   <div class="tabbar">
     <nav class="tabs" role="tablist" aria-label="Sections">
       <button class="tab" role="tab" id="tab-company" aria-controls="panel-company" data-tab="company">Company Detail</button>

@@ -4,7 +4,8 @@ name: Pages
 on:
   push:
     branches: [main]
-    paths: ["site/**", ".github/workflows/pages.yml"]
+    # model/ and inputs/sectors/ too: the demo is rebuilt from the current code on every deploy
+    paths: ["site/**", "model/**", "inputs/sectors/**", ".github/workflows/pages.yml"]
   workflow_run:
     # A push made by the Pipeline workflow's token doesn't trigger `push`, so deploy after it.
     workflows: [Pipeline]
@@ -31,6 +32,15 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build the demo
+        # Synthetic companies through the real pipeline code -> site/demo/data (the site's Demo switch).
+        # Rebuilt each deploy, so the demo always shows the current features; it isn't committed.
+        env:
+          PYTHONPATH: model
+        run: python -m L3_app.demo --site-dir site
       - name: Stamp asset versions
         # Browsers cache Pages files; a per-commit query string makes them fetch new CSS/JS after each deploy.
         run: |

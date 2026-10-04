@@ -20,7 +20,8 @@ pytest
 export SEC_USER_AGENT="Your Name you@example.com"
 python pipeline.py run AAPL --stop-after L1          # data/AAPL/<today>/company_detail.json
 python pipeline.py sector sic-of:AAPL                # data/sectors/sector-technology/<today>/sector.json
-python -m L3_app.publish && python -m http.server -d site 8000
+python -m L3_app.publish && python -m L3_app.demo     # real data + the pre-loaded demo
+python -m http.server -d site 8000                   # http://localhost:8000 (?demo=1 for the demo)
 ```
 
 ## Docs

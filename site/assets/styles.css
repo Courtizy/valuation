@@ -372,3 +372,22 @@ table.sens td.base { outline: 2px solid var(--ink); outline-offset: -2px; font-w
 #ret-legend .swatch { margin-right: 4px; }
 
 .warn { color: var(--critical); }
+
+/* ---- demo mode and guided tour */
+.mode-strip { background: color-mix(in srgb, var(--brand-fill) 10%, var(--panel)); border-bottom: 1px solid var(--border); }
+.mode-strip__inner { max-width: 1200px; margin: 0 auto; padding: 8px 16px; display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; font-size: 13px; }
+.mode-strip__inner .tile-tag { color: var(--accent); font-weight: 600; }
+.mode-strip__inner button { margin-left: auto; }
+#demo-toggle[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.tour-focus { outline: 3px solid var(--accent); outline-offset: 4px; scroll-margin-top: 80px; }
+.tour {
+  position: fixed; right: 16px; bottom: 16px; z-index: 50; width: min(380px, calc(100vw - 32px));
+  background: var(--panel); border: 1px solid var(--border); border-top: 4px solid var(--brand-fill);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25); padding: 14px 16px;
+}
+.tour__count { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.tour__title { margin: 2px 0 6px; font-size: 16px; }
+.tour__text { margin: 0 0 12px; font-size: 13px; line-height: 1.5; color: var(--ink-2); }
+.tour__actions { display: flex; gap: 8px; align-items: center; }
+.tour__actions .spacer { flex: 1; }
+@media (max-width: 640px) { .tour { right: 8px; left: 8px; bottom: 8px; width: auto; } }

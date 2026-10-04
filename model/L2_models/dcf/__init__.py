@@ -291,6 +291,10 @@ class DCF:
                                 "older low-coupon debt; the terminal debt rate keeps that negative spread")
             return rd, "interest_over_debt"
         fb = cc.get("pre_tax_cost_of_debt_fallback")
+        if fb is None and not debt > 0:
+            # no debt: the debt weight is zero unless a target D/E says otherwise, so the rate barely matters
+            warnings.append(f"no debt: cost of debt set to risk-free + {DEFAULT_CREDIT_SPREAD:.1%} (only used with a target D/E)")
+            return risk_free + DEFAULT_CREDIT_SPREAD, "no_debt"
         if fb is None:
             raise AssumptionError("can't measure interest / debt from the filings: set "
                                   "cost_of_capital.pre_tax_cost_of_debt_fallback (e.g. bond yield to maturity)")
