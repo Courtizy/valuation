@@ -9,49 +9,71 @@ export function setRunHooks(hooks) { ({ showDevice, route } = hooks); }
 
 // ---- Run in this browser (anyone) -------------------------------------------------
 const proxyUrl = () => ($("h-proxy").value.trim() || PROXY_URL).replace(/\/+$/, "");
+const avKey = () => $("h-avkey").value.trim();
+
+/** Where Run Comps, Save Peers, Screen and Build go: GitHub only for the owner (a token is set)
+ *  working on a published company; everyone else, and every company run here, uses this browser. */
+export const useGitHub = () => !!gh().token && !state.company?.device;
 
 function renderSaved() {
-  const list = deviceIndex()?.companies || [];
-  $("h-saved").innerHTML = list.length
-    ? `Saved on this device: ${list.map((c) => `<b>${esc(c.ticker)}</b> (${c.runs.length} run${c.runs.length > 1 ? "s" : ""})`).join(", ")}.
-       <button type="button" class="linkish" id="h-clear">Clear</button>`
+  const list = deviceIndex()?.companies || [], sectors = deviceIndex()?.sectors || [];
+  const what = [...list.map((c) => `<b>${esc(c.ticker)}</b> (${c.runs.length} run${c.runs.length > 1 ? "s" : ""})`),
+    ...sectors.map((x) => `<b>${esc(x.label || x.id)}</b> screen`)];
+  $("h-saved").innerHTML = what.length
+    ? `Saved on this device: ${what.join(", ")}. <button type="button" class="linkish" id="h-clear">Clear</button>`
     : '<span class="muted">Nothing saved on this device yet.</span>';
   const clear = $("h-clear");
   if (clear) clear.onclick = async () => {
-    if (!confirm("Remove every run saved in this browser?")) return;
+    if (!confirm("Remove every run, sector screen and peer list saved in this browser?")) return;
     await clearDevice(); renderSaved(); await showDevice?.(null);
   };
 }
 
+/** Run a company ({ticker, models}) or screen a sector ({sector}) in this browser, keep it on
+ *  this device and open it. Progress and the outcome go to the status element. */
+export async function runInBrowser(job, status) {
+  const asOf = job.asOf || new Date().toISOString().slice(0, 10);
+  if (!proxyUrl()) { setStatus(status, { ok: false, msg: "The data proxy isn't set up: add its URL on the Run page under Settings." }); return false; }
+  status.className = "status"; status.textContent = "Starting…";
+  try {
+    const out = await runHere({ ...job, asOf, proxy: proxyUrl(), avKey: job.sector ? "" : avKey() }, (msg) => { status.textContent = msg; });
+    const failed = out.report.filter(([, st]) => st === "failed");
+    const built = job.sector ? !failed.length : !!out.files[`${job.ticker}/${asOf}/company_detail.json`];
+    if (!built) throw new Error(failed.map(([step, , msg]) => `${step}: ${msg}`).join("; ") || "nothing was built");
+    await saveDevice(out.files);
+    renderSaved();
+    setStatus(status, { ok: !failed.length, msg: failed.length
+      ? `Done, with problems: ${failed.map(([step, , msg]) => `${step} (${msg})`).join("; ")}`
+      : `Done. ${job.sector ? "The screen" : job.ticker} is saved on this device.` });
+    await showDevice?.(job.sector ? null : job.ticker);
+    return true;
+  } catch (err) {
+    setStatus(status, { ok: false, msg: `Run failed: ${err.message}` });
+    return false;
+  }
+}
+
 export function setupHereForm() {
   $("h-proxy").value = store.get("proxy_url") || "";
+  $("h-avkey").value = store.get("av_key") || "";
   $("h-asof").value = new Date().toISOString().slice(0, 10);
   renderSaved();
-  $("here-form").onsubmit = async (e) => {
-    e.preventDefault();
-    const status = $("h-status"), go = $("h-go");
-    const ticker = $("h-ticker").value.trim().toUpperCase();
+  const remember = () => {
     store.set("proxy_url", $("h-proxy").value.trim() || null);
-    if (!/^[A-Z][A-Z0-9.\-]{0,9}$/.test(ticker)) { setStatus(status, { ok: false, msg: "Enter a valid ticker." }); return; }
-    if (!proxyUrl()) { setStatus(status, { ok: false, msg: "The data proxy isn't set up yet: add its URL under Data Proxy." }); return; }
-    go.disabled = true;
-    status.className = "status"; status.textContent = "Starting…";
-    try {
-      const out = await runHere({ ticker, asOf: $("h-asof").value, models: "dcf", proxy: proxyUrl() },
-        (msg) => { status.textContent = msg; });
-      const failed = out.report.filter(([, st]) => st === "failed");
-      if (!out.files[`${ticker}/${$("h-asof").value}/company_detail.json`] && failed.length) {
-        throw new Error(failed.map(([step, , msg]) => `${step}: ${msg}`).join("; "));
-      }
-      await saveDevice(out.files);
-      renderSaved();
-      setStatus(status, { ok: !failed.length, msg: failed.length
-        ? `Done, with problems: ${failed.map(([step, , msg]) => `${step} (${msg})`).join("; ")}`
-        : `Done. ${ticker} is saved on this device.` });
-      await showDevice?.(ticker);
-    } catch (err) {
-      setStatus(status, { ok: false, msg: `Run failed: ${err.message}` });
-    } finally { go.disabled = false; }
+    store.set("av_key", avKey() || null);
+  };
+  $("h-proxy").onchange = $("h-avkey").onchange = remember;
+  const busy = async (btn, work) => { btn.disabled = true; try { await work(); } finally { btn.disabled = false; } };
+  $("here-form").onsubmit = (e) => {
+    e.preventDefault();
+    remember();
+    const ticker = $("h-ticker").value.trim().toUpperCase();
+    if (!/^[A-Z][A-Z0-9.\-]{0,9}$/.test(ticker)) { setStatus($("h-status"), { ok: false, msg: "Enter a valid ticker." }); return; }
+    busy($("h-go"), () => runInBrowser({ ticker, asOf: $("h-asof").value, models: "auto" }, $("h-status")));
+  };
+  $("h-screen").onclick = () => {
+    remember();
+    busy($("h-screen"), () => runInBrowser({ sector: `sector:${$("h-sector").value}`, asOf: $("h-asof").value }, $("h-status")));
   };
 }
 
@@ -66,9 +88,9 @@ export function runMode() { return document.querySelector("#r-mode [aria-pressed
 
 /** Fill the Sector list from the taxonomy (called once it has loaded). */
 export function fillSectorList() {
-  const sel = $("r-sector-id");
-  if (!sel || !state.taxonomy) return;
-  sel.innerHTML = state.taxonomy.sectors.map((x) => `<option value="${esc(x.id)}">${esc(x.name)}</option>`).join("");
+  if (!state.taxonomy) return;
+  const opts = state.taxonomy.sectors.map((x) => `<option value="${esc(x.id)}">${esc(x.name)}</option>`).join("");
+  for (const id of ["r-sector-id", "h-sector"]) if ($(id)) $(id).innerHTML = opts;
 }
 
 export function setupRunForm() {

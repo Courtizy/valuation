@@ -17,7 +17,7 @@ The Valuation Model turns a company's SEC filings into normalized statements, ra
 - **Analyzes statements three ways.** Standard ratios, managerial (working capital) ratios and reformulated operating/financing ratios, with definitions taken from MBA course workbooks.
 - **Values with a simulated DCF.** 2,000 seeded runs over near-term growth, WACC and terminal growth. Bear and Bull are the 10th and 90th percentiles.
 - **Compares methods.** Public comparables, plus reconciliation into a football field that explains why the methods differ.
-- **Runs in your browser.** Anyone can value a company from the Run page with no token. The same Python engine runs in the browser through Pyodide, and the results are saved on that device only.
+- **Runs in your browser.** Anyone can value a company, screen a sector, pick comps peers and run comps from the site with no token. The same Python engine runs in the browser through Pyodide, and the results are saved on that device only. An optional Alpha Vantage key of your own adds share prices.
 - **Screens sectors.** GICS-style groups of SEC industry codes, with benchmarks and a peer picker that saves comps peer lists back to the repo.
 
 ## Status
@@ -104,7 +104,7 @@ Only government data and Damodaran's openly published datasets reach the public 
 | [FRED](https://fred.stlouisfed.org/series/DGS10) (10-year Treasury, DGS10) | Risk-free rate | Yes | Yes |
 | [Aswath Damodaran, NYU Stern](https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/Betas.html) (US industry betas, implied ERP) | Industry beta when no price-based beta is shown, ERP for the default DCF | Yes, cited | Yes |
 | Yahoo Finance (unofficial chart and fundamentals endpoints) | Prices, beta, backfill for items the filings lack | No | Yes |
-| [Alpha Vantage](https://www.alphavantage.co/) (optional, your own key) | Backup prices and a price cross-check | No | Yes |
+| [Alpha Vantage](https://www.alphavantage.co/) (optional, your own key) | Backup prices and a price cross-check; prices for runs in your browser | No (only on your device) | Yes |
 
 - **Damodaran's datasets** are published freely for teaching and updated each January. Each figure that uses them names the industry row and date.
 - **SEC and FRED** are US government data. Requests carry a contact User-Agent and stay within the SEC's fair-access limit of 10 requests a second.

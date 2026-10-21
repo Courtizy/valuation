@@ -18,21 +18,35 @@ async function boot(say) {
 }
 
 // Python calls this synchronously; a worker may block on XHR, the page never does.
+// Alpha Vantage (the visitor's own key) is called directly, at most one request a second;
+// everything else goes through the proxy.
+const AV = "https://www.alphavantage.co/";
+let lastAv = 0;
 const fetchText = (proxy) => (url) => {
+  const direct = url.startsWith(AV);
+  if (direct) { while (Date.now() < lastAv + 1100) { /* free keys allow about one request a second */ } lastAv = Date.now(); }
   const x = new XMLHttpRequest();
-  x.open("GET", `${proxy}?url=${encodeURIComponent(url)}`, false);
+  x.open("GET", direct ? url : `${proxy}?url=${encodeURIComponent(url)}`, false);
   x.send();
-  if (x.status !== 200) throw new Error(`${x.status} from the proxy for ${url}: ${(x.responseText || "").slice(0, 200)}`);
+  const shown = direct ? url.replace(/apikey=[^&]*/, "apikey=***") : url;
+  if (x.status !== 200) throw new Error(`${x.status} from the proxy for ${shown}: ${(x.responseText || "").slice(0, 200)}`);
   return x.responseText;
 };
 
 self.onmessage = async (e) => {
-  const { id, ticker, asOf, models, proxy, saved } = e.data;
+  const { id, ticker, sector, asOf, models, proxy, saved, assumptions, avKey } = e.data;
   const say = (progress) => self.postMessage({ id, progress });
   try {
     engine ||= await boot(say);
-    say(`Fetching SEC filings for ${ticker} and building the models…`);
-    const out = engine.run_json(ticker, fetchText(proxy), asOf || null, models || "dcf", JSON.stringify(saved || {}));
+    let out;
+    if (sector) {
+      say(`Screening ${sector} from SEC filings (a few minutes: every company's figures for four years)…`);
+      out = engine.run_sector_json(sector, fetchText(proxy), asOf || null, JSON.stringify(saved || {}));
+    } else {
+      say(`Fetching SEC filings for ${ticker}${avKey ? " and prices" : ""} and building the models…`);
+      out = engine.run_json(ticker, fetchText(proxy), asOf || null, models || "auto", JSON.stringify(saved || {}),
+        JSON.stringify(assumptions || {}), avKey || "");
+    }
     self.postMessage({ id, ok: true, out });
   } catch (err) {
     self.postMessage({ id, ok: false, error: String(err?.message || err).split("\n").filter(Boolean).slice(-1)[0] });
