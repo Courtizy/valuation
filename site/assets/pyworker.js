@@ -18,23 +18,23 @@ async function boot(say) {
 }
 
 // Python calls this synchronously; a worker may block on XHR, the page never does.
-// Alpha Vantage (the visitor's own key) is called directly, at most one request a second;
-// everything else goes through the proxy.
-const AV = "https://www.alphavantage.co/";
-let lastAv = 0;
+// Alpha Vantage and Finnhub (the visitor's own keys) are called directly, at most one request
+// a second; everything else, Yahoo included (local runs only), goes through the proxy.
+const DIRECT = ["https://www.alphavantage.co/", "https://finnhub.io/"];
+let lastDirect = 0;
 const fetchText = (proxy) => (url) => {
-  const direct = url.startsWith(AV);
-  if (direct) { while (Date.now() < lastAv + 1100) { /* free keys allow about one request a second */ } lastAv = Date.now(); }
+  const direct = DIRECT.some((d) => url.startsWith(d));
+  if (direct) { while (Date.now() < lastDirect + 1100) { /* free keys allow about one request a second */ } lastDirect = Date.now(); }
   const x = new XMLHttpRequest();
   x.open("GET", direct ? url : `${proxy}?url=${encodeURIComponent(url)}`, false);
   x.send();
-  const shown = direct ? url.replace(/apikey=[^&]*/, "apikey=***") : url;
+  const shown = url.replace(/(apikey|token)=[^&]*/g, "$1=***");
   if (x.status !== 200) throw new Error(`${x.status} from the proxy for ${shown}: ${(x.responseText || "").slice(0, 200)}`);
   return x.responseText;
 };
 
 self.onmessage = async (e) => {
-  const { id, ticker, sector, asOf, models, proxy, saved, assumptions, avKey } = e.data;
+  const { id, ticker, sector, asOf, models, proxy, saved, assumptions, avKey, finnhubKey, yahoo } = e.data;
   const say = (progress) => self.postMessage({ id, progress });
   try {
     engine ||= await boot(say);
@@ -43,9 +43,9 @@ self.onmessage = async (e) => {
       say(`Screening ${sector} from SEC filings (a few minutes: every company's figures for four years)…`);
       out = engine.run_sector_json(sector, fetchText(proxy), asOf || null, JSON.stringify(saved || {}));
     } else {
-      say(`Fetching SEC filings for ${ticker}${avKey ? " and prices" : ""} and building the models…`);
+      say(`Fetching SEC filings for ${ticker}${avKey || finnhubKey || yahoo ? " and prices" : ""} and building the models…`);
       out = engine.run_json(ticker, fetchText(proxy), asOf || null, models || "auto", JSON.stringify(saved || {}),
-        JSON.stringify(assumptions || {}), avKey || "");
+        JSON.stringify(assumptions || {}), avKey || "", finnhubKey || "", !!yahoo);
     }
     self.postMessage({ id, ok: true, out });
   } catch (err) {

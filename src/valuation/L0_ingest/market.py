@@ -8,6 +8,9 @@ Sources
   check)                      TIME_SERIES_MONTHLY_ADJUSTED); free key in $ALPHAVANTAGE_API_KEY.
                               The free plan allows 25 requests a day, so it is used sparingly:
                               one call per cross-check, three for a full fallback.
+  Finnhub (last resort)       finnhub.io/api/v1/quote and /stock/metric; free key in $FINNHUB_API_KEY.
+                              The free plan has no price history, only today's quote and a reported
+                              beta, so it serves an as_of within a week of today and nothing older.
   FRED DGS10 (risk-free)      fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10, no key
 
 Rules
@@ -15,7 +18,8 @@ Rules
 - Price = the last close on or before as_of (a past as_of never sees later prices).
 - Monthly adjusted closes for 5 years plus the market index (^GSPC on Yahoo, SPY on
   Alpha Vantage, which has no index series) feed the beta in L1.
-- Yahoo fails or returns nothing -> Alpha Vantage becomes the source (`fallback: true`).
+- Yahoo fails or returns nothing -> Alpha Vantage becomes the source (`fallback: true`), then Finnhub.
+  Finnhub's beta arrives as `beta_reported` (no monthly series to compute one from).
 - cross_check=True also asks Alpha Vantage for the same close and records the gap:
   ok within 2%, else mismatch. No key -> the check is skipped and says so.
 - Alpha Vantage's free daily series covers the latest 100 trading days, so a fallback or
@@ -44,6 +48,9 @@ from .http import HttpClient, HttpError
 SCHEMA_VERSION = "0.1.0"
 YAHOO_URL = "https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?period1={p1}&period2={p2}&interval={interval}&events=div%2Csplit"
 AV_URL = "https://www.alphavantage.co/query?function={function}&symbol={symbol}{extra}&apikey={key}"
+FINNHUB_QUOTE_URL = "https://finnhub.io/api/v1/quote?symbol={symbol}&token={key}"
+FINNHUB_METRIC_URL = "https://finnhub.io/api/v1/stock/metric?symbol={symbol}&metric=all&token={key}"
+FINNHUB_MAX_AGE_DAYS = 7
 FRED_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}&cosd={start}&coed={end}"
 FUNDAMENTALS_URL = ("https://query1.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/{symbol}"
                     "?type={types}&period1={p1}&period2={p2}")
@@ -151,21 +158,26 @@ class MarketAdapter:
 
     def __init__(self, yahoo: BytesClient | None = None, alphavantage: BytesClient | None = None,
                  fred: BytesClient | None = None, cache: FileCache | None = None,
-                 av_key: str | None = None, damodaran: BytesClient | None = None):
+                 av_key: str | None = None, damodaran: BytesClient | None = None,
+                 finnhub: BytesClient | None = None, finnhub_key: str | None = None):
         self._yahoo, self._alphavantage, self._fred, self._damodaran = yahoo, alphavantage, fred, damodaran
+        self._finnhub = finnhub
         self.av_key = av_key if av_key is not None else os.environ.get("ALPHAVANTAGE_API_KEY", "")
+        self.finnhub_key = finnhub_key if finnhub_key is not None else os.environ.get("FINNHUB_API_KEY", "")
         self.cache = cache
 
     # clients are built lazily, so tests and cache-only runs need no network or key
     def _client(self, which: str) -> BytesClient:
         attr = f"_{which}"
         if getattr(self, attr) is None:
-            gap = {"yahoo": 0.5, "alphavantage": 1.5}.get(which, 0.2)
+            gap = {"yahoo": 0.5, "alphavantage": 1.5, "finnhub": 1.0}.get(which, 0.2)
             setattr(self, attr, HttpClient(BROWSER_UA, min_interval=gap, contact_required=False))
         return getattr(self, attr)
 
     def _redact(self, msg: str) -> str:
-        return msg.replace(self.av_key, "***") if self.av_key else msg
+        for k in (self.av_key, self.finnhub_key):
+            msg = msg.replace(k, "***") if k else msg
+        return msg
 
     def _get(self, which: str, url: str, key: str) -> bytes:
         if self.cache and (hit := self.cache.get(key)):
@@ -196,6 +208,27 @@ class MarketAdapter:
         if not rows:
             raise MarketDataError(f"alphavantage: no {symbol} data between {start} and {end}")
         return {**doc, "rows": rows}
+
+    def finnhub(self, ticker: str, as_of: date) -> dict:
+        """Today's quote and Finnhub's reported beta. No history on the free plan, so an as_of more
+        than a week before the quote can't be served."""
+        if not self.finnhub_key:
+            raise MarketDataError("finnhub: no FINNHUB_API_KEY")
+        sym = quote(av_symbol(ticker), safe="")
+        q = json.loads(self._get("finnhub", FINNHUB_QUOTE_URL.format(symbol=sym, key=self.finnhub_key), f"finnhub_quote_{sym}_{date.today()}"))
+        if not q.get("c") or not q.get("t"):
+            raise MarketDataError(f"finnhub: no quote for {ticker}")
+        on = datetime.fromtimestamp(q["t"], timezone.utc).date()
+        if on > as_of or (as_of - on).days > FINNHUB_MAX_AGE_DAYS:
+            raise MarketDataError(f"finnhub: the free plan has today's quote only ({on}), not a close for {as_of}")
+        try:
+            m = json.loads(self._get("finnhub", FINNHUB_METRIC_URL.format(symbol=sym, key=self.finnhub_key), f"finnhub_metric_{sym}_{date.today()}"))
+            beta = (m.get("metric") or {}).get("beta")
+        except (MarketDataError, ValueError):
+            beta = None
+        return {"source": "finnhub", "currency": "USD", "price": float(q["c"]), "price_date": on.isoformat(),
+                "monthly": [], "index": {"symbol": None, "monthly": []},
+                "beta_reported": float(beta) if isinstance(beta, (int, float)) else None}
 
     def fundamentals(self, ticker: str, as_of: str) -> dict:
         """Annual and quarterly statement items from Yahoo, periods ending on or before as_of."""
@@ -254,9 +287,9 @@ class MarketAdapter:
         t, end = ticker.upper(), date.fromisoformat(as_of)
         errors: list[str] = []
         doc = None
-        for which in ("yahoo", "alphavantage"):
+        for which in ("yahoo", "alphavantage", "finnhub"):
             try:
-                doc = self._series(which, t, end)
+                doc = self.finnhub(t, end) if which == "finnhub" else self._series(which, t, end)
                 break
             except (HttpError, MarketDataError, ValueError, KeyError) as e:
                 errors.append(self._redact(f"{which}: {e}"))

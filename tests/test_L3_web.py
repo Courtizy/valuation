@@ -116,3 +116,59 @@ def test_web_prices_come_from_the_visitors_alpha_vantage_key(tmp_path):
     assert detail["market"]["price"] == 250.0 and detail["market"]["source"] == "alphavantage"
     assert not any("yahoo" in u for u in calls)
     assert len([u for u in calls if "alphavantage" in u]) <= 4        # cached within the run: daily, monthly, index
+
+
+def _quote_fetch(calls, handle):
+    base = fetch_text(calls)
+
+    def get(url):
+        out = handle(url)
+        if out is not None:
+            calls.append(url)
+            return out
+        return base(url)
+    return get
+
+
+def test_web_finnhub_key_gives_todays_quote_and_reported_beta(tmp_path):
+    import time
+    from datetime import date
+    today = date.today().isoformat()
+
+    def handle(url):
+        if "finnhub.io" in url:
+            assert "token=FHKEY" in url
+            return json.dumps({"c": 321.5, "t": int(time.time())} if "/quote" in url else {"metric": {"beta": 1.23}})
+    calls = []
+    out = run("AAPL", _quote_fetch(calls, handle), today, "dcf", work=str(tmp_path / "w"), finnhub_key="FHKEY")
+    detail = json.loads(out["files"][f"AAPL/{today}/company_detail.json"])
+    assert detail["market"]["price"] == 321.5 and detail["market"]["source"] == "finnhub"
+    assert detail["market"]["beta"]["value"] == 1.23
+    assert not any("yahoo" in u or "alphavantage" in u for u in calls)
+
+
+def test_web_finnhub_refuses_an_old_as_of(tmp_path):
+    import time
+
+    def handle(url):
+        if "finnhub.io" in url:
+            return json.dumps({"c": 321.5, "t": int(time.time())})
+    out = run("AAPL", _quote_fetch([], handle), "2024-01-05", "dcf", work=str(tmp_path / "w"), finnhub_key="FHKEY")
+    msg = {n: m for n, _, m in out["report"]}["market AAPL"]
+    assert "today's quote only" in msg and "FHKEY" not in msg
+
+
+def test_web_yahoo_only_when_asked(tmp_path):
+    from test_L0_market import yahoo_route
+
+    def handle(url):
+        if "finance.yahoo.com" in url:
+            return yahoo_route(url) if "/chart/" in url else json.dumps({"timeseries": {"result": []}})
+    calls = []
+    run("AAPL", _quote_fetch(calls, handle), "2026-10-02", "dcf", work=str(tmp_path / "a"))
+    assert not any("yahoo" in u for u in calls)                 # off by default: the public site
+    out = run("AAPL", _quote_fetch(calls, handle), "2026-10-02", "dcf", work=str(tmp_path / "b"), yahoo=True)
+    assert any("yahoo" in u for u in calls)
+    assert {n: s for n, s, _ in out["report"]}["market AAPL"] == "done"
+    detail = json.loads(out["files"]["AAPL/2026-10-02/company_detail.json"])
+    assert detail["market"]["source"] == "yahoo" and detail["market"]["beta"]["value"]

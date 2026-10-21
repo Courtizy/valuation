@@ -10,6 +10,10 @@ export function setRunHooks(hooks) { ({ showDevice, route } = hooks); }
 // ---- Run in this browser (anyone) -------------------------------------------------
 const proxyUrl = () => ($("h-proxy").value.trim() || PROXY_URL).replace(/\/+$/, "");
 const avKey = () => $("h-avkey").value.trim();
+const finnhubKey = () => $("h-fhkey").value.trim();
+/** Opened from this machine (python -m http.server): Yahoo prices through the proxy, which relays
+ *  Yahoo for localhost origins only. Never on the public site. */
+export const localRun = () => ["localhost", "127.0.0.1"].includes(location.hostname);
 
 /** Where Run Comps, Save Peers, Screen and Build go: GitHub only for the owner (a token is set)
  *  working on a published company; everyone else, and every company run here, uses this browser. */
@@ -36,7 +40,8 @@ export async function runInBrowser(job, status) {
   if (!proxyUrl()) { setStatus(status, { ok: false, msg: "The data proxy isn't set up: add its URL on the Run page under Settings." }); return false; }
   status.className = "status"; status.textContent = "Starting…";
   try {
-    const out = await runHere({ ...job, asOf, proxy: proxyUrl(), avKey: job.sector ? "" : avKey() }, (msg) => { status.textContent = msg; });
+    const prices = job.sector ? {} : { avKey: avKey(), finnhubKey: finnhubKey(), yahoo: localRun() };
+    const out = await runHere({ ...job, asOf, proxy: proxyUrl(), ...prices }, (msg) => { status.textContent = msg; });
     const failed = out.report.filter(([, st]) => st === "failed");
     const built = job.sector ? !failed.length : !!out.files[`${job.ticker}/${asOf}/company_detail.json`];
     if (!built) throw new Error(failed.map(([step, , msg]) => `${step}: ${msg}`).join("; ") || "nothing was built");
@@ -56,13 +61,16 @@ export async function runInBrowser(job, status) {
 export function setupHereForm() {
   $("h-proxy").value = store.get("proxy_url") || "";
   $("h-avkey").value = store.get("av_key") || "";
+  $("h-fhkey").value = store.get("finnhub_key") || "";
+  $("h-local").hidden = !localRun();
   $("h-asof").value = new Date().toISOString().slice(0, 10);
   renderSaved();
   const remember = () => {
     store.set("proxy_url", $("h-proxy").value.trim() || null);
     store.set("av_key", avKey() || null);
+    store.set("finnhub_key", finnhubKey() || null);
   };
-  $("h-proxy").onchange = $("h-avkey").onchange = remember;
+  $("h-proxy").onchange = $("h-avkey").onchange = $("h-fhkey").onchange = remember;
   const busy = async (btn, work) => { btn.disabled = true; try { await work(); } finally { btn.disabled = false; } };
   $("here-form").onsubmit = (e) => {
     e.preventDefault();

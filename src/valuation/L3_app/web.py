@@ -3,12 +3,14 @@
 The page's web worker loads this package and calls run() or run_sector(). Every request goes
 through `fetch_text(url)`, which the worker implements as a synchronous request: to the
 Cloudflare proxy (worker/) for the SEC, FRED and Damodaran, since browsers can't call the SEC
-directly, and straight to Alpha Vantage when the visitor gives their own key. Nothing is
+directly, and straight to Alpha Vantage or Finnhub when the visitor gives their own key.
+On the visitor's own machine (the site opened from localhost) the page also passes yahoo=True,
+and the proxy relays Yahoo for localhost origins only, so Yahoo never serves the public site. Nothing is
 committed or published: each call returns the visitor's own site/data files, which the page
 keeps in IndexedDB and passes back in as `saved` next time, so earlier runs stay listed.
 
 `assumptions` overlays configs/public/assumptions with the visitor's own files (comps peers
-picked on the site, as {"TICKER/comps.json": text}). Without an Alpha Vantage key no prices are
+picked on the site, as {"TICKER/comps.json": text}). Without a key or Yahoo no prices are
 fetched: the DCF uses Damodaran's industry beta and implied ERP, and comps needs peer prices
 typed into the peer picker.
 """
@@ -50,10 +52,10 @@ class ProxyClient:
 
 
 class NoPrices:
-    """Stands in for Yahoo (and for Alpha Vantage without a key): the browser never calls Yahoo."""
+    """Stands in for a price source this run may not use (Yahoo off localhost, a provider without a key)."""
 
     def get_bytes(self, url: str) -> bytes:
-        raise HttpError(url, None, "market prices aren't fetched in the browser without an Alpha Vantage key")
+        raise HttpError(url, None, "this price source isn't used in this browser run")
 
 
 def _write_under(base: Path, rel: str, text: str) -> None:
@@ -86,7 +88,8 @@ def _finish(work_dir: Path, market: str) -> dict[str, str]:
 
 def run(ticker: str, fetch_text: Callable[[str], str], as_of: str | None = None, models: str = "dcf",
         saved: dict[str, str] | None = None, work: str = "/tmp/valuation",
-        assumptions: dict[str, str] | None = None, av_key: str = "") -> dict:
+        assumptions: dict[str, str] | None = None, av_key: str = "", finnhub_key: str = "",
+        yahoo: bool = False) -> dict:
     """Run L0 -> L2 for one ticker (and its comps peers) and publish into this device's site data.
 
     models: comma-separated, or "auto" = DCF, plus comps when the ticker has comps peers.
@@ -99,9 +102,12 @@ def run(ticker: str, fetch_text: Callable[[str], str], as_of: str | None = None,
     if names == ["auto"]:
         names = ["dcf"] + (["comps"] if load_peers(paths, ticker.upper()) else [])
     steps = plan(ticker, names, as_of, paths, lambda: SecSectorAdapter(client=client), "L2",
-                 market_factory=lambda: MarketAdapter(yahoo=NoPrices(), alphavantage=client if av_key else NoPrices(),
-                                                      fred=client, damodaran=client, av_key=av_key, cache=cache),
-                 market_prices=bool(av_key))
+                 market_factory=lambda: MarketAdapter(yahoo=client if yahoo else NoPrices(),
+                                                      alphavantage=client if av_key else NoPrices(),
+                                                      finnhub=client if finnhub_key else NoPrices(),
+                                                      fred=client, damodaran=client, av_key=av_key,
+                                                      finnhub_key=finnhub_key, cache=cache),
+                 market_prices=bool(av_key or finnhub_key or yahoo))
     report = [list(r) for r in execute(steps)]
     return {"report": report, "files": _finish(work_dir, "real")}
 
@@ -121,10 +127,12 @@ def run_sector(spec: str, fetch_text: Callable[[str], str], as_of: str | None = 
 
 
 def run_json(ticker: str, fetch_text: Callable[[str], str], as_of: str | None = None, models: str = "dcf",
-             saved_json: str = "{}", assumptions_json: str = "{}", av_key: str = "") -> str:
+             saved_json: str = "{}", assumptions_json: str = "{}", av_key: str = "", finnhub_key: str = "",
+             yahoo: bool = False) -> str:
     """run() with JSON in and out, the simplest shape to pass across Pyodide's boundary."""
     return json.dumps(run(ticker, fetch_text, as_of, models, json.loads(saved_json or "{}"),
-                          assumptions=json.loads(assumptions_json or "{}"), av_key=av_key or ""))
+                          assumptions=json.loads(assumptions_json or "{}"), av_key=av_key or "",
+                          finnhub_key=finnhub_key or "", yahoo=bool(yahoo)))
 
 
 def run_sector_json(spec: str, fetch_text: Callable[[str], str], as_of: str | None = None, saved_json: str = "{}") -> str:
