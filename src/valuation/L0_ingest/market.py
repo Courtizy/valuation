@@ -151,8 +151,8 @@ class MarketAdapter:
 
     def __init__(self, yahoo: BytesClient | None = None, alphavantage: BytesClient | None = None,
                  fred: BytesClient | None = None, cache: FileCache | None = None,
-                 av_key: str | None = None):
-        self._yahoo, self._alphavantage, self._fred = yahoo, alphavantage, fred
+                 av_key: str | None = None, damodaran: BytesClient | None = None):
+        self._yahoo, self._alphavantage, self._fred, self._damodaran = yahoo, alphavantage, fred, damodaran
         self.av_key = av_key if av_key is not None else os.environ.get("ALPHAVANTAGE_API_KEY", "")
         self.cache = cache
 
@@ -217,6 +217,16 @@ class MarketAdapter:
             raise MarketDataError(f"fred: no {series} observation in the two weeks to {as_of}")
         d, v = rows[-1]
         return {"series": series, "value": v, "date": d, "source": "FRED (Federal Reserve H.15)"}
+
+    def damodaran(self, as_of: str) -> dict:
+        """Damodaran's US industry betas and latest implied ERP (L0_ingest/damodaran.py).
+        Updated each January, so cached per month."""
+        from .damodaran import BETAS_URL, ERP_URL, parse_betas, parse_erp
+        month = as_of[:7]
+        betas = parse_betas(self._get("damodaran", BETAS_URL, f"damodaran_betas_{month}").decode("utf-8", "replace"))
+        erp = parse_erp(self._get("damodaran", ERP_URL, f"damodaran_erp_{month}").decode("utf-8", "replace"))
+        return {"source": "Aswath Damodaran, NYU Stern (pages.stern.nyu.edu/~adamodar)", "as_of": as_of,
+                "betas": betas, "erp": erp}
 
     # ------------------------------------------------------------- one company
     def _series(self, which: str, ticker: str, as_of: date) -> dict:

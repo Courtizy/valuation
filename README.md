@@ -17,6 +17,7 @@ The Valuation Model turns a company's SEC filings into normalized statements, ra
 - **Analyzes statements three ways.** Standard ratios, managerial (working capital) ratios and reformulated operating/financing ratios, with definitions taken from MBA course workbooks.
 - **Values with a simulated DCF.** 2,000 seeded runs over near-term growth, WACC and terminal growth. Bear and Bull are the 10th and 90th percentiles.
 - **Compares methods.** Public comparables, plus reconciliation into a football field that explains why the methods differ.
+- **Runs in your browser.** Anyone can value a company from the Run page with no token. The same Python engine runs in the browser through Pyodide, and the results are saved on that device only.
 - **Screens sectors.** GICS-style groups of SEC industry codes, with benchmarks and a peer picker that saves comps peer lists back to the repo.
 
 ## Status
@@ -29,6 +30,7 @@ The Valuation Model turns a company's SEC filings into normalized statements, ra
 | L2 Models | Precedent transactions, LBO, IPO | Scaffolded, not built |
 | L2 Models | Excel export, memo PDF, back-testing | Planned |
 | L3 App | Static site on GitHub Pages (Overview, Results, Method), demo and tour | Built |
+| L3 App | Run in this browser (Pyodide, Cloudflare Worker proxy, saved on the device) | Built; the proxy needs deploying |
 
 The public site runs in **showcase mode**: it publishes SEC-derived figures only, with no licensed market prices. Price-dependent outputs (market multiples, upside to price) appear in the demo and in private runs.
 
@@ -94,15 +96,17 @@ Both need the repository secret `SEC_USER_AGENT`. Published data lives on the `s
 
 ## Data and licensing
 
-Only government data reaches the public site. Third-party market data is used in private runs on your own machine and is never committed or published.
+Only government data and Damodaran's openly published datasets reach the public site. Third-party market data is used in private runs on your own machine and is never committed or published.
 
 | Source | What it provides | Public site | Private runs |
 |---|---|---|---|
 | [SEC EDGAR](https://www.sec.gov/search-filings/edgar-application-programming-interfaces) (XBRL company facts, industry codes) | Financial statements, share counts, sector membership | Yes | Yes |
 | [FRED](https://fred.stlouisfed.org/series/DGS10) (10-year Treasury, DGS10) | Risk-free rate | Yes | Yes |
+| [Aswath Damodaran, NYU Stern](https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/Betas.html) (US industry betas, implied ERP) | Industry beta when no price-based beta is shown, ERP for the default DCF | Yes, cited | Yes |
 | Yahoo Finance (unofficial chart and fundamentals endpoints) | Prices, beta, backfill for items the filings lack | No | Yes |
 | [Alpha Vantage](https://www.alphavantage.co/) (optional, your own key) | Backup prices and a price cross-check | No | Yes |
 
+- **Damodaran's datasets** are published freely for teaching and updated each January. Each figure that uses them names the industry row and date.
 - **SEC and FRED** are US government data. Requests carry a contact User-Agent and stay within the SEC's fair-access limit of 10 requests a second.
 - **Showcase mode** (the default for the public site) never fetches Yahoo or Alpha Vantage. If a run did carry their values, publish strips the prices and anything derived from them, and skips any company with Yahoo backfill. Price-based outputs on the public site appear only in the synthetic demo.
 - **Private runs** (`app/run_private.py`) write only to `private/`, which is gitignored. Keys stay in environment variables or repository secrets, never in the code.
@@ -128,7 +132,8 @@ Each layer talks to the next only through JSON files that record their inputs' h
 |---|---|---|
 | `src/valuation/` | both | The engine: layers L0–L3, `runner/`, and `_core/` (shared math, imports nothing else from the app) |
 | `configs/public/` | public | Hand-edited assumptions, comps peers, packs, sectors and `universe.json` (what Refresh builds) |
-| `scripts/export_site.py` | public | Copies `brand/` into `site/brand`, rebuilds the demo, writes `site/data/changelog.json`, refreshes the index |
+| `scripts/export_site.py` | public | Copies `brand/` into `site/brand`, rebuilds the demo, writes `site/data/changelog.json`, refreshes the index, packs the engine into `site/py/valuation.zip` |
+| `worker/` | public | Cloudflare Worker proxy for the in-browser Run (SEC, FRED and Damodaran only) |
 | `scripts/refresh_universe.py`, `scripts/site_data.sh` | public | Weekly build of `universe.json`; load and save the `site-data` branch |
 | `site/` | public | Static Pages site; displays the JSON only |
 | `brand/` | public | Decision Models brand kit (CSS, JS palette, icons) |

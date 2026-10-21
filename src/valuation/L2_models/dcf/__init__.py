@@ -97,24 +97,28 @@ def default_assumptions(detail: dict) -> dict:
 
     Everything comes from the data: revenue growth = the company's own historical CAGR
     (from the L1 trend case, capped to -5%..20%) fading to 2.5% terminal growth over ten
-    years; 5% equity risk premium; risk-free from FRED and price / beta from market data
-    when present (else the sector's illustrative beta and book D/E); cost lines, capex,
+    years; Damodaran's implied equity risk premium (else 5%); risk-free from FRED and price / beta from
+    market data when present (else Damodaran's industry beta, else the sector's illustrative beta);
+    cost lines, capex,
     tax and working capital from the filings. A dcf.json always replaces it."""
     trend = ((detail or {}).get("projection") or {}).get("assumptions") or {}
     g0 = trend.get("revenue_growth_start")
     g0 = 0.05 if g0 is None else min(max(g0, GROWTH_CAP[0]), GROWTH_CAP[1])
+    erp_doc = (detail or {}).get("equity_risk_premium") or {}
+    erp = erp_doc.get("value") if erp_doc.get("value") is not None else DEFAULT_ERP
+    erp_source = f"{erp:.2%}, {erp_doc['basis']}" if erp_doc.get("value") is not None else f"default case: {DEFAULT_ERP:.0%}"
     return {
         "default_case": True, "mode": "forecast", "base_period": "annual",
         "market": {"price": None, "basic_shares": None, "options": []},
         "forecast": {"years_to_terminal": 10, "revenue_growth": g0, "terminal_growth": DEFAULT_TERMINAL_GROWTH},
-        "cost_of_capital": {"risk_free": None, "risk_free_terminal": None, "equity_risk_premium": DEFAULT_ERP, "beta": None,
+        "cost_of_capital": {"risk_free": None, "risk_free_terminal": None, "equity_risk_premium": erp, "beta": None,
                             "pre_tax_cost_of_debt": None, "pre_tax_cost_of_debt_fallback": None},
         "bridge": {"operating_cash_pct": 0.5, "include_longterm_investments": False},
         "terminal": {"method": "gordon", "weight": 1.0},
         "sources": {
             "revenue_growth": f"default case: historical revenue CAGR {g0:.1%} (capped {GROWTH_CAP[0]:.0%} to {GROWTH_CAP[1]:.0%}), fading over 10 years",
             "terminal_growth": f"default case: {DEFAULT_TERMINAL_GROWTH:.1%}",
-            "equity_risk_premium": f"default case: {DEFAULT_ERP:.0%}",
+            "equity_risk_premium": erp_source,
             "pre_tax_cost_of_debt": "interest expense / total debt from the filings, else risk-free + 1.5%",
         },
     }
@@ -206,13 +210,19 @@ class DCF:
             sources["risk_free"] = f"{rf_doc.get('series', 'DGS10')} on {rf_doc.get('date')} (FRED)"
         if cc.get("pre_tax_cost_of_debt_fallback") is None and a.get("default_case") and cc.get("risk_free") is not None:
             cc["pre_tax_cost_of_debt_fallback"] = cc["risk_free"] + DEFAULT_CREDIT_SPREAD
+        beta_u = None
         if cc.get("beta") is None:
-            # no beta in the file and none from market data (showcase mode): the sector's typical beta,
-            # which L1 puts in company detail (configs/public/sectors/taxonomy.json "typical_beta")
+            # no beta in the file and none from market data (showcase mode): the industry beta L1 puts in
+            # company detail, Damodaran's unlevered beta (relevered at this company's D/E) when L0 fetched
+            # it, else the taxonomy's illustrative sector beta
             tb = detail.get("sector_beta") or {"value": 1.0, "basis": "market beta of 1.0 (no sector beta in company detail)"}
-            cc["beta"] = tb["value"]
-            sources["beta"] = f"{tb['value']:.2f}, {tb['basis']}"
-            warnings.append(f"beta not given and no market beta: using the {tb['basis']}, {tb['value']:.2f}")
+            if tb.get("unlevered"):
+                beta_u = tb["value"]
+                sources["beta"] = f"unlevered {tb['value']:.2f}, relevered at this company's D/E; {tb['basis']}"
+            else:
+                cc["beta"] = tb["value"]
+                sources["beta"] = f"{tb['value']:.2f}, {tb['basis']}"
+                warnings.append(f"beta not given and no market beta: using the {tb['basis']}, {tb['value']:.2f}")
         a["sources"] = sources
 
         # shares and bridge
@@ -251,13 +261,15 @@ class DCF:
         rates = discount_rates(
             risk_free=rf,
             pre_tax_cost_of_debt=rd,
-            beta=_need(cc, "beta", "cost_of_capital"),
+            beta=cc.get("beta") if beta_u is not None else _need(cc, "beta", "cost_of_capital"),
+            beta_unlevered=beta_u,
             equity_risk_premium=_need(cc, "equity_risk_premium", "cost_of_capital"),
             tax_rate=tax, current_debt_to_equity=current_de,
             target_debt_to_equity=cc.get("target_debt_to_equity"),
             risk_free_terminal=cc.get("risk_free_terminal"))
         rates.update(pre_tax_cost_of_debt=rd, cost_of_debt_method=rd_method)
-        rate_args = dict(risk_free=rf, pre_tax_cost_of_debt=rd, beta=cc["beta"], equity_risk_premium=cc["equity_risk_premium"],
+        rate_args = dict(risk_free=rf, pre_tax_cost_of_debt=rd, beta=cc.get("beta"), beta_unlevered=beta_u,
+                         equity_risk_premium=cc["equity_risk_premium"],
                          tax_rate=tax, target_debt_to_equity=cc.get("target_debt_to_equity"),
                          risk_free_terminal=cc.get("risk_free_terminal"))
 

@@ -1,7 +1,7 @@
 import { areaChart, groupedBarChart, lineChart, spreadChart } from "./charts.js";
 import { NA, days, esc, estLabel, fin, label, millions, money, monthYear, num, pct, periodLabel, price, times, titleCase } from "./format.js";
 import { renderSector } from "./sector.js";
-import { $, state } from "./state.js";
+import { $, fileHref, runRoot, state } from "./state.js";
 import { acct, cellOf, finRow } from "./tables.js";
 
 // ---------------------------------------------------------------- company
@@ -297,7 +297,7 @@ export function renderStatements() {
     }
   }
   t.innerHTML = html + "</tbody>";
-  $("stmt-full").innerHTML = state.run.full ? `This page shows the latest periods. <a href="${state.root}${esc(state.run.full)}" download>Download the full history (JSON)</a>.` : "";
+  $("stmt-full").innerHTML = state.run.full ? `This page shows the latest periods. <a href="${esc(fileHref(runRoot() + state.run.full))}" download>Download the full history (JSON)</a>.` : "";
   $("stmt-note").textContent = proj ? `${proj.note} Years 6–9 are in the chart above and the DCF table.` : view === "annual" ? "" : "Estimates are shown in the Annual view.";
 }
 

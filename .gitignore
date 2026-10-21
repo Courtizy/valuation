@@ -1,6 +1,6 @@
 # pipeline outputs (published copies live in site/data)
 /data/
-# built by scripts/export_site.py on every deploy
+# built by scripts/export_site.py on every deploy (demo, brand, the in-browser engine)
 /site/demo/
 /site/brand/
 # published data lives on the site-data branch (scripts/site_data.sh)
@@ -19,3 +19,4 @@ __pycache__/
 build/
 .pytest_cache/
 .venv/
+/site/py/

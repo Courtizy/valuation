@@ -23,7 +23,30 @@
                        data/{TICKER}/{as_of}/company_detail.json, comparison.json
 ```
 
-GitHub Pages only serves static files, and the SEC API can't be called from a browser (no CORS, and it needs a contact User-Agent). So all fetching and computation runs in Actions; the page only renders.
+GitHub Pages only serves static files, and the SEC API can't be called from a browser (no CORS, and it needs a contact User-Agent). So published data is fetched and computed in Actions, and the page only renders it. The one exception is a visitor's own run (below).
+
+## Run in this browser
+
+Anyone can value a company from the **Run ▸** page with no token. The results stay on their device.
+
+```
+ Run in This Browser ──► assets/pyworker.js (web worker)
+                           Pyodide 0.29.4 (CDN) + py/valuation.zip (built by export_site.py:
+                           src/valuation and configs/public)
+                           valuation.L3_app.web.run(ticker) → same plan as the pipeline, L0 → L2 (DCF)
+                                   │  every request: sync XHR to the proxy, ?url=<SEC | FRED | Damodaran>
+                                   ▼
+                       worker/ (Cloudflare Worker): allowlist, SEC User-Agent, edge cache
+                                   │
+                                   ▼
+                       the visitor's site-data files → IndexedDB (assets/device.js)
+                       listed in the company menu as "on this device", read through getJSON("device/…")
+```
+
+- **No prices.** Yahoo and Alpha Vantage are replaced by stand-ins that refuse, so a browser run uses Damodaran's industry beta (relevered at the company's D/E), the implied ERP and the 10-year Treasury. That matches the published showcase data.
+- **Nothing is published.** Each run returns the device's whole `data/` folder (earlier runs are passed back in), which replaces what IndexedDB holds. **Clear** on the Run page removes it.
+- **The proxy URL** is `PROXY_URL` in `site/assets/config.js` (https://valuation.jason-courtoy.workers.dev). A visitor can set another under **Data Proxy** on the Run page; it's remembered in this browser. Without one, Run Here explains that the proxy isn't set up.
+- The first run downloads Pyodide (about 10 MB, then cached by the browser). The engine itself is about 140 KB.
 
 ## Published data and the weekly refresh
 
@@ -41,14 +64,15 @@ Plain ES modules, no build step. `main.js` loads `index.json`, concepts, compani
 |---|---|
 | `main.js` | start-up, company and run selection, page routing (`route`), theme, Demo switch |
 | `pages.js` | Overview and Method pages |
-| `state.js` | shared state, `$`, `getJSON`, banners |
+| `state.js` | shared state, `$`, `getJSON` (reads `device/…` paths from memory), `runRoot`, `fileHref`, banners |
 | `format.js` | the presentation standard (below): numbers, periods, Title Case, labels |
 | `tables.js` | statement rows (`finRow`, `acct`) |
 | `charts.js` | SVG charts: column, line (dashed estimates), area, range, scatter, bar list, spread, grouped bars, histogram |
 | `company.js` | Company Detail: tiles, Revenue, Returns, Margins, Cash Conversion, statements, ratios |
 | `sector.js` | Versus Sector and Sector cards, level switch |
 | `valuation.js` | Results side column, KPI row, football field with why they differ, spread of simulated outcomes, sensitivity, value vs price, profile, comps, peer picker, DCF detail, similar companies |
-| `run.js`, `github.js` | Run page form; GitHub API (dispatch, read/write repo JSON) |
+| `run.js`, `github.js` | Run page: Run in This Browser, and the owner's Publish form; GitHub API (dispatch, read/write repo JSON) |
+| `device.js`, `pyworker.js`, `config.js` | runs in this browser: IndexedDB store, the Pyodide worker, the proxy URL |
 
 The Pages workflow stamps every stylesheet and module import with `?v=<commit>`, so a deploy is never hidden by the browser cache.
 

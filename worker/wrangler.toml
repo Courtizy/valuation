@@ -1,0 +1,10 @@
+# Cloudflare Worker: a narrow proxy so the in-browser Run can read SEC filings (the SEC sends no
+# CORS headers and wants a contact User-Agent, which a browser can't set). Deployed by Cloudflare
+# Workers Builds from this folder (root directory: worker). See worker/README.md.
+name = "valuation"            # must match the Worker's name in Cloudflare (Workers Builds)
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+[vars]
+# Sites allowed to call the proxy. The SEC_USER_AGENT secret is set in the Cloudflare dashboard.
+ALLOWED_ORIGINS = "https://courtizy.github.io,http://localhost:8000,http://127.0.0.1:8000"

@@ -207,6 +207,23 @@ def test_default_case_values_a_company_without_a_dcf_json(detail):
     assert "illustrative" in r["assumptions_used"]["sources"]["beta"]
 
 
+def test_default_case_uses_damodaran_beta_and_erp(detail):
+    """Showcase mode with Damodaran's data in company detail: the industry's unlevered beta is
+    relevered at the company's own (solved) D/E, and the implied ERP replaces the flat 5%."""
+    from valuation.L2_models.dcf import default_assumptions
+    d = {**detail, "market": None, "shares_outstanding": 330e6,
+         "risk_free": {"value": 0.045, "date": "2026-09-30", "series": "DGS10"},
+         "sector_beta": {"value": 0.58, "unlevered": True, "industry": "Beverage (Soft)",
+                         "basis": "Damodaran US industry unlevered beta, cash-corrected: Beverage (Soft) (27 firms, January 2026)"},
+         "equity_risk_premium": {"value": 0.0423, "year": 2025, "basis": "Damodaran implied ERP (FCFE), start of 2026"}}
+    r = get_model("dcf").run(d, default_assumptions(d)).to_dict()
+    rates, src = r["details"]["rates"], r["assumptions_used"]["sources"]
+    assert rates["beta_unlevered"] == A(0.58)
+    assert rates["beta_levered_observed"] > 0.58 if rates["current_debt_to_equity"] > 0 else True   # levered at its own D/E
+    assert r["assumptions_used"]["cost_of_capital"]["equity_risk_premium"] == 0.0423
+    assert "Damodaran" in src["beta"] and "Damodaran" in src["equity_risk_premium"]
+
+
 def test_default_case_handles_negative_book_equity(detail):
     """Dell-like: buybacks leave book equity negative, and there's no price in showcase mode."""
     from copy import deepcopy

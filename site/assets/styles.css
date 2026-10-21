@@ -479,3 +479,6 @@ a.btn:hover { filter: brightness(1.08); }
 .method-main table th, .method-main table td { text-align: left; }
 .method-main .ov-steps { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
 .method-main h2 { margin-bottom: 10px; }
+
+/* a button that reads as an inline link (Run page: Clear) */
+button.linkish { background: none; border: 0; padding: 0; color: var(--accent, inherit); text-decoration: underline; cursor: pointer; font: inherit; }

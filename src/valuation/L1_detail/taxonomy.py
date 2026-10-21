@@ -26,7 +26,8 @@ class Taxonomy:
                         if code in self.by_sic:
                             raise ValueError(f"SIC {code} is listed in two industries")
                         self.by_sic[code] = {"sector": s["id"], "sector_name": s["name"], "group": g["id"],
-                                             "group_name": g["name"], "industry": i["id"], "industry_name": i["name"]}
+                                             "group_name": g["name"], "industry": i["id"], "industry_name": i["name"],
+                                             "damodaran": i.get("damodaran")}
         self.excluded = set(doc.get("excluded") or {})
 
     def classify(self, sic: str | int | None) -> dict | None:
@@ -52,6 +53,30 @@ class Taxonomy:
         value = betas.get(sid, betas.get("_default", 1.0))
         return {"value": value, "sector": c["sector_name"] if c else None,
                 "basis": f"industry-typical beta for {c['sector_name'] if c else 'an unclassified company'} (illustrative)"}
+
+    def industry_beta(self, sic: str | int | None, damodaran: dict | None) -> dict:
+        """Damodaran's US unlevered beta (corrected for cash) for the company's industry, else the
+        market-wide row, else typical_beta(). Unlevered, so the DCF relevers it at the company's own
+        D/E: {value, unlevered, industry, basis, source}."""
+        betas = ((damodaran or {}).get("betas") or {})
+        rows = betas.get("industries") or {}
+        if not rows:
+            return self.typical_beta(sic)
+        from valuation.L0_ingest.damodaran import norm
+        rows = {norm(k): v for k, v in rows.items()}
+        c = self.classify(sic)
+        name = norm(c["damodaran"]) if c and c.get("damodaran") else None
+        if name not in rows:
+            name = "Total Market"
+        row = rows.get(name)
+        if not row:
+            return self.typical_beta(sic)
+        value = row.get("beta_unlevered_cash_corrected") or row["beta_unlevered"]
+        when = f", {betas['updated']}" if betas.get("updated") else ""
+        return {"value": value, "unlevered": True, "industry": name, "sector": c["sector_name"] if c else None,
+                "levered": row.get("beta"), "debt_to_equity": row.get("debt_to_equity"), "firms": row.get("firms"),
+                "basis": f"Damodaran US industry unlevered beta, cash-corrected: {name} ({row.get('firms')} firms{when})",
+                "source": betas.get("source")}
 
 
 @lru_cache(maxsize=4)

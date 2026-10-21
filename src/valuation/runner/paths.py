@@ -7,6 +7,7 @@
   data/{TICKER}/{as_of}/model_results/{model}.json         L2 models
   data/{TICKER}/{as_of}/comparison.json                    L2 reconcile
   data/_market/{as_of}/risk_free.json                      L0 FRED rate
+  data/_market/{as_of}/damodaran.json                      L0 Damodaran industry betas and ERP
   data/_screen/{as_of}/raw_screen.json, sic_{code}.json    L0 sector frames, EDGAR SIC lists
   data/sectors/{sector_id}/{as_of}/sector.json             L1 sector screen
 """
@@ -33,6 +34,9 @@ class Paths:
 
     def risk_free(self, as_of: str) -> Path:
         return self.data / "_market" / as_of / "risk_free.json"
+
+    def damodaran(self, as_of: str) -> Path:
+        return self.data / "_market" / as_of / "damodaran.json"
 
     def canonical(self, t: str, as_of: str) -> Path:
         return self.asof_dir(t, as_of) / "canonical_statements.json"
