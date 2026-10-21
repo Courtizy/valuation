@@ -80,14 +80,17 @@ python app/run_private.py --config private/inputs.json     # private door, real 
 
 ### Publishing real companies
 
-The **Pipeline** workflow runs a ticker or a sector on GitHub Actions and commits the results to `site/data/`; **Pages** then redeploys. Start it from the Actions tab or with:
+Two GitHub Actions workflows build real companies from SEC filings, and **Pages** redeploys after each:
+
+- **Refresh** (every Monday, or `gh workflow run refresh.yml`) builds every sector and company in [`configs/public/universe.json`](configs/public/universe.json), about 40 companies across Technology and Consumer Staples. Visitors browse these with no token.
+- **Pipeline** runs one ticker or sector on demand:
 
 ```bash
 gh workflow run pipeline.yml -f ticker=DELL -f models=dcf,comps -f stop_after=L2
 gh workflow run pipeline.yml -f sector=sector:technology
 ```
 
-It needs the repository secret `SEC_USER_AGENT`. Comps peer lists live in `configs/public/assumptions/{TICKER}/comps.json`; the site's peer picker can save them there.
+Both need the repository secret `SEC_USER_AGENT`. Published data lives on the `site-data` branch, replaced by a single commit on each save, so `main` stays code only and the history doesn't grow ([docs/L3_site.md](docs/L3_site.md)). Comps peer lists live in `configs/public/assumptions/{TICKER}/comps.json`; the site's peer picker can save them there.
 
 ## Layers
 
@@ -106,8 +109,9 @@ Each layer talks to the next only through JSON files that record their inputs' h
 | Folder | Door | Purpose |
 |---|---|---|
 | `src/valuation/` | both | The engine: layers L0–L3, `runner/`, and `_core/` (shared math, imports nothing else from the app) |
-| `configs/public/` | public | Hand-edited assumptions, comps peers, packs and sectors for the published companies |
+| `configs/public/` | public | Hand-edited assumptions, comps peers, packs, sectors and `universe.json` (what Refresh builds) |
 | `scripts/export_site.py` | public | Copies `brand/` into `site/brand`, rebuilds the demo, writes `site/data/changelog.json`, refreshes the index |
+| `scripts/refresh_universe.py`, `scripts/site_data.sh` | public | Weekly build of `universe.json`; load and save the `site-data` branch |
 | `site/` | public | Static Pages site; displays the JSON only |
 | `brand/` | public | Decision Models brand kit (CSS, JS palette, icons) |
 | `app/run_private.py` | private | Same engine on `private/inputs.json`, real market data, output in `private/site` |
@@ -115,7 +119,7 @@ Each layer talks to the next only through JSON files that record their inputs' h
 
 ## Roadmap
 
-1. Rerun and review real companies and sectors on the public site.
+1. Review the weekly refresh's companies against published figures.
 2. Excel export: a live-formula DCF workbook per run, then comps.
 3. Precedent transactions, then LBO, then IPO, each with course parity tests.
 4. Back-testing: score past DCF forecasts against what was later filed, using the as-of cutoff.

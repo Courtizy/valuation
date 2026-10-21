@@ -3,7 +3,8 @@
 # built by scripts/export_site.py on every deploy
 /site/demo/
 /site/brand/
-/site/data/changelog.json
+# published data lives on the site-data branch (scripts/site_data.sh)
+/site/data/
 # private inputs and outputs never leave your machine
 /private/*
 !/private/README.md

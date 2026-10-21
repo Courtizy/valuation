@@ -5,13 +5,18 @@
 ## How it fits together
 
 ```
- Run page (Run ▸) ──► Pipeline action (workflow_dispatch)
+ Run page (Run ▸) ──► Pipeline action (one ticker or sector, on demand)
    (or Actions page,       python -m valuation run TICKER --stop-after L1|L2
-    or gh CLI)             python -m valuation.L3_app.publish  → commits site/data/
+    or gh CLI)
+                       Refresh action (weekly, configs/public/universe.json)
+                           scripts/refresh_universe.py → every sector and company listed
+                                   │
+                         both: python -m valuation.L3_app.publish over the site-data branch
+                               scripts/site_data.sh save → force-pushes one commit to site-data
                                    │
                                    ▼
-                       Pages action (on push, or after Pipeline)
-                           pytest → scripts/export_site.py → uploads site/
+                       Pages action (on push to main, or after Pipeline / Refresh)
+                           pytest → site_data.sh load → scripts/export_site.py → uploads site/
                                    │
                                    ▼
                        Browser: index.html reads data/index.json,
@@ -19,6 +24,12 @@
 ```
 
 GitHub Pages only serves static files, and the SEC API can't be called from a browser (no CORS, and it needs a contact User-Agent). So all fetching and computation runs in Actions; the page only renders.
+
+## Published data and the weekly refresh
+
+Published data lives on the **`site-data` branch**, not on `main`. Each save replaces that branch with a single commit, so refreshing about 40 companies a week (roughly 1.1 MB of JSON each per run) doesn't grow the repository's history, and `main` holds only code and configuration. Pipeline and Refresh share the `pipeline-publish` concurrency group, so two saves never race.
+
+The **Refresh** workflow runs every Monday at 07:00 UTC, or by hand (`gh workflow run refresh.yml`). It builds every sector and ticker in `configs/public/universe.json`: the DCF for each company, plus comps where `configs/public/assumptions/{TICKER}/comps.json` exists (its peers are built too). Visitors then pick from those companies with no token. One company failing doesn't stop the rest; the run summary lists failures. To change what's on the site, edit `universe.json`.
 
 The page does no valuation math. Projections are calculated in Python and published with the data: the DCF's projection when a DCF has run, otherwise the L1 trend case (`company_detail.json` → `projection`). There are no driver selectors on the site; to change a projection, edit `configs/public/assumptions/{TICKER}/dcf.json` and rerun.
 
@@ -96,7 +107,7 @@ Light and dark themes follow the OS, with a manual toggle. The layout works down
 
 2. **Settings → Pages → Source: GitHub Actions.**
 3. **Settings → Secrets and variables → Actions → New repository secret:** `SEC_USER_AGENT` = `Your Name you@example.com`.
-4. **Settings → Actions → General → Workflow permissions:** read and write (the Pipeline job commits `site/data`).
+4. **Settings → Actions → General → Workflow permissions:** read and write (Pipeline and Refresh push the `site-data` branch).
    Optional: secret `ALPHAVANTAGE_API_KEY` (free key) for backup prices and the price cross-check (`docs/L0_market.md`).
 5. Run a ticker from the **Run ▸** page, or run:
 
@@ -124,6 +135,7 @@ Locally: `python scripts/export_site.py` then `python -m http.server -d site 800
 ## Local preview
 
 ```bash
+scripts/site_data.sh load           # optional: the published companies from the site-data branch
 python scripts/export_site.py       # brand, demo, changelog; publishes data/ → site/data and rebuilds the index
 python -m http.server -d site 8000  # open http://localhost:8000
 ```

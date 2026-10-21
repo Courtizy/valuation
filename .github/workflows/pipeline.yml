@@ -1,5 +1,5 @@
 # Runs the valuation pipeline for one ticker, or screens one sector, and publishes
-# the results to site/data. Start it from the Actions tab, with
+# the results to the site-data branch, which the Pages workflow deploys. Start it from the Actions tab, with
 #   gh workflow run pipeline.yml -f ticker=AAPL
 #   gh workflow run pipeline.yml -f sector=sic:3674
 # or from the site's "Run pipeline" tab.
@@ -98,28 +98,14 @@ jobs:
         if: env.MODE == 'sector'
         run: python -m valuation sector "$SECTOR" --as-of "$AS_OF"
 
+      - name: Load published data
+        run: scripts/site_data.sh load
+
       - name: Publish to site/data
         run: python -m valuation.L3_app.publish --data-dir data --site-dir site --market-data "$SITE_MARKET_DATA"
 
-      - name: Commit results
-        # main can move during a run (you push files, or the site saves comps peers). If the push
-        # is rejected, take the latest main and publish again on top of it: data/ is gitignored, so
-        # this run's outputs survive the reset, and publish merges them into the newer site/data.
+      - name: Save published data
+        # to the site-data branch (scripts/site_data.sh); Pages deploys it after this workflow
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           what="${TICKER^^}"; [[ "$MODE" == "sector" ]] && what="sector ${SECTOR}"
-          for attempt in 1 2 3 4; do
-            git add site/data
-            if git diff --cached --quiet; then
-              echo "nothing new to publish"; exit 0
-            fi
-            git commit -q -m "data: ${what} as of ${AS_OF}"
-            if git push; then exit 0; fi
-            echo "push rejected (main moved); republishing on the latest main, attempt ${attempt}"
-            sleep $((attempt * 5))
-            git fetch -q origin main
-            git reset -q --hard origin/main
-            python -m valuation.L3_app.publish --data-dir data --site-dir site --market-data "$SITE_MARKET_DATA"
-          done
-          echo "could not push after 4 attempts"; exit 1
+          scripts/site_data.sh save "data: ${what} as of ${AS_OF}"

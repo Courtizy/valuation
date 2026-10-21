@@ -1,0 +1,10 @@
+{
+  "_comment": "What the weekly Refresh workflow builds for the public site. Peers named in a comps.json are built too.",
+  "sectors": ["sector:technology", "sector:consumer_staples"],
+  "tickers": [
+    "AAPL", "MSFT", "NVDA", "DELL", "IBM", "ORCL", "AVGO", "SNX", "CSCO", "HPQ", "INTC",
+    "INGM", "QCOM", "CRM", "MU", "AMD", "HPE", "JBL", "AMAT", "ADBE", "STX",
+    "CVS", "KR", "PEP", "SYY", "PG", "ADM", "TSN", "KO", "PM", "MDLZ", "KHC", "MO",
+    "CL", "PPC", "GIS", "KDP", "LW", "CPB", "HSY", "STZ"
+  ]
+}
