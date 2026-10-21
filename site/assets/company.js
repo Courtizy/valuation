@@ -143,7 +143,7 @@ export const SHOWN_YEARS = [1, 2, 3, 4, 5, 10];
 // valuation), otherwise the trend case calculated in L1 from history.
 export const PROJ_MAP = { revenue: "revenue", cost_of_goods_and_services_sold: "cogs", gross_profit: "gross_profit",
   research_and_development_expenses: "rnd", selling_general_and_admin_expenses: "sga", operating_income_loss: "ebit",
-  depreciation_amortization_cf: "depreciation", ebitda: "ebitda", pretax_income_loss: "ebt", income_taxes: "income_taxes",
+  depreciation_amortization_cf: "depreciation", ebitda: "ebitda", interest_expense: "interest_expense", interest_income: "interest_income", pretax_income_loss: "ebt", income_taxes: "income_taxes",
   net_income: "net_income", capital_expenses: "capex" };
 
 export function projection() {
@@ -445,7 +445,7 @@ export const RATIO_ROWS = {
     ],
   },
   risk: {
-    note: "Altman Z public needs a market price (not published on this site); the private-firm form uses book equity. Zones: Z < 1.2 distress, < 2.9 grey.",
+    note: "Altman Z public needs the market value of equity at the statement date, so it shows only for the latest year (at the as-of price) when a run pulled one; the private-firm form uses book equity. Zones: Z < 1.2 distress, < 2.9 grey.",
     rows: [
       ["group", "Distress"],
       ["Altman Z (Private Form)", (a) => a.ratios.risk.altman_z.private, num, { kind: "key" }],

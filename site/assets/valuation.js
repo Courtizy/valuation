@@ -320,7 +320,7 @@ export function renderCompsCard() {
     <td>${price(p.price)}</td><td>${millions(p.enterprise_value)}</td>
     <td>${mult(p.multiples.ev_sales)}</td><td>${mult(p.multiples.ev_ebitda)}</td><td>${mult(p.multiples.pe)}</td>
     <td>${pct(p.ebitda_margin)}</td><td>${pct(p.revenue_growth)}</td>
-    ${mids.map((m) => `<td>${isTarget ? "–" : price(d.multiples[m].implied[p.ticker])}</td>`).join("")}</tr>`;
+    ${mids.map((m) => (isTarget ? `<td title="the peers' median implied value"><b>${price(d.multiples[m].expected)}</b></td>` : `<td>${price(d.multiples[m].implied[p.ticker])}</td>`)).join("")}</tr>`;
   // dot plot: each peer's implied price per multiple, the range band and the median tick, against the price
   const all = mids.flatMap((m) => Object.values(d.multiples[m].implied).filter(fin)).concat(fin(d.market_price) ? [d.market_price] : []);
   const lo = Math.min(...all) * 0.95, hi = Math.max(...all) * 1.05, x = (v) => `${((v - lo) / (hi - lo)) * 100}%`;

@@ -51,9 +51,11 @@ DCF_ASSUMPTIONS = {
 
 
 def demo_deal(detail: dict) -> dict:
-    """A synthetic bid for DEMO: cost synergies of 3% of revenue, revenue synergies a third of that."""
+    """A synthetic bid for DEMO: cost synergies of 3% of revenue, revenue synergies a third of that,
+    and an initial offer of $54.00 against the $45.00 pre-announcement price (a 20% premium)."""
     rev = detail["views"]["annual"][-1]["values"]["revenue"]
-    return {"relative_power": 0.5, "sources": {"synergies": "synthetic demo assumption"},
+    return {"relative_power": 0.5, "sources": {"synergies": "synthetic demo assumption", "offer_price": "synthetic demo bid"},
+            "pre_announcement_price": 45.0, "offer_price": 54.0,
             "synergies": {"annual_cost": round(rev * 0.03, -5), "revenue_pct_of_cost": 0.33, "years_to_full": 2,
                           "cost_forever": 0.1, "revenue_growth_add": 0.005, "cost_realized": 1.0}}
 

@@ -122,7 +122,10 @@ def build_detail(canonical: dict, as_of: str, raw_market: dict | None = None, pa
     market = _market_block(raw_market, as_of, views, risk_free, records)
 
     statement_date = max((p["end"] for p in views["quarterly"] + views["annual"]), default=None)
-    market_cap_at = {statement_date: market["market_cap"]} if market and market["market_cap"] else None
+    # today's market value of equity stands in at the latest statement date and at the latest fiscal
+    # year end (Altman Z public form); earlier years would need the price on their own dates
+    ends = [statement_date] + ([views["annual"][-1]["end"]] if views["annual"] else [])
+    market_cap_at = {e: market["market_cap"] for e in ends} if market and market["market_cap"] else None
 
     warnings = []
     if not views["annual"]:

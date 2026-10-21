@@ -2,6 +2,10 @@
 
 All notable changes to the Valuation Model. Newest first.
 
+## [0.4.1] - 2026-10-21
+- Values that were blank after a run: projected interest expense and income in the statements' estimate columns; Altman Z (public form) for the latest fiscal year, at the as-of market value; the Target row of Public Comps now shows the peers' median implied value per multiple.
+- The demo bid has an initial offer ($54.00 against $45.00, a 20% premium), so the Deal view shows the offer premium and the share of synergies paid.
+
 ## [0.4.0] - 2026-10-21
 - Deal view (Results → Deal), the acquisition side of the course model. Enter the expected synergies and Save and Run Deal values the target two ways in the browser: the whole-firm DCF with synergies (faster revenue growth, COGS and SG&A cut, integration costs in the closing year) and just synergies (the synergies' own DCF added to the pre-announcement price). Both match the course workbooks to the cent.
 - The course Summary: standalone range (comps, DCF, 52-week low / current / high) and offer price range (synergy models now; prior deals and the LBO once built), with weights you can edit, the blank-row rule, the relative power of the target setting the best guess, premiums, and the share of synergies paid to the target. A deal football field shows both against the pre-announcement and offer prices.
