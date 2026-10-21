@@ -4,14 +4,19 @@
 // - adds the contact User-Agent the SEC requires (secret SEC_USER_AGENT, else the SEC_CONTACT var)
 // - caches responses at the edge, and spaces upstream SEC calls so one visitor can't
 //   exceed the SEC's 10 requests a second from this Worker
-// No market data passes through here: prices in the browser come from the visitor's own key.
+// Market data: prices in the browser come from the visitor's own key (called directly, not
+// through here). Yahoo is relayed only for localhost origins, i.e. the owner running the site
+// on their own machine; for the public site's origin it is refused like any other host.
 
 const ALLOW = [
   { host: "data.sec.gov", path: /^\/(api\/xbrl\/(companyfacts|companyconcept|frames)\/|submissions\/)/, ttl: 12 * 3600 },
   { host: "www.sec.gov", path: /^\/(files\/company_tickers\.json|cgi-bin\/browse-edgar)/, ttl: 24 * 3600 },
   { host: "fred.stlouisfed.org", path: /^\/graph\/fredgraph\.csv/, ttl: 6 * 3600 },
   { host: "pages.stern.nyu.edu", path: /^\/~adamodar\/New_Home_Page\/datafile\/(Betas|histimpl)\.html$/, ttl: 7 * 24 * 3600 },
+  { host: "query1.finance.yahoo.com", path: /^\/(v8\/finance\/chart\/|ws\/fundamentals-timeseries\/)/, ttl: 15 * 60, localOnly: true },
 ];
+const isLocal = (origin) => /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+const BROWSER_UA = "Mozilla/5.0 (compatible; valuation-model/0.1)";
 const SEC_HOSTS = new Set(["data.sec.gov", "www.sec.gov"]);
 const MIN_GAP_MS = 150;            // per isolate: at most ~7 SEC requests a second
 let lastSec = 0;
@@ -43,6 +48,7 @@ export default {
     }
     const rule = ALLOW.find((r) => r.host === target.hostname && r.path.test(target.pathname));
     if (target.protocol !== "https:" || !rule) return fail(403, "not an allowed source", ch);
+    if (rule.localOnly && !isLocal(origin)) return fail(403, "Yahoo is relayed for local runs only", ch);
     const contact = env.SEC_USER_AGENT || env.SEC_CONTACT;
     if (SEC_HOSTS.has(target.hostname) && !contact) return fail(500, "no SEC contact: set SEC_CONTACT in wrangler.toml", ch);
 
@@ -57,6 +63,7 @@ export default {
       }
       const headers = { Accept: "application/json, text/html;q=0.9, text/csv;q=0.9, */*;q=0.5" };
       if (contact) headers["User-Agent"] = contact;   // the SEC requires it; FRED and NYU get the same polite contact
+      if (rule.localOnly) headers["User-Agent"] = BROWSER_UA;
       const up = await fetch(target.toString(), { headers });
       res = new Response(up.body, up);
       res.headers.set("Cache-Control", `public, max-age=${rule.ttl}`);

@@ -6,6 +6,7 @@ All notable changes to the Valuation Model. Newest first.
 - Weekly Refresh builds about 40 real companies and two sector screens from SEC filings, so visitors browse them with no token.
 - Published data moves to the site-data branch, replaced by one commit on each save, so main stays code only.
 - Run in this browser: anyone can value a company from the Run page with no token. The same Python engine runs in the browser (Pyodide), and the results are saved on that device only.
+- Browser prices: a Finnhub key of your own (today's quote and reported beta) beside Alpha Vantage, and Yahoo when the site is opened from localhost (the proxy relays Yahoo for localhost only).
 - In the browser, without a token: Save Peers and Run Comps (peers kept on the device), sector screens, and Build Company Detail from a sector table. An optional Alpha Vantage key (the visitor's own) adds prices.
 - worker/: a Cloudflare Worker proxy (SEC, FRED and Damodaran only) that the in-browser Run fetches through.
 - README: a Data and licensing section listing each source and where it appears.

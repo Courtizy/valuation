@@ -8,13 +8,14 @@ Share prices, beta and the risk-free rate, point-in-time at `as_of`. Code: `src/
 |---|---|---|---|
 | Primary prices | Yahoo chart API (`query1.finance.yahoo.com/v8/finance/chart`) | none | the endpoint yfinance uses; unofficial |
 | Backup + cross-check | Alpha Vantage (`TIME_SERIES_DAILY` compact, `TIME_SERIES_MONTHLY_ADJUSTED`) | free, `ALPHAVANTAGE_API_KEY` secret | free plan: 25 requests a day; the daily series covers the latest 100 trading days. The key must go in the URL, so it is redacted from every stored message |
+| Last resort | Finnhub (`/quote`, `/stock/metric`) | free, `FINNHUB_API_KEY` | no price history on the free plan: today's quote and a reported beta (`beta_reported`, used by L1 when there's no series to regress), so only for an as-of within a week of today. Key redacted like Alpha Vantage's |
 | Risk-free rate | FRED `DGS10` (10-year Treasury, H.15) | none | last observation on or before `as_of` |
 | Index for beta | S&P 500 (`^GSPC`) on Yahoo; `SPY` on Alpha Vantage (no index series) | | |
 
 ## Rules
 
 - **Price** = the last close on or before `as_of`. A past `as_of` never sees later prices.
-- **Fallback:** when Yahoo fails or returns nothing, Alpha Vantage becomes the source and the site says so (3 requests: daily, monthly, SPY monthly).
+- **Fallback:** when Yahoo fails or returns nothing, Alpha Vantage becomes the source and the site says so (3 requests: daily, monthly, SPY monthly), then Finnhub (2 requests: quote, metrics).
 - **Cross-check:** for the company being run and its comps peers, Alpha Vantage's close for the same day is compared with Yahoo's (1 request each, cached for the day). Within 2% = `ok`, otherwise `mismatch` (shown in red next to the price). With no key the check is `skipped`; past the daily cap, or for an as-of date older than ~100 trading days, it is `unavailable`.
 - **Budget:** 25 requests a day, shared across every run that day: a company plus 6 peers uses 7 checks, so about three such runs a day, fewer if fallbacks are needed. Rate-limit notices come back as HTTP 200 with an `Information` or `Note` key and are treated as unavailable, never as data.
 - **Optional step:** if both sources fail, the run continues without market figures and reports a warning, not a failure.

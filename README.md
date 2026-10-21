@@ -105,10 +105,12 @@ Only government data and Damodaran's openly published datasets reach the public 
 | [Aswath Damodaran, NYU Stern](https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/Betas.html) (US industry betas, implied ERP) | Industry beta when no price-based beta is shown, ERP for the default DCF | Yes, cited | Yes |
 | Yahoo Finance (unofficial chart and fundamentals endpoints) | Prices, beta, backfill for items the filings lack | No | Yes |
 | [Alpha Vantage](https://www.alphavantage.co/) (optional, your own key) | Backup prices and a price cross-check; prices for runs in your browser | No (only on your device) | Yes |
+| [Finnhub](https://finnhub.io/) (optional, your own key) | Today's price and a reported beta, when the others have nothing | No (only on your device) | Yes |
 
 - **Damodaran's datasets** are published freely for teaching and updated each January. Each figure that uses them names the industry row and date.
 - **SEC and FRED** are US government data. Requests carry a contact User-Agent and stay within the SEC's fair-access limit of 10 requests a second.
 - **Showcase mode** (the default for the public site) never fetches Yahoo or Alpha Vantage. If a run did carry their values, publish strips the prices and anything derived from them, and skips any company with Yahoo backfill. Price-based outputs on the public site appear only in the synthetic demo.
+- **Runs in your browser** keep everything on your device. Prices come only from your own Alpha Vantage or Finnhub key, called straight from your browser, or from Yahoo when you open the site from your own machine (`localhost`); the proxy relays Yahoo for localhost only.
 - **Private runs** (`app/run_private.py`) write only to `private/`, which is gitignored. Keys stay in environment variables or repository secrets, never in the code.
 - The repository ships code, configuration and the synthetic demo. It does not ship a third-party dataset.
 

@@ -61,6 +61,8 @@ def _market_block(raw_market: dict | None, as_of: str, views: dict, risk_free: d
               or _latest(views, "shares_year_end") or _latest(views, "shares_fully_diluted_average"))
     mcap = price * shares if price is not None and shares else None
     b = _beta(raw_market.get("monthly") or [], (raw_market.get("index") or {}).get("monthly") or [])
+    if not b and raw_market.get("beta_reported") is not None:     # Finnhub: no history, a reported beta
+        b = {"value": raw_market["beta_reported"], "basis": f"reported by {raw_market.get('source')} (no price history to regress)"}
     block = {"price": price, "price_date": price_date, "currency": raw_market.get("currency"),
              "shares_outstanding": shares, "market_cap": mcap,
              "beta": b and {**b, "index": (raw_market.get("index") or {}).get("symbol")},

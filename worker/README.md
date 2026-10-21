@@ -8,7 +8,7 @@ call the SEC directly: it sends no CORS headers and requires a contact User-Agen
 - **Only the site may call it from a browser:** CORS headers are sent only to `ALLOWED_ORIGINS` (`wrangler.toml`). A script can fake an Origin, so the allowlist and the edge cache are what actually bound it: it can only ever fetch these public pages.
 - **Polite to the SEC:** adds the contact User-Agent (`SEC_CONTACT` in `wrangler.toml`, or a `SEC_USER_AGENT` secret if set), caches responses at the edge (12 h for filings), and
   spaces SEC calls per isolate.
-- **No market data.** Prices in the browser come from the visitor's own API key, fetched directly by their browser.
+- **Market data.** Prices in the browser come from the visitor's own Alpha Vantage or Finnhub key, fetched directly by their browser, not through here. Yahoo (`query1.finance.yahoo.com` chart and fundamentals) is relayed only for `localhost` / `127.0.0.1` origins, for the owner's local runs; the public site's origin gets 403.
 
 ## Set up (once)
 

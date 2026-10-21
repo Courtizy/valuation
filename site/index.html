@@ -165,7 +165,8 @@
             <div class="field"><label for="h-ticker">Ticker</label><input type="text" id="h-ticker" pattern="[A-Za-z][A-Za-z0-9.\-]{0,9}" placeholder="AAPL" required></div>
             <div class="field"><label for="h-asof">As Of</label><input type="date" id="h-asof"></div>
           </div>
-          <p class="hint" style="margin-top:8px">Builds company details and the DCF, plus comps when you've picked peers for it. Without a price key the DCF uses Damodaran's industry beta and implied equity risk premium, and comps uses the peer prices you type in the peer picker.</p>
+          <p class="hint" style="margin-top:8px">Builds company details and the DCF, plus comps when you've picked peers for it. Without a price key (Settings) the DCF uses Damodaran's industry beta and implied equity risk premium, and comps uses the peer prices you type in the peer picker.</p>
+          <p class="hint" id="h-local" hidden><b>Local run:</b> opened from this machine, so prices come from Yahoo as well (relayed for localhost only, never for the public site).</p>
           <div class="actions">
             <button type="submit" class="primary" id="h-go">Run Here</button>
           </div>
@@ -182,6 +183,9 @@
               <div class="field"><label for="h-avkey">Alpha Vantage Key <span class="hint">optional: share prices and beta, <a href="https://www.alphavantage.co/support/#api-key" target="_blank" rel="noopener">free key</a></span></label>
                 <input type="password" id="h-avkey" placeholder="your own key" autocomplete="off">
                 <span class="hint">Kept in this browser and sent only to alphavantage.co. A free key allows 25 requests a day, about three per company.</span></div>
+              <div class="field"><label for="h-fhkey">Finnhub Key <span class="hint">optional: today's price and a reported beta, <a href="https://finnhub.io/register" target="_blank" rel="noopener">free key</a></span></label>
+                <input type="password" id="h-fhkey" placeholder="your own key" autocomplete="off">
+                <span class="hint">Kept in this browser and sent only to finnhub.io. Used when Alpha Vantage has nothing; the free plan has no price history, so only for an As Of within the last week.</span></div>
               <div class="field"><label for="h-proxy">Data Proxy <span class="hint">the Cloudflare Worker in <code>worker/</code></span></label>
                 <input type="url" id="h-proxy" placeholder="https://valuation.jason-courtoy.workers.dev"></div>
             </div>
