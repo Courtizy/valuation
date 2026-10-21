@@ -80,6 +80,13 @@ def plan(
             out.parent.mkdir(parents=True, exist_ok=True)
             out.write_text(json.dumps(market_factory().risk_free(as_of), indent=2))
         steps.append(Step("risk-free rate", "L0", ticker, [paths.risk_free(as_of)], risk_free, soft=True, optional=True))
+    if market_factory and not paths.damodaran(as_of).exists():
+        def damodaran():
+            out = paths.damodaran(as_of)
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_text(json.dumps(market_factory().damodaran(as_of), indent=2))
+        steps.append(Step("industry betas and ERP (Damodaran)", "L0", ticker, [paths.damodaran(as_of)], damodaran,
+                          soft=True, optional=True))
 
     for c in companies:
         peer = c != ticker   # a peer that fails is reported but doesn't stop the target's run
@@ -108,7 +115,8 @@ def plan(
                           soft=peer))
         steps.append(Step(f"build detail {c}", "L1", c, [paths.detail(c, as_of)],
                           lambda c=c: l1_build.run(paths.canonical(c, as_of), paths.raw_market(c, as_of), as_of,
-                                                   paths.detail(c, as_of), risk_free=paths.risk_free(as_of)),
+                                                   paths.detail(c, as_of), risk_free=paths.risk_free(as_of),
+                                                   damodaran=paths.damodaran(as_of)),
                           soft=peer))
 
     for m in models:

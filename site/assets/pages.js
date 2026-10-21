@@ -71,7 +71,9 @@ const INPUTS = [
   ["Sector benchmarks", "Quartiles across the sector", "SEC frames API"],
   ["Risk-free rate", "10-year Treasury yield", "FRED (DGS10)"],
   ["Near-term growth, margins", "Triangular range around a stated case", "Company history or configs/public/assumptions"],
-  ["Discount rate (WACC)", "Triangular range around the built-up rate", "Sector illustrative beta, book or target D/E"],
+  ["Beta", "Industry unlevered beta (cash-corrected), relevered at the company's own D/E", "Aswath Damodaran, NYU Stern: US industry betas"],
+  ["Equity risk premium", "Implied ERP (FCFE), start of the year", "Aswath Damodaran, NYU Stern: implied ERP"],
+  ["Discount rate (WACC)", "Triangular range around the built-up rate", "CAPM on the beta and ERP above; D/E at the model's own equity value"],
   ["Share price, peer prices", "Not published here (data terms)", "Synthetic in the Demo; private runs only otherwise"],
   ["Peer set", "Hand-picked or ranked by similarity", "configs/public/assumptions/{ticker}/comps.json"],
 ];

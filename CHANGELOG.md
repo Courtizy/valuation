@@ -6,6 +6,7 @@ All notable changes to the Valuation Model. Newest first.
 - Weekly Refresh builds about 40 real companies and two sector screens from SEC filings, so visitors browse them with no token.
 - Published data moves to the site-data branch, replaced by one commit on each save, so main stays code only.
 - README: a Data and licensing section listing each source and where it appears.
+- Industry betas and the implied equity risk premium from Aswath Damodaran's datasets (NYU Stern): the public site's DCF uses the industry's unlevered beta, relevered at the company's own D/E, in place of the illustrative sector beta; the default case uses the implied ERP in place of a flat 5%.
 - Pages deploys no longer get cancelled by a skipped run.
 
 ## [0.2.1] - 2026-10-21

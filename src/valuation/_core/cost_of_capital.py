@@ -37,13 +37,22 @@ def wacc(cost_of_equity: float, pre_tax_cost_of_debt: float, tax_rate: float, de
     return cost_of_equity * we + pre_tax_cost_of_debt * (1 - tax_rate) * wd
 
 
-def discount_rates(*, risk_free: float, pre_tax_cost_of_debt: float, beta: float, equity_risk_premium: float,
+def discount_rates(*, risk_free: float, pre_tax_cost_of_debt: float, beta: float | None, equity_risk_premium: float,
                    tax_rate: float, current_debt_to_equity: float, target_debt_to_equity: float | None = None,
-                   risk_free_terminal: float | None = None) -> dict:
-    """All the course's discount-rate figures. Debt-to-equity uses market equity."""
+                   risk_free_terminal: float | None = None, beta_unlevered: float | None = None) -> dict:
+    """All the course's discount-rate figures. Debt-to-equity uses market equity.
+
+    `beta_unlevered` (an industry beta, e.g. Damodaran's) skips step 1: the observed beta is then
+    that beta levered at today's D/E, so the figures read the same either way."""
     target = current_debt_to_equity if target_debt_to_equity is None else target_debt_to_equity
     rf_t = risk_free if risk_free_terminal is None else risk_free_terminal
-    beta_u = unlever_beta(beta, current_debt_to_equity, tax_rate)
+    if beta_unlevered is not None:
+        beta_u = beta_unlevered
+        beta = relever_beta(beta_u, current_debt_to_equity, tax_rate)
+    elif beta is None:
+        raise ValueError("discount_rates needs beta or beta_unlevered")
+    else:
+        beta_u = unlever_beta(beta, current_debt_to_equity, tax_rate)
     beta_tl = relever_beta(beta_u, target, tax_rate)
     re = capm(risk_free, beta_tl, equity_risk_premium)
     re_t = capm(rf_t, beta_tl, equity_risk_premium)

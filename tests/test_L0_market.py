@@ -58,9 +58,14 @@ def av_route(bump: float = 1.0, notice: str | None = None):
     return route
 
 
+def damodaran_route(url):
+    return (FIXTURES / ("damodaran_erp.html" if "histimpl" in url else "damodaran_betas.html")).read_bytes()
+
+
 def adapter(yahoo=yahoo_route, av_bump=1.0, key="test-key", notice=None):
     return MarketAdapter(yahoo=FakeSecClient(fallback=yahoo), alphavantage=FakeSecClient(fallback=av_route(av_bump, notice)),
-                         fred=FakeSecClient(fallback=lambda url: FRED_CSV), av_key=key)
+                         fred=FakeSecClient(fallback=lambda url: FRED_CSV), av_key=key,
+                         damodaran=FakeSecClient(fallback=damodaran_route))
 
 
 # ---------------------------------------------------------------- L0
@@ -178,7 +183,7 @@ def sec_factory():
 def test_runner_adds_market_steps_and_detail_gets_market_block(tmp_path):
     paths = Paths(tmp_path / "data", tmp_path / "assumptions")
     steps = plan("AAPL", ["dcf"], AS_OF, paths, sec_factory, "L1", market_factory=adapter)
-    assert [s.name for s in steps] == ["risk-free rate", "ingest AAPL", "market AAPL", "normalize AAPL", "build detail AAPL"]
+    assert [s.name for s in steps] == ["risk-free rate", "industry betas and ERP (Damodaran)", "ingest AAPL", "market AAPL", "normalize AAPL", "build detail AAPL"]
     report = execute(steps)
     assert all(st == "done" for _, st, _ in report), report
     m = json.loads(paths.detail("AAPL", AS_OF).read_text())["market"]
@@ -199,7 +204,7 @@ def test_market_failure_is_a_warning_and_the_run_continues(tmp_path):
 def test_showcase_runs_fetch_only_the_risk_free_rate(tmp_path):
     paths = Paths(tmp_path / "data", tmp_path / "assumptions")
     steps = plan("AAPL", ["dcf"], AS_OF, paths, sec_factory, "L1", market_factory=adapter, market_prices=False)
-    assert [s.name for s in steps] == ["risk-free rate", "ingest AAPL", "normalize AAPL", "build detail AAPL"]
+    assert [s.name for s in steps] == ["risk-free rate", "industry betas and ERP (Damodaran)", "ingest AAPL", "normalize AAPL", "build detail AAPL"]
 
 
 def test_showcase_filter_keeps_synthetic_and_strips_real_market_figures():

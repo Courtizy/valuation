@@ -89,7 +89,7 @@ def _ttm_priors(ttm: list[dict], annual: list[dict]) -> dict:
 
 
 def build_detail(canonical: dict, as_of: str, raw_market: dict | None = None, pack: dict | None = None,
-                 lineage: dict | None = None, risk_free: dict | None = None) -> dict:
+                 lineage: dict | None = None, risk_free: dict | None = None, damodaran: dict | None = None) -> dict:
     date.fromisoformat(as_of)
     if canonical.get("as_of") and canonical["as_of"] != as_of:
         raise ValueError(f"canonical as_of {canonical['as_of']} != {as_of}")
@@ -150,23 +150,32 @@ def build_detail(canonical: dict, as_of: str, raw_market: dict | None = None, pa
     if backfill:
         doc["warnings"].append(f"{len(backfill)} value(s) the filings lack were filled from Yahoo fundamentals (marked y)")
     from .taxonomy import load as load_taxonomy
-    doc["sector_beta"] = load_taxonomy().typical_beta((canonical.get("entity") or {}).get("sic"))
+    # industry beta and ERP from Damodaran's datasets when L0 fetched them (public, so shown in showcase
+    # mode too), else the taxonomy's illustrative sector beta and no ERP (the DCF then uses its default)
+    doc["sector_beta"] = load_taxonomy().industry_beta((canonical.get("entity") or {}).get("sic"), damodaran)
+    erp = (damodaran or {}).get("erp") or {}
+    doc["equity_risk_premium"] = ({"value": erp["value"], "year": erp.get("year"), "source": erp.get("source"),
+                                   "basis": f"Damodaran implied ERP (FCFE), start of {erp['year'] + 1}"}
+                                  if erp.get("value") is not None else None)
     doc["profile"] = build_profile(doc, load_rules(((pack or {}).get("l1") or {}).get("profile_rules")))
     doc["projection"] = trend_case(doc)
     return doc
 
 
 def run(canonical: Path, raw_market: Path | None, as_of: str, out_path: Path,
-        pack: dict | None = None, risk_free: Path | None = None) -> Path:
+        pack: dict | None = None, risk_free: Path | None = None, damodaran: Path | None = None) -> Path:
     doc = json.loads(Path(canonical).read_text())
     if doc.get("stage") != "L1.normalize":
         raise ValueError(f"{canonical} is not a canonical_statements.json")
     raw_market = raw_market if raw_market and Path(raw_market).exists() else None
     risk_free = risk_free if risk_free and Path(risk_free).exists() else None
-    inputs = [canonical] + ([raw_market] if raw_market else []) + ([risk_free] if risk_free else [])
+    damodaran = damodaran if damodaran and Path(damodaran).exists() else None
+    inputs = ([canonical] + ([raw_market] if raw_market else []) + ([risk_free] if risk_free else [])
+              + ([damodaran] if damodaran else []))
     market = json.loads(Path(raw_market).read_text()) if raw_market else None
     rf = json.loads(Path(risk_free).read_text()) if risk_free else None
-    detail = build_detail(doc, as_of, market, pack, lineage_block(as_of, inputs), rf)
+    dam = json.loads(Path(damodaran).read_text()) if damodaran else None
+    detail = build_detail(doc, as_of, market, pack, lineage_block(as_of, inputs), rf, dam)
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(detail, indent=2))

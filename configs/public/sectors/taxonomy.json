@@ -41,7 +41,8 @@
         "1389",
         "3533"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Oilfield Svcs/Equip."
       }
      ]
     },
@@ -56,7 +57,8 @@
         "1311",
         "6792"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Oil/Gas (Production and Exploration)"
       },
       {
        "id": "integrated_refining",
@@ -67,7 +69,8 @@
         "5171",
         "5172"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Oil/Gas (Integrated)"
       },
       {
        "id": "midstream_pipelines",
@@ -76,7 +79,8 @@
         "4610",
         "4922"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Oil/Gas Distribution"
       },
       {
        "id": "coal",
@@ -85,7 +89,8 @@
         "1220",
         "1221"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Coal & Related Energy"
       }
      ]
     }
@@ -114,7 +119,8 @@
         "2891",
         "5160"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Chemical (Diversified)"
       },
       {
        "id": "construction_materials",
@@ -129,7 +135,8 @@
         "3281",
         "3290"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Building Materials"
       },
       {
        "id": "containers_packaging",
@@ -145,7 +152,8 @@
         "3411",
         "3412"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Packaging & Container"
       },
       {
        "id": "metals_mining",
@@ -169,7 +177,8 @@
         "5051",
         "6795"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Metals & Mining"
       },
       {
        "id": "paper_forest_products",
@@ -185,7 +194,8 @@
         "2670",
         "5110"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Paper/Forest Products"
       },
       {
        "id": "glass_ceramics",
@@ -196,7 +206,8 @@
         "3231",
         "3260"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Building Materials"
       }
      ]
     }
@@ -222,7 +233,8 @@
         "3760",
         "3812"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Aerospace/Defense"
       },
       {
        "id": "building_products",
@@ -238,7 +250,8 @@
         "3585",
         "3822"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Building Materials"
       },
       {
        "id": "construction_engineering",
@@ -251,7 +264,8 @@
         "1731",
         "8711"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Engineering/Construction"
       },
       {
        "id": "electrical_equipment",
@@ -265,7 +279,8 @@
         "3640",
         "3690"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Electrical Equipment"
       },
       {
        "id": "machinery",
@@ -306,7 +321,8 @@
         "3743",
         "3790"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Machinery"
       },
       {
        "id": "trading_companies_distributors",
@@ -331,7 +347,8 @@
         "7359",
         "7377"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Retail (Distributors)"
       }
      ]
     },
@@ -365,7 +382,8 @@
         "8744",
         "8900"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Business & Consumer Services"
       },
       {
        "id": "professional_services",
@@ -379,7 +397,8 @@
         "8741",
         "8742"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Business & Consumer Services"
       }
      ]
     },
@@ -397,7 +416,8 @@
         "4700",
         "4731"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Transportation"
       },
       {
        "id": "passenger_airlines",
@@ -407,7 +427,8 @@
         "4522",
         "4581"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Air Transport"
       },
       {
        "id": "ground_transportation",
@@ -419,7 +440,8 @@
         "4210",
         "4213"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Transportation"
       },
       {
        "id": "marine_transportation",
@@ -428,7 +450,8 @@
         "4400",
         "4412"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Shipbuilding & Marine"
       }
      ]
     }
@@ -450,7 +473,8 @@
         "3716",
         "3751"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Auto & Truck"
       },
       {
        "id": "automotive_parts",
@@ -459,7 +483,8 @@
         "3011",
         "3714"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Auto Parts"
       }
      ]
     },
@@ -481,7 +506,8 @@
         "3630",
         "3634"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Furn/Home Furnishings"
       },
       {
        "id": "leisure_products",
@@ -493,7 +519,8 @@
         "3944",
         "3949"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Recreation"
       },
       {
        "id": "textiles_apparel_luxury_goods",
@@ -519,7 +546,8 @@
         "5094",
         "5130"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Apparel"
       }
      ]
     },
@@ -540,7 +568,8 @@
         "7990",
         "7997"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Restaurant/Dining"
       },
       {
        "id": "diversified_consumer_services",
@@ -554,7 +583,8 @@
         "8351",
         "8600"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Business & Consumer Services"
       }
      ]
     },
@@ -572,7 +602,8 @@
         "5960",
         "5961"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Retail (General)"
       },
       {
        "id": "specialty_retail",
@@ -600,7 +631,8 @@
         "5945",
         "5990"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Retail (Special Lines)"
       },
       {
        "id": "distributors",
@@ -608,7 +640,8 @@
        "sic": [
         "3990"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Retail (Distributors)"
       }
      ]
     }
@@ -635,7 +668,8 @@
         "5412",
         "5912"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Retail (Grocery and Food)"
       }
      ]
     },
@@ -651,7 +685,8 @@
         "2082",
         "2086"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Beverage (Soft)"
       },
       {
        "id": "food_products",
@@ -678,7 +713,8 @@
         "2092",
         "5150"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Food Processing"
       },
       {
        "id": "tobacco",
@@ -687,7 +723,8 @@
         "2100",
         "2111"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Tobacco"
       }
      ]
     },
@@ -704,7 +741,8 @@
         "2842",
         "2844"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Household Products"
       }
      ]
     }
@@ -729,7 +767,8 @@
         "3845",
         "3851"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Healthcare Products"
       },
       {
        "id": "health_care_providers_services",
@@ -747,7 +786,8 @@
         "8093",
         "8300"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Hospitals/Healthcare Facilities"
       },
       {
        "id": "managed_health_care",
@@ -755,7 +795,8 @@
        "sic": [
         "6324"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Healthcare Support Services"
       },
       {
        "id": "health_care_distributors",
@@ -764,7 +805,8 @@
         "5047",
         "5122"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Healthcare Support Services"
       }
      ]
     },
@@ -780,7 +822,8 @@
         "2834",
         "2835"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Drugs (Pharmaceutical)"
       },
       {
        "id": "biotechnology",
@@ -789,7 +832,8 @@
         "2836",
         "8731"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Drugs (Biotechnology)"
       },
       {
        "id": "life_sciences_tools_services",
@@ -799,7 +843,8 @@
         "3826",
         "8734"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Healthcare Products"
       }
      ]
     }
@@ -823,7 +868,8 @@
         "6035",
         "6036"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Banks (Regional)"
       }
      ]
     },
@@ -843,7 +889,8 @@
         "6163",
         "6172"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Financial Svcs. (Non-bank & Insurance)"
       },
       {
        "id": "financial_services_payments",
@@ -852,7 +899,8 @@
         "6099",
         "6199"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Financial Svcs. (Non-bank & Insurance)"
       },
       {
        "id": "capital_markets",
@@ -864,7 +912,8 @@
         "6282",
         "6799"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Brokerage & Investment Banking"
       },
       {
        "id": "blank_check_companies",
@@ -892,7 +941,8 @@
         "6399",
         "6411"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Insurance (General)"
       }
      ]
     }
@@ -912,7 +962,8 @@
        "sic": [
         "3674"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Semiconductor"
       },
       {
        "id": "semiconductor_equipment",
@@ -921,7 +972,8 @@
         "3559",
         "3825"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Semiconductor Equip"
       }
      ]
     },
@@ -935,7 +987,8 @@
        "sic": [
         "7372"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Software (System & Application)"
       },
       {
        "id": "it_services",
@@ -944,7 +997,8 @@
         "7371",
         "7373"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Computer Services"
       },
       {
        "id": "data_processing_hosting",
@@ -952,7 +1006,8 @@
        "sic": [
         "7374"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Information Services"
       }
      ]
     },
@@ -974,7 +1029,8 @@
         "3695",
         "5045"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Computers/Peripherals"
       },
       {
        "id": "communications_equipment",
@@ -985,7 +1041,8 @@
         "3663",
         "3669"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Telecom. Equipment"
       },
       {
        "id": "consumer_electronics",
@@ -993,7 +1050,8 @@
        "sic": [
         "3651"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Electronics (Consumer & Office)"
       },
       {
        "id": "electronic_components",
@@ -1005,7 +1063,8 @@
         "3678",
         "3679"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Electronics (General)"
       },
       {
        "id": "electronic_instruments",
@@ -1016,7 +1075,8 @@
         "3827",
         "3829"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Electronics (General)"
       }
      ]
     }
@@ -1040,7 +1100,8 @@
         "4899",
         "7385"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Telecom. Services"
       }
      ]
     },
@@ -1054,7 +1115,8 @@
        "sic": [
         "7370"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Software (Internet)"
       },
       {
        "id": "media",
@@ -1071,7 +1133,8 @@
         "7310",
         "7311"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Publishing & Newspapers"
       },
       {
        "id": "entertainment",
@@ -1085,7 +1148,8 @@
         "7830",
         "7841"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Entertainment"
       }
      ]
     }
@@ -1106,7 +1170,8 @@
         "4900",
         "4911"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Utility (General)"
       },
       {
        "id": "gas_utilities",
@@ -1115,7 +1180,8 @@
         "4923",
         "4924"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Utility (General)"
       },
       {
        "id": "multi_utilities",
@@ -1125,7 +1191,8 @@
         "4932",
         "4961"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Utility (General)"
       },
       {
        "id": "water_utilities",
@@ -1133,7 +1200,8 @@
        "sic": [
         "4941"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Utility (Water)"
       },
       {
        "id": "independent_power_producers",
@@ -1141,7 +1209,8 @@
        "sic": [
         "4991"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Power"
       }
      ]
     }
@@ -1161,7 +1230,8 @@
        "sic": [
         "6798"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "R.E.I.T."
       }
      ]
     },
@@ -1183,11 +1253,13 @@
         "6552",
         "6794"
        ],
-       "naics": []
+       "naics": [],
+       "damodaran": "Real Estate (Operations & Services)"
       }
      ]
     }
    ]
   }
- ]
+ ],
+ "_about_damodaran": "Each industry's \"damodaran\" names the matching row of Aswath Damodaran's US industry betas (NYU Stern), used for the industry beta when no price-based beta may be shown. Missing = the market-wide row."
 }

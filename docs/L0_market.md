@@ -56,7 +56,7 @@ company_detail.json → market              L1: price, date, source, check, shar
 Yahoo's terms bar automated collection and commercial reuse, and Alpha Vantage's free key covers private, individual use only. A public showcase goes beyond both, so by default **no real market figures are published**:
 
 - The Pipeline action runs with `--market risk-free`: only the FRED rate is fetched, no prices.
-- The DCF then runs without a price: beta = the sector's illustrative beta (`configs/public/sectors/taxonomy.json` → `typical_beta`, carried in company detail as `sector_beta`), today's D/E = the target D/E or book D/E, and implied mode falls back to forecast mode. Values are intrinsic only; there is no upside against a price.
+- The DCF then runs without a price: beta = Damodaran's unlevered industry beta for the company's industry, relevered at its D/E (`L0_ingest/damodaran.py` → `data/_market/{as_of}/damodaran.json`; each taxonomy industry names its Damodaran row), or the sector's illustrative beta (`typical_beta`) if that fetch failed, carried in company detail as `sector_beta`; today's D/E = the target D/E or book D/E, and implied mode falls back to forecast mode. Values are intrinsic only; there is no upside against a price.
 - Comps runs only with prices you typed into `comps.json`.
 - `publish --market-data showcase` also strips any real market block, market-based price and upside, and any comps result built on market prices, in case a run with prices is published by mistake.
 - The synthetic examples (DEMO, DEMOG, DEMOU) keep made-up but reproducible market figures: their demo price, the sector beta, a WACC at a fixed 4.5% risk-free rate, all labelled "Synthetic Example".
@@ -67,3 +67,7 @@ Yahoo's terms bar automated collection and commercial reuse, and Alpha Vantage's
 ## Setup
 
 Add the repository secret **`ALPHAVANTAGE_API_KEY`** (free key from alphavantage.co). Without it, Yahoo still supplies prices; there is no backup or cross-check.
+
+## Damodaran industry betas and ERP
+
+`L0_ingest/damodaran.py` reads two of Aswath Damodaran's public pages (NYU Stern), once per as-of date and cached per month: US industry betas (`Betas.html`) and the implied equity risk premium (`histimpl.html`). Both are parsed by column name. `configs/public/sectors/taxonomy.json` maps each industry to a Damodaran row (`"damodaran"`); an unmapped industry uses the Total Market row. They're published (cited) in showcase mode, since they're openly available for teaching. The datasets update each January, so a back-dated as-of uses the latest edition.

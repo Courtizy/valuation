@@ -77,9 +77,9 @@ When `configs/public/assumptions/{TICKER}/dcf.json` doesn't exist, the runner va
 |---|---|
 | Mode | forecast |
 | Revenue growth | the company's historical revenue CAGR from the L1 trend case, capped to −5%…20%, fading to 2.5% over 10 years |
-| Equity risk premium | 5% |
+| Equity risk premium | Damodaran's implied ERP (FCFE) for the start of the year (company detail `equity_risk_premium`), else 5% |
 | Risk-free | FRED 10-year Treasury on or before as_of (company detail `risk_free`) |
-| Beta | market beta when prices are allowed, else the sector's illustrative beta |
+| Beta | market beta when prices are allowed; else Damodaran's US unlevered industry beta (cash-corrected), relevered at the company's own D/E (`discount_rates(beta_unlevered=...)`); else the sector's illustrative beta |
 | Cost of debt | interest / debt from the filings, else risk-free + 1.5% |
 | Shares | newest filed share count (cover page) |
 | Costs, capex, tax, working capital | from the filings, as in any DCF |
