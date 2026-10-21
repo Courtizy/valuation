@@ -1,8 +1,8 @@
 import { PROXY_URL } from "./config.js";
-import { clearDevice, deviceIndex, runHere, saveDevice } from "./device.js";
-import { actionsUrl, dispatchPipeline, gh, setStatus } from "./github.js";
+import { clearDevice, deviceIndex, runHere, saveAssumption, saveDevice } from "./device.js";
+import { setStatus } from "./status.js";
 import { esc } from "./format.js";
-import { $, state, store } from "./state.js";
+import { $, getJSON, state, store } from "./state.js";
 
 let showDevice = null, route = null;    // injected by main.js (avoids a circular import)
 export function setRunHooks(hooks) { ({ showDevice, route } = hooks); }
@@ -11,13 +11,18 @@ export function setRunHooks(hooks) { ({ showDevice, route } = hooks); }
 const proxyUrl = () => ($("h-proxy").value.trim() || PROXY_URL).replace(/\/+$/, "");
 const avKey = () => $("h-avkey").value.trim();
 const finnhubKey = () => $("h-fhkey").value.trim();
-/** Opened from this machine (python -m http.server): Yahoo prices through the proxy, which relays
- *  Yahoo for localhost origins only. Never on the public site. */
-export const localRun = () => ["localhost", "127.0.0.1"].includes(location.hostname);
 
-/** Where Run Comps, Save Peers, Screen and Build go: GitHub only for the owner (a token is set)
- *  working on a published company; everyone else, and every company run here, uses this browser. */
-export const useGitHub = () => !!gh().token && !state.company?.device;
+/** What the site has published that a browser run can lean on: EDGAR's company lists by SIC code
+ *  (the SEC refuses that page to the proxy, so sector screens read these), and for a company run
+ *  the published sector screens that include it (to pick its comps peers without screening). */
+async function published(ticker) {
+  const sic = await getJSON("data/sic_members.json").then((d) => d.sic || {}).catch(() => ({}));
+  if (!ticker) return { sic };
+  const index = await getJSON("data/index.json").catch(() => ({}));
+  const mine = (index.sectors || []).filter((x) => !x.demo && (x.members || []).includes(ticker));
+  const screens = await Promise.all(mine.map((x) => fetch(`data/${x.path}`, { cache: "no-cache" }).then((r) => (r.ok ? r.text() : null)).catch(() => null)));
+  return { sic, screens: screens.filter(Boolean) };
+}
 
 function renderSaved() {
   const list = deviceIndex()?.companies || [], sectors = deviceIndex()?.sectors || [];
@@ -40,12 +45,14 @@ export async function runInBrowser(job, status) {
   if (!proxyUrl()) { setStatus(status, { ok: false, msg: "The data proxy isn't set up: add its URL on the Run page under Settings." }); return false; }
   status.className = "status"; status.textContent = "Starting…";
   try {
-    const prices = job.sector ? {} : { avKey: avKey(), finnhubKey: finnhubKey(), yahoo: localRun() };
-    const out = await runHere({ ...job, asOf, proxy: proxyUrl(), ...prices }, (msg) => { status.textContent = msg; });
+    const prices = job.sector ? {} : { avKey: avKey(), finnhubKey: finnhubKey(), yahoo: true };
+    const out = await runHere({ ...job, asOf, proxy: proxyUrl(), ...prices, ...(await published(job.ticker)) },
+      (msg) => { status.textContent = msg; });
     const failed = out.report.filter(([, st]) => st === "failed");
     const built = job.sector ? !failed.length : !!out.files[`${job.ticker}/${asOf}/company_detail.json`];
     if (!built) throw new Error(failed.map(([step, , msg]) => `${step}: ${msg}`).join("; ") || "nothing was built");
     await saveDevice(out.files);
+    for (const [rel, text] of Object.entries(out.assumptions || {})) await saveAssumption(rel, JSON.parse(text));   // peers it picked
     renderSaved();
     setStatus(status, { ok: !failed.length, msg: failed.length
       ? `Done, with problems: ${failed.map(([step, , msg]) => `${step} (${msg})`).join("; ")}`
@@ -62,8 +69,8 @@ export function setupHereForm() {
   $("h-proxy").value = store.get("proxy_url") || "";
   $("h-avkey").value = store.get("av_key") || "";
   $("h-fhkey").value = store.get("finnhub_key") || "";
-  $("h-local").hidden = !localRun();
   $("h-asof").value = new Date().toISOString().slice(0, 10);
+  $("h-go").disabled = $("h-screen").disabled = false;   // off in the HTML until wired, so an early click can't submit the page
   renderSaved();
   const remember = () => {
     store.set("proxy_url", $("h-proxy").value.trim() || null);
@@ -85,99 +92,9 @@ export function setupHereForm() {
   };
 }
 
-// ---- Publish to the site (owner) -------------------------------------------------------------
-export function repoGuess() {
-  const h = location.hostname;
-  if (h.endsWith(".github.io")) return { owner: h.split(".")[0], repo: location.pathname.split("/").filter(Boolean)[0] || `${h}` };
-  return { owner: "", repo: "valuation" };
-}
-
-export function runMode() { return document.querySelector("#r-mode [aria-pressed=true]")?.dataset.mode || "company"; }
-
 /** Fill the Sector list from the taxonomy (called once it has loaded). */
 export function fillSectorList() {
   if (!state.taxonomy) return;
   const opts = state.taxonomy.sectors.map((x) => `<option value="${esc(x.id)}">${esc(x.name)}</option>`).join("");
-  for (const id of ["r-sector-id", "h-sector"]) if ($(id)) $(id).innerHTML = opts;
-}
-
-export function setupRunForm() {
-  const g = repoGuess();
-  $("r-owner").value = store.get("gh_owner") || g.owner;
-  $("r-repo").value = store.get("gh_repo") || g.repo;
-  const tok = store.get("gh_token");
-  if (tok) { $("r-token").value = tok; $("r-remember").checked = true; }
-  const today = new Date().toISOString().slice(0, 10);
-  $("r-asof").value = today; $("r-sasof").value = today;
-
-  document.querySelectorAll("#r-mode button").forEach((b) => b.onclick = () => {
-    document.querySelectorAll("#r-mode button").forEach((x) => x.setAttribute("aria-pressed", x === b));
-    $("r-company").hidden = b.dataset.mode !== "company"; $("r-sector").hidden = b.dataset.mode !== "sector";
-    refresh();
-  });
-  $("r-skind").onchange = () => {
-    document.querySelectorAll("#r-sector [data-for]").forEach((f) => { f.hidden = f.dataset.for !== $("r-skind").value; });
-    refresh();
-  };
-  // models need company details, so picking one locks that box on
-  const syncDetail = () => {
-    const anyModel = !!document.querySelector("#r-models input:checked");
-    if (anyModel) $("r-detail").checked = true;
-    $("r-detail").disabled = anyModel;
-    $("r-run-hint").textContent = anyModel ? "Models use the company details, so those are rebuilt too." : "";
-  };
-  $("r-models").addEventListener("change", syncDetail);
-  syncDetail();                                       // DCF is ticked by default
-
-  const refresh = () => {
-    syncDetail();
-    const gg = gh(), i = runInputs();
-    $("r-actions-link").href = gg.owner && gg.repo ? `${actionsUrl(gg)}/workflows/pipeline.yml` : "https://github.com";
-    const flags = Object.entries(i).filter(([, v]) => v !== "").map(([k, v]) => `-f ${k}=${/\s|;/.test(v) ? `"${v}"` : v}`).join(" ");
-    $("r-cli").textContent = `gh workflow run pipeline.yml${gg.owner && gg.repo ? ` -R ${gg.owner}/${gg.repo}` : ""} \\\n  ${flags}`;
-  };
-  $("run-form").addEventListener("input", refresh);
-  $("run-form").addEventListener("change", refresh);
-  refresh();
-
-  $("run-form").onsubmit = async (e) => {
-    e.preventDefault();
-    const status = $("r-status");
-    store.set("gh_owner", $("r-owner").value.trim()); store.set("gh_repo", $("r-repo").value.trim());
-    store.set("gh_token", $("r-remember").checked && $("r-token").value.trim() ? $("r-token").value.trim() : null);
-    const i = runInputs();
-    const bad = runInputsError(i);
-    if (bad) { setStatus(status, { ok: false, msg: bad }); return; }
-    status.className = "status"; status.textContent = "Starting…";
-    try { setStatus(status, await dispatchPipeline(i)); } catch (err) { setStatus(status, { ok: false, msg: `Request failed: ${err.message}` }); }
-  };
-}
-
-// Inputs for the Pipeline workflow. Company mode: company details alone = through L1;
-// any model ticked = through L2 with those models. Sector mode: one sector spec.
-export function runInputs() {
-  if (runMode() === "sector") {
-    const kind = $("r-skind").value;
-    let spec = "";
-    if (kind === "sic") spec = `sic:${$("r-sic").value.trim()}`;
-    if (kind === "sector") spec = `sector:${$("r-sector-id").value}`;
-    if (kind === "sic-of") spec = `sic-of:${$("r-sicof").value.trim().toUpperCase()}`;
-    if (kind === "list") spec = `list:${$("r-list").value.trim()}`;
-    if (kind === "traits") spec = "traits:" + [...document.querySelectorAll("#r-sector [data-trait]")]
-      .filter((x) => x.value).map((x) => `${x.dataset.trait}=${x.value}`).join(";");
-    return { sector: spec, as_of: $("r-sasof").value };
-  }
-  const models = [...document.querySelectorAll("#r-models input:checked")].map((x) => x.value);
-  return { ticker: $("r-ticker").value.trim().toUpperCase(), as_of: $("r-asof").value,
-           models: models.join(",") || "dcf", stop_after: models.length ? "L2" : "L1" };
-}
-
-export function runInputsError(i) {
-  if (i.sector !== undefined) {
-    if (/^sector:[a-z_]{3,30}$|^sic:\d{4}$|^sic-of:[A-Z][A-Z0-9.\-]{0,9}$|^list:[A-Za-z0-9_\-]{1,40}$|^traits:[a-z_]+=[a-z ]+(;[a-z_]+=[a-z ]+)*$/.test(i.sector)) return "";
-    return i.sector.startsWith("traits:") ? "Pick at least one trait." : "Fill in the sector field (SIC is 4 digits; a list name uses letters, digits, _ and -).";
-  }
-  if (!/^[A-Za-z][A-Za-z0-9.\-]{0,9}$/.test(i.ticker)) return "Enter a valid ticker.";
-  if (!$("r-detail").checked) return "Tick Company details or a model.";
-  return "";
+  if ($("h-sector")) $("h-sector").innerHTML = opts;
 }

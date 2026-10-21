@@ -26,6 +26,7 @@ from valuation.lineage import lineage_block
 
 from .analysis import _one_year_apart, analyze_view, load_classification
 from .backfill import backfill_records
+from .validate import validation, warnings_for
 from .periods import build_views
 from .forecast import trend_case
 from .profile import build_profile, load_rules
@@ -151,6 +152,9 @@ def build_detail(canonical: dict, as_of: str, raw_market: dict | None = None, pa
                        for r in backfill]
     if backfill:
         doc["warnings"].append(f"{len(backfill)} value(s) the filings lack were filled from Yahoo fundamentals (marked y)")
+    # the SEC figures checked against themselves (tie-outs) and against Yahoo's for the same years
+    doc["validation"] = validation(canonical, canonical["records"], (raw_market or {}).get("fundamentals"))
+    doc["warnings"] += warnings_for(doc["validation"])
     from .taxonomy import load as load_taxonomy
     # industry beta and ERP from Damodaran's datasets when L0 fetched them (public, so shown in showcase
     # mode too), else the taxonomy's illustrative sector beta and no ERP (the DCF then uses its default)

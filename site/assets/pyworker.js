@@ -19,7 +19,7 @@ async function boot(say) {
 
 // Python calls this synchronously; a worker may block on XHR, the page never does.
 // Alpha Vantage and Finnhub (the visitor's own keys) are called directly, at most one request
-// a second; everything else, Yahoo included (local runs only), goes through the proxy.
+// a second; everything else, Yahoo included, goes through the proxy.
 const DIRECT = ["https://www.alphavantage.co/", "https://finnhub.io/"];
 let lastDirect = 0;
 const fetchText = (proxy) => (url) => {
@@ -34,18 +34,19 @@ const fetchText = (proxy) => (url) => {
 };
 
 self.onmessage = async (e) => {
-  const { id, ticker, sector, asOf, models, proxy, saved, assumptions, avKey, finnhubKey, yahoo } = e.data;
+  const { id, ticker, sector, asOf, models, proxy, saved, assumptions, avKey, finnhubKey, yahoo, sic, screens } = e.data;
   const say = (progress) => self.postMessage({ id, progress });
   try {
     engine ||= await boot(say);
     let out;
     if (sector) {
       say(`Screening ${sector} from SEC filings (a few minutes: every company's figures for four years)…`);
-      out = engine.run_sector_json(sector, fetchText(proxy), asOf || null, JSON.stringify(saved || {}));
+      out = engine.run_sector_json(sector, fetchText(proxy), asOf || null, JSON.stringify(saved || {}), JSON.stringify(sic || {}));
     } else {
-      say(`Fetching SEC filings for ${ticker}${avKey || finnhubKey || yahoo ? " and prices" : ""} and building the models…`);
+      say(`Fetching SEC filings and prices for ${ticker}, picking peers and building the models (a few minutes the first time)…`);
       out = engine.run_json(ticker, fetchText(proxy), asOf || null, models || "auto", JSON.stringify(saved || {}),
-        JSON.stringify(assumptions || {}), avKey || "", finnhubKey || "", !!yahoo);
+        JSON.stringify(assumptions || {}), avKey || "", finnhubKey || "", !!yahoo, JSON.stringify(screens || []),
+        JSON.stringify(sic || {}));
     }
     self.postMessage({ id, ok: true, out });
   } catch (err) {

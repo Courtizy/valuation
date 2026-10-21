@@ -60,6 +60,28 @@ def copy_sectors(data_dir: Path, site_data: Path) -> list[str]:
     return copied
 
 
+def copy_sic_lists(data_dir: Path, site_data: Path) -> list[str]:
+    """Merge every fetched EDGAR SIC list (data/_screen/{as_of}/sic_*.json) into site/data/sic_members.json,
+    newest per code, so in-browser screens don't need that EDGAR page (the SEC refuses it to the proxy)."""
+    target = site_data / "sic_members.json"
+    lists = json.loads(target.read_text()).get("sic", {}) if target.exists() else {}
+    found = []
+    for f in sorted((data_dir / "_screen").glob("*/sic_*.json"), key=lambda p: p.parent.name):
+        if not AS_OF.match(f.parent.name):
+            continue
+        doc = json.loads(f.read_text())
+        if doc.get("source"):                           # itself read from the published lists
+            continue
+        found.append(f)
+        code = doc["sic"]
+        if f.parent.name >= (lists.get(code) or {}).get("as_of", ""):
+            lists[code] = {"description": doc.get("description"), "ciks": doc["ciks"], "as_of": f.parent.name}
+    if not found:
+        return []
+    write_json(target, {"about": "EDGAR company lists by SIC code (www.sec.gov/cgi-bin/browse-edgar)", "sic": lists})
+    return [str(target.relative_to(site_data))]
+
+
 def build_sector_index(site_data: Path) -> list[dict]:
     """Latest screen per sector, with its member tickers so the site can find a company's sectors."""
     out = []
@@ -269,7 +291,8 @@ def publish(data_dir: Path, site_dir: Path, market_data: str = "showcase", keep_
     site_data = site_dir / "data"
     site_data.mkdir(parents=True, exist_ok=True)
     demo_removed = [] if keep_demo else remove_demo(site_data)
-    copied = (copy_outputs(data_dir, site_data, market_data) + copy_sectors(data_dir, site_data)) if data_dir.exists() else []
+    copied = (copy_outputs(data_dir, site_data, market_data) + copy_sectors(data_dir, site_data)
+              + copy_sic_lists(data_dir, site_data)) if data_dir.exists() else []
     removed = prune(site_data) + demo_removed
     index = build_index(site_data)
     index["market_data"] = market_data

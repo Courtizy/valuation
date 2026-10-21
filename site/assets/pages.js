@@ -74,7 +74,7 @@ const INPUTS = [
   ["Beta", "Industry unlevered beta (cash-corrected), relevered at the company's own D/E", "Aswath Damodaran, NYU Stern: US industry betas"],
   ["Equity risk premium", "Implied ERP (FCFE), start of the year", "Aswath Damodaran, NYU Stern: implied ERP"],
   ["Discount rate (WACC)", "Triangular range around the built-up rate", "CAPM on the beta and ERP above; D/E at the model's own equity value"],
-  ["Share price, peer prices", "Not published here (data terms)", "Synthetic in the Demo; private runs only otherwise"],
+  ["Share price, peer prices", "Not published here (data terms)", "Synthetic in the Demo; in-browser runs fetch them from Yahoo or your own key, kept on your device"],
   ["Peer set", "Hand-picked or ranked by similarity", "configs/public/assumptions/{ticker}/comps.json"],
 ];
 
@@ -87,7 +87,8 @@ const MODEL = [
 
 const VALIDATION = [
   ["Projected statements balance and cash ties", "Done", "Unit tests on every build"],
-  ["Normalized statements tie to reported totals", "Done", "Balance, gross profit and net income checks run with every normalization"],
+  ["Normalized statements tie to reported totals", "Done", "Balance, gross profit and net income checks run with every normalization, shown under Statements"],
+  ["Filed figures cross-checked against a second source", "Done", "Each run compares the SEC figures with Yahoo's for the same years (2%) and lists any that differ"],
   ["Simulation is seeded and reproducible", "Done", "Same inputs and seed give the same numbers"],
   ["Ratios, DCF and comps match the course workbooks", "Done locally", "Parity tests need the workbooks, so they're skipped in CI"],
   ["Shared math imports nothing else from the app", "Done", "Enforced by a test until it moves to Shared Core"],

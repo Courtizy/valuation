@@ -1,5 +1,5 @@
 import { areaChart, groupedBarChart, lineChart, spreadChart } from "./charts.js";
-import { NA, days, esc, estLabel, fin, label, millions, money, monthYear, num, pct, periodLabel, price, times, titleCase } from "./format.js";
+import { NA, days, esc, estLabel, fin, label, millions, money, monthYear, num, pct, periodLabel, price, times, titleCase, unit, unitShort } from "./format.js";
 import { renderSector } from "./sector.js";
 import { $, fileHref, runRoot, state } from "./state.js";
 import { acct, cellOf, finRow } from "./tables.js";
@@ -51,15 +51,61 @@ export const STATEMENTS = [
     { id: "operating_cash_flow", label: "Cash from Operations (CFO)", kind: "key" },
     { id: "capital_expenses", label: "Capital Expenditures", indent: 1, sign: -1 },
     { id: "free_cash_flow", label: "FCF (CFO − Capex)", kind: "sub" },
+    { id: "investing_cash_flow", label: "Cash from Investing (CFI)", kind: "item" },
+    { id: "financing_cash_flow", label: "Cash from Financing (CFF)", kind: "item" },
     { head: "Returned to Shareholders", indent: 1 },
     { id: "stock_repurchased", label: "Share Repurchases", indent: 2, sign: -1 },
     { id: "common_dividends_paid", label: "Dividends Paid", indent: 2, sign: -1 },
   ]],
+  ["Dividends", [
+    { id: "common_dividends_paid", label: "Dividends Paid", kind: "key" },
+    { id: "common_dividends_per_share", label: "Dividends per Share ($)", digits: 2, scale: 1 },
+    { id: "stock_repurchased", label: "Share Repurchases", indent: 1 },
+    { id: "returned", label: "Total Returned to Shareholders", kind: "sub",
+      calc: (v) => (fin(v.common_dividends_paid) || fin(v.stock_repurchased) ? (v.common_dividends_paid || 0) + (v.stock_repurchased || 0) : null) },
+    { head: "Coverage", indent: 0 },
+    { id: "payout", label: "Payout Ratio (Dividends / Net Income)", indent: 1, fmt: "pct",
+      calc: (v) => (fin(v.common_dividends_paid) && v.net_income > 0 ? v.common_dividends_paid / v.net_income : null) },
+    { id: "total_payout", label: "Total Payout (incl. Buybacks) / Net Income", indent: 1, fmt: "pct",
+      calc: (v) => (v.net_income > 0 && (fin(v.common_dividends_paid) || fin(v.stock_repurchased)) ? ((v.common_dividends_paid || 0) + (v.stock_repurchased || 0)) / v.net_income : null) },
+    { id: "fcf_cover", label: "Dividends / FCF", indent: 1, fmt: "pct",
+      calc: (v) => (fin(v.common_dividends_paid) && v.free_cash_flow > 0 ? v.common_dividends_paid / v.free_cash_flow : null) },
+  ]],
   ["Per Share", [
     { id: "eps_diluted", label: "Diluted EPS ($)", digits: 2, scale: 1 },
-    { id: "shares_fully_diluted_average", label: "Diluted Shares (M)", indent: 0 },
+    { id: "shares_fully_diluted_average", label: "Diluted Shares (M)", indent: 0, dollars: false },
   ]],
 ];
+// Which statements each toggle shows, and the chart of each statement's main lines.
+const STMT_GROUPS = { income: ["Income Statement", "Per Share"], balance: ["Balance Sheet"], cash: ["Cash Flow"], dividends: ["Dividends"] };
+const STMT_CHARTS = {
+  income: { label: "Revenue, operating income and net income", note: "How much of each dollar of sales reaches the bottom line.",
+    series: [["Revenue", "revenue", 1], ["Operating Income", "operating_income_loss", 2], ["Net Income", "net_income", 3]],
+    extra: (v) => ({ label: "Net Margin", value: v.revenue && fin(v.net_income) ? pct(v.net_income / v.revenue) : NA }) },
+  balance: { label: "Assets, liabilities, debt and cash", note: "What it owns, what it owes, and how much of that is borrowing vs. cash on hand.",
+    series: [["Total Assets", "assets", 1], ["Total Liabilities", "liabilities", 2], ["Total Debt", "total_debt", 4], ["Cash & Short-Term Investments", "cash_and_marketable_securities", 3]],
+    extra: (v) => ({ label: "Net Debt", value: fin(v.net_debt) ? money(v.net_debt) : NA }) },
+  cash: { label: "Operating, investing, financing and free cash flow", note: "Cash the business makes (CFO), spends on investment (CFI) and returns or raises (CFF); FCF = CFO − capex.",
+    series: [["Cash from Operations", "operating_cash_flow", 1], ["Cash from Investing", "investing_cash_flow", 2], ["Cash from Financing", "financing_cash_flow", 4], ["Free Cash Flow", "free_cash_flow", 3]],
+    extra: (v) => ({ label: "FCF / Net Income", value: fin(v.free_cash_flow) && v.net_income > 0 ? pct(v.free_cash_flow / v.net_income) : NA }) },
+  dividends: { label: "Dividends and buybacks against net income and free cash flow", note: "What it pays out (dividends and buybacks) next to what it earns and the cash it generates; payouts above FCF are funded from the balance sheet.",
+    series: [["Dividends Paid", "common_dividends_paid", 1], ["Share Repurchases", "stock_repurchased", 2], ["Net Income", "net_income", 4], ["Free Cash Flow", "free_cash_flow", 3]],
+    extra: (v) => ({ label: "Payout Ratio", value: fin(v.common_dividends_paid) && v.net_income > 0 ? pct(v.common_dividends_paid / v.net_income) : NA }) },
+};
+
+function renderStatementChart() {
+  const spec = STMT_CHARTS[state.stmt];
+  $("stmt-graph").hidden = !spec;
+  if (!spec) return;
+  const ps = chartPeriods(state.view);
+  const series = spec.series.map(([name, id, c]) => ({ name, color: `var(--series-${c})`, values: ps.map((p) => p.values[id] ?? null) }))
+    .filter((x) => x.values.some(fin));
+  $("stmt-legend").innerHTML = series.map((x) => `<span><span class="key" style="background:${x.color}"></span>${x.name}</span>`).join("");
+  $("stmt-chart-note").textContent = spec.note;
+  groupedBarChart($("stmt-chart"), { categories: ps.map(periodLabel), series, format: money, label: spec.label,
+    tipExtra: (i) => spec.extra(ps[i].values) });
+}
+
 export const DERIVED_METHODS = new Set(["q4_derived", "ytd_derived", "summed_4q_with_derived"]);
 
 export function periodsFor(view) {
@@ -246,6 +292,24 @@ export const GROWTH_ROWS = [
 
 // Annual view: up to five reported fiscal years, an LTM reference column when it is
 // newer than the last fiscal year, then Years 1–4, Year 5 and Year 10 (shaded).
+/** One line on how the filed figures were checked: tie-outs within the filings, and against Yahoo. */
+function checksNote(v) {
+  if (!v) return "";
+  const ties = (v.tie_outs || []).filter((t) => t.evaluated);
+  const tieBad = ties.filter((t) => t.failed);
+  const parts = [ties.length ? (tieBad.length
+    ? `<span class="warn">Tie-outs: ${tieBad.map((t) => `${esc(t.name.replace(/_/g, " "))} off in ${t.failed} of ${t.evaluated} periods`).join("; ")}</span>`
+    : `Tie-outs: all ${ties.reduce((n, t) => n + t.evaluated, 0)} checks pass (balance sheet, gross profit, net income)`) : ""];
+  const x = v.cross_source;
+  if (x && x.compared) {
+    const differ = x.differ.map((d) => `${d.concept.replace(/_/g, " ")} ${d.end.slice(0, 4)}: SEC ${money(d.sec)} vs ${money(d.other)}`).join("; ");
+    parts.push(x.differ.length
+      ? `<span class="warn">${x.agree} of ${x.compared} filed figures match ${esc(titleCase(x.source))} within ${Math.round(x.tolerance * 100)}%; differ: ${esc(differ)}</span>`
+      : `All ${x.compared} filed figures match ${esc(titleCase(x.source))} within ${Math.round(x.tolerance * 100)}%`);
+  } else parts.push("Not cross-checked against a second source on this run");
+  return `<b>Data checks.</b> ${parts.filter(Boolean).join(". ")}. The SEC figures are the ones used.`;
+}
+
 export function renderStatements() {
   const view = state.view, ps = periodsFor(view);
   const t = $("stmt-table");
@@ -259,19 +323,21 @@ export function renderStatements() {
   const est = shown.map((y) => ({ y, e: all[y - 1], prev: y > 1 ? all[y - 2] : baseValues(proj), fcf: proj.rows[y - 1].fcf }));
   const n = cols.length + est.length;
   const yearTag = (y) => (y === 5 || y === 10 ? `<span class="th-sub">Year ${y}</span>` : "");
-  let html = `<thead><tr><th scope="col">$ Millions</th>${cols.map(({ p, ref }) =>
+  let html = `<thead><tr><th scope="col">${unit().label}</th>${cols.map(({ p, ref }) =>
       `<th scope="col" class="${ref ? "ref" : ""}" title="${esc(p.start)} to ${esc(p.end)}${ref ? " · latest twelve months, for reference" : ""}">${esc(periodLabel(p))}</th>`).join("")}
     ${est.map(({ y }) => `<th scope="col" class="est${y === 5 || y === 10 ? " milestone" : ""}" title="projected Year ${y}">${estLabel(proj.base, y)}${yearTag(y)}</th>`).join("")}</tr></thead><tbody>`;
 
   const section = (name) => `<tr class="group"><td colspan="${n + 1}">${esc(name)}</td></tr>`;
-  html += section("Growth & Margins");
-  for (const [name, f] of GROWTH_ROWS) {
+  if (state.stmt === "income" || state.stmt === "all") html += section("Growth & Margins");
+  for (const [name, f] of state.stmt === "income" || state.stmt === "all" ? GROWTH_ROWS : []) {
     const cells = cols.map(({ p, view: vw, ref }) => cellOf(pct(f(p.values, priorFor(p, vw))), ref ? "ref" : ""))
       .concat(est.map(({ e, prev }) => cellOf(pct(f(e, prev)), "est")));
     html += finRow(name, cells, { indent: 1, kind: name === "Revenue Growth" ? "key" : "item" });
   }
-  for (const [group, spec] of STATEMENTS) {
-    const has = (r) => r.id && (cols.some(({ p }) => fin(p.values[r.id])) || est.some(({ e }) => fin(e[r.id])));
+  let drawn = 0;
+  for (const [group, spec] of STATEMENTS.filter(([g]) => !STMT_GROUPS[state.stmt] || STMT_GROUPS[state.stmt].includes(g))) {
+    const val = (r, values) => (r.calc ? r.calc(values) : values[r.id]);
+    const has = (r) => r.id && (cols.some(({ p }) => fin(val(r, p.values))) || est.some(({ e }) => fin(val(r, e))));
     // keep heads only when a deeper row with data follows before the next row at the head's level
     const rows = spec.filter((r, i) => {
       if (!r.head) return has(r);
@@ -279,25 +345,30 @@ export function renderStatements() {
       return false;
     });
     if (!rows.some((r) => r.id)) continue;
+    drawn++;
     html += section(group);
     for (const r of rows) {
       if (r.head) { html += finRow(esc(r.head), cols.concat(est).map(() => ({ html: "" })), { kind: "head", indent: r.indent }); continue; }
-      const sg = r.sign || 1, o = { digits: r.digits ?? 1, scale: r.scale ?? 1e6 };
+      const sg = r.sign || 1, o = { digits: r.digits, scale: r.scale ?? 1e6, dollars: r.dollars ?? !r.scale };
+      const show = (v) => (r.fmt === "pct" ? pct(v) : acct(sg * v, o));
       const cells = cols.map(({ p, ref }) => {
-        const v = p.values[r.id], m = p.methods[r.id];
+        const v = val(r, p.values), m = r.calc ? null : p.methods[r.id];
         const mark = m === "yahoo_backup" ? `<span class="mark" title="not in the filings: filled from Yahoo fundamentals">y</span>`
           : DERIVED_METHODS.has(m) ? `<span class="mark" title="${esc(m.replace(/_/g, " "))}">d</span>` : "";
-        return fin(v) ? { html: acct(sg * v, o) + mark, cls: ref ? "ref" : "" } : cellOf(NA, ref ? "ref" : "");
-      }).concat(est.map(({ e }) => (fin(e[r.id]) ? { html: acct(sg * e[r.id], o), cls: "est" } : cellOf(NA, "est"))));
-      html += finRow(esc(r.label || label(r.id)), cells, { kind: r.kind, indent: r.indent, title: label(r.id) });
+        return fin(v) ? { html: show(v) + mark, cls: ref ? "ref" : "" } : cellOf(NA, ref ? "ref" : "");
+      }).concat(est.map(({ e }) => (fin(val(r, e)) ? { html: show(val(r, e)), cls: "est" } : cellOf(NA, "est"))));
+      html += finRow(esc(r.label || label(r.id)), cells, { kind: r.kind, indent: r.indent, title: r.calc ? "" : label(r.id) });
     }
     if (group === "Cash Flow" && est.length) {
       html += finRow("Unlevered FCF (Projected)", cols.map(({ ref }) => cellOf(NA, ref ? "ref" : "")).concat(
         est.map(({ fcf }) => ({ html: acct(fcf), cls: "est" }))), { kind: "memo", indent: 1 });
     }
   }
+  if (!drawn && state.stmt !== "all") html += `<tr><td class="muted" colspan="${n + 1}">No ${state.stmt === "dividends" ? "dividends or share repurchases" : "figures for this statement"} in these filings.</td></tr>`;
   t.innerHTML = html + "</tbody>";
+  renderStatementChart();
   $("stmt-full").innerHTML = state.run.full ? `This page shows the latest periods. <a href="${esc(fileHref(runRoot() + state.run.full))}" download>Download the full history (JSON)</a>.` : "";
+  $("stmt-checks").innerHTML = checksNote(state.detail.validation);
   $("stmt-note").textContent = proj ? `${proj.note} Years 6–9 are in the chart above and the DCF table.` : view === "annual" ? "" : "Estimates are shown in the Annual view.";
 }
 
@@ -409,6 +480,37 @@ export const RATIO_ROWS = {
   },
 };
 
+// The few ratios that carry each framework, charted over the same columns as the table.
+// Picks follow the usual analysis: Penman's reformulated drivers (RNOA = NOPM × NOAT, ROCE adds
+// leverage), the operating cycle (DSO + DIO − DPO = cash conversion cycle), DuPont (ROE = margin ×
+// turnover × leverage), credit (Debt/EBITDA, interest cover, Altman Z) and earnings quality (cash vs. accruals).
+const R = (a, path) => path.split(".").reduce((o, k) => (o == null ? null : o[k]), a);
+export const RATIO_CHARTS = {
+  reformulated: { format: pct, note: "RNOA is the return on the operating business; ROCE is what shareholders earn after leverage. ROCE above RNOA means borrowing is adding to returns.",
+    series: [["RNOA", "ratios.reformulated.avg.rnoa", 1], ["ROCE", "ratios.reformulated.avg.roce", 2], ["Operating Margin (NOPM)", "ratios.reformulated.nopm", 3]] },
+  managerial: { format: days, note: "The operating cycle: days to collect from customers and to sell inventory, less days taken to pay suppliers. A shorter cash conversion cycle ties up less cash.",
+    series: [["Collection Period", "ratios.managerial.collection_period_days", 1], ["Days Inventory", "ratios.managerial.days_inventory", 2], ["Payment Period", "ratios.managerial.payment_period_days", 4],
+      ["Cash Conversion Cycle", (a) => { const m = a.ratios?.managerial || {}; return fin(m.collection_period_days) && fin(m.payment_period_days) ? m.collection_period_days + (m.days_inventory || 0) - m.payment_period_days : null; }, 3]] },
+  traditional: { format: pct, note: "DuPont: ROA = profit margin × asset turnover, and ROE = ROA × leverage. The gap between ROE and ROA is the part that comes from the balance sheet.",
+    series: [["ROE", "ratios.traditional.roe", 1], ["ROA", "ratios.traditional.roa", 2], ["Profit Margin", "ratios.traditional.profit_margin", 3]] },
+  risk: { format: times, note: "Credit health: Debt / EBITDA (lower is safer, above about 3x is high), EBIT / interest (higher is safer, below about 3x is thin) and the Altman Z (below 1.2 distress, above 2.9 safe).",
+    series: [["Debt / EBITDA", "ratios.risk.credit.debt_to_ebitda", 1], ["EBIT / Interest", "ratios.risk.credit.ebit_to_interest", 2], ["Altman Z (Private Form)", "ratios.risk.altman_z.private", 3]] },
+  signals: { format: num, note: "Earnings quality: cash from operations against operating income (about 1 or more means profits turn into cash) and accruals against the change in sales (large accruals can flag earnings that won't repeat).",
+    series: [["CFO / Operating Income", "ratios.signals.cfo_to_operating_income", 1], ["Accruals / ΔSales", "ratios.signals.accruals_to_sales_change", 2], ["Depreciation / Capex", "ratios.signals.depreciation_to_capex", 3]] },
+};
+
+function renderRatioChart(cols) {
+  const spec = RATIO_CHARTS[state.fw];
+  $("ratio-graph").hidden = !spec;
+  if (!spec) return;
+  const series = spec.series.map(([name, get, c]) => ({ name, color: `var(--series-${c})`,
+    values: cols.map((a) => { try { const v = typeof get === "function" ? get(a) : R(a, get); return fin(v) ? v : null; } catch { return null; } }) }))
+    .filter((x) => x.values.some(fin));
+  $("ratio-legend").innerHTML = series.map((x) => `<span><span class="key" style="background:${x.color}"></span>${x.name}</span>`).join("");
+  $("ratio-chart-note").textContent = spec.note;
+  lineChart($("ratio-chart"), { categories: cols.map(analysisLabel), series, format: spec.format, label: `${titleCase(state.fw)} ratios` });
+}
+
 export function renderRatios() {
   const an = state.detail.analysis;
   const cols = [...an.annual.slice(-5)];
@@ -418,7 +520,7 @@ export function renderRatios() {
   let html = `<thead><tr><th scope="col">${esc(titleCase(state.fw))}</th>${head}</tr></thead><tbody>`;
   let inGroup = false;
   for (const [name, get, fmt, o = {}] of spec.rows) {
-    if (name === "group") { inGroup = true; html += `<tr class="group"><td colspan="${cols.length + 1}">${esc(get)}</td></tr>`; continue; }
+    if (name === "group") { inGroup = true; html += `<tr class="group"><td colspan="${cols.length + 1}">${esc(get.replace("($M)", `(${unitShort()})`))}</td></tr>`; continue; }
     const sg = o.sign || 1;
     html += finRow(esc(name), cols.map((a) => {
       let v; try { v = get(a); } catch { v = null; }
@@ -426,5 +528,6 @@ export function renderRatios() {
     }), { kind: o.kind || "item", indent: o.indent ?? (inGroup ? 1 : 0) });
   }
   $("ratio-table").innerHTML = html + "</tbody>";
+  renderRatioChart(cols);
   $("ratio-note").textContent = `${spec.note} Marginal tax rate ${pct(state.detail.classification.marginal_tax_rate)}. Source: SEC filings via XBRL.`;
 }

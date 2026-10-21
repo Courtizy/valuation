@@ -48,7 +48,7 @@
       <button class="tab" role="tab" id="tab-overview" aria-controls="panel-overview" data-tab="overview">Overview</button>
       <button class="tab" role="tab" id="tab-results" aria-controls="panel-results" data-tab="results">Results</button>
       <button class="tab" role="tab" id="tab-method" aria-controls="panel-method" data-tab="method">Method</button>
-      <a class="run-link" href="#run" id="run-link" title="Run a company in this browser, or publish one (owner)">Run ▸</a>
+      <a class="run-link" href="#run" id="run-link" title="Run a company or screen a sector in this browser">Run ▸</a>
     </nav>
   </div>
 
@@ -72,6 +72,11 @@
         <div class="seg" id="results-view" role="group" aria-label="Results view">
           <button type="button" data-rv="valuation" aria-pressed="true">Valuation</button>
           <button type="button" data-rv="company" aria-pressed="false">Company Detail</button>
+        </div>
+        <div class="seg" id="units-seg" role="group" aria-label="Dollar amounts in">
+          <button type="button" data-units="K" aria-pressed="false" title="Thousands">$K</button>
+          <button type="button" data-units="M" aria-pressed="true" title="Millions">$M</button>
+          <button type="button" data-units="B" aria-pressed="false" title="Billions">$B</button>
         </div>
       </div>
     <div id="panel-company" class="view" hidden>
@@ -109,10 +114,23 @@
           </div>
         </div>
         <div class="card-body">
+        <div class="seg" id="stmt-seg" role="group" aria-label="Statement" style="margin-bottom:12px">
+          <button type="button" data-stmt="income" aria-pressed="true">Income Statement</button>
+          <button type="button" data-stmt="balance" aria-pressed="false">Balance Sheet</button>
+          <button type="button" data-stmt="cash" aria-pressed="false">Cash Flow</button>
+          <button type="button" data-stmt="dividends" aria-pressed="false">Dividends</button>
+          <button type="button" data-stmt="all" aria-pressed="false">All</button>
+        </div>
+        <div id="stmt-graph">
+          <div class="legend" id="stmt-legend"></div>
+          <div id="stmt-chart"></div>
+          <p class="legend-note" id="stmt-chart-note"></p>
+        </div>
         <div class="table-wrap"><table id="stmt-table"></table></div>
-        <p class="legend-note"><span class="mark">d</span> derived: Q4 = full year − 9-month YTD, or a quarter from YTD differences. <span class="mark">y</span> not in the filings: filled from Yahoo (private runs only). Shaded columns are estimates. Values in millions unless noted.</p>
+        <p class="legend-note"><span class="mark">d</span> derived: Q4 = full year − 9-month YTD, or a quarter from YTD differences. <span class="mark">y</span> not in the filings: filled from Yahoo. Shaded columns are estimates. Dollar amounts in the unit chosen at the top ($K, $M or $B) unless noted.</p>
         <p class="legend-note" id="stmt-note"></p>
         <p class="legend-note" id="stmt-full"></p>
+        <p class="legend-note" id="stmt-checks"></p>
         </div>
       </div>
       <div class="card collapsible" data-collapse="ratios">
@@ -127,6 +145,11 @@
           </div>
         </div>
         <div class="card-body">
+        <div id="ratio-graph">
+          <div class="legend" id="ratio-legend"></div>
+          <div id="ratio-chart"></div>
+          <p class="legend-note" id="ratio-chart-note"></p>
+        </div>
         <div class="table-wrap"><table id="ratio-table"></table></div>
         <p class="legend-note" id="ratio-note"></p>
         </div>
@@ -165,17 +188,16 @@
             <div class="field"><label for="h-ticker">Ticker</label><input type="text" id="h-ticker" pattern="[A-Za-z][A-Za-z0-9.\-]{0,9}" placeholder="AAPL" required></div>
             <div class="field"><label for="h-asof">As Of</label><input type="date" id="h-asof"></div>
           </div>
-          <p class="hint" style="margin-top:8px">Builds company details and the DCF, plus comps when you've picked peers for it. Without a price key (Settings) the DCF uses Damodaran's industry beta and implied equity risk premium, and comps uses the peer prices you type in the peer picker.</p>
-          <p class="hint" id="h-local" hidden><b>Local run:</b> opened from this machine, so prices come from Yahoo as well (relayed for localhost only, never for the public site).</p>
+          <p class="hint" style="margin-top:8px">Builds company details, the DCF and comps: peers are picked automatically from its sector (change them later in the peer picker). Figures come from SEC filings; Yahoo fills what the filings lack (marked y) and cross-checks the rest. Prices and beta come from Yahoo, else your Alpha Vantage or Finnhub key (Settings), which also double-check Yahoo's close.</p>
           <div class="actions">
-            <button type="submit" class="primary" id="h-go">Run Here</button>
+            <button type="submit" class="primary" id="h-go" disabled>Run Here</button>
           </div>
           <div class="form-grid" style="margin-top:12px">
             <div class="field"><label for="h-sector">Or Screen a Sector</label><select id="h-sector"></select></div>
           </div>
           <p class="hint">Every company in the sector from SEC data, for benchmarks and the peer picker. A few minutes: it reads four years of figures for every filer.</p>
           <div class="actions">
-            <button type="button" id="h-screen">Screen Here</button>
+            <button type="button" id="h-screen" disabled>Screen Here</button>
             <span id="h-status" class="status" role="status"></span>
           </div>
           <details style="margin-top:8px"><summary class="small">Settings</summary>
@@ -192,77 +214,6 @@
           </details>
         </form>
         <div id="h-saved" class="small" style="margin-top:12px"></div>
-      </div>
-      <div class="card">
-        <div class="card-head"><h2>Publish to the Site (Owner)</h2></div>
-        <p class="muted">Starts the <code>Pipeline</code> GitHub Action. It fetches SEC filings, builds company detail, publishes the results here and redeploys the site. That usually takes a few minutes.</p>
-        <form id="run-form" autocomplete="off">
-          <div class="seg" id="r-mode" role="group" aria-label="What to run" style="margin-bottom:12px">
-            <button type="button" data-mode="company" aria-pressed="true">Company</button>
-            <button type="button" data-mode="sector" aria-pressed="false">Sector</button>
-          </div>
-          <div id="r-company">
-            <div class="form-grid">
-              <div class="field"><label for="r-ticker">Ticker</label><input type="text" id="r-ticker" pattern="[A-Za-z][A-Za-z0-9.\-]{0,9}" placeholder="AAPL"></div>
-              <div class="field"><label for="r-asof">As Of</label><input type="date" id="r-asof"></div>
-            </div>
-            <fieldset style="margin-top:12px">
-              <legend>Run</legend>
-              <div class="checks">
-                <label><input type="checkbox" id="r-detail" checked> Company Details <span class="hint">filings, statements, ratios, profile, trend projection</span></label>
-              </div>
-              <div class="checks" id="r-models" style="margin-top:8px">
-                <label><input type="checkbox" value="dcf" checked> DCF</label>
-                <label><input type="checkbox" value="comps"> Comps</label>
-                <label class="muted" title="not built yet"><input type="checkbox" value="lbo" disabled> LBO</label>
-                <label class="muted" title="not built yet"><input type="checkbox" value="precedents" disabled> Precedents</label>
-                <label class="muted" title="not built yet"><input type="checkbox" value="ipo" disabled> IPO</label>
-              </div>
-              <span class="hint" id="r-run-hint"></span>
-            </fieldset>
-          </div>
-          <div id="r-sector" hidden>
-            <div class="form-grid">
-              <div class="field"><label for="r-skind">Sector By</label>
-                <select id="r-skind">
-                  <option value="sic-of">A Company's Sector</option>
-                  <option value="sector">Sector</option>
-                  <option value="sic">SIC Code</option>
-                  <option value="traits">Trait Group</option>
-                  <option value="list">My List</option>
-                </select></div>
-              <div class="field" data-for="sic-of"><label for="r-sicof">Ticker</label><input type="text" id="r-sicof" placeholder="AAPL"></div>
-              <div class="field" data-for="sector" hidden><label for="r-sector-id">Sector</label><select id="r-sector-id"></select></div>
-              <div class="field" data-for="sic" hidden><label for="r-sic">SIC Code</label><input type="text" id="r-sic" inputmode="numeric" pattern="[0-9]{4}" placeholder="3674"></div>
-              <div class="field" data-for="list" hidden><label for="r-list">List Name</label><input type="text" id="r-list" placeholder="example_chips">
-                <span class="hint">sectors/<b>name</b>.json in the repo</span></div>
-              <div class="field" data-for="traits" hidden><label for="r-t-stage">Stage</label><select id="r-t-stage" data-trait="stage"><option value="">any</option><option>high growth</option><option>mature grower</option><option>mature</option><option>declining</option></select></div>
-              <div class="field" data-for="traits" hidden><label for="r-t-pred">Predictability</label><select id="r-t-pred" data-trait="predictability"><option value="">any</option><option>high</option><option>medium</option><option>low</option></select></div>
-              <div class="field" data-for="traits" hidden><label for="r-t-int">Asset Intensity</label><select id="r-t-int" data-trait="asset_intensity"><option value="">any</option><option>light</option><option>moderate</option><option>heavy</option></select></div>
-              <div class="field" data-for="traits" hidden><label for="r-t-cap">Capital Structure</label><select id="r-t-cap" data-trait="capital_structure"><option value="">any</option><option>low leverage</option><option>moderate leverage</option><option>high leverage</option><option>financial</option></select></div>
-              <div class="field"><label for="r-sasof">As Of</label><input type="date" id="r-sasof"></div>
-            </div>
-            <p class="hint" style="margin-top:8px">Screens every company in the sector from SEC data (a few figures each, the 300 largest by revenue). Benchmarks then compare at sector, industry group or industry level. Full company detail is built when you open a company from the sector table.</p>
-          </div>
-          <fieldset>
-            <legend>GitHub</legend>
-            <div class="form-grid">
-              <div class="field"><label for="r-owner">Owner</label><input type="text" id="r-owner"></div>
-              <div class="field"><label for="r-repo">Repository</label><input type="text" id="r-repo"></div>
-              <div class="field" style="grid-column: 1 / -1"><label for="r-token">GitHub Token <span class="hint">fine-grained, this repo only: Actions and Contents, read and write</span></label>
-                <input type="password" id="r-token" placeholder="github_pat_…">
-                <span class="hint">Sent only to api.github.com from your browser. Leave blank to use the Actions page or the CLI instead.</span></div>
-            </div>
-            <div class="checks" style="margin-top:8px"><label><input type="checkbox" id="r-remember"> Remember Token on This Device</label></div>
-          </fieldset>
-          <div class="actions">
-            <button type="submit" class="primary">Start Run</button>
-            <a id="r-actions-link" target="_blank" rel="noopener">Open the Actions Page</a>
-            <span id="r-status" class="status" role="status"></span>
-          </div>
-        </form>
-        <h3 style="margin-top:16px">Same Run from a Terminal</h3>
-        <pre id="r-cli"></pre>
       </div>
     </section>
   </main>

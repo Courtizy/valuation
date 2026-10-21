@@ -54,7 +54,7 @@ FINNHUB_MAX_AGE_DAYS = 7
 FRED_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}&cosd={start}&coed={end}"
 FUNDAMENTALS_URL = ("https://query1.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/{symbol}"
                     "?type={types}&period1={p1}&period2={p2}")
-# Yahoo fundamentals fetched as a backup for statement items SEC filings lack (private runs only;
+# Yahoo fundamentals fetched as a backup for statement items SEC filings lack (private and in-browser runs;
 # L1_detail/backfill.py maps them to concepts and fills gaps, never overwriting a filed value)
 FUNDAMENTAL_ITEMS = ("TotalRevenue", "CostOfRevenue", "GrossProfit", "OperatingIncome", "ReconciledDepreciation",
                      "InterestExpense", "InterestIncome", "PretaxIncome", "TaxProvision", "NetIncome",
@@ -306,10 +306,22 @@ class MarketAdapter:
                 "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
 
     def check(self, ticker: str, doc: dict) -> dict:
-        """Compare the primary close with Alpha Vantage's on the same day."""
+        """Compare the primary close with Alpha Vantage's on the same day (else Finnhub's quote,
+        when it is for that day)."""
         base = {"source": "alphavantage", "tolerance": CHECK_TOLERANCE}
+        if not self.av_key and self.finnhub_key:
+            base["source"] = "finnhub"
+            try:
+                got = self.finnhub(ticker, date.fromisoformat(doc["price_date"]))
+            except (HttpError, MarketDataError, ValueError, KeyError) as e:
+                return {**base, "status": "unavailable", "note": self._redact(str(e))}
+            if got["price_date"] != doc["price_date"]:
+                return {**base, "status": "unavailable", "note": f"Finnhub's quote is for {got['price_date']}, not {doc['price_date']}"}
+            diff = got["price"] / doc["price"] - 1 if doc["price"] else None
+            return {**base, "status": "ok" if diff is not None and abs(diff) <= CHECK_TOLERANCE else "mismatch",
+                    "price": got["price"], "price_date": got["price_date"], "diff_pct": diff}
         if not self.av_key:
-            return {**base, "status": "skipped", "note": "no ALPHAVANTAGE_API_KEY"}
+            return {**base, "status": "skipped", "note": "no ALPHAVANTAGE_API_KEY or FINNHUB_API_KEY"}
         try:
             got = self._close_on("alphavantage", ticker, doc["price_date"])
         except (HttpError, MarketDataError, ValueError, KeyError) as e:

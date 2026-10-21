@@ -20,7 +20,17 @@ export function money(v, axis = false) {
   if (a >= 1e3) return `${s}$${(a / 1e3).toFixed(0)}K`;
   return `${s}$${a.toFixed(0)}`;
 }
-export const millions = (v) => (fin(v) ? minus((Math.abs(v) < 5e4 ? 0 : v / 1e6).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })) : NA);
+// Dollar units for tables (the $K / $M / $B switch on Results): scale, decimals and labels.
+export const UNITS = { K: { scale: 1e3, digits: 0, label: "$ Thousands" }, M: { scale: 1e6, digits: 1, label: "$ Millions" },
+  B: { scale: 1e9, digits: 2, label: "$ Billions" } };
+export const unit = () => UNITS[state.units] || UNITS.M;
+export const unitShort = () => `$${UNITS[state.units] ? state.units : "M"}`;
+/** A dollar amount in the selected unit, no symbol (table cells). */
+export const millions = (v) => {
+  if (!fin(v)) return NA;
+  const u = unit(), x = Math.abs(v) < u.scale / 20 ? 0 : v / u.scale;
+  return minus(x.toLocaleString("en-US", { minimumFractionDigits: u.digits, maximumFractionDigits: u.digits }));
+};
 export const pct = (v, axis = false) => (fin(v) ? minus(`${(v * 100).toFixed(axis ? 0 : 1)}%`) : NA);
 export const pts = (v) => (fin(v) ? `${v >= 0 ? "+" : "−"}${Math.abs(v * 100).toFixed(1)} pts` : NA);
 /** Valuation multiple: one decimal; NM when the base is a loss (negative multiple). */

@@ -32,6 +32,28 @@ def parse_sector_spec(spec: str) -> tuple[str, str]:
     return kind, value
 
 
+def sic_lists(as_of: str, paths: Paths, adapter_factory: Callable[[], SecSectorAdapter]) -> tuple[int, list[str]]:
+    """EDGAR's company list for every SIC code in the taxonomy, into data/_screen/{as_of}/sic_*.json,
+    for publishing as site/data/sic_members.json (the in-browser screens can't reach that EDGAR page).
+    Returns (codes fetched, codes that failed)."""
+    ad, tax = adapter_factory(), l1_taxonomy.load()
+    done, failed = 0, []
+    for code in dict.fromkeys(c for s in tax.sectors for c in tax.codes(s)):
+        p = paths.sic_list(as_of, code)
+        if p.exists():
+            done += 1
+            continue
+        try:
+            lst = ad.sic_members(code)
+        except Exception as e:                       # one code shouldn't stop the rest
+            failed.append(f"{code} ({type(e).__name__})")
+            continue
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(json.dumps(lst, indent=2))
+        done += 1
+    return done, failed
+
+
 def run_sector(spec: str, as_of: str, paths: Paths, adapter_factory: Callable[[], SecSectorAdapter],
                lists_dir: Path = Path("configs/public/sectors"), limit: int | None = None) -> Path:
     """Screen one sector and write data/sectors/{id}/{as_of}/sector.json. Returns its path."""
