@@ -14,9 +14,9 @@ async function chooseMode() {
   const q = new URLSearchParams(location.search).get("demo");
   if (q === "1" || q === "0") store.set("mode", q === "1" ? "demo" : "live");
   let mode = store.get("mode");
-  if (!mode) {
+  if (!mode) {                          // first visit: real data if there is any, published or run on this device
     const live = await getJSON("data/index.json").catch(() => null);
-    mode = live?.companies?.length ? "live" : "demo";
+    mode = live?.companies?.length || deviceIndex()?.companies?.length ? "live" : "demo";
   }
   state.demoMode = mode === "demo";
   state.root = state.demoMode ? "demo/data/" : "data/";
@@ -52,10 +52,16 @@ function fillCompanies() {
 
 /** After a run in this browser: list it and open it. */
 export async function showDevice(ticker) {
-  if (state.emptied) {                  // the pages were replaced by the "no results" card: start over
+  // the Demo doesn't list device runs, and the "no results" card replaced the pages: start over in real data
+  if (state.demoMode && !ticker) return;                  // Clear from the Demo: nothing listed to update
+  if (state.demoMode || state.emptied) {
+    store.set("mode", "live");
     if (ticker) store.set("ticker", `device:${ticker}`);
-    location.hash = "#valuation";
-    location.reload();
+    const url = new URL(location.href);
+    url.searchParams.delete("demo");                    // ?demo=1 would switch straight back
+    url.hash = "#valuation";
+    location.replace(url.toString());
+    if (url.toString().split("#")[0] === location.href.split("#")[0]) location.reload();
     return;
   }
   state.index = withDevice(state.index);
@@ -70,6 +76,7 @@ export async function showDevice(ticker) {
 }
 
 async function init() {
+  await loadDevice();
   await chooseMode();
   setupTheme();
   setupTabs();
@@ -85,7 +92,6 @@ async function init() {
     banner(`Couldn't load ${state.root}index.json (${e.message}). Run the pipeline, or "python scripts/export_site.py", then reload.`);
     state.index = { companies: [] };
   }
-  if (!state.demoMode) await loadDevice();
   state.index = withDevice(state.index);
   fillSectorList();
   $("footer-market").textContent = state.index.market_data === "real" ? "Market prices: Yahoo, checked against Alpha Vantage."
