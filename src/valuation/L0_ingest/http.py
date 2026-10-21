@@ -71,4 +71,10 @@ class HttpClient:
                     self._sleep(self.backoff * 2**attempt)
                     continue
                 raise HttpError(url, None, str(e.reason)) from e
+            except (TimeoutError, ConnectionError) as e:
+                # a read that stalls after connecting raises these directly, not as URLError
+                if attempt < self.max_retries:
+                    self._sleep(self.backoff * 2**attempt)
+                    continue
+                raise HttpError(url, None, f"{type(e).__name__}: {e}") from e
         raise HttpError(url, None, "retries exhausted")  # pragma: no cover

@@ -198,6 +198,25 @@ def test_http_client_does_not_retry_404():
     assert exc.value.status == 404 and len(attempts) == 1
 
 
+def test_http_client_retries_read_timeout():
+    attempts = []
+
+    def opener(req, timeout):
+        attempts.append(1)
+        if len(attempts) < 2:
+            raise TimeoutError("The read operation timed out")
+        return io.BytesIO(b"ok")
+
+    c = HttpClient("Test tester@example.com", opener=opener, sleep=lambda s: None)
+    assert c.get_bytes("https://example.test/x") == b"ok" and len(attempts) == 2
+
+    def always(req, timeout):
+        raise TimeoutError("The read operation timed out")
+
+    with pytest.raises(HttpError):
+        HttpClient("Test tester@example.com", opener=always, sleep=lambda s: None).get_bytes("https://example.test/x")
+
+
 # --- Schema validator -----------------------------------------------------
 
 def test_validator_flags_problems(client):

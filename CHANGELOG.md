@@ -5,6 +5,7 @@ All notable changes to the Valuation Model. Newest first.
 ## [0.2.1] - 2026-10-21
 - Comps peer lists for AAPL, DELL, HPQ and KO restored under configs/public/assumptions (dropped in the 0.2.0 layout move).
 - README rewritten: live links, status by layer, validation and course workbook parity, publishing real companies, roadmap.
+- SEC requests retry when a read times out, instead of failing the pipeline run.
 - Apache 2.0 license; package version now matches this changelog (a test checks it).
 
 ## [0.2.0] - 2026-10-04
