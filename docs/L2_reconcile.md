@@ -1,6 +1,6 @@
 # L2 Reconcile: Profile-Driven Triangulation
 
-*Status: built. Inputs are `model_results/*.json`, `company_detail.json` (profile and price) and an optional `configs/public/assumptions/{TICKER}/reconcile.json`. Output is `comparison.json` (schema 0.2.0).*
+*Status: built. Inputs are `model_results/*.json`, `company_detail.json` (profile and price) and an optional `configs/public/assumptions/{TICKER}/reconcile.json`. Output is `comparison.json` (schema 0.3.0).*
 
 ## Principle
 
@@ -29,7 +29,9 @@ The thresholds are in `L1_detail/profile_rules.json`, and a pack can override th
 
 **Standalone context (default).** Precedent transactions and LBO are reference only: precedents include a control premium, and an LBO prices what a financial buyer could pay.
 
-**Acquisition context** (`"context": "acquisition"`). This is the course's offer-price view: just synergies 33%, DCF with synergies 33%, precedents (premium paid) 34%, with LBO and standalone DCF as reference.
+**Acquisition context** (`"context": "acquisition"`). This is the course's offer-price view: just synergies 33%, DCF with synergies 33%, precedents (premium paid) 34%, with LBO and standalone DCF as reference. In the standalone context the synergy models are reference rows (an offer price is not a standalone value).
+
+**Deal summary.** With a `deal.json`, `comparison.json` also carries `deal`: the course Summary's standalone range and offer price range, premiums and share of synergies (`deal.py`, documented in [L2_synergy.md](L2_synergy.md)).
 
 **Missing methods.** Weights for methods that didn't run are dropped, and the rest renormalized, as the course summary does with blank rows.
 

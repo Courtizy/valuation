@@ -49,7 +49,9 @@ def _plan(profile: dict | None, context: str) -> tuple[list[tuple[str, str, floa
     cap = t.get("capital_structure", {}).get("label", "unknown")
     intensity = t.get("asset_intensity", {}).get("label", "unknown")
     ref = [("precedents", "reference", 0.0, "includes a control premium; not a standalone value"),
-           ("lbo", "reference", 0.0, "what a financial buyer could pay given the cash flows and debt capacity")]
+           ("lbo", "reference", 0.0, "what a financial buyer could pay given the cash flows and debt capacity"),
+           ("dcf_synergy", "reference", 0.0, "value to a buyer, synergies included: an offer price, not a standalone value"),
+           ("just_synergy", "reference", 0.0, "pre-announcement price plus the synergies: an offer price, not a standalone value")]
 
     if cap == "financial":
         return ([("comps", "primary", 1.0, "for a financial firm debt is operating, so book-value and earnings multiples fit"),

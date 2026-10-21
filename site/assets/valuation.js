@@ -8,6 +8,7 @@ import { runInBrowser } from "./run.js";
 import { levelBar, levelOptions, levelRows, sectorMe, sectorPicker, wireLevelBar, wireSectorPicker } from "./sector.js";
 import { $, fileHref, getJSON, runRoot, state } from "./state.js";
 import { acct, cellOf, finRow } from "./tables.js";
+import { DEAL_MODELS, renderDeal } from "./deal.js";
 
 // ---------------------------------------------------------------- valuation
 
@@ -23,6 +24,7 @@ export function signed(v) { return fin(v) ? `${v >= 0 ? "+" : "−"}${Math.abs(v
 export function upClass(v, band = 0.005) { return !fin(v) || Math.abs(v) < band ? "" : v > 0 ? "up" : "down"; }
 
 export function renderValuation() {
+  if (state.detail && state.tab === "deal") { renderDeal(); return; }
   if (!state.detail || state.tab !== "valuation") return;
   renderSide();
   renderKpis();
@@ -138,7 +140,8 @@ export function renderHeadline() {
 }
 
 export function renderField() {
-  const c = state.comparison, k = state.scn, methods = (c.plan?.methods || []).filter((m) => m.value_per_share);
+  // offer-price methods (synergies) belong on the Deal view, not the standalone field
+  const c = state.comparison, k = state.scn, methods = (c.plan?.methods || []).filter((m) => m.value_per_share && !DEAL_MODELS.includes(m.model));
   const q = state.detail.market?.quote, wk = q && fin(q.wk52_low) && fin(q.wk52_high) ? q : null;
   const vals = methods.flatMap((m) => [m.value_per_share.p10, m.value_per_share.p90]).concat(fin(c.price) ? [c.price] : [])
     .concat(wk ? [wk.wk52_low, wk.wk52_high] : []);
@@ -181,7 +184,7 @@ export function renderField() {
     ${whyTheyDiffer(methods)}
     <p class="legend-note"><b>Bear / Bull by model:</b> DCF = 10th and 90th percentiles of ${simulationSummary() ? simulationSummary().used.toLocaleString() : "the"} simulated runs, Base = the stated case; Comps uses the peer range (Q1–Q3 with 4+ peers, else lowest–highest); the Blended row weights each model's Bear, Base and Bull.</p>
     ${c.plan?.notes?.length ? `<p class="legend-note">${c.plan.notes.map((n) => esc(sentence(n))).join(" ")}</p>` : ""}
-    <p class="legend-note">Weights: configs/public/assumptions/${esc(state.company.ticker)}/reconcile.json can override them (<code>{"weights": {"dcf": 0.7, "comps": 0.3}}</code>) or switch to <code>"context": "acquisition"</code> for an offer-price view.</p>
+    <p class="legend-note">Weights: configs/public/assumptions/${esc(state.company.ticker)}/reconcile.json can override them (<code>{"weights": {"dcf": 0.7, "comps": 0.3}}</code>); the offer-price view (synergies, standalone vs. offer range) is under <a href="#deal">Deal</a>.</p>
   </div>`;
   wireToggle($("val-ff"));
   drawPriceLine(fin(c.price) ? (c.price - lo) / (hi - lo) : null, c.price);

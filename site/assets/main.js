@@ -144,13 +144,17 @@ export async function selectRun(asOf) {
     // one round trip: every file this run needs, fetched together
     const root = runRoot(), base = `${root}${state.company.ticker}/${state.run.as_of}/model_results`;
     const opt = (cond, path) => (cond ? getJSON(path).catch(() => null) : Promise.resolve(null));
-    [state.detail, state.comparison, state.comps, state.dcf] = await Promise.all([
+    let syn, just;
+    [state.detail, state.comparison, state.comps, state.dcf, syn, just] = await Promise.all([
       getJSON(`${root}${state.run.detail}`),
       opt(state.run.comparison, `${root}${state.run.comparison}`),
       opt(state.run.models?.includes("comps"), `${base}/comps.json`),
       opt(state.run.models?.includes("dcf"), `${base}/dcf.json`),
+      opt(state.run.models?.includes("dcf_synergy"), `${base}/dcf_synergy.json`),
+      opt(state.run.models?.includes("just_synergy"), `${base}/just_synergy.json`),
       loadSector(),
     ]);
+    state.deal = { dcf_synergy: syn, just_synergy: just };
   } catch (e) {
     banner(`Couldn't load results for ${state.company.ticker} as of ${asOf}: ${e.message}`);
     return;
@@ -170,16 +174,16 @@ function renderEmptyEverywhere() {
   state.detail = state.company = null;             // nothing left to draw into
   const msg = `<div class="card empty"><h2>No Published Results Yet</h2>
     <p>Use <b>Run ▸</b> to fetch a company, or press <b>Demo</b> at the top to explore every feature on synthetic companies.</p></div>`;
-  for (const id of ["panel-company", "panel-valuation"]) $(id).innerHTML = msg;
+  for (const id of ["panel-company", "panel-valuation", "panel-deal"]) $(id).innerHTML = msg;
   renderOverview();
 }
 
 // ---------------------------------------------------------------- tabs, theme
 
-// Pages: Overview · Results · Method, plus the owner's Run page. Results holds two views,
-// Valuation (default) and Company Detail. The hash names the page or view: #overview, #valuation,
-// #company, #method, #run (#results opens the last view used).
-const PAGES = { overview: "overview", results: "results", valuation: "results", company: "results", method: "method", run: "run" };
+// Pages: Overview · Results · Method, plus the Run page. Results holds three views,
+// Valuation (default), Company Detail and Deal. The hash names the page or view: #overview, #valuation,
+// #company, #deal, #method, #run (#results opens the last view used).
+const PAGES = { overview: "overview", results: "results", valuation: "results", company: "results", deal: "results", method: "method", run: "run" };
 
 export function route(name) {
   if (!PAGES[name]) name = "overview";
@@ -197,6 +201,7 @@ export function route(name) {
     store.set("rv", name);
     $("panel-valuation").hidden = name !== "valuation";
     $("panel-company").hidden = name !== "company";
+    $("panel-deal").hidden = name !== "deal";
     for (const b of $("results-view").querySelectorAll("button")) b.setAttribute("aria-pressed", b.dataset.rv === name);
   }
   if (location.hash !== `#${name}`) history.replaceState(null, "", `#${name}`);
@@ -204,7 +209,7 @@ export function route(name) {
   if (name === "overview") renderOverview();
   if (name === "method") renderMethod();
   if (name === "company" && state.detail) renderCompany();
-  if (name === "valuation" && state.detail) renderValuation();
+  if ((name === "valuation" || name === "deal") && state.detail) renderValuation();
 }
 
 export function setupTabs() {

@@ -72,6 +72,7 @@
         <div class="seg" id="results-view" role="group" aria-label="Results view">
           <button type="button" data-rv="valuation" aria-pressed="true">Valuation</button>
           <button type="button" data-rv="company" aria-pressed="false">Company Detail</button>
+          <button type="button" data-rv="deal" aria-pressed="false" title="Acquisition: synergies, standalone vs. offer price range">Deal</button>
         </div>
         <div class="seg" id="units-seg" role="group" aria-label="Dollar amounts in">
           <button type="button" data-units="K" aria-pressed="false" title="Thousands">$K</button>
@@ -163,6 +164,9 @@
         </div>
       </div>
     </div>
+
+    <!-- Deal view: acquisition inputs, synergy models and the standalone vs. offer summary -->
+    <div id="panel-deal" class="view" hidden></div>
 
     <!-- Valuation view -->
     <div id="panel-valuation" class="view" hidden>

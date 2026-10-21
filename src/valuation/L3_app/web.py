@@ -33,7 +33,7 @@ from valuation.L0_ingest.market import MarketAdapter, MarketDataError
 from valuation.L0_ingest.sec_sector import SecSectorAdapter
 from valuation.L3_app.publish import publish
 from valuation.L3_app.similar import pick_peers
-from valuation.runner.company import execute, load_peers, plan
+from valuation.runner.company import DEAL_MODELS, execute, has_deal, load_peers, plan
 from valuation.runner.paths import Paths
 from valuation.runner.sector import run_sector as _run_sector
 
@@ -160,7 +160,8 @@ def run(ticker: str, fetch_text: Callable[[str], str], as_of: str | None = None,
             first.append(auto_peers(t, as_of, work_dir, paths, client, screens, sic_lists))
             if first[-1][1] == "done":
                 picked = {f"{t}/comps.json": paths.model_assumptions(t, "comps").read_text()}
-        names = ["dcf"] + (["comps"] if load_peers(paths, t) else [])
+        names = (["dcf"] + (["comps"] if load_peers(paths, t) else [])
+                 + (list(DEAL_MODELS) if has_deal(paths, t) else []))
     steps = plan(ticker, names, as_of, paths, _sector_adapter(client, sic_lists), "L2",
                  market_factory=lambda: MarketAdapter(yahoo=client if yahoo else NoPrices(),
                                                       alphavantage=client if av_key else NoPrices(),

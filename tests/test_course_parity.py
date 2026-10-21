@@ -364,3 +364,89 @@ def test_789_public_comps(case):
     avg = lambda k: sum(r["multiples"][k] for r in rows.values()) / len(rows)  # noqa: E731
     assert avg("ev_sales") == pytest.approx(_num(v("K16")), rel=1e-9)
     assert avg("ev_ebitda") == pytest.approx(_num(v("K17")), rel=1e-9)
+
+
+# ------------------------------------------------- 789: synergy models
+
+from valuation._core.synergy import just_synergies, synergy_drivers  # noqa: E402
+
+
+@pytest.mark.parametrize("case", sorted(FIRM_DCF_CASES))
+def test_789_just_synergies(case):
+    wb = _book(FIRM_DCF_CASES[case])
+    ws = wb["Just Syn"]
+    b = lambda r: _num(ws[f"B{r}"].value)  # noqa: E731
+    v = just_synergies(annual_cost=b(17), revenue_pct_of_cost=b(18), one_time_cost=b(19), tax_rate=b(20),
+                       terminal_growth=b(21), wacc=b(22), exchange_rate=b(23) or 1.0, shares=b(24), pre_price=b(25),
+                       cost_forever=b(26), wacc_terminal=b(27), growth=b(28), years_to_full=int(b(29)),
+                       terminal_year=int(b(30)))
+    for t, col in enumerate("BCDEFGHIJKLMNOPQRSTUV"[: int(b(30)) + 1]):
+        assert v["years"][t]["pv"] == pytest.approx(_num(ws[f"{col}9"].value), rel=1e-9, abs=1e-9), (case, t)
+    assert v["total_value"] == pytest.approx(b(10), rel=1e-9, abs=1e-9)
+    assert v["per_share"] == pytest.approx(b(12), rel=1e-9, abs=1e-9)
+    assert v["value_per_share"] == pytest.approx(b(13), rel=1e-9)
+    assert v["max_premium"] == pytest.approx(b(14), rel=1e-9, abs=1e-12)
+
+
+@pytest.mark.parametrize("case", sorted(FIRM_DCF_CASES))
+def test_789_firm_dcf_with_synergies(case):
+    """The whole-firm DCF with the template's synergy inputs: faster revenue growth from year 1 and
+    COGS / SG&A cut by % synergies x % realized (up in the closing year, half in year 1, full after,
+    the lasting share in the terminal year)."""
+    wb = _book(FIRM_DCF_CASES[case])
+    ir, syn = wb["Inputs_Results"], wb["Firm DCF Syn"]
+    c = lambda a: _num(ir[a].value)  # noqa: E731
+    base, drivers, cols, _ = _firm_dcf_inputs(wb)
+    hand = [f"{col}{row}" for col in cols for row in (15, 18, 24, 27, 33, 36, 42, 45, 51, 53, 59, 61, 70, 73, 75)
+            if syn[f"{col}{row}"].value not in (None, 0)]
+    if hand or abs(c("O4") - c("O5")) > 1e-12:
+        pytest.skip("year-by-year synergy entries typed into Firm DCF Syn are not modeled")
+    d = synergy_drivers(drivers, base, len(cols), revenue_growth_add=c("F13"), cost_pct=c("O4"),
+                        realized=c("F14"), cost_forever=c("F15"), years_to_full=2)
+    years = project(base, d, len(cols))["years"]
+    for y, col in zip(years, cols):
+        assert y["revenue"] == pytest.approx(_num(syn[f"{col}13"].value), rel=1e-9), (case, col)
+        assert y["ebitda"] == pytest.approx(_num(syn[f"{col}37"].value), rel=1e-9, abs=1e-6), (case, col)
+        assert y["free_cash_flow"]["fcf"] == pytest.approx(_num(syn[f"{col}77"].value), rel=1e-9, abs=1e-6), (case, col)
+    d["revenue"]["g_terminal"] = drivers["revenue"]["g_terminal"]
+    v = _value(wb, base, d, cols)
+    assert v["enterprise_value"] == pytest.approx(_num(syn["C90"].value), rel=1e-9)
+    assert v["value_per_share"] == pytest.approx(_num(syn["C94"].value), rel=1e-9)
+
+
+# ------------------------------------------------- 789: summary ranges
+
+from valuation.L2_models.reconcile.deal import deal_summary  # noqa: E402
+
+
+@pytest.mark.parametrize("case", sorted(FIRM_DCF_CASES))
+def test_789_summary_standalone_and_offer_ranges(case):
+    """The Summary sheet's weighting, blank-row renormalization and Relative Power of the Target,
+    fed the sheet's own method rows."""
+    wb = _book(FIRM_DCF_CASES[case])
+    ws = wb["Summary"]
+    v = lambda a: _num(ws[a].value)  # noqa: E731
+    rows = {"standalone": {7: "pub_sales", 8: "pub_ebitda", 10: "tc_pre_sales", 11: "tc_pre_ebitda", 13: "dcf",
+                           15: "trading_range"},
+            "offer": {20: "tc_sales", 21: "tc_ebitda", 22: "tc_premium", 24: "dcf_synergy", 25: "just_synergy",
+                      27: "lbo"}}
+    by, weights = {}, {"standalone": {}, "offer": {}}
+    for side, rs in rows.items():
+        for r, m in rs.items():
+            weights[side][m] = v(f"F{r}")
+            if v(f"D{r}"):
+                by[m] = {"value_per_share": {"p10": v(f"C{r}"), "p50": v(f"D{r}"), "p90": v(f"E{r}")}}
+    for m in ("comps", "precedents_pre", "precedents"):
+        weights["standalone" if m != "precedents" else "offer"][m] = 0
+    s = deal_summary(by, {"market": {"price": v("C33")}},
+                     {"weights": weights, "relative_power": v("C35"), "offer_price": v("C29") or None})
+    st, of = s["standalone"]["range"], s["offer"]["range"]
+    assert st["conservative"] == pytest.approx(v("C16"), rel=1e-9)
+    if v("D16") != pytest.approx((v("C16") + v("E16")) / 2, rel=1e-12):   # older templates used the midpoint
+        assert st["best_guess"] == pytest.approx(v("D16"), rel=1e-9)
+    assert st["aggressive"] == pytest.approx(v("E16"), rel=1e-9)
+    assert of["conservative"] == pytest.approx(v("C28"), rel=1e-9)
+    assert of["best_guess"] == pytest.approx(v("D28"), rel=1e-9)
+    assert of["aggressive"] == pytest.approx(v("E28"), rel=1e-9)
+    assert s["offer"]["premium"]["best_guess"] == pytest.approx(v("J28"), rel=1e-9)
+    assert s["offer"]["synergy_share"]["conservative"] == pytest.approx(v("L28"), rel=1e-9)

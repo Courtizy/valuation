@@ -90,7 +90,7 @@ const VALIDATION = [
   ["Normalized statements tie to reported totals", "Done", "Balance, gross profit and net income checks run with every normalization, shown under Statements"],
   ["Filed figures cross-checked against a second source", "Done", "Each run compares the SEC figures with Yahoo's for the same years (2%) and lists any that differ"],
   ["Simulation is seeded and reproducible", "Done", "Same inputs and seed give the same numbers"],
-  ["Ratios, DCF and comps match the course workbooks", "Done locally", "Parity tests need the workbooks, so they're skipped in CI"],
+  ["Ratios, DCF, comps, synergy models and the deal summary match the course workbooks", "Done locally", "Parity tests need the workbooks, so they're skipped in CI"],
   ["Shared math imports nothing else from the app", "Done", "Enforced by a test until it moves to Shared Core"],
   ["Live runs reviewed on real tickers against published estimates", "Planned", ""],
   ["Parity and seeded-run suites in CI", "Planned", ""],
