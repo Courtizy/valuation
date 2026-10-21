@@ -1,7 +1,8 @@
 import { barListChart, scatterChart } from "./charts.js";
 import { NA, esc, fin, label, money, mult, pct, periodLabel, sentence, sourceLine, times, titleCase } from "./format.js";
 import { dispatchPipeline, setStatus } from "./github.js";
-import { selectCompany } from "./main.js";
+import { keyOf, selectCompany } from "./main.js";
+import { runInBrowser, useGitHub } from "./run.js";
 import { $, getJSON, state, store } from "./state.js";
 import { renderValuation, upClass } from "./valuation.js";
 
@@ -111,13 +112,17 @@ function ownFigures() {
   };
 }
 
-export function sectorsFor(ticker) { return (state.index.sectors || []).filter((x) => x.members.includes(ticker)); }
+export function sectorsFor(ticker) {
+  const seen = new Set();             // a screen run on this device comes first and hides the published one
+  return (state.index.sectors || []).filter((x) => x.members.includes(ticker) && !seen.has(x.id) && seen.add(x.id));
+}
 
 export async function loadSector() {
   const t = state.company.ticker, list = sectorsFor(t);
   const want = store.get(`sector:${t}`);
   state.sectorMeta = list.find((x) => x.id === want) || list[0] || null;
-  state.sector = state.sectorMeta ? await getJSON(`${state.root}${state.sectorMeta.path}`).catch(() => null) : null;
+  const root = state.sectorMeta?.device ? "device/" : state.root;
+  state.sector = state.sectorMeta ? await getJSON(`${root}${state.sectorMeta.path}`).catch(() => null) : null;
 }
 
 export function sectorMe() { return state.sector?.companies.find((c) => c.ticker === state.company.ticker) || null; }
@@ -156,13 +161,14 @@ export function screenButtons() {
 export function wireScreenButtons(root) {
   root.querySelectorAll("[data-screen]").forEach((b) => b.onclick = async () => {
     const st = root.querySelector(".status");
+    if (!useGitHub()) { b.disabled = true; await runInBrowser({ sector: b.dataset.screen }, st); if (b.isConnected) b.disabled = false; return; }
     st.className = "status"; st.textContent = "Starting…";
     try { setStatus(st, await dispatchPipeline({ sector: b.dataset.screen, as_of: new Date().toISOString().slice(0, 10) })); }
     catch (err) { setStatus(st, { ok: false, msg: err.message }); }
   });
   root.querySelectorAll("[data-goto-run]").forEach((a) => a.onclick = (ev) => {
     ev.preventDefault();
-    document.querySelector('#r-mode [data-mode="sector"]').click();
+    if (useGitHub()) document.querySelector('#r-mode [data-mode="sector"]').click();
     location.hash = "run";
   });
 }
@@ -223,6 +229,8 @@ export const SEC_COLS = [
 ];
 
 export function inIndex(t) { return state.index.companies.some((c) => c.ticker === t); }
+/** The listed entry for a ticker, preferring a run on this device when the current company is one. */
+const listed = (t) => { const all = state.index.companies.filter((c) => c.ticker === t); return all.find((c) => !!c.device === !!state.company?.device) || all[0]; };
 
 export function renderSectorCard() {
   const card = $("sector-card");
@@ -286,8 +294,9 @@ export function drawSectorTable(demo, levelRowsIn) {
 export async function sectorOpen(ticker) {
   if (ticker === state.company.ticker) return;
   if (inIndex(ticker)) {
-    $("company").value = ticker;
-    await selectCompany(ticker);
+    const key = keyOf(listed(ticker));
+    $("company").value = key;
+    await selectCompany(key);
     window.scrollTo({ top: 0, behavior: "smooth" });
     return;
   }
@@ -299,12 +308,14 @@ export async function sectorOpen(ticker) {
     return;
   }
   box.innerHTML = `<p><b>${esc(ticker)}</b> · ${esc(c?.name || "")} has no company detail yet. Building it fetches its filings and
-    publishes statements, ratios, a profile and a DCF on default assumptions here (a few minutes).</p>
+    ${useGitHub() ? "publishes statements, ratios, a profile and a DCF on default assumptions here (a few minutes)"
+      : "builds statements, ratios, a profile and a DCF on default assumptions in this browser, saved on this device"}.</p>
     <div class="actions"><button type="button" class="primary" id="sec-build">Build Company Detail + DCF for ${esc(ticker)}</button>
     <span class="status" role="status"></span></div>`;
   box.scrollIntoView({ behavior: "smooth", block: "nearest" });
   $("sec-build").onclick = async () => {
     const st = box.querySelector(".status");
+    if (!useGitHub()) { $("sec-build").disabled = true; await runInBrowser({ ticker, models: "auto" }, st); return; }
     st.className = "status"; st.textContent = "Starting…";
     try {
       setStatus(st, await dispatchPipeline({ ticker, as_of: new Date().toISOString().slice(0, 10), models: "dcf", stop_after: "L2" }));

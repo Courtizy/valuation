@@ -2,7 +2,9 @@ import { $M } from "./company.js";
 import { histogramChart } from "./charts.js";
 import { simulationSummary } from "./pages.js";
 import { NA, NM, esc, estLabel, fin, label, millions, money, mult, num, pct, periodLabel, price, sentence, sourceLine, times, titleCase } from "./format.js";
-import { dispatchPipeline, gh, readRepoJSON, setStatus, writeRepoJSON } from "./github.js";
+import { deviceAssumptions, saveAssumption } from "./device.js";
+import { dispatchPipeline, readRepoJSON, setStatus, writeRepoJSON } from "./github.js";
+import { runInBrowser, useGitHub } from "./run.js";
 import { levelBar, levelOptions, levelRows, sectorMe, sectorPicker, wireLevelBar, wireSectorPicker } from "./sector.js";
 import { $, fileHref, getJSON, runRoot, state } from "./state.js";
 import { acct, cellOf, finRow } from "./tables.js";
@@ -340,8 +342,11 @@ export function renderPeerPicker() {
       <button type="button" id="pp-run" ${demo ? "disabled" : ""}>Run Comps</button>
       <span class="status" role="status" id="pp-status">${demo ? "Demo data: saving is off." : ""}</span>
     </div>
-    <p class="legend-note">Writes <code>configs/public/assumptions/${esc(state.company.ticker)}/comps.json</code> in your repo with the token from the Run page
-      (it needs Contents: read and write). Run Comps fetches each peer's price from market data; type a price only to override it.
+    <p class="legend-note">${useGitHub()
+      ? `Writes <code>configs/public/assumptions/${esc(state.company.ticker)}/comps.json</code> in your repo with the token from the Run page
+        (it needs Contents: read and write), and Run Comps starts the pipeline.`
+      : `Saves the peers in this browser, and Run Comps values ${esc(state.company.ticker)} against them here (it saves the ticks first).
+        Each peer needs a price: type it, or add an Alpha Vantage key on the Run page to fetch prices.`}
       Peers not listed here (entered by hand, or from outside this sector) are kept.</p></div>`;
   wireSectorPicker(root);
   wireLevelBar(root, renderPeerPicker);
@@ -352,12 +357,11 @@ export function renderPeerPicker() {
   $("pp-run").onclick = () => runComps();
 }
 
-export async function savePeers() {
+export async function savePeers(quiet = false) {
   const st = $("pp-status"), t = state.company.ticker, path = `configs/public/assumptions/${t}/comps.json`;
   const picks = [...document.querySelectorAll("#pp-table input[type=checkbox]:checked")].map((x) => x.value);
   const prices = Object.fromEntries([...document.querySelectorAll(".pp-price")].filter((x) => x.value !== "").map((x) => [x.dataset.t, Number(x.value)]));
-  if (!picks.length) { setStatus(st, { ok: false, msg: "Tick at least one peer." }); return; }
-  if (!gh().token) { setStatus(st, { ok: false, noToken: true, msg: "Add a token on the Run page (Contents: read and write) to save from here." }); return; }
+  if (!picks.length) { setStatus(st, { ok: false, msg: "Tick at least one peer." }); return false; }
   st.className = "status"; st.textContent = "Saving…";
   // keep what this picker didn't show: hand-entered peers and peers outside the level in view
   const shown = new Set([...document.querySelectorAll("#pp-table input[type=checkbox]")].map((x) => x.value.toUpperCase()));
@@ -373,6 +377,16 @@ export async function savePeers() {
     d.sources = { ...(d.sources || {}), peers: `picked from ${state.sector.label} (screened ${state.sectorMeta.as_of}) on ${new Date().toISOString().slice(0, 10)}` };
     return d;
   };
+  if (!useGitHub()) {                   // this browser: the peers the current comps run used are the starting point
+    try {
+      const mine = deviceAssumptions()[`${t}/comps.json`];
+      const base = mine ? JSON.parse(mine) : { multiples: ["ev_ebitda", "ev_sales"], range: "auto",
+        peers: (state.comps?.details?.peers || []).map((p) => ({ ticker: p.ticker })) };
+      await saveAssumption(`${t}/comps.json`, merge(base));
+      if (!quiet) setStatus(st, { ok: true, msg: `Saved ${picks.length} peers on this device. Run Comps to value against them.` });
+      return true;
+    } catch (err) { setStatus(st, { ok: false, msg: `Couldn't save in this browser: ${err.message}` }); return false; }
+  }
   try {
     // read, merge, write; if the file changed in between (409), read the new version and merge again once
     for (let attempt = 0; ; attempt++) {
@@ -381,15 +395,23 @@ export async function savePeers() {
       catch (err) { if (err.status !== 409 || attempt) throw err; }
     }
     setStatus(st, { ok: true, msg: `Saved ${picks.length} peers to ${path}. Run Comps to value against them.` });
-  } catch (err) { setStatus(st, { ok: false, msg: err.message }); }
+    return true;
+  } catch (err) { setStatus(st, { ok: false, msg: err.message }); return false; }
 }
 
 /** Run comps (and the DCF, if it has run) on the peers saved in comps.json. */
 export async function runComps() {
   const st = $("pp-status"), t = state.company.ticker;
+  const models = [...new Set([...(state.run.models || []).filter((m) => m === "dcf" || m === "comps"), "comps"])];
+  if (!useGitHub()) {
+    if (!(await savePeers(true))) return;
+    const btn = $("pp-run");
+    btn.disabled = true;
+    try { await runInBrowser({ ticker: t, models: models.join(",") }, st); } finally { if (btn.isConnected) btn.disabled = false; }
+    return;
+  }
   st.className = "status"; st.textContent = "Starting…";
   try {
-    const models = [...new Set([...(state.run.models || []).filter((m) => m === "dcf" || m === "comps"), "comps"])];
     setStatus(st, await dispatchPipeline({ ticker: t, as_of: new Date().toISOString().slice(0, 10), models: models.join(","), stop_after: "L2" }));
   } catch (err) { setStatus(st, { ok: false, msg: err.message }); }
 }

@@ -3,7 +3,7 @@ import { esc } from "./format.js";
 import { fillSectorList, setRunHooks, setupHereForm, setupRunForm } from "./run.js";
 import { loadSector } from "./sector.js";
 import { deviceIndex, loadDevice } from "./device.js";
-import { $, banner, getJSON, runRoot, state, store } from "./state.js";
+import { $, banner, device, getJSON, runRoot, state, store } from "./state.js";
 import { renderValuation } from "./valuation.js";
 import { setTourHooks, startTour } from "./tour.js";
 import { renderMethod, renderOverview } from "./pages.js";
@@ -36,13 +36,21 @@ async function chooseMode() {
 }
 
 // Companies run in this browser are listed after the published ones, marked "on this device".
-// Their key is "device:TICKER", so a ticker can be both published and run here.
-const keyOf = (c) => (c.device ? `device:${c.ticker}` : c.ticker);
+// Their key is "device:TICKER", so a ticker can be both published and run here. Sectors screened
+// here come first, so a company shows its newest screen; their similarity cards join companies.json.
+export const keyOf = (c) => (c.device ? `device:${c.ticker}` : c.ticker);
+let published = null;                   // the site's own index and company cards, before device runs join
 
-function withDevice(index) {
-  const published = index.companies.filter((c) => !c.device);
-  const mine = state.demoMode ? [] : (deviceIndex()?.companies || []).map((c) => ({ ...c, device: true }));
-  return { ...index, companies: [...published, ...mine] };
+function mergeDevice() {
+  const mine = state.demoMode ? null : deviceIndex();
+  const { index, companies } = published;
+  state.index = { ...index,
+    companies: [...index.companies, ...(mine?.companies || []).map((c) => ({ ...c, device: true }))],
+    sectors: [...(mine?.sectors || []).map((x) => ({ ...x, device: true })), ...(index.sectors || [])] };
+  let cards = [];
+  try { cards = mine ? JSON.parse(device.files["companies.json"] || "{}").companies || [] : []; } catch { /* none */ }
+  const seen = new Set((companies.companies || []).map((c) => c.ticker));
+  state.companies = { ...companies, companies: [...(companies.companies || []), ...cards.filter((c) => !seen.has(c.ticker))] };
 }
 
 function fillCompanies() {
@@ -64,10 +72,14 @@ export async function showDevice(ticker) {
     if (url.toString().split("#")[0] === location.href.split("#")[0]) location.reload();
     return;
   }
-  state.index = withDevice(state.index);
+  mergeDevice();
   fillCompanies();
-  if (!ticker) {
-    if (state.company?.device) await selectCompany(state.index.companies[0] ? keyOf(state.index.companies[0]) : "");
+  if (!ticker) {                        // a sector screen, or Clear: redraw the company in view, if it's still listed
+    const still = state.company && state.index.companies.find((c) => keyOf(c) === keyOf(state.company));
+    const next = still || state.index.companies[0];
+    if (!next) { renderEmptyEverywhere(); return; }
+    $("company").value = keyOf(next);
+    await selectCompany(keyOf(next));
     return;
   }
   $("company").value = `device:${ticker}`;
@@ -92,7 +104,11 @@ async function init() {
     banner(`Couldn't load ${state.root}index.json (${e.message}). Run the pipeline, or "python scripts/export_site.py", then reload.`);
     state.index = { companies: [] };
   }
-  state.index = withDevice(state.index);
+  published = { index: state.index, companies: state.companies || { companies: [] } };
+  mergeDevice();
+  for (const [k, f] of [["taxonomy", "taxonomy.json"], ["concepts", "concepts.json"]]) {   // no published data yet
+    if ((!state[k] || !Object.keys(state[k]).length) && device.files[f]) try { state[k] = JSON.parse(device.files[f]); } catch { /* keep */ }
+  }
   fillSectorList();
   $("footer-market").textContent = state.index.market_data === "real" ? "Market prices: Yahoo, checked against Alpha Vantage."
     : state.index.market_data === "demo" ? "Demo: synthetic companies and synthetic market data, run through the real pipeline."
