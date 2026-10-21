@@ -6,7 +6,9 @@ Sources (all SEC, all free):
                duration mapped to that calendar year) or CY2025Q4I (an instant)
   SIC members  https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&SIC={sic}...
                EDGAR's company list for an industry code, 100 per page; includes
-               filers that stopped reporting (the screen drops anyone without frames data)
+               filers that stopped reporting (the screen drops anyone without frames data).
+               The SEC refuses this page to the Cloudflare proxy, so in-browser screens read
+               the lists the weekly Refresh publishes (site/data/sic_members.json) instead.
   submissions  a company's own SIC code (SecCompanyFactsAdapter.industry)
 
 L0 stays faithful: frames rows are kept as returned (slimmed to the fields used),
@@ -72,6 +74,11 @@ def parse_sic_page(page: str) -> tuple[list[str], str | None]:
 class SecSectorAdapter(SecCompanyFactsAdapter):
     name = "sec_frames"
 
+    def __init__(self, *a, sic_lists: dict | None = None, **kw):
+        """sic_lists: {sic: {"description", "ciks", "as_of"}} published by Refresh; used before EDGAR."""
+        super().__init__(*a, **kw)
+        self.sic_lists = sic_lists or {}
+
     def frame(self, tag: str, period: str) -> list[list] | None:
         """Rows [cik, name, start, end, val] for one frame; None if the SEC has no such frame."""
         url = FRAMES_URL.format(tag=tag, period=period)
@@ -103,6 +110,10 @@ class SecSectorAdapter(SecCompanyFactsAdapter):
         """{"sic", "description", "ciks"} from EDGAR's company list for an industry code."""
         if not re.fullmatch(r"\d{4}", str(sic)):
             raise ValueError(f"SIC code must be 4 digits: {sic!r}")
+        if str(sic) in self.sic_lists:
+            got = self.sic_lists[str(sic)]
+            return {"sic": str(sic), "description": got.get("description"), "ciks": list(got.get("ciks") or []),
+                    "source": f"published SIC list as of {got.get('as_of')}"}
         ciks: list[str] = []
         desc = None
         for page in range(MAX_SIC_PAGES):

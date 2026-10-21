@@ -1,6 +1,6 @@
 import { renderCashChart, renderCompany, renderMarginChart, renderRatios, renderReturnsChart, renderRevenueChart, renderStatements } from "./company.js";
 import { esc } from "./format.js";
-import { fillSectorList, setRunHooks, setupHereForm, setupRunForm } from "./run.js";
+import { fillSectorList, setRunHooks, setupHereForm } from "./run.js";
 import { loadSector } from "./sector.js";
 import { deviceIndex, loadDevice } from "./device.js";
 import { $, banner, device, getJSON, runRoot, state, store } from "./state.js";
@@ -94,7 +94,6 @@ async function init() {
   setupTabs();
   setupSegments();
   setupCollapsibles();
-  setupRunForm();
   setupHereForm();
   try {
     [state.index, state.concepts, state.companies, state.taxonomy] = await Promise.all([getJSON(`${state.root}index.json`),
@@ -163,11 +162,12 @@ export async function selectRun(asOf) {
   renderCompany();
   renderValuation();
   renderOverview();
-  $("r-ticker").value = state.company.demo ? "" : state.company.ticker;
+  $("h-ticker").value = state.company.demo || state.company.device ? $("h-ticker").value : state.company.ticker;
 }
 
 function renderEmptyEverywhere() {
   state.emptied = true;
+  state.detail = state.company = null;             // nothing left to draw into
   const msg = `<div class="card empty"><h2>No Published Results Yet</h2>
     <p>Use <b>Run ▸</b> to fetch a company, or press <b>Demo</b> at the top to explore every feature on synthetic companies.</p></div>`;
   for (const id of ["panel-company", "panel-valuation"]) $(id).innerHTML = msg;
@@ -279,6 +279,14 @@ function setupSegments() {
   };
   wire("view-seg", "view", "view", () => { renderStatements(); renderRevenueChart(); renderReturnsChart(); renderMarginChart(); renderCashChart(); });
   wire("ratio-seg", "fw", "fw", renderRatios);
+  wire("stmt-seg", "stmt", "stmt", renderStatements);
+  // $K / $M / $B for every table, remembered in this browser
+  const u = store.get("units");
+  if (["K", "M", "B"].includes(u)) {
+    state.units = u;
+    for (const x of $("units-seg").querySelectorAll("button")) x.setAttribute("aria-pressed", x.dataset.units === u);
+  }
+  wire("units-seg", "units", "units", () => { store.set("units", state.units); if (state.detail) { renderCompany(); renderValuation(); } });
 }
 
 init();

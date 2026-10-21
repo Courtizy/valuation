@@ -55,8 +55,8 @@ const STEPS = [
   { at: "#val-similar", title: "Similar Companies", text: "Every published company ranked by closeness on growth, margins, cash-flow stability, capital intensity, leverage and size; weak matches are hidden." },
   { at: "#m-validation", title: "Method", go: async () => { tab("method"); },
     text: "Inputs and their sources, how the model works, what has been checked (and what is still planned), the limits and the changelog." },
-  { at: "#run-form", title: "Run It on a Real Company", go: async () => { tab("run"); },
-    text: "The owner's <b>Run ▸</b> page: pick a ticker, tick Company Details and the models, and the GitHub action runs the pipeline and publishes the results here. Press <b>Exit Demo</b> at the top to see your own data." },
+  { at: "#here-form", title: "Run It on a Real Company", go: async () => { tab("run"); },
+    text: "The <b>Run ▸</b> page: type a ticker and press Run Here. Your browser fetches its SEC filings, picks its closest peers and builds the DCF and comps, saved on this device only. Press <b>Exit Demo</b> at the top to see your own data." },
 ];
 
 let i = -1, box = null, focused = null;

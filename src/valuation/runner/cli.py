@@ -21,7 +21,7 @@ from valuation.L0_ingest.sec_sector import SecSectorAdapter
 from valuation.L2_models.base import MODEL_NAMES
 from valuation.runner.company import execute, plan
 from valuation.runner.paths import Paths
-from valuation.runner.sector import run_sector
+from valuation.runner.sector import run_sector, sic_lists
 
 
 def main(argv: list[str] | None = None,
@@ -50,7 +50,18 @@ def main(argv: list[str] | None = None,
     sc.add_argument("--cache-dir", type=Path, default=Path(".cache/sec"))
     sc.add_argument("--limit", type=int, default=None, help="largest companies kept (default 300 for a sector, else 100)")
     sc.add_argument("--user-agent", help="defaults to $SEC_USER_AGENT")
+    sl = sub.add_parser("sic-lists", help="fetch EDGAR's company list for every SIC code in the taxonomy (for the site)")
+    sl.add_argument("--as-of", default=date.today().isoformat())
+    sl.add_argument("--data-dir", type=Path, default=Path("data"))
+    sl.add_argument("--cache-dir", type=Path, default=Path(".cache/sec"))
+    sl.add_argument("--user-agent", help="defaults to $SEC_USER_AGENT")
     args = p.parse_args(argv)
+
+    if args.cmd == "sic-lists":
+        fac = adapter_factory or (lambda: SecSectorAdapter(cache=FileCache(args.cache_dir), user_agent=args.user_agent))
+        done, failed = sic_lists(args.as_of, Paths(args.data_dir, Path("configs/public/assumptions")), fac)
+        print(f"SIC lists: {done} fetched" + (f", {len(failed)} failed: {', '.join(failed)}" if failed else ""))
+        return 0 if done else 1
 
     if args.cmd == "sector":
         fac = adapter_factory or (lambda: SecSectorAdapter(cache=FileCache(args.cache_dir), user_agent=args.user_agent))

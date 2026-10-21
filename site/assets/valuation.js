@@ -1,10 +1,10 @@
 import { $M } from "./company.js";
 import { histogramChart } from "./charts.js";
 import { simulationSummary } from "./pages.js";
-import { NA, NM, esc, estLabel, fin, label, millions, money, mult, num, pct, periodLabel, price, sentence, sourceLine, times, titleCase } from "./format.js";
+import { NA, NM, esc, estLabel, fin, label, millions, money, mult, num, pct, periodLabel, price, sentence, sourceLine, times, titleCase, unit, unitShort } from "./format.js";
 import { deviceAssumptions, saveAssumption } from "./device.js";
-import { dispatchPipeline, readRepoJSON, setStatus, writeRepoJSON } from "./github.js";
-import { runInBrowser, useGitHub } from "./run.js";
+import { setStatus } from "./status.js";
+import { runInBrowser } from "./run.js";
 import { levelBar, levelOptions, levelRows, sectorMe, sectorPicker, wireLevelBar, wireSectorPicker } from "./sector.js";
 import { $, fileHref, getJSON, runRoot, state } from "./state.js";
 import { acct, cellOf, finRow } from "./tables.js";
@@ -284,7 +284,7 @@ export function renderCompsCard() {
         <div class="ff-num">${price(d.blend.conservative)} – ${price(d.blend.aggressive)}</div><div class="ff-num"><b>${price(d.blend.expected)}</b></div></div>
     </div>
     <div class="table-wrap" style="margin-top:12px"><table class="list">
-      <thead><tr><th>Company</th><th>Price</th><th>EV ($M)</th><th>EV/Sales</th><th>EV/EBITDA</th><th>P/E</th><th>EBITDA Margin</th><th>Revenue CAGR</th>
+      <thead><tr><th>Company</th><th>Price</th><th>EV (${unitShort()})</th><th>EV/Sales</th><th>EV/EBITDA</th><th>P/E</th><th>EBITDA Margin</th><th>Revenue CAGR</th>
         ${mids.map((m) => `<th>Implied (${multName(m)})</th>`).join("")}</tr></thead>
       <tbody>${row(d.target, true)}${d.peers.map((p) => row(p, false)).join("")}</tbody></table></div>
     ${r.notes?.length ? `<p class="legend-note">${r.notes.map((n) => esc(sentence(n))).join(" · ")}</p>` : ""}
@@ -342,11 +342,9 @@ export function renderPeerPicker() {
       <button type="button" id="pp-run" ${demo ? "disabled" : ""}>Run Comps</button>
       <span class="status" role="status" id="pp-status">${demo ? "Demo data: saving is off." : ""}</span>
     </div>
-    <p class="legend-note">${useGitHub()
-      ? `Writes <code>configs/public/assumptions/${esc(state.company.ticker)}/comps.json</code> in your repo with the token from the Run page
-        (it needs Contents: read and write), and Run Comps starts the pipeline.`
-      : `Saves the peers in this browser, and Run Comps values ${esc(state.company.ticker)} against them here (it saves the ticks first).
-        Each peer needs a price: type it, or add an Alpha Vantage key on the Run page to fetch prices.`}
+    <p class="legend-note">A company run picks its six closest peers on its own; change the ticks here and Save Peers, or
+      Run Comps to value ${esc(state.company.ticker)} against them in this browser (it saves the ticks first).
+      Each peer needs a price: type it, or add an Alpha Vantage or Finnhub key on the Run page to fetch prices.
       Peers not listed here (entered by hand, or from outside this sector) are kept.</p></div>`;
   wireSectorPicker(root);
   wireLevelBar(root, renderPeerPicker);
@@ -358,7 +356,7 @@ export function renderPeerPicker() {
 }
 
 export async function savePeers(quiet = false) {
-  const st = $("pp-status"), t = state.company.ticker, path = `configs/public/assumptions/${t}/comps.json`;
+  const st = $("pp-status"), t = state.company.ticker;
   const picks = [...document.querySelectorAll("#pp-table input[type=checkbox]:checked")].map((x) => x.value);
   const prices = Object.fromEntries([...document.querySelectorAll(".pp-price")].filter((x) => x.value !== "").map((x) => [x.dataset.t, Number(x.value)]));
   if (!picks.length) { setStatus(st, { ok: false, msg: "Tick at least one peer." }); return false; }
@@ -377,43 +375,24 @@ export async function savePeers(quiet = false) {
     d.sources = { ...(d.sources || {}), peers: `picked from ${state.sector.label} (screened ${state.sectorMeta.as_of}) on ${new Date().toISOString().slice(0, 10)}` };
     return d;
   };
-  if (!useGitHub()) {                   // this browser: the peers the current comps run used are the starting point
-    try {
-      const mine = deviceAssumptions()[`${t}/comps.json`];
-      const base = mine ? JSON.parse(mine) : { multiples: ["ev_ebitda", "ev_sales"], range: "auto",
-        peers: (state.comps?.details?.peers || []).map((p) => ({ ticker: p.ticker })) };
-      await saveAssumption(`${t}/comps.json`, merge(base));
-      if (!quiet) setStatus(st, { ok: true, msg: `Saved ${picks.length} peers on this device. Run Comps to value against them.` });
-      return true;
-    } catch (err) { setStatus(st, { ok: false, msg: `Couldn't save in this browser: ${err.message}` }); return false; }
-  }
-  try {
-    // read, merge, write; if the file changed in between (409), read the new version and merge again once
-    for (let attempt = 0; ; attempt++) {
-      const { sha, doc } = await readRepoJSON(path);
-      try { await writeRepoJSON(path, merge(doc), sha, `assumptions: ${t} comps peers from ${state.sector.label}`); break; }
-      catch (err) { if (err.status !== 409 || attempt) throw err; }
-    }
-    setStatus(st, { ok: true, msg: `Saved ${picks.length} peers to ${path}. Run Comps to value against them.` });
+  try {                                 // the peers the current comps run used are the starting point
+    const mine = deviceAssumptions()[`${t}/comps.json`];
+    const base = mine ? JSON.parse(mine) : { multiples: ["ev_ebitda", "ev_sales"], range: "auto",
+      peers: (state.comps?.details?.peers || []).map((p) => ({ ticker: p.ticker })) };
+    await saveAssumption(`${t}/comps.json`, merge(base));
+    if (!quiet) setStatus(st, { ok: true, msg: `Saved ${picks.length} peers on this device. Run Comps to value against them.` });
     return true;
-  } catch (err) { setStatus(st, { ok: false, msg: err.message }); return false; }
+  } catch (err) { setStatus(st, { ok: false, msg: `Couldn't save in this browser: ${err.message}` }); return false; }
 }
 
 /** Run comps (and the DCF, if it has run) on the peers saved in comps.json. */
 export async function runComps() {
   const st = $("pp-status"), t = state.company.ticker;
   const models = [...new Set([...(state.run.models || []).filter((m) => m === "dcf" || m === "comps"), "comps"])];
-  if (!useGitHub()) {
-    if (!(await savePeers(true))) return;
-    const btn = $("pp-run");
-    btn.disabled = true;
-    try { await runInBrowser({ ticker: t, models: models.join(",") }, st); } finally { if (btn.isConnected) btn.disabled = false; }
-    return;
-  }
-  st.className = "status"; st.textContent = "Starting…";
-  try {
-    setStatus(st, await dispatchPipeline({ ticker: t, as_of: new Date().toISOString().slice(0, 10), models: models.join(","), stop_after: "L2" }));
-  } catch (err) { setStatus(st, { ok: false, msg: err.message }); }
+  if (!(await savePeers(true))) return;
+  const btn = $("pp-run");
+  btn.disabled = true;
+  try { await runInBrowser({ ticker: t, models: models.join(",") }, st); } finally { if (btn.isConnected) btn.disabled = false; }
 }
 
 export function bridgeRows(b) {
@@ -440,7 +419,7 @@ function dcfProjectionTable(d) {
   const head = idx.map((y) => `<th class="${y === 5 || y === 10 || y === n ? "milestone" : ""}">${estLabel(d.base_period, y)}<span class="th-sub">${y === n ? "Terminal" : y === 5 || y === 10 ? `Year ${y}` : y === 1 ? "Closing" : ""}</span></th>`).join("");
   const row = (name, f, o) => finRow(name, idx.map((y) => cellOf(acct(f(P[y - 1])))), o);
   return `<div class="table-wrap"><table>
-      <thead><tr><th>$ Millions</th>${head}</tr></thead>
+      <thead><tr><th>${unit().label}</th>${head}</tr></thead>
       <tbody>
         ${row("Revenue", (y) => y.revenue, { kind: "key" })}
         ${row("EBITDA", (y) => y.ebitda, { indent: 1 })}
@@ -482,7 +461,7 @@ export function renderDcfCard() {
       ${tile("Terminal Value Share", pct(d.terminal_value_share), `Terminal EV/EBITDA ${mult(t.ev_to_ebitda)}`)}
     </div>
     <div class="grid-2">
-      <div><h3>EV to Equity Bridge ($M)</h3><div class="table-wrap"><table><tbody>${bridgeRows(b)}</tbody></table></div></div>
+      <div><h3>EV to Equity Bridge (${unitShort()})</h3><div class="table-wrap"><table><tbody>${bridgeRows(b)}</tbody></table></div></div>
       <div><h3>Discount Rates</h3><div class="table-wrap"><table><tbody>
         <tr class="group"><td colspan="2">Cost of Equity</td></tr>
         ${finRow("Beta: Observed → Unlevered → Relevered", [cellOf(`${num(rt.beta_levered_observed)} → ${num(rt.beta_unlevered)} → ${num(rt.beta_relevered)}`)], { indent: 1 })}
@@ -500,7 +479,7 @@ export function renderDcfCard() {
         ${finRow("Terminal ROIC", [cellOf(pct(t.roic))], { indent: 1, kind: "memo" })}
       </tbody></table></div></div>
     </div>
-    <h3 style="margin-top:16px">Projection ($M)</h3>
+    <h3 style="margin-top:16px">Projection (${unitShort()})</h3>
     ${dcfProjectionTable(d)}
     <p class="legend-note">Free cash flow = EBITDA × (1 − t) + D&amp;A × t − capex − ΔNWC, so it isn't the simple sum of the lines above.</p>
     <p class="legend-note">Year 1 is the closing year (not discounted). The values above are the stated case; the range comes from the simulation (Spread of Simulated Outcomes).${r.notes?.length ? " " + esc(r.notes.filter((n) => !n.startsWith("range =")).join(" ")) : ""}</p>`;

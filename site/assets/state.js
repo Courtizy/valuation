@@ -2,7 +2,7 @@
 
 export const $ = (id) => document.getElementById(id);
 export const state = { root: "data/", demoMode: false, index: null, concepts: {}, company: null, run: null, detail: null, comparison: null, scn: "p50", companies: null,
-                view: "annual", fw: "reformulated", tab: "company", sector: null, sectorMeta: null,
+                view: "annual", stmt: "income", units: "M", fw: "reformulated", tab: "company", sector: null, sectorMeta: null,
                 secSort: { key: "revenue", dir: -1 } };
 
 // ---------------------------------------------------------------- storage

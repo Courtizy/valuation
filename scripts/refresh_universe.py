@@ -29,7 +29,8 @@ def models_for(ticker: str, assumptions: Path = ASSUMPTIONS) -> str:
 
 
 def jobs(universe: dict, as_of: str, market: str, assumptions: Path = ASSUMPTIONS) -> list[tuple[str, list[str]]]:
-    out = [(spec, ["sector", spec, "--as-of", as_of]) for spec in universe.get("sectors", [])]
+    out = [("SIC lists", ["sic-lists", "--as-of", as_of])]       # for in-browser screens (site/data/sic_members.json)
+    out += [(spec, ["sector", spec, "--as-of", as_of]) for spec in universe.get("sectors", [])]
     for t in dict.fromkeys(universe.get("tickers", [])):       # de-duplicated, order kept
         out.append((t, ["run", t, "--as-of", as_of, "--models", models_for(t, assumptions),
                         "--stop-after", "L2", "--market", market]))
@@ -51,7 +52,10 @@ def main(argv: list[str] | None = None) -> int:
         except Exception as e:                 # one company's bad filing shouldn't stop the refresh
             print(f"error: {type(e).__name__}: {e}", file=sys.stderr)
             code = 1
-        (done if code == 0 else failed).append(name)
+        if name != "SIC lists":                 # not a build: only companies and sectors count
+            (done if code == 0 else failed).append(name)
+        elif code:
+            print("warning: SIC lists not fetched; in-browser screens keep the last published ones", file=sys.stderr)
 
     summary = f"Refresh {args.as_of}: {len(done)} built, {len(failed)} failed" + (f" ({', '.join(failed)})" if failed else "")
     print(summary)

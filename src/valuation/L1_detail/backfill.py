@@ -1,4 +1,4 @@
-"""Backfill: statement items SEC filings lack, from Yahoo fundamentals (private runs only).
+"""Backfill: statement items SEC filings lack, from Yahoo fundamentals (private and in-browser runs).
 
 SEC filings stay the source. A Yahoo value is added only where no filed record exists
 for the same concept and period, and only for periods the filings already define (the

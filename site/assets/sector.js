@@ -1,8 +1,7 @@
 import { barListChart, scatterChart } from "./charts.js";
 import { NA, esc, fin, label, money, mult, pct, periodLabel, sentence, sourceLine, times, titleCase } from "./format.js";
-import { dispatchPipeline, setStatus } from "./github.js";
 import { keyOf, selectCompany } from "./main.js";
-import { runInBrowser, useGitHub } from "./run.js";
+import { runInBrowser } from "./run.js";
 import { $, getJSON, state, store } from "./state.js";
 import { renderValuation, upClass } from "./valuation.js";
 
@@ -161,14 +160,10 @@ export function screenButtons() {
 export function wireScreenButtons(root) {
   root.querySelectorAll("[data-screen]").forEach((b) => b.onclick = async () => {
     const st = root.querySelector(".status");
-    if (!useGitHub()) { b.disabled = true; await runInBrowser({ sector: b.dataset.screen }, st); if (b.isConnected) b.disabled = false; return; }
-    st.className = "status"; st.textContent = "Starting…";
-    try { setStatus(st, await dispatchPipeline({ sector: b.dataset.screen, as_of: new Date().toISOString().slice(0, 10) })); }
-    catch (err) { setStatus(st, { ok: false, msg: err.message }); }
+    b.disabled = true; await runInBrowser({ sector: b.dataset.screen }, st); if (b.isConnected) b.disabled = false;
   });
   root.querySelectorAll("[data-goto-run]").forEach((a) => a.onclick = (ev) => {
     ev.preventDefault();
-    if (useGitHub()) document.querySelector('#r-mode [data-mode="sector"]').click();
     location.hash = "run";
   });
 }
@@ -308,17 +303,12 @@ export async function sectorOpen(ticker) {
     return;
   }
   box.innerHTML = `<p><b>${esc(ticker)}</b> · ${esc(c?.name || "")} has no company detail yet. Building it fetches its filings and
-    ${useGitHub() ? "publishes statements, ratios, a profile and a DCF on default assumptions here (a few minutes)"
-      : "builds statements, ratios, a profile and a DCF on default assumptions in this browser, saved on this device"}.</p>
-    <div class="actions"><button type="button" class="primary" id="sec-build">Build Company Detail + DCF for ${esc(ticker)}</button>
+    builds statements, ratios, a profile, a DCF and comps against its closest peers in this browser, saved on this device.</p>
+    <div class="actions"><button type="button" class="primary" id="sec-build">Build Company Detail, DCF + Comps for ${esc(ticker)}</button>
     <span class="status" role="status"></span></div>`;
   box.scrollIntoView({ behavior: "smooth", block: "nearest" });
   $("sec-build").onclick = async () => {
     const st = box.querySelector(".status");
-    if (!useGitHub()) { $("sec-build").disabled = true; await runInBrowser({ ticker, models: "auto" }, st); return; }
-    st.className = "status"; st.textContent = "Starting…";
-    try {
-      setStatus(st, await dispatchPipeline({ ticker, as_of: new Date().toISOString().slice(0, 10), models: "dcf", stop_after: "L2" }));
-    } catch (err) { setStatus(st, { ok: false, msg: err.message }); }
+    $("sec-build").disabled = true; await runInBrowser({ ticker, models: "auto" }, st);
   };
 }

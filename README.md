@@ -17,7 +17,7 @@ The Valuation Model turns a company's SEC filings into normalized statements, ra
 - **Analyzes statements three ways.** Standard ratios, managerial (working capital) ratios and reformulated operating/financing ratios, with definitions taken from MBA course workbooks.
 - **Values with a simulated DCF.** 2,000 seeded runs over near-term growth, WACC and terminal growth. Bear and Bull are the 10th and 90th percentiles.
 - **Compares methods.** Public comparables, plus reconciliation into a football field that explains why the methods differ.
-- **Runs in your browser.** Anyone can value a company, screen a sector, pick comps peers and run comps from the site with no token. The same Python engine runs in the browser through Pyodide, and the results are saved on that device only. An optional Alpha Vantage key of your own adds share prices.
+- **Runs in your browser.** Anyone can value a company, screen a sector, pick comps peers and run comps from the site with no token. The same Python engine runs in the browser through Pyodide, and the results are saved on that device only. One pull builds the company, the DCF and comps against six peers picked automatically from its sector. SEC filings are the source; Yahoo fills gaps and cross-checks them.
 - **Screens sectors.** GICS-style groups of SEC industry codes, with benchmarks and a peer picker that saves comps peer lists back to the repo.
 
 ## Status
@@ -110,7 +110,7 @@ Only government data and Damodaran's openly published datasets reach the public 
 - **Damodaran's datasets** are published freely for teaching and updated each January. Each figure that uses them names the industry row and date.
 - **SEC and FRED** are US government data. Requests carry a contact User-Agent and stay within the SEC's fair-access limit of 10 requests a second.
 - **Showcase mode** (the default for the public site) never fetches Yahoo or Alpha Vantage. If a run did carry their values, publish strips the prices and anything derived from them, and skips any company with Yahoo backfill. Price-based outputs on the public site appear only in the synthetic demo.
-- **Runs in your browser** keep everything on your device. Prices come only from your own Alpha Vantage or Finnhub key, called straight from your browser, or from Yahoo when you open the site from your own machine (`localhost`); the proxy relays Yahoo for localhost only.
+- **Runs in your browser** keep everything on your device. Prices, beta and statement items the filings lack come from Yahoo through the proxy, or from your own Alpha Vantage or Finnhub key, called straight from your browser. Yahoo's statement figures are also used to cross-check the SEC's, and shown as Data checks.
 - **Private runs** (`app/run_private.py`) write only to `private/`, which is gitignored. Keys stay in environment variables or repository secrets, never in the code.
 - The repository ships code, configuration and the synthetic demo. It does not ship a third-party dataset.
 

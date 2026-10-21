@@ -2,6 +2,16 @@
 
 All notable changes to the Valuation Model. Newest first.
 
+## [0.3.1] - 2026-10-21
+- One pull does it all: Run Here (and Build from a sector table) picks the company's six closest peers from its sector and runs comps with the DCF. The peer picker opens on those peers to change them.
+- Everything on the site runs in the browser: the "Publish to the Site" card and the GitHub token are gone (publishing stays in GitHub Actions).
+- Yahoo is relayed for the public site, not just localhost: prices, beta, and statement items the filings lack. Alpha Vantage or Finnhub keys are the fallback and cross-check Yahoo's close.
+- Data checks: SEC figures tie out against themselves and are compared with Yahoo's for the same years; differences are listed under Statements and in the warnings.
+- Statements: Income Statement / Balance Sheet / Cash Flow / Dividends / All toggles, each with a chart of its main lines (revenue, operating and net income; assets, liabilities, debt and cash; CFO, CFI, CFF and FCF; dividends and buybacks against earnings and FCF). The Dividends view adds dividends per share, payout ratio, total payout and FCF coverage. Cash from investing and financing added to the Cash Flow statement.
+- Ratios: each framework opens on a chart of the ratios that carry it (RNOA, ROCE and NOPM; the operating cycle and cash conversion cycle; DuPont ROE, ROA and margin; Debt/EBITDA, interest cover and Altman Z; cash vs. accrual earnings), with a line on how to read it.
+- A $K / $M / $B switch on Results sets the unit of every dollar table, remembered in this browser. Selected toggles are highlighted in the accent color.
+- Sector screens in the browser read EDGAR's SIC lists from site/data/sic_members.json, which the weekly Refresh now publishes; the SEC refuses that EDGAR page to the proxy.
+
 ## [0.3.0] - 2026-10-21
 - Weekly Refresh builds about 40 real companies and two sector screens from SEC filings, so visitors browse them with no token.
 - Published data moves to the site-data branch, replaced by one commit on each save, so main stays code only.

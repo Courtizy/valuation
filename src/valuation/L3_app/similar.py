@@ -61,3 +61,24 @@ def from_card(card: dict) -> dict:
     v = card.get("vector") or {}
     return {"ticker": card["ticker"], "traits": card.get("traits") or {}, "revenue": v.get("revenue"),
             **{k: v.get(k) for k in KEYS if k != "log_revenue"}}
+
+
+def pick_peers(sector: dict, ticker: str, n: int = 6) -> dict | None:
+    """Comps peers for a ticker from a sector screen, as the peer picker would tick them: the
+    narrowest level (industry, then group, then sector) with at least six companies, ranked by
+    closeness, the n closest. {level, label, peers: [{ticker, score}]}, or None if the ticker
+    isn't in the screen."""
+    rows = [r for r in sector.get("companies") or [] if r.get("ticker")]
+    me = next((r for r in rows if r["ticker"] == ticker.upper()), None)
+    if not me:
+        return None
+    mine = me.get("classification") or {}
+    for level in ("industry", "group", "sector"):
+        pool = [r for r in rows if mine.get(level) and (r.get("classification") or {}).get(level) == mine[level]]
+        if len(pool) >= n:
+            break
+    else:
+        level, pool = "all", rows
+    ranked = [r for r in rank(me, pool) if r["ticker"]][:n]
+    return {"level": level, "label": mine.get(level) or sector.get("label"), "sector": sector.get("label"),
+            "peers": [{"ticker": r["ticker"], "score": r["score"]} for r in ranked]} if ranked else None
