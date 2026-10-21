@@ -1,0 +1,27 @@
+{
+  "multiples": [
+    "ev_ebitda",
+    "ev_sales"
+  ],
+  "range": "min_max",
+  "peers": [
+    {
+      "ticker": "IBM"
+    },
+    {
+      "ticker": "INGM"
+    },
+    {
+      "ticker": "DELL"
+    },
+    {
+      "ticker": "SNX"
+    },
+    {
+      "ticker": "STX"
+    }
+  ],
+  "sources": {
+    "peers": "picked from Technology (screened 2026-10-03) on 2026-10-03"
+  }
+}
