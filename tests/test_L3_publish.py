@@ -124,4 +124,6 @@ def test_export_changelog_parses():
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     releases = mod.changelog()
-    assert releases[0]["version"] == "0.2.0" and releases[0]["items"]
+    # the newest release is the package version, so the two can't drift apart
+    version = re.search(r'^version = "([^"]+)"', (ROOT / "pyproject.toml").read_text(), flags=re.M).group(1)
+    assert releases[0]["version"] == version and releases[0]["items"]
