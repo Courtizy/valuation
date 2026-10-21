@@ -484,3 +484,23 @@ a.btn:hover { filter: brightness(1.08); }
 
 /* a button that reads as an inline link (Run page: Clear) */
 button.linkish { background: none; border: 0; padding: 0; color: var(--accent, inherit); text-decoration: underline; cursor: pointer; font: inherit; }
+
+/* ---- market snapshot ---- */
+.qhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin-bottom: 12px; }
+.qhead .pos { color: var(--good); } .qhead .neg { color: var(--critical); }
+.qgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px 18px; }
+.qitem { border-top: 1px solid var(--border); padding-top: 6px; min-width: 0; }
+.qitem .label { font-size: 0.78rem; color: var(--ink-2); }
+.qrange { position: relative; height: 4px; margin-top: 6px; background: var(--surface-2); border-radius: 2px; }
+.qrange span { position: absolute; top: -3px; width: 2px; height: 10px; margin-left: -1px; background: var(--accent); }
+
+/* Deal view */
+#panel-deal > .card + .card { margin-top: 16px; }
+#panel-deal h3 { font-size: 13px; margin: 0 0 8px; }
+.ff-bar .px.offer { border-left: 2px solid var(--ink); }
+table.deal-sum td:not(:first-child), table.deal-sum th:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
+table.deal-sum input.dw { width: 64px; text-align: right; }
+table.deal-sum tr.na td { color: var(--muted); }
+.status:empty { display: none; }
+#panel-deal textarea { width: 100%; font: 12px/1.4 var(--font-mono, monospace); }
+#pd-table td:nth-child(2), #pd-table td:nth-child(3), #pd-table th:nth-child(2), #pd-table th:nth-child(3) { text-align: left; }

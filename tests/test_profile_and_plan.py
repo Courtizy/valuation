@@ -69,7 +69,7 @@ def test_overrides_and_acquisition_context():
     p = method_plan(_profile(stage="mature grower", predictability="high"), ["dcf", "comps", "precedents"],
                     {"weights": {"dcf": 1, "precedents": 3}})
     w = {m["model"]: m["weight"] for m in p["methods"]}
-    assert w == {"dcf": A(0.25), "precedents": A(0.75), "comps": 0.0, "lbo": 0.0}
+    assert w == {"dcf": A(0.25), "precedents": A(0.75), "comps": 0.0, "lbo": 0.0, "dcf_synergy": 0.0, "just_synergy": 0.0}
     assert p["methods"][0]["model"] == "precedents" and p["methods"][0]["role"] == "primary"
     acq = method_plan(None, ["dcf", "precedents"], {"context": "acquisition"})
     assert acq["context"] == "acquisition"

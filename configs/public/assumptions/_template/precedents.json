@@ -1,0 +1,7 @@
+{
+  "csv": "Target Name,Acquiror Name,Year Announced,Price Per Share,Target Share Price 1 Week Prior to Announcement,Target Share Price 4 Weeks Prior to Announcement,Shares Out. (mil),Net Debt ($ mil),Target Net Sales LTM ($mil),Target EBITDA LTM ($mil),Best\nExample Target,Example Buyer,2024,50.00,38.00,37.00,100,250,1200,240,yes\n",
+  "best": null,
+  "choice": 0,
+  "central": {"spread": [0.1, 0.1], "percentile": {"ev_sales": null, "ev_ebitda": null}},
+  "sources": {"deals": "where the deal list comes from (e.g. SDC Platinum export, date)"}
+}

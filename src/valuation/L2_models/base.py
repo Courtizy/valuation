@@ -6,7 +6,9 @@ from dataclasses import asdict, dataclass, field
 from typing import Protocol
 
 RESULT_SCHEMA_VERSION = "0.1.0"
-MODEL_NAMES = ("dcf", "comps", "lbo", "ipo", "precedents")
+MODEL_NAMES = ("dcf", "comps", "lbo", "ipo", "precedents", "dcf_synergy", "just_synergy")
+# models that live in another model's package (the synergy DCFs reuse the standalone DCF's inputs)
+_MODULE = {"dcf_synergy": "dcf", "just_synergy": "dcf"}
 
 
 @dataclass
@@ -35,4 +37,5 @@ class Model(Protocol):
 def get_model(name: str) -> Model:
     if name not in MODEL_NAMES:
         raise KeyError(f"unknown model {name!r}; choose from {MODEL_NAMES}")
-    return importlib.import_module(f"valuation.L2_models.{name}").MODEL
+    mod = importlib.import_module(f"valuation.L2_models.{_MODULE.get(name, name)}")
+    return getattr(mod, "MODELS", {}).get(name) or mod.MODEL

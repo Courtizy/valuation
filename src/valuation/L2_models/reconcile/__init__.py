@@ -8,15 +8,17 @@ Builds comparison.json with:
   - consistency warnings: different as_of dates or different input files
   - assumption differences: fields present in 2+ models whose values differ,
     which is how a value gap gets split into "inputs" vs "method"
+  - with a deal (deal.json): the standalone and offer price ranges (deal.py)
 """
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
+from .deal import deal_summary
 from .methods import method_plan
 
-COMPARISON_SCHEMA_VERSION = "0.2.0"
+COMPARISON_SCHEMA_VERSION = "0.3.0"
 
 
 def _flatten(d: dict, prefix: str = "") -> dict:
@@ -31,9 +33,10 @@ def _flatten(d: dict, prefix: str = "") -> dict:
 
 
 def build_comparison(result_paths: list[str | Path], detail: dict | None = None,
-                     overrides: dict | None = None) -> dict:
+                     overrides: dict | None = None, deal: dict | None = None) -> dict:
     """`detail` (company_detail.json) supplies the profile and price;
-    `overrides` is configs/public/assumptions/{TICKER}/reconcile.json (context, weights)."""
+    `overrides` is configs/public/assumptions/{TICKER}/reconcile.json (context, weights);
+    `deal` (deal.json) adds the standalone and offer price ranges (deal.py)."""
     results = [json.loads(Path(p).read_text()) for p in result_paths]
     if not results:
         raise ValueError("no model results to reconcile")
@@ -94,5 +97,6 @@ def build_comparison(result_paths: list[str | Path], detail: dict | None = None,
             for r in sorted(results, key=lambda r: r["model"])
         ],
         "assumption_differences": differences,
+        "deal": deal_summary(by_model, detail, deal or {}) if deal or "precedents" in by_model else None,
         "warnings": warnings,
     }

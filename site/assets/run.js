@@ -54,10 +54,13 @@ export async function runInBrowser(job, status) {
     await saveDevice(out.files);
     for (const [rel, text] of Object.entries(out.assumptions || {})) await saveAssumption(rel, JSON.parse(text));   // peers it picked
     renderSaved();
-    setStatus(status, { ok: !failed.length, msg: failed.length
+    const done = { ok: !failed.length, msg: failed.length
       ? `Done, with problems: ${failed.map(([step, , msg]) => `${step} (${msg})`).join("; ")}`
-      : `Done. ${job.sector ? "The screen" : job.ticker} is saved on this device.` });
+      : `Done. ${job.sector ? "The screen" : job.ticker} is saved on this device.` };
+    setStatus(status, done);
     await showDevice?.(job.sector ? null : job.ticker);
+    const again = status.id && document.getElementById(status.id);     // the page re-rendered: keep the outcome in view
+    if (again && again !== status) setStatus(again, done);
     return true;
   } catch (err) {
     setStatus(status, { ok: false, msg: `Run failed: ${err.message}` });

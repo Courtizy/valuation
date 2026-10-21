@@ -50,6 +50,16 @@ def _latest_share_count(records: list[dict], as_of: str):
     return max(rows, key=lambda r: r["end"])["value"] if rows else None
 
 
+def _quote(raw_market: dict, price, price_date) -> dict | None:
+    """The trading-day snapshot (open, range, previous close, 52-week range, volume), when it is for the price's day."""
+    q = raw_market.get("quote")
+    if not q or q.get("date") != price_date:
+        return None
+    prev = q.get("prev_close")
+    return {**q, "change": price - prev if price is not None and prev else None,
+            "change_pct": price / prev - 1 if price is not None and prev else None}
+
+
 def _market_block(raw_market: dict | None, as_of: str, views: dict, risk_free: dict | None = None,
                   records: list[dict] | None = None) -> dict | None:
     """Price, market cap, beta and a WACC estimate. Share count: raw_market's, else the newest filed count."""
@@ -68,7 +78,7 @@ def _market_block(raw_market: dict | None, as_of: str, views: dict, risk_free: d
              "shares_outstanding": shares, "market_cap": mcap,
              "beta": b and {**b, "index": (raw_market.get("index") or {}).get("symbol")},
              "source": raw_market.get("source"), "fallback": bool(raw_market.get("fallback")),
-             "check": raw_market.get("check"), "wacc": None}
+             "check": raw_market.get("check"), "wacc": None, "quote": _quote(raw_market, price, price_date)}
     if b and mcap and risk_free and risk_free.get("value") is not None:
         ttm = (views.get("ttm") or views.get("annual") or [{}])[-1].get("values", {})
         debt = (ttm.get("short_term_debt") or 0) + (ttm.get("long_term_debt") or 0)

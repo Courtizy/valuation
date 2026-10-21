@@ -1,6 +1,6 @@
 import { areaChart, groupedBarChart, lineChart, spreadChart } from "./charts.js";
 import { NA, days, esc, estLabel, fin, label, millions, money, monthYear, num, pct, periodLabel, price, times, titleCase, unit, unitShort } from "./format.js";
-import { renderSector } from "./sector.js";
+import { renderRatioBench, renderSector } from "./sector.js";
 import { $, fileHref, runRoot, state } from "./state.js";
 import { acct, cellOf, finRow } from "./tables.js";
 
@@ -480,37 +480,6 @@ export const RATIO_ROWS = {
   },
 };
 
-// The few ratios that carry each framework, charted over the same columns as the table.
-// Picks follow the usual analysis: Penman's reformulated drivers (RNOA = NOPM × NOAT, ROCE adds
-// leverage), the operating cycle (DSO + DIO − DPO = cash conversion cycle), DuPont (ROE = margin ×
-// turnover × leverage), credit (Debt/EBITDA, interest cover, Altman Z) and earnings quality (cash vs. accruals).
-const R = (a, path) => path.split(".").reduce((o, k) => (o == null ? null : o[k]), a);
-export const RATIO_CHARTS = {
-  reformulated: { format: pct, note: "RNOA is the return on the operating business; ROCE is what shareholders earn after leverage. ROCE above RNOA means borrowing is adding to returns.",
-    series: [["RNOA", "ratios.reformulated.avg.rnoa", 1], ["ROCE", "ratios.reformulated.avg.roce", 2], ["Operating Margin (NOPM)", "ratios.reformulated.nopm", 3]] },
-  managerial: { format: days, note: "The operating cycle: days to collect from customers and to sell inventory, less days taken to pay suppliers. A shorter cash conversion cycle ties up less cash.",
-    series: [["Collection Period", "ratios.managerial.collection_period_days", 1], ["Days Inventory", "ratios.managerial.days_inventory", 2], ["Payment Period", "ratios.managerial.payment_period_days", 4],
-      ["Cash Conversion Cycle", (a) => { const m = a.ratios?.managerial || {}; return fin(m.collection_period_days) && fin(m.payment_period_days) ? m.collection_period_days + (m.days_inventory || 0) - m.payment_period_days : null; }, 3]] },
-  traditional: { format: pct, note: "DuPont: ROA = profit margin × asset turnover, and ROE = ROA × leverage. The gap between ROE and ROA is the part that comes from the balance sheet.",
-    series: [["ROE", "ratios.traditional.roe", 1], ["ROA", "ratios.traditional.roa", 2], ["Profit Margin", "ratios.traditional.profit_margin", 3]] },
-  risk: { format: times, note: "Credit health: Debt / EBITDA (lower is safer, above about 3x is high), EBIT / interest (higher is safer, below about 3x is thin) and the Altman Z (below 1.2 distress, above 2.9 safe).",
-    series: [["Debt / EBITDA", "ratios.risk.credit.debt_to_ebitda", 1], ["EBIT / Interest", "ratios.risk.credit.ebit_to_interest", 2], ["Altman Z (Private Form)", "ratios.risk.altman_z.private", 3]] },
-  signals: { format: num, note: "Earnings quality: cash from operations against operating income (about 1 or more means profits turn into cash) and accruals against the change in sales (large accruals can flag earnings that won't repeat).",
-    series: [["CFO / Operating Income", "ratios.signals.cfo_to_operating_income", 1], ["Accruals / ΔSales", "ratios.signals.accruals_to_sales_change", 2], ["Depreciation / Capex", "ratios.signals.depreciation_to_capex", 3]] },
-};
-
-function renderRatioChart(cols) {
-  const spec = RATIO_CHARTS[state.fw];
-  $("ratio-graph").hidden = !spec;
-  if (!spec) return;
-  const series = spec.series.map(([name, get, c]) => ({ name, color: `var(--series-${c})`,
-    values: cols.map((a) => { try { const v = typeof get === "function" ? get(a) : R(a, get); return fin(v) ? v : null; } catch { return null; } }) }))
-    .filter((x) => x.values.some(fin));
-  $("ratio-legend").innerHTML = series.map((x) => `<span><span class="key" style="background:${x.color}"></span>${x.name}</span>`).join("");
-  $("ratio-chart-note").textContent = spec.note;
-  lineChart($("ratio-chart"), { categories: cols.map(analysisLabel), series, format: spec.format, label: `${titleCase(state.fw)} ratios` });
-}
-
 export function renderRatios() {
   const an = state.detail.analysis;
   const cols = [...an.annual.slice(-5)];
@@ -528,6 +497,6 @@ export function renderRatios() {
     }), { kind: o.kind || "item", indent: o.indent ?? (inGroup ? 1 : 0) });
   }
   $("ratio-table").innerHTML = html + "</tbody>";
-  renderRatioChart(cols);
+  renderRatioBench();
   $("ratio-note").textContent = `${spec.note} Marginal tax rate ${pct(state.detail.classification.marginal_tax_rate)}. Source: SEC filings via XBRL.`;
 }

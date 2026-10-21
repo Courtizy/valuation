@@ -52,6 +52,13 @@ def raw_market(ticker: str) -> dict:
            "index": {"symbol": "^GSPC", "monthly": _series(4800.0, idx)}, "errors": [], "fundamentals": None,
            "check": {"source": "alphavantage", "tolerance": 0.02, "status": "ok", "price": round(price * 1.002, 2),
                      "price_date": AS_OF, "diff_pct": 0.002}}
+    year = [m["adj_close"] for m in doc["monthly"][-12:]] + [price]
+    prev = round(price / (1 + rng.gauss(0, 0.012)), 2)
+    doc["quote"] = {"source": doc["source"], "date": AS_OF, "close": price, "prev_close": prev, "open": round((prev + price) / 2, 2),
+                    "day_high": round(max(prev, price) * 1.008, 2), "day_low": round(min(prev, price) * 0.992, 2),
+                    "volume": round(shares * 0.004), "avg_volume_3m": round(shares * 0.0045),
+                    "wk52_high": round(max(year) * 1.03, 2), "wk52_high_date": None,
+                    "wk52_low": round(min(year) * 0.97, 2), "wk52_low_date": None}
     if ticker == "DEMOG":
         doc["check"] = {**doc["check"], "status": "mismatch", "price": round(price * 1.026, 2), "diff_pct": 0.026}
     if ticker == "DEMOU":

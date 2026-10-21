@@ -90,7 +90,7 @@ const VALIDATION = [
   ["Normalized statements tie to reported totals", "Done", "Balance, gross profit and net income checks run with every normalization, shown under Statements"],
   ["Filed figures cross-checked against a second source", "Done", "Each run compares the SEC figures with Yahoo's for the same years (2%) and lists any that differ"],
   ["Simulation is seeded and reproducible", "Done", "Same inputs and seed give the same numbers"],
-  ["Ratios, DCF and comps match the course workbooks", "Done locally", "Parity tests need the workbooks, so they're skipped in CI"],
+  ["Ratios, DCF, comps, synergy models, transaction comps and the deal summary match the course workbooks", "Done locally", "Parity tests need the workbooks, so they're skipped in CI"],
   ["Shared math imports nothing else from the app", "Done", "Enforced by a test until it moves to Shared Core"],
   ["Live runs reviewed on real tickers against published estimates", "Planned", ""],
   ["Parity and seeded-run suites in CI", "Planned", ""],
@@ -115,7 +115,7 @@ export async function renderMethod() {
           <ul class="checklist">${VALIDATION.map(([t, st, note]) => `<li><span class="vstat ${st === "Planned" ? "planned" : "done"}">${st}</span>
             <span><b>${esc(t)}</b>${note ? `<span class="muted small"> · ${esc(note)}</span>` : ""}</span></li>`).join("")}</ul></section>
         <section id="m-limits" class="card"><h2>Limits</h2>
-          <p>Analysis of method, not investment advice. Built for non-financial operating companies; banks, insurers, REITs and pre-revenue biotech need different frameworks. US GAAP filers only (no 20-F / IFRS). Terminal value usually carries most of the value, so long-run assumptions matter more than any single year. Precedents are illustrative until that model is built. The public site shows no real market prices.</p></section>
+          <p>Analysis of method, not investment advice. Built for non-financial operating companies; banks, insurers, REITs and pre-revenue biotech need different frameworks. US GAAP filers only (no 20-F / IFRS). Terminal value usually carries most of the value, so long-run assumptions matter more than any single year. The public site shows no real market prices.</p></section>
         <section id="m-changelog" class="card"><h2>Changelog</h2><div id="m-changes" class="muted">Loading…</div></section>
       </div></div>`;
     body.querySelectorAll("[data-jump]").forEach((a) => a.onclick = (e) => {

@@ -488,3 +488,7 @@ class DCF:
 
 
 MODEL = DCF()
+
+from valuation.L2_models.dcf.synergy import DCFSynergy, JustSynergy  # noqa: E402
+
+MODELS = {"dcf": MODEL, "dcf_synergy": DCFSynergy(MODEL), "just_synergy": JustSynergy(MODEL)}

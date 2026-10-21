@@ -32,7 +32,7 @@ const STEPS = [
   { at: "#stmt-table", title: "Statements", go: async () => { await company("DEMOU"); view("annual"); open("statements"); },
     text: "Hybrid accounting layout: indents, subtotal bands, deductions in parentheses, estimates shaded. Small marks show provenance: <b>d</b> = derived (Q4 = year − 9 months), <b>y</b> = missing from the filings and filled from Yahoo (DEMOU's D&amp;A for two years)." },
   { at: "#ratio-seg", title: "Ratios", go: async () => { open("ratios"); },
-    text: "Five frameworks: reformulated (operating vs financing), managerial balance sheet, traditional, risk (Altman Z, credit) and accounting signals." },
+    text: "Five frameworks: reformulated (operating vs financing), managerial balance sheet, traditional, risk (Altman Z, credit) and accounting signals. Each opens on its nearest figures against the sector's quartiles." },
   { at: "#sector-levels", title: "Sector › Group › Industry", go: async () => { await company("DEMO"); open("sector"); },
     text: "The company's whole sector is screened from SEC data, then narrowed by level. Counts show how many companies each level holds; the benchmarks and charts below follow your choice." },
   { at: "#bench-card", title: "Relative Performance", text: "Each figure against the sector's quartiles: the bar is Q1–Q3, the line the median, the dot this company. Green and red mark favourable and unfavourable gaps." },

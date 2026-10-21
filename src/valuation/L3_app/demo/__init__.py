@@ -7,7 +7,8 @@ own data root so it never mixes with real tickers.
 What it shows (every feature the site has):
   DEMO   mature manufacturer: your own dcf.json (forecast mode, price and beta filled from market
          data), comps against six detailed industrial peers plus a hand-entered one, an
-         illustrative precedents row, market price checked against the backup source
+         market price checked against the backup source, and a synthetic bid for the Deal view:
+         synergies and transaction comps on a synthetic deal list
   DEMOG  high-growth software: implied mode (growth solved to match the price), a price
          cross-check mismatch flag
   DEMOU  leveraged utility: no dcf.json, so the DCF default case; Yahoo was "down" so the backup
@@ -29,6 +30,7 @@ from valuation.L2_models.dcf import default_assumptions
 from valuation.L2_models.reconcile import build_comparison
 from valuation.L3_app.demo.companies import (AS_OF, DEMO_PRICES, DEMO_SIC, FEATURED, MANUAL_PEER, MARKET, PEERS,  # noqa: F401
                                    SPECS, synthetic_records)
+from valuation.L3_app.demo.deals import demo_deal_list
 from valuation.L3_app.demo.market import RISK_FREE, fundamentals_for_gaps, raw_market
 from valuation.L3_app.demo.sector import write_demo_sector
 
@@ -46,6 +48,14 @@ DCF_ASSUMPTIONS = {
               "cost_of_capital": {"risk_free": None, "equity_risk_premium": 0.05, "beta": None},
               "sources": {"mode": "synthetic demo: implied growth solved to match the price"}},
 }
+
+
+def demo_deal(detail: dict) -> dict:
+    """A synthetic bid for DEMO: cost synergies of 3% of revenue, revenue synergies a third of that."""
+    rev = detail["views"]["annual"][-1]["values"]["revenue"]
+    return {"relative_power": 0.5, "sources": {"synergies": "synthetic demo assumption"},
+            "synergies": {"annual_cost": round(rev * 0.03, -5), "revenue_pct_of_cost": 0.33, "years_to_full": 2,
+                          "cost_forever": 0.1, "revenue_growth_add": 0.005, "cost_realized": 1.0}}
 
 
 def _canonical(ticker: str) -> tuple[dict, list[dict]]:
@@ -85,7 +95,7 @@ def build_demo_data(data_dir: Path) -> dict:
     for t, detail in details.items():
         out = data_dir / t / AS_OF
         results = []
-        a = DCF_ASSUMPTIONS.get(t) or default_assumptions(detail)
+        a = dcf_a = DCF_ASSUMPTIONS.get(t) or default_assumptions(detail)
         if t not in FEATURED:
             a = {**a, "simulation": {"runs": 500}}          # peers: a lighter simulation keeps rebuilds quick
         dcf = get_model("dcf").run(detail, a).to_dict()
@@ -98,15 +108,17 @@ def build_demo_data(data_dir: Path) -> dict:
                  "sources": {"peers": "synthetic demo peers; prices from the synthetic market data"}}
             comps = get_model("comps").run(detail, a, [details[o] for o in others]).to_dict()
             results.append(_write(out / "model_results" / "comps.json", {**comps, "lineage": LINEAGE, "demo": True}))
-        if t == "DEMO":
-            # precedents isn't built yet: an illustrative row so the football field shows a reference method
-            mid = dcf["value_per_share"]["p50"]
-            prec = {"schema_version": "0.1.0", "model": "precedents", "ticker": t, "as_of": AS_OF,
-                    "value_per_share": {"p10": mid * 1.04, "p50": mid * 1.24, "p90": mid * 1.42, "mean": mid * 1.233},
-                    "assumptions_used": {}, "lineage": LINEAGE, "samples_ref": None,
-                    "notes": ["synthetic demo result, not a valuation"], "demo": True, "illustrative": True}
-            results.append(_write(out / "model_results" / "precedents.json", prec))
-        comparison = build_comparison(results, detail)
+        deal = demo_deal(detail) if t == "DEMO" else None
+        if deal:
+            # transaction comps on a synthetic deal list (as pasted from an SDC export)
+            prec = get_model("precedents").run(detail, {"csv": demo_deal_list(), "deal": deal,
+                                                        "sources": {"deals": "synthetic demo deal list"}}).to_dict()
+            results.append(_write(out / "model_results" / "precedents.json", {**prec, "lineage": LINEAGE, "demo": True}))
+            # an acquisition case: synergies sized off the company's own revenue
+            for m in ("dcf_synergy", "just_synergy"):
+                r = get_model(m).run(detail, {**dcf_a, "deal": deal}).to_dict()
+                results.append(_write(out / "model_results" / f"{m}.json", {**r, "lineage": LINEAGE, "demo": True}))
+        comparison = build_comparison(results, detail, None, deal)
         _write(out / "comparison.json", {**comparison, "demo": True})
 
     write_demo_sector(data_dir, {t: details[t] for t in ("DEMO",) + PEERS})

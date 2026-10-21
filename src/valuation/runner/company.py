@@ -27,6 +27,17 @@ class Step:
     optional: bool = False  # a failure is only a warning (market data): it never fails the run
 
 
+DEAL_MODELS = ("dcf_synergy", "just_synergy")
+
+
+def has_deal(paths: Paths, ticker: str) -> bool:
+    return paths.model_assumptions(ticker, "deal").exists()
+
+
+def has_deal_list(paths: Paths, ticker: str) -> bool:
+    return paths.model_assumptions(ticker, "precedents").exists()
+
+
 def load_peers(paths: Paths, ticker: str) -> list[str]:
     p = paths.model_assumptions(ticker, "comps")
     if not p.exists():
@@ -123,14 +134,16 @@ def plan(
         def run_model(m=m):
             model = get_model(m)
             detail = _read_json(paths.detail(ticker, as_of))
-            a_path = paths.model_assumptions(ticker, m)
+            a_path = paths.model_assumptions(ticker, "dcf" if m in DEAL_MODELS else m)
             if a_path.exists():
                 assumptions = _read_json(a_path, {})
-            elif m == "dcf":
+            elif m == "dcf" or m in DEAL_MODELS:
                 from valuation.L2_models.dcf import default_assumptions   # no dcf.json: the default case from the data
                 assumptions = default_assumptions(detail)
             else:
                 raise FileNotFoundError(f"{a_path} not found; copy configs/public/assumptions/_template/{m}.json and fill it in")
+            if m in DEAL_MODELS or m == "precedents":   # standalone inputs (or the deal list) plus the deal
+                assumptions = {**assumptions, "deal": _read_json(paths.model_assumptions(ticker, "deal"), None)}
             peer_details = [d for d in (_read_json(paths.detail(p, as_of)) for p in peers) if d] if model.needs_peers else None
             result = model.run(detail, assumptions, peer_details)
             result.lineage = lineage_block(as_of, [paths.detail(ticker, as_of)])
@@ -145,7 +158,8 @@ def plan(
             raise RuntimeError("no model produced a result to reconcile")
         done = [paths.result(ticker, as_of, m) for m in models if paths.result(ticker, as_of, m).exists()]
         overrides = _read_json(paths.model_assumptions(ticker, "reconcile"), None)
-        comp = build_comparison(done, _read_json(paths.detail(ticker, as_of)), overrides)
+        comp = build_comparison(done, _read_json(paths.detail(ticker, as_of)), overrides,
+                                _read_json(paths.model_assumptions(ticker, "deal"), None))
         paths.comparison(ticker, as_of).write_text(json.dumps(comp, indent=2))
 
     steps.append(Step("reconcile", "L2", ticker, [paths.comparison(ticker, as_of)], reconcile))

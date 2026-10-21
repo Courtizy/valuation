@@ -94,7 +94,7 @@ def test_demo_is_valid_and_flagged(tmp_path):
     assert validate_detail(detail) == []
     assert len(detail["views"]["annual"]) == 5 and detail["views"]["ttm"]
     comp = json.loads((out / "comparison.json").read_text())
-    assert comp["demo"] is True and len(comp["football_field"]) == 3
+    assert comp["demo"] is True and len(comp["football_field"]) == 5
 
 
 def test_plan_stop_after_drops_later_layers(tmp_path):

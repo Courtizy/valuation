@@ -177,6 +177,7 @@ export function renderSector() {
   lv.innerHTML = ready ? levelBar("secLevel") : "";
   if (ready) { wireSectorPicker(pick); wireLevelBar(lv, renderSector); }
   renderBenchmarks();
+  renderRatioBench();
   renderSectorCard();
 }
 
@@ -192,7 +193,60 @@ export function renderBenchmarks() {
     return;
   }
   const lv = levelRows("secLevel"), rows = lv.rows, own = ownFigures();
-  const body = SEC_METRICS.map(([k, name, f, unit, pol]) => {
+  const body = benchRows(SEC_METRICS.map((m) => m[0]));
+  card.innerHTML = `<h3>Relative Performance</h3>
+    <div class="table-wrap"><table class="list bench">${benchHead(own)}<tbody>${body}</tbody></table></div>
+    <p class="legend-note">${rows.length} companies (${esc(lv.label)}) · calendar ${state.sector.year} · screened ${esc(state.sectorMeta.as_of)}.
+      ${esc(state.company.ticker)}'s figures come from its own filings; the sector's from SEC frames by calendar year. Green and red mark favourable and unfavourable gaps; capex intensity is neither.</p>
+`;
+}
+
+// The sector screen's figures closest to each ratio framework. The screen carries a dozen figures
+// per filer, so RNOA, the working-capital days, Altman Z and the earnings signals have no sector
+// counterpart; these are the nearest ones, on the screen's definitions.
+export const RATIO_BENCH = {
+  reformulated: { keys: ["operating_margin", "roe", "roa"],
+    note: "RNOA and ROCE aren't in the sector screen; operating margin (pre-tax) and ROE are the nearest figures it has." },
+  managerial: { keys: ["capex_to_sales", "liabilities_to_assets"],
+    note: "The sector screen doesn't carry receivables, inventory or payables, so the working-capital days can't be compared yet." },
+  traditional: { keys: ["net_margin", "roa", "roe", "liabilities_to_assets"],
+    note: "The DuPont parts: net margin and ROA, and ROE with liabilities / assets standing in for leverage." },
+  risk: { keys: ["debt_to_ebitda", "liabilities_to_assets", "operating_margin"],
+    note: "Credit: Debt / EBITDA and the share of assets funded by liabilities. Altman Z and interest cover aren't in the screen." },
+  signals: { keys: ["gross_margin", "fcf_margin", "capex_to_sales", "revenue_growth"],
+    note: "Earnings quality against peers: FCF margin shows how much of revenue turns into cash." },
+};
+
+/** The ratio card's comparison: this framework's nearest sector figures, or how to get them. */
+export function renderRatioBench() {
+  const el = $("ratio-bench");
+  if (!el || !state.company) return;
+  const spec = RATIO_BENCH[state.fw] || RATIO_BENCH.reformulated;
+  const body = benchRows(spec.keys);
+  if (!body) {
+    el.innerHTML = `<p class="muted small">Against the sector: no sector screen includes ${esc(state.company.ticker)} yet. Relative Performance below can screen its sector.</p>`;
+    return;
+  }
+  const lv = levelRows("secLevel");
+  el.innerHTML = `<h3>Against the Sector</h3>
+    <div class="table-wrap"><table class="list bench">${benchHead()}<tbody>${body}</tbody></table></div>
+    <p class="legend-note">${esc(spec.note)} ${levelRows("secLevel").rows.length} companies (${esc(lv.label)}), calendar ${state.sector.year}; all twelve figures are in Relative Performance below.</p>`;
+}
+
+/** Header for benchmark rows. */
+export function benchHead(own = ownFigures()) {
+  return `<thead><tr><th>Metric</th><th>Q1</th><th>Median</th><th>Q3</th>
+      <th>${esc(state.company.ticker)} <span class="th-sub">${esc(own.period ? periodLabel(own.period) : "")}</span></th><th>vs. Median</th><th class="posbar-cell">Position <span class="muted small">bar = Q1–Q3 · line = median · dot = ${esc(state.company.ticker)}</span></th></tr></thead>`;
+}
+
+/** One row per metric key: the sector's quartiles, this company's figure (same definition as the
+ *  screen, from its latest annual filing), the gap to the median and a position bar. "" when no
+ *  sector screen includes this company. */
+export function benchRows(keys) {
+  const me = sectorMe();
+  if (!state.sector || !me) return "";
+  const rows = levelRows("secLevel").rows, own = ownFigures();
+  return keys.map((key) => SEC_METRICS.find((m) => m[0] === key)).filter(Boolean).map(([k, name, f, unit, pol]) => {
     const b = quartiles(rows.map((c) => c[k])), v = fin(own[k]) ? own[k] : me[k];
     if (!fin(b.median)) return "";
     const xs = rows.map((c) => c[k]).concat(fin(v) ? [v] : []).filter(fin), lo = Math.min(...xs), hi = Math.max(...xs), span = hi - lo || 1;
@@ -208,13 +262,6 @@ export function renderBenchmarks() {
         <span class="rng" style="left:${at(b.q1)};width:calc(${at(b.q3)} - ${at(b.q1)})"></span><span class="med" style="left:${at(b.median)}"></span>
         ${fin(v) ? `<span class="me" style="left:${at(v)}"></span>` : ""}</div></td></tr>`;
   }).join("");
-  card.innerHTML = `<h3>Relative Performance</h3>
-    <div class="table-wrap"><table class="list bench"><thead><tr><th>Metric</th><th>Q1</th><th>Median</th><th>Q3</th>
-      <th>${esc(state.company.ticker)} <span class="th-sub">${esc(own.period ? periodLabel(own.period) : "")}</span></th><th>vs. Median</th><th class="posbar-cell">Position <span class="muted small">bar = Q1–Q3 · line = median · dot = ${esc(state.company.ticker)}</span></th></tr></thead>
-      <tbody>${body}</tbody></table></div>
-    <p class="legend-note">${rows.length} companies (${esc(lv.label)}) · calendar ${state.sector.year} · screened ${esc(state.sectorMeta.as_of)}.
-      ${esc(state.company.ticker)}'s figures come from its own filings; the sector's from SEC frames by calendar year. Green and red mark favourable and unfavourable gaps; capex intensity is neither.</p>
-`;
 }
 
 export const SEC_COLS = [

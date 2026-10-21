@@ -15,6 +15,7 @@ Share prices, beta and the risk-free rate, point-in-time at `as_of`. Code: `src/
 ## Rules
 
 - **Price** = the last close on or before `as_of`. A past `as_of` never sees later prices.
+- **Quote:** `raw_market.quote` holds the as-of day's open, high, low, close and volume, the previous close, the 52-week high and low (with dates) and 3-month average volume. Yahoo's daily request covers a year for this (still one request). Alpha Vantage's free 100 days give everything but the 52-week range; Finnhub gives today's open, range and previous close. L1 copies it to `company_detail.market.quote` (with the change from the previous close) when it is for the price's day.
 - **Fallback:** when Yahoo fails or returns nothing, Alpha Vantage becomes the source and the site says so (3 requests: daily, monthly, SPY monthly), then Finnhub (2 requests: quote, metrics).
 - **Cross-check:** for the company being run and its comps peers, Alpha Vantage's close for the same day is compared with Yahoo's (1 request each, cached for the day). Within 2% = `ok`, otherwise `mismatch` (shown in red next to the price). With no key the check is `skipped`; past the daily cap, or for an as-of date older than ~100 trading days, it is `unavailable`.
 - **Budget:** 25 requests a day, shared across every run that day: a company plus 6 peers uses 7 checks, so about three such runs a day, fewer if fallbacks are needed. Rate-limit notices come back as HTTP 200 with an `Information` or `Note` key and are treated as unavailable, never as data.
