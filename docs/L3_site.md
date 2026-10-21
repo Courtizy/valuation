@@ -45,7 +45,7 @@ Anyone can value a company from the **Run ▸** page with no token. The results 
 
 - **No prices.** Yahoo and Alpha Vantage are replaced by stand-ins that refuse, so a browser run uses Damodaran's industry beta (relevered at the company's D/E), the implied ERP and the 10-year Treasury. That matches the published showcase data.
 - **Nothing is published.** Each run returns the device's whole `data/` folder (earlier runs are passed back in), which replaces what IndexedDB holds. **Clear** on the Run page removes it.
-- **The proxy URL** is `PROXY_URL` in `site/assets/config.js`. A visitor can set another under **Data Proxy** on the Run page; it's remembered in this browser. Without one, Run Here explains that the proxy isn't set up.
+- **The proxy URL** is `PROXY_URL` in `site/assets/config.js` (https://valuation.jason-courtoy.workers.dev). A visitor can set another under **Data Proxy** on the Run page; it's remembered in this browser. Without one, Run Here explains that the proxy isn't set up.
 - The first run downloads Pyodide (about 10 MB, then cached by the browser). The engine itself is about 140 KB.
 
 ## Published data and the weekly refresh

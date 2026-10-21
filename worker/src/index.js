@@ -1,4 +1,4 @@
-// valuation-proxy: GET /?url=<https URL> for a short allowlist of public sources.
+// valuation (proxy): GET /?url=<https URL> for a short allowlist of public sources.
 // - only the hosts and paths below; GET only; https only
 // - only the Decision Models site (ALLOWED_ORIGINS) gets CORS headers
 // - adds the contact User-Agent the SEC requires (secret SEC_USER_AGENT)

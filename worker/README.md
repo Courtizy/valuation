@@ -1,4 +1,4 @@
-# valuation-proxy (Cloudflare Worker)
+# valuation (Cloudflare Worker proxy)
 
 The in-browser Run reads SEC filings, FRED and Damodaran's tables through this Worker. Browsers can't
 call the SEC directly: it sends no CORS headers and requires a contact User-Agent.
@@ -16,8 +16,8 @@ call the SEC directly: it sends no CORS headers and requires a contact User-Agen
 2. **Root directory:** `worker`. Build command: leave blank. Deploy command: `npx wrangler deploy`.
 3. After the first deploy: the Worker → **Settings → Variables and Secrets → Add → Secret**
    `SEC_USER_AGENT` = `Jason Courtoy your@email.com`.
-4. Put the Worker URL (`https://valuation-proxy.<your-subdomain>.workers.dev`) in `PROXY_URL` in
-   `site/assets/config.js`. Until then a visitor can paste it under **Data Proxy** on the Run page.
+4. The Worker URL (`https://valuation.jason-courtoy.workers.dev`) is `PROXY_URL` in
+   `site/assets/config.js`. A visitor can paste another under **Data Proxy** on the Run page.
 
 Every push to `main` that changes `worker/` redeploys it.
 
@@ -25,7 +25,7 @@ Every push to `main` that changes `worker/` redeploys it.
 
 ```bash
 curl -H "Origin: https://courtizy.github.io" \
-  "https://valuation-proxy.<you>.workers.dev/?url=https://data.sec.gov/submissions/CIK0000320193.json" | head -c 200
+  "https://valuation.jason-courtoy.workers.dev/?url=https://data.sec.gov/submissions/CIK0000320193.json" | head -c 200
 ```
 
 Free plan: 100,000 requests a day. One company is about three SEC requests, and repeat views come from the edge cache.
