@@ -2,6 +2,12 @@
 
 All notable changes to the Valuation Model. Newest first.
 
+## [0.3.0] - 2026-10-21
+- Weekly Refresh builds about 40 real companies and two sector screens from SEC filings, so visitors browse them with no token.
+- Published data moves to the site-data branch, replaced by one commit on each save, so main stays code only.
+- README: a Data and licensing section listing each source and where it appears.
+- Pages deploys no longer get cancelled by a skipped run.
+
 ## [0.2.1] - 2026-10-21
 - Comps peer lists for AAPL, DELL, HPQ and KO restored under configs/public/assumptions (dropped in the 0.2.0 layout move).
 - README rewritten: live links, status by layer, validation and course workbook parity, publishing real companies, roadmap.
