@@ -93,10 +93,11 @@ def _r(model, low, mid, high):
 
 
 def test_offer_range_weights_power_and_synergy_share():
-    by = {"precedents": _r("precedents", 40, 45, 50), "dcf_synergy": _r("dcf_synergy", 42, 48, 55),
+    by = {"precedents_premium": _r("precedents_premium", 40, 45, 50), "dcf_synergy": _r("dcf_synergy", 42, 48, 55),
           "just_synergy": _r("just_synergy", 41, 46, 52), "dcf": _r("dcf", 30, 33, 36)}
     detail = {"market": {"price": 33.0, "quote": {"wk52_low": 25.0, "wk52_high": 40.0}}}
-    s = deal_summary(by, detail, {"relative_power": 0.6, "offer_price": 53.0})
+    s = deal_summary(by, detail, {"relative_power": 0.6, "offer_price": 53.0,
+                                  "weights": {"offer": {"precedents_premium": 0.34}}})
     o = s["offer"]["range"]
     low = 0.34 * 40 + 0.33 * 42 + 0.33 * 41
     high = 0.34 * 50 + 0.33 * 48 + 0.33 * 46          # synergy methods enter the top at their best guess
@@ -119,3 +120,55 @@ def test_weights_override_and_blank_rows():
     rows = {r["method"]: r for r in s["offer"]["methods"]}
     assert rows["dcf_synergy"]["adjusted_weight"] == A(1.0)
     assert s["offer"]["range"]["aggressive"] == A(48)
+
+
+# ------------------------------------------------------------ transaction comps
+
+from valuation._core.deals import deal_figures, parse_deal_list, percentile, percentrank_exc  # noqa: E402
+from valuation.L2_models.precedents import transaction_comps  # noqa: E402
+
+# copied from Excel: header cells with line breaks come quoted
+_HEAD = ["Year\nAnnounced", "Target Name", "Acquiror Name", "Enterprise\nValue\nevaluated at offer price",
+         "Target\nNet\nSales\nLTM\n($mil)", "Target\nEBITDA\nLTM\n($mil)", "Net Income\nLast Twelve\nMonths\n($ Mil)",
+         "Price\nPer\nShare", "Target\nShare Price\n1 Week\nPrior to\nAnnouncement",
+         "Target\nShare Price\n4 Weeks\nPrior to\nAnnouncement", "Net Debt\n($ mil)", "Shares\nOut. (mil)"]
+SDC = ("\t".join(f'"{h}"' if "\n" in h else h for h in _HEAD) + "\n"
+       "2019\tAlpha Corp\tBuyer A\t1,200\t1000\t200\t50\t25.00\t20.00\t19.00\t200\t40\n"
+       "2020\tBeta Inc\tBuyer B\t900\t600\t150\t40\t$30.00\t28.00\t31.00\t(50)\t30\n")
+
+
+def test_parse_sdc_paste_and_figures():
+    deals = parse_deal_list(SDC)
+    a, b = deals
+    assert a["target"] == "Alpha Corp" and a["acquirer"] == "Buyer A" and a["ev"] == 1200 and a["net_income"] == 50
+    assert b["net_debt"] == -50 and b["offer_price"] == 30
+    fa, fb = deal_figures(a), deal_figures(b)
+    assert fa["premium"] == A(0.3157894736842105)          # 4-week premium is the larger
+    assert fb["premium"] == A(30 / 28 - 1)                  # 4-week premium negative: the 1-week one
+    assert fa["tx_ev_sales"] == A(1.2) and fa["built_ev_sales"] == A((25 * 40 + 200) / 1000)
+    assert fa["pre_ev_ebitda"] == A((20 * 40 + 200) / 200)
+
+
+def test_csv_needs_target_and_offer():
+    with pytest.raises(ValueError, match="offer_price"):
+        parse_deal_list("target,sales\nA,1\n")
+
+
+def test_excel_percentile_functions():
+    xs = [1, 2, 3, 4]
+    assert percentile(xs, 0.5) == A(2.5) and percentile(xs, 0.25) == A(1.75)
+    assert percentrank_exc(xs, 2) == A(0.4) and percentrank_exc(xs, 2.5) == A(0.5)
+    assert percentrank_exc(xs, 5) is None
+
+
+def test_transaction_comps_rows_and_choice():
+    deals = parse_deal_list(SDC)
+    t = {"price": 10.0, "shares": 100.0, "net_debt": 0.0, "sales": 500.0, "ebitda": 100.0, "ev_sales": 2.0, "ev_ebitda": 10.0}
+    out = transaction_comps(deals, t)
+    rows = out["summary_rows"]
+    assert set(rows) == {"precedents_pre_sales", "precedents_pre_ebitda", "precedents_sales", "precedents_ebitda", "precedents_premium"}
+    lo, mid, hi = rows["precedents_premium"]
+    assert lo <= mid <= hi and mid == A(10 * (1 + (0.3157894736842105 + 30 / 28 - 1) / 2))
+    best = transaction_comps(deals, t, best=["Beta Inc"], choice=1)
+    assert best["best"] == ["Beta Inc"]
+    assert best["summary_rows"]["precedents_premium"] == A([10 * 30 / 28] * 3)

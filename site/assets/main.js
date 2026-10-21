@@ -144,17 +144,18 @@ export async function selectRun(asOf) {
     // one round trip: every file this run needs, fetched together
     const root = runRoot(), base = `${root}${state.company.ticker}/${state.run.as_of}/model_results`;
     const opt = (cond, path) => (cond ? getJSON(path).catch(() => null) : Promise.resolve(null));
-    let syn, just;
-    [state.detail, state.comparison, state.comps, state.dcf, syn, just] = await Promise.all([
+    let syn, just, prec;
+    [state.detail, state.comparison, state.comps, state.dcf, syn, just, prec] = await Promise.all([
       getJSON(`${root}${state.run.detail}`),
       opt(state.run.comparison, `${root}${state.run.comparison}`),
       opt(state.run.models?.includes("comps"), `${base}/comps.json`),
       opt(state.run.models?.includes("dcf"), `${base}/dcf.json`),
       opt(state.run.models?.includes("dcf_synergy"), `${base}/dcf_synergy.json`),
       opt(state.run.models?.includes("just_synergy"), `${base}/just_synergy.json`),
+      opt(state.run.models?.includes("precedents"), `${base}/precedents.json`),
       loadSector(),
     ]);
-    state.deal = { dcf_synergy: syn, just_synergy: just };
+    state.deal = { dcf_synergy: syn, just_synergy: just, precedents: prec };
   } catch (e) {
     banner(`Couldn't load results for ${state.company.ticker} as of ${asOf}: ${e.message}`);
     return;

@@ -502,3 +502,5 @@ table.deal-sum td:not(:first-child), table.deal-sum th:not(:first-child) { text-
 table.deal-sum input.dw { width: 64px; text-align: right; }
 table.deal-sum tr.na td { color: var(--muted); }
 .status:empty { display: none; }
+#panel-deal textarea { width: 100%; font: 12px/1.4 var(--font-mono, monospace); }
+#pd-table td:nth-child(2), #pd-table td:nth-child(3), #pd-table th:nth-child(2), #pd-table th:nth-child(3) { text-align: left; }

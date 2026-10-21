@@ -450,3 +450,63 @@ def test_789_summary_standalone_and_offer_ranges(case):
     assert of["aggressive"] == pytest.approx(v("E28"), rel=1e-9)
     assert s["offer"]["premium"]["best_guess"] == pytest.approx(v("J28"), rel=1e-9)
     assert s["offer"]["synergy_share"]["conservative"] == pytest.approx(v("L28"), rel=1e-9)
+
+
+# ------------------------------------------------- 789: transaction comps
+
+from valuation.L2_models.precedents import central_rows, best_rows  # noqa: E402
+from valuation._core.deals import deal_figures  # noqa: E402
+
+
+def _orig_deals(wb):
+    ws = wb["Orig_TC_Data"]
+    out = []
+    for r in range(2, ws.max_row + 1):
+        if not ws[f"B{r}"].value or ws[f"L{r}"].value in (None, ""):
+            continue
+        g = lambda c: ws[f"{c}{r}"].value  # noqa: E731
+        out.append({"target": g("B"), "year": g("A"), "ev": g("D"), "sales": g("E"), "ebitda": g("F"), "offer_price": g("L"),
+                    "price_1w": g("M"), "price_4w": g("N"), "net_debt": g("AT"), "shares": g("AU")})
+    return out
+
+
+@pytest.mark.parametrize("case", sorted(FIRM_DCF_CASES))
+def test_789_transaction_comps_central_tendency(case):
+    wb = _book(FIRM_DCF_CASES[case])
+    deals = [deal_figures(d) for d in _orig_deals(wb)]
+    if len(deals) < 4:
+        pytest.skip("no deal data in this workbook")
+    ct = wb["Cent_Tend_TC"]
+    v = lambda a: _num(ct[a].value)  # noqa: E731
+    t = {"price": v("H19"), "shares": v("H20"), "net_debt": v("H21"), "sales": v("H23"), "ebitda": v("H24"),
+         "ev_sales": v("H26"), "ev_ebitda": v("H27")}
+    c = central_rows(deals, t, {})
+    for col, k in zip("BCDEFG", ("premium", "tx_ev_sales", "tx_ev_ebitda", "pre_ev_sales", "pre_ev_ebitda", "ebitda_margin")):
+        for row, q in zip(range(5, 11), ("mean", "min", "q1", "median", "q3", "max")):
+            assert c["stats"][k][q] == pytest.approx(v(f"{col}{row}"), rel=1e-9), (case, k, q)
+    assert c["percentiles"]["ev_sales"] == pytest.approx([v("J23"), v("K23"), v("L23")], abs=1e-12)
+    assert c["percentiles"]["ev_ebitda"] == pytest.approx([v("J24"), v("K24"), v("L24")], abs=1e-12)
+    for row, key in ((20, "tx_sales"), (21, "tx_ebitda"), (22, "premium"), (27, "pre_sales"), (28, "pre_ebitda")):
+        assert c["ranges"][key] == pytest.approx([v(f"C{row}"), v(f"D{row}"), v(f"E{row}")], rel=1e-9), (case, key)
+
+
+@pytest.mark.parametrize("case", sorted(FIRM_DCF_CASES))
+def test_789_transaction_comps_best_deals(case):
+    wb = _book(FIRM_DCF_CASES[case])
+    ws = wb["Best_TC_Comps"]
+    v = lambda a: None if isinstance(ws[a].value, str) and not ws[a].value.strip() else ws[a].value  # noqa: E731
+    cols = [c for c in "DEFGH" if v(f"{c}7") not in (None, "", 0) and v(f"{c}13") not in (None, "", 0)
+            and v(f"{c}16") is not None]
+    if not cols:
+        pytest.skip("no best deals entered")
+    deals = [deal_figures({"target": v(f"{c}4"), "offer_price": _num(v(f"{c}7")), "price_1w": _num(v(f"{c}8")),
+                           "shares": _num(v(f"{c}9")), "net_debt": _num(v(f"{c}10")), "sales": _num(v(f"{c}13")),
+                           "ebitda": _num(v(f"{c}14")), "premium": _num(v(f"{c}16"))}) for c in cols]
+    t = {"price": _num(v("C8")), "shares": _num(v("C9")), "net_debt": _num(v("C10")), "sales": _num(v("C13")),
+         "ebitda": _num(v("C14"))}
+    b = best_rows(deals, t)
+    for d, c in zip(b["deals"], cols):
+        for key, row in (("tx_sales", 23), ("tx_ebitda", 24), ("premium", 25), ("pre_sales", 35), ("pre_ebitda", 36)):
+            assert d[key] == pytest.approx(_num(v(f"{c}{row}")), rel=1e-9), (case, c, key)
+    for key, row in (("tx_sales", 23), ("tx_ebitda", 24), ("premium", 25), ("pre_sales", 35), ("pre_ebitda", 36)):
+        assert b["ranges"][key][1] == pytest.approx(_num(v(f"I{row}")), rel=1e-9), (case, key)

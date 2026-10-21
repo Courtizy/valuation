@@ -137,7 +137,7 @@ function summaryCard(s, d) {
     </div>
     <p class="legend-note">Weights follow the course model: a method with no value passes its weight to the others ("Used").
       The top of the offer range takes the synergy methods at their best guess, since paying for synergies beyond what you expect gives the whole gain away;
-      the best guess sits between the ends by the relative power of the target (${num(d?.relative_power ?? 0.5)}). Prior-deal multiples and the LBO join once they're built.</p>
+      the best guess sits between the ends by the relative power of the target (${num(d?.relative_power ?? 0.5)}). The LBO joins once it's built.</p>
     ${state.comparison?.deal?.notes?.length ? `<p class="legend-note">${state.comparison.deal.notes.map((n) => esc(sentence(n))).join(" ")}</p>` : ""}
   </div>`;
 }
@@ -219,6 +219,87 @@ function justSynergyCard(r) {
       Range: annual synergies ${pct(-rg.steps.annual_cost, true)} / +${pct(rg.steps.annual_cost, true)}.</p></div>`;
 }
 
+// ---- prior deals (transaction comps) ------------------------------------------------------
+
+function savedDeals() {
+  try { return JSON.parse(deviceAssumptions()[`${state.company.ticker}/precedents.json`] || "null"); } catch { return null; }
+}
+
+const CHOICES = { 0: "Best deals for standalone, all deals for the offer (course default)", 1: "Best deals only", 2: "All deals only" };
+const xm = (v) => (fin(v) ? `${v.toFixed(1)}x` : NA);
+
+function priorDealsCard(r, demo) {
+  const d = r?.details, mine = savedDeals();
+  const choice = mine?.choice ?? d?.choice ?? 0;
+  const best = new Set(d?.best || []);
+  const inputs = `<div class="form-grid">
+      <div class="field"><label for="pd-file">Deal List <span class="hint">CSV, or a sheet saved as CSV; an SDC export works as is</span></label>
+        <input type="file" id="pd-file" accept=".csv,.tsv,.txt,text/csv,text/plain"></div>
+      <div class="field"><label for="pd-choice">Which Deals Feed the Summary</label>
+        <select id="pd-choice">${Object.entries(CHOICES).map(([k, n]) => `<option value="${k}" ${Number(k) === Number(choice) ? "selected" : ""}>${esc(n)}</option>`).join("")}</select></div>
+    </div>
+    <div class="field" style="margin-top:8px"><label for="pd-paste">Or Paste from Excel <span class="hint">copy the deal rows with their header row</span></label>
+      <textarea id="pd-paste" rows="4" placeholder="Target Name&#9;Price Per Share&#9;Target Share Price 1 Week Prior&#9;Shares&#9;Net Debt&#9;Sales&#9;EBITDA …">${esc(mine?.csv || "")}</textarea></div>
+    <div class="actions">
+      <button type="button" class="primary" id="pd-run" ${demo ? "disabled" : ""}>Save and Run Prior Deals</button>
+      <span class="status" role="status" id="pd-status">${demo ? "Demo data: a synthetic deal list, saving is off." : ""}</span>
+    </div>
+    <p class="legend-note">Columns are matched by name: target, acquirer, year or date, offer price per share, price 1 week (and 4 weeks) before
+      the announcement, shares, net debt, sales, EBITDA, and the EV at the offer price if your source reports it. Keep each row in one unit
+      (SDC uses $ millions); only ratios cross over to ${esc(state.company.ticker)}. Mark the most comparable deals in a "Best" column or tick them below.</p>`;
+  if (!d) return `<div class="card"><div class="card-head"><h2>Prior Deals (Transaction Comps)</h2><span class="muted small">Upload the deals to compare against</span></div>${inputs}</div>`;
+  const deals = d.deals, c = d.central, b = d.best_rows, t = d.target;
+  const st = (k, q, f) => f(c.stats[k]?.[q]);
+  const qs = [["mean", "Mean"], ["min", "Minimum"], ["q1", "1st Quartile"], ["median", "Median"], ["q3", "3rd Quartile"], ["max", "Maximum"]];
+  const rowNames = { pre_sales: "Pre-announcement EV/Sales", pre_ebitda: "Pre-announcement EV/EBITDA", tx_sales: "Transaction EV/Sales",
+    tx_ebitda: "Transaction EV/EBITDA", premium: "Premium Paid" };
+  const rng = (x) => (x ? x.map((v) => `<td>${price(v)}</td>`).join("") : `<td colspan="3" class="na">${NA}</td>`);
+  return `<div class="card"><div class="card-head"><h2>Prior Deals (Transaction Comps)</h2>
+      <span class="muted small">${deals.length} deals · ${best.size} most comparable · target ${price(t.price)}, EV/Sales ${xm(t.ev_sales)}, EV/EBITDA ${xm(t.ev_ebitda)}</span></div>
+    ${inputs}
+    <h3 style="margin-top:16px">Implied Value per Share</h3>
+    <div class="table-wrap"><table class="list deal-sum"><thead><tr><th></th><th colspan="3">Best Deals: Lowest · Average · Highest</th>
+      <th colspan="3">All Deals: Central Tendency</th></tr></thead><tbody>
+      ${Object.entries(rowNames).map(([k, n]) => `<tr><td>${n}</td>${rng(b.ranges[k])}${rng(c.ranges[k])}</tr>`).join("")}
+    </tbody></table></div>
+    <p class="legend-note">Central tendency: premium at the 1st quartile, median and 3rd quartile; multiples at the ${pct(c.percentiles.ev_sales[1], true)} (EV/Sales) and
+      ${pct(c.percentiles.ev_ebitda[1], true)} (EV/EBITDA) percentile ±10 points, where ${esc(state.company.ticker)}'s own multiples rank among the deals' pre-announcement multiples.
+      Best deals rebuild each deal's EV from offer × shares + net debt.${r.notes?.length ? " " + esc(r.notes.map(sentence).join(" ")) : ""}</p>
+    <h3 style="margin-top:16px">All Deals</h3>
+    <div class="table-wrap"><table class="list deal-sum"><thead><tr><th></th><th>Premium</th><th>Trans. EV/Sales</th><th>Trans. EV/EBITDA</th>
+      <th>Pre-ann. EV/Sales</th><th>Pre-ann. EV/EBITDA</th><th>EBITDA Margin</th></tr></thead><tbody>
+      ${qs.map(([q, n]) => `<tr><td>${n}</td><td>${st("premium", q, pct)}</td><td>${st("tx_ev_sales", q, xm)}</td><td>${st("tx_ev_ebitda", q, xm)}</td>
+        <td>${st("pre_ev_sales", q, xm)}</td><td>${st("pre_ev_ebitda", q, xm)}</td><td>${st("ebitda_margin", q, pct)}</td></tr>`).join("")}
+    </tbody></table></div>
+    <div class="table-wrap" style="margin-top:12px"><table class="list deal-sum" id="pd-table"><thead><tr><th>Best</th><th>Target</th><th>Acquirer</th><th>Year</th>
+      <th>Premium</th><th>Trans. EV/Sales</th><th>Trans. EV/EBITDA</th><th>Pre-ann. EV/EBITDA</th><th>EBITDA Margin</th></tr></thead><tbody>
+      ${deals.map((x) => `<tr><td><input type="checkbox" value="${esc(x.target)}" ${best.has(x.target) ? "checked" : ""} aria-label="Best: ${esc(x.target)}"></td>
+        <td>${esc(x.target)}</td><td class="muted">${esc(x.acquirer || "")}</td><td>${fin(x.year) ? x.year : ""}</td><td>${pct(x.premium)}</td>
+        <td>${xm(x.tx_ev_sales)}</td><td>${xm(x.tx_ev_ebitda)}</td><td>${xm(x.pre_ev_ebitda)}</td><td>${pct(x.ebitda_margin)}</td></tr>`).join("")}
+    </tbody></table></div>
+    <p class="legend-note">Premium = offer over the price 1 week (or 4 weeks, whichever is larger) before the announcement; a negative premium counts as 10% and anything over 100% as 100%.
+      Tick the most comparable deals (up to about five) and press Save and Run Prior Deals.</p>
+  </div>`;
+}
+
+async function runPriorDeals() {
+  const st = $("pd-status"), t = state.company.ticker, btn = $("pd-run");
+  const file = $("pd-file").files?.[0];
+  const csv = file ? await file.text() : $("pd-paste").value;
+  if (!csv.trim()) { setStatus(st, { ok: false, msg: "Choose a deal list file or paste the deals." }); return; }
+  const ticked = [...document.querySelectorAll("#pd-table input[type=checkbox]:checked")].map((x) => x.value);
+  const old = savedDeals() || {};
+  const doc = { ...old, csv, choice: Number($("pd-choice").value), sources: { deals: file ? `uploaded ${file.name}` : "pasted deal list" } };
+  if (csv === old.csv && ticked.length) doc.best = ticked; else delete doc.best;      // a new list starts from its own "Best" column
+  btn.disabled = true;
+  try {
+    await saveAssumption(`${t}/precedents.json`, doc);
+    const deal = savedDeal() ? DEAL_MODELS : [];
+    const models = [...new Set([...(state.run.models || []).filter((m) => m === "dcf" || m === "comps"), "dcf", "precedents", ...deal])];
+    await runInBrowser({ ticker: t, models: models.join(",") }, st);
+  } catch (err) { setStatus(st, { ok: false, msg: `Couldn't save in this browser: ${err.message}` }); } finally { if (btn.isConnected) btn.disabled = false; }
+}
+
 export function renderDeal() {
   const box = $("panel-deal");
   if (!box || !state.detail) return;
@@ -227,8 +308,9 @@ export function renderDeal() {
   const s = base ? summarize(base, w, d?.relative_power ?? base.relative_power ?? 0.5) : null;
   box.innerHTML = `${inputsCard(d, demo)}
     ${s ? `<div id="deal-sumbox">${fieldCard(s, d) + summaryCard(s, d)}</div>` : `<div class="card empty"><h2>No Deal Run Yet</h2><p>Enter the expected synergies above and press <b>Save and Run Deal</b>.
-      The standalone values (DCF, comps, 52-week range) fill the summary's standalone side; the synergy models fill the offer side.</p></div>`}
-    ${wholeFirmCard(state.deal?.dcf_synergy)}${justSynergyCard(state.deal?.just_synergy)}`;
+      The standalone values (DCF, comps, 52-week range) fill the summary's standalone side; the synergy models and prior deals fill the offer side.</p></div>`}
+    ${priorDealsCard(state.deal?.precedents, demo)}${wholeFirmCard(state.deal?.dcf_synergy)}${justSynergyCard(state.deal?.just_synergy)}`;
+  $("pd-run").onclick = runPriorDeals;
   wire(base);
 }
 
@@ -242,7 +324,8 @@ function wire(base) {
     btn.disabled = true;
     try {
       await saveAssumption(`${t}/deal.json`, doc);
-      const models = [...new Set([...(state.run.models || []).filter((m) => m === "dcf" || m === "comps"), "dcf", ...DEAL_MODELS])];
+      const models = [...new Set([...(state.run.models || []).filter((m) => m === "dcf" || m === "comps" || m === "precedents"), "dcf",
+        ...(savedDeals() ? ["precedents"] : []), ...DEAL_MODELS])];
       await runInBrowser({ ticker: t, models: models.join(",") }, st);
     } catch (err) { setStatus(st, { ok: false, msg: `Couldn't save in this browser: ${err.message}` }); } finally { if (btn.isConnected) btn.disabled = false; }
   };

@@ -97,6 +97,6 @@ def build_comparison(result_paths: list[str | Path], detail: dict | None = None,
             for r in sorted(results, key=lambda r: r["model"])
         ],
         "assumption_differences": differences,
-        "deal": deal_summary(by_model, detail, deal) if deal else None,
+        "deal": deal_summary(by_model, detail, deal or {}) if deal or "precedents" in by_model else None,
         "warnings": warnings,
     }

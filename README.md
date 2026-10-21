@@ -27,8 +27,8 @@ The Valuation Model turns a company's SEC filings into normalized statements, ra
 | L0 Ingest | SEC company facts, sector frames, risk-free rate, market data adapter | Built |
 | L1 Company detail | Normalize, annual / quarterly / TTM views, ratios, company profile, sector screens | Built |
 | L2 Models | DCF (simulated), public comps, reconcile | Built |
-| L2 Models | Whole firm DCF with synergies, just synergies, standalone vs. offer summary | Built, course parity |
-| L2 Models | Precedent transactions, LBO, IPO | Scaffolded, not built |
+| L2 Models | Whole firm DCF with synergies, just synergies, precedent transactions (uploaded deal list), standalone vs. offer summary | Built, course parity |
+| L2 Models | LBO, IPO | Scaffolded, not built |
 | L2 Models | Excel export, memo PDF, back-testing | Planned |
 | L3 App | Static site on GitHub Pages (Overview, Results, Method), demo and tour | Built |
 | L3 App | Run in this browser (Pyodide, Cloudflare Worker proxy, saved on the device) | Built; the proxy needs deploying |
@@ -122,7 +122,7 @@ This is a personal, educational project and analysis of method, not investment a
 ```
 L0  Ingest          SEC companyfacts, sector frames, market data → raw_filing.json, raw_market.json
 L1  Company detail  normalize → canonical_statements.json; build → company_detail.json
-L2  Models          dcf (simulated), comps, dcf_synergy, just_synergy; precedents, lbo, ipo scaffolded → model_results/
+L2  Models          dcf (simulated), comps, dcf_synergy, just_synergy, precedents; lbo, ipo scaffolded → model_results/
                     reconcile reads model_results/*.json only → comparison.json
 L3  App             site/ on GitHub Pages; Actions run the pipeline and publish JSON
 ```

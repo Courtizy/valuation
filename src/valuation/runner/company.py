@@ -34,6 +34,10 @@ def has_deal(paths: Paths, ticker: str) -> bool:
     return paths.model_assumptions(ticker, "deal").exists()
 
 
+def has_deal_list(paths: Paths, ticker: str) -> bool:
+    return paths.model_assumptions(ticker, "precedents").exists()
+
+
 def load_peers(paths: Paths, ticker: str) -> list[str]:
     p = paths.model_assumptions(ticker, "comps")
     if not p.exists():
@@ -138,7 +142,7 @@ def plan(
                 assumptions = default_assumptions(detail)
             else:
                 raise FileNotFoundError(f"{a_path} not found; copy configs/public/assumptions/_template/{m}.json and fill it in")
-            if m in DEAL_MODELS:     # the synergy DCFs: standalone inputs plus the deal
+            if m in DEAL_MODELS or m == "precedents":   # standalone inputs (or the deal list) plus the deal
                 assumptions = {**assumptions, "deal": _read_json(paths.model_assumptions(ticker, "deal"), None)}
             peer_details = [d for d in (_read_json(paths.detail(p, as_of)) for p in peers) if d] if model.needs_peers else None
             result = model.run(detail, assumptions, peer_details)

@@ -39,12 +39,12 @@ The standalone projection with synergies in its drivers: revenue growth + `reven
 
 ## Summary (`L2_models/reconcile/deal.py`, `comparison.json` → `deal`)
 
-Each method gives conservative / best guess / aggressive per share (DCF: course scenarios; synergy models: the ranges above; comps and others: p10 / p50 / p90; the 52-week low, pre-announcement price and high).
+Each method gives conservative / best guess / aggressive per share (DCF: course scenarios; synergy models: the ranges above; prior deals: five rows from [L2_precedents.md](L2_precedents.md); comps and others: p10 / p50 / p90; the 52-week low, pre-announcement price and high). The weights are the course template's defaults.
 
 | Side | Default weights |
 |---|---|
-| Standalone | comps 20%, prior deals at pre-announcement multiples 20%, DCF 40%, 52-week range 20% |
-| Offer | prior deals (transaction comps) 34%, whole firm with synergies 33%, just synergies 33%, LBO 0% |
+| Standalone | comps 20%, prior deals' pre-announcement EV/Sales 10% and EV/EBITDA 10%, DCF 40%, 52-week range 20% |
+| Offer | prior deals' transaction EV/Sales 2%, EV/EBITDA 2% and premium paid 30%, whole firm with synergies 33%, just synergies 33%, LBO 0% |
 
 A method with no value passes its weight to the rest. Standalone range = weighted values. Offer range: conservative = weighted conservative values; aggressive = weighted aggressive values except the synergy methods at their best guess; best guess = conservative + (aggressive − conservative) × relative power. Premiums are against the pre-announcement price; "share of synergies" is how much of the gap between that price and the top of the offer range a price pays to the target.
 
@@ -54,4 +54,4 @@ A method with no value passes its weight to the rest. Standalone range = weighte
 
 ## Not yet
 
-Prior deals (transaction comps), with pre-announcement and transaction multiples and premium paid; the LBO. Their rows show in the summary with no value until then.
+The LBO. Its row shows in the summary with no value until then.

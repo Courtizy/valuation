@@ -22,10 +22,14 @@ hands to the target's shareholders.
 """
 from __future__ import annotations
 
-STANDALONE = {"comps": 0.2, "precedents_pre": 0.2, "dcf": 0.4, "trading_range": 0.2}
-OFFER = {"precedents": 0.34, "dcf_synergy": 0.33, "just_synergy": 0.33, "lbo": 0.0}
-NAMES = {"comps": "Public Comps", "precedents_pre": "Prior Deals, Pre-announcement Multiples", "dcf": "DCF (Standalone)",
-         "trading_range": "52-Week Low, Current, High", "precedents": "Prior Deals (Transaction Comps)",
+# the course template's default weights
+STANDALONE = {"comps": 0.2, "precedents_pre_sales": 0.1, "precedents_pre_ebitda": 0.1, "dcf": 0.4, "trading_range": 0.2}
+OFFER = {"precedents_sales": 0.02, "precedents_ebitda": 0.02, "precedents_premium": 0.30, "dcf_synergy": 0.33,
+         "just_synergy": 0.33, "lbo": 0.0}
+NAMES = {"comps": "Public Comps", "precedents_pre_sales": "Prior Deals: Pre-announcement EV/Sales",
+         "precedents_pre_ebitda": "Prior Deals: Pre-announcement EV/EBITDA", "dcf": "DCF (Standalone)",
+         "trading_range": "52-Week Low, Current, High", "precedents_sales": "Prior Deals: Transaction EV/Sales",
+         "precedents_ebitda": "Prior Deals: Transaction EV/EBITDA", "precedents_premium": "Prior Deals: Premium Paid",
          "dcf_synergy": "Whole Firm DCF with Synergies", "just_synergy": "Pre-announcement Price + Just Synergies",
          "lbo": "LBO"}
 SYNERGY_METHODS = ("dcf_synergy", "just_synergy")
@@ -58,6 +62,8 @@ def deal_summary(by_model: dict, detail: dict | None, deal: dict) -> dict:
     pre = deal.get("pre_announcement_price") or market.get("price")
     q = market.get("quote") or {}
     values = {m: _triple(by_model.get(m)) for m in set(STANDALONE) | set(OFFER) | set(by_model)}
+    rows = (((by_model.get("precedents") or {}).get("details") or {}).get("summary_rows") or {})
+    values.update({m: tuple(v) for m, v in rows.items() if v})     # transaction comps fill five rows
     if pre and q.get("wk52_low") and q.get("wk52_high"):
         values["trading_range"] = (q["wk52_low"], pre, q["wk52_high"])
     w = deal.get("weights") or {}
