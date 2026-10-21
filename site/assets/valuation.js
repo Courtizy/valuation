@@ -30,6 +30,8 @@ export function renderValuation() {
   if (!c || !c.football_field?.length) {
     body.innerHTML = `<div class="card empty"><h2>No Model Results for This Run</h2>
       <p>Tick <b>DCF</b> under Models on the Run page and run this ticker. Without a <code>dcf.json</code> the DCF uses default assumptions from the data; Comps needs a <code>comps.json</code> with peers.</p></div>`;
+    body.insertAdjacentHTML("afterbegin", '<div id="val-quote"></div>');
+    renderQuote($("val-quote"));
     renderProfileCard(body);
     body.insertAdjacentHTML("beforeend", '<div id="val-peers"></div>');
     renderPeerPicker();
@@ -37,9 +39,10 @@ export function renderValuation() {
     return;
   }
   state.scn = state.scn || "p50";
-  body.innerHTML = `<div id="val-ff"></div><div id="val-spread"></div><div id="val-sens"></div>
+  body.innerHTML = `<div id="val-quote"></div><div id="val-ff"></div><div id="val-spread"></div><div id="val-sens"></div>
     <div id="val-head"></div><div id="val-profile"></div><div id="val-comps"></div><div id="val-peers"></div>
     <div id="val-dcf"></div><div id="val-similar"></div><div id="val-diffs"></div>`;
+  renderQuote($("val-quote"));
   renderField();
   renderSpread();
   renderSensitivity();
@@ -66,6 +69,54 @@ export function wireToggle(root) {
   root.querySelectorAll("[data-scn]").forEach((b) => { b.onclick = () => { state.scn = b.dataset.scn; renderHeadline(); renderField(); }; });
 }
 
+/** Market snapshot, as on a quote page and the course model's inputs sheet: the trading day,
+ *  the 52-week range, size (market cap, EV, net debt, shares) and the trailing multiples. */
+export function renderQuote(box) {
+  if (!box) return;
+  const m = state.detail.market, q = m?.quote;
+  if (!m?.price) { box.innerHTML = showcase() ? "" : `<div class="card"><div class="card-head"><h2>Market Snapshot</h2></div>
+    <p class="muted">No price for this run: Yahoo had nothing, and no Alpha Vantage or Finnhub key is set (Run ▸ Settings).</p></div>`; return; }
+  const ltm = (state.detail.views.ttm?.at(-1) || state.detail.views.annual?.at(-1) || {}).values || {};
+  const ann = (state.detail.views.annual?.at(-1) || {}).values || {};
+  const v = (k) => (fin(ltm[k]) ? ltm[k] : fin(ann[k]) ? ann[k] : null);
+  const mcap = m.market_cap, debt = (v("short_term_debt") || 0) + (v("long_term_debt") || 0), cash = v("cash_and_marketable_securities");
+  const netDebt = fin(v("net_debt")) ? v("net_debt") : fin(cash) ? debt - cash : null;
+  const ev = fin(mcap) && fin(netDebt) ? mcap + netDebt : null;
+  const ratio = (a, b) => (fin(a) && fin(b) && b > 0 ? a / b : null);
+  const eps = v("eps_diluted") ?? ratio(v("net_income"), v("shares_fully_diluted_average")), dps = v("common_dividends_per_share") ?? (fin(v("common_dividends_paid")) && m.shares_outstanding ? v("common_dividends_paid") / m.shares_outstanding : null);
+  const vol = (x) => (fin(x) ? (x >= 1e6 ? `${(x / 1e6).toFixed(2)}M` : x >= 1e3 ? `${(x / 1e3).toFixed(1)}K` : x.toFixed(0)) : NA);
+  const rangeBar = (lo, hi, at) => (fin(lo) && fin(hi) && hi > lo && fin(at)
+    ? `<div class="qrange" title="${price(lo)} to ${price(hi)}"><span style="left:${Math.min(100, Math.max(0, ((at - lo) / (hi - lo)) * 100))}%"></span></div>` : "");
+  const chg = q?.change_pct;
+  const item = (label, value, extra = "") => `<div class="qitem"><div class="label">${label}</div><div class="num">${value}</div>${extra}</div>`;
+  box.innerHTML = `<div class="card">
+    <div class="card-head"><h2>Market Snapshot</h2><span class="muted small">${marketLine(m)}</span></div>
+    <div class="qhead"><span class="big num">${price(m.price)}</span>
+      ${fin(chg) ? `<span class="num ${chg >= 0 ? "pos" : "neg"}">${chg >= 0 ? "+" : "−"}${price(Math.abs(q.change))} (${chg >= 0 ? "+" : "−"}${pct(Math.abs(chg))})</span>` : ""}
+      <span class="muted small">Close ${esc(m.price_date || "")}</span></div>
+    <div class="qgrid">
+      ${item("Previous Close", price(q?.prev_close))}
+      ${item("Open", price(q?.open))}
+      ${item("Day's Range", fin(q?.day_low) && fin(q?.day_high) ? `${price(q.day_low)} – ${price(q.day_high)}` : NA, rangeBar(q?.day_low, q?.day_high, m.price))}
+      ${item("52-Week Range", fin(q?.wk52_low) ? `${price(q.wk52_low)} – ${price(q.wk52_high)}` : NA, rangeBar(q?.wk52_low, q?.wk52_high, m.price))}
+      ${item("Volume", vol(q?.volume))}
+      ${item("Avg. Volume (3M)", vol(q?.avg_volume_3m))}
+      ${item("Market Cap", money(mcap))}
+      ${item("Enterprise Value", money(ev))}
+      ${item("Net Debt", money(netDebt))}
+      ${item("Shares Outstanding", fin(m.shares_outstanding) ? `${(m.shares_outstanding / 1e6).toLocaleString("en-US", { maximumFractionDigits: 1 })}M` : NA)}
+      ${item("Beta", fin(m.beta?.value) ? num(m.beta.value) : NA)}
+      ${item("EPS (LTM, Diluted)", fin(eps) ? price(eps) : NA)}
+      ${item("P/E (LTM)", mult(ratio(m.price, eps)))}
+      ${item("EV / Sales (LTM)", mult(ratio(ev, v("revenue"))))}
+      ${item("EV / EBITDA (LTM)", mult(ratio(ev, v("ebitda"))))}
+      ${item("Price / Book", mult(ratio(mcap, v("all_equity_balance"))))}
+      ${item("Dividend (LTM) & Yield", fin(dps) && dps > 0 ? `${price(dps)} (${pct(dps / m.price)})` : "None")}
+    </div>
+    <p class="legend-note">Trading figures are for the close on the as-of date (${esc(SOURCE_NAMES[q?.source] || q?.source || m.source || "")}); size and multiples use the latest twelve months of filings. Enterprise value = market cap + debt − cash and short-term investments.</p>
+  </div>`;
+}
+
 export function renderHeadline() {
   const c = state.comparison, k = state.scn, blend = c.blend;
   const primary = (c.plan?.methods || []).filter((m) => m.weight > 0);
@@ -88,7 +139,9 @@ export function renderHeadline() {
 
 export function renderField() {
   const c = state.comparison, k = state.scn, methods = (c.plan?.methods || []).filter((m) => m.value_per_share);
-  const vals = methods.flatMap((m) => [m.value_per_share.p10, m.value_per_share.p90]).concat(fin(c.price) ? [c.price] : []);
+  const q = state.detail.market?.quote, wk = q && fin(q.wk52_low) && fin(q.wk52_high) ? q : null;
+  const vals = methods.flatMap((m) => [m.value_per_share.p10, m.value_per_share.p90]).concat(fin(c.price) ? [c.price] : [])
+    .concat(wk ? [wk.wk52_low, wk.wk52_high] : []);
   const vmin = Math.min(...vals), vmax = Math.max(...vals);
   const raw = (vmax - vmin) / 4 || 1, mag = 10 ** Math.floor(Math.log10(raw));
   const step = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((st) => st >= raw);
@@ -118,6 +171,9 @@ export function renderField() {
         <div class="ff-axis">${ticks.map((t) => `<span style="left:${x(t)}">$${Math.abs(t - Math.round(t)) < 1e-9 ? Math.round(t) : t.toFixed(1)}</span>`).join("")}</div>
         <div class="ff-num">Bear – Bull</div><div class="ff-num">${SCENARIOS[k]}</div><div class="ff-num">vs. Price</div></div>
       ${methods.map(row).join("")}
+      ${wk ? `<div class="ff-row ref"><div class="ff-name"><b>52-Week Trading Range</b><div class="muted small">Market reference · not weighted</div></div>
+        ${bar({ p10: wk.wk52_low, p90: wk.wk52_high, [k]: fin(c.price) ? c.price : wk.close }, "")}
+        <div class="ff-num">${price(wk.wk52_low)} – ${price(wk.wk52_high)}</div><div class="ff-num">${price(fin(c.price) ? c.price : wk.close)}</div><div class="ff-num"></div></div>` : ""}
       ${b ? `<div class="ff-row total"><div class="ff-name"><b>Blended</b><div class="muted small">Weights Above</div></div>${bar(b, "blend")}
         <div class="ff-num">${price(b.p10)} – ${price(b.p90)}</div><div class="ff-num"><b>${price(b[k])}</b></div>
         <div class="ff-num ${upClass(c.upside?.[k])}">${signed(c.upside?.[k])}</div></div>` : ""}
@@ -194,7 +250,7 @@ export const MIN_SIMILARITY = 0.35;
 export const showcase = () => state.index?.market_data !== "real" && !state.company?.demo;
 export const SHOWCASE_NOTE = "Market prices aren't published on this site; values are intrinsic only";
 
-const SOURCE_NAMES = { yahoo: "Yahoo", alphavantage: "Alpha Vantage", synthetic: "Synthetic Example" };
+const SOURCE_NAMES = { yahoo: "Yahoo", alphavantage: "Alpha Vantage", finnhub: "Finnhub", synthetic: "Synthetic Example" };
 /** "Close Oct 2, 2026 · Yahoo · Checked against Alpha Vantage": where the price came from and whether it was confirmed. */
 export function marketLine(m) {
   if (!m?.price) return showcase() ? SHOWCASE_NOTE : "No market data";
@@ -202,10 +258,10 @@ export function marketLine(m) {
   const src = SOURCE_NAMES[m.source] || m.source || "";
   const ck = m.check || {};
   const check = m.fallback ? `<span class="warn">Yahoo unavailable; backup source</span>`
-    : ck.status === "ok" ? "Checked against Alpha Vantage"
-    : ck.status === "mismatch" ? `<span class="warn">Alpha Vantage differs by ${pct(Math.abs(ck.diff_pct ?? 0))}${ck.price_date !== m.price_date ? ` (its close is ${esc(ck.price_date)})` : ""}</span>`
-    : ck.status === "skipped" ? "Not cross-checked (no Alpha Vantage key)"
-    : ck.status === "unavailable" ? "Alpha Vantage check unavailable" : "";
+    : ck.status === "ok" ? `Checked against ${SOURCE_NAMES[ck.source] || "Alpha Vantage"}`
+    : ck.status === "mismatch" ? `<span class="warn">${SOURCE_NAMES[ck.source] || "Alpha Vantage"} differs by ${pct(Math.abs(ck.diff_pct ?? 0))}${ck.price_date !== m.price_date ? ` (its close is ${esc(ck.price_date)})` : ""}</span>`
+    : ck.status === "skipped" ? "Not cross-checked (no Alpha Vantage or Finnhub key)"
+    : ck.status === "unavailable" ? `${SOURCE_NAMES[ck.source] || "Alpha Vantage"} check unavailable` : "";
   return [`Close ${esc(d)}`, esc(src), check].filter(Boolean).join(" · ");
 }
 

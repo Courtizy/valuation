@@ -25,12 +25,15 @@ Rules
 - Alpha Vantage's free daily series covers the latest 100 trading days, so a fallback or
   check for an older as_of reports "unavailable" rather than guessing.
 - The key has to go in the query string; it is redacted from every stored error message.
+- quote: the as_of day's open, high, low, close and volume, the previous close, the 52-week
+  range and 3-month average volume, from a year of daily bars (Yahoo; Alpha Vantage's free
+  100 days give no 52-week range; Finnhub gives today's open, range and previous close).
 - L0 stores what the sources said; beta, market cap and WACC are L1's job.
 
 raw_market.json
 ---------------
   {schema_version, ticker, as_of, source, fallback, currency, price, price_date,
-   monthly: [{month, adj_close}], index: {symbol, monthly}, check, errors, fetched_at}
+   monthly: [{month, adj_close}], index: {symbol, monthly}, quote, check, errors, fetched_at}
 """
 from __future__ import annotations
 
@@ -102,7 +105,7 @@ def av_symbol(t: str) -> str:
 
 
 def parse_yahoo(payload: dict) -> dict:
-    """Chart API JSON -> {currency, daily: [(date, close, adj_close)]}."""
+    """Chart API JSON -> {currency, rows: [(date, close, adj_close)], bars: [(date, open, high, low, close, volume)]}."""
     chart = payload.get("chart") or {}
     if chart.get("error"):
         raise MarketDataError(f"yahoo: {chart['error']}")
@@ -112,7 +115,11 @@ def parse_yahoo(payload: dict) -> dict:
     q = (res.get("indicators", {}).get("quote") or [{}])[0].get("close") or []
     adj = ((res.get("indicators", {}).get("adjclose") or [{}])[0].get("adjclose")) or q
     rows = [(_day(t), c, a) for t, c, a in zip(res["timestamp"], q, adj) if c is not None]
-    return {"currency": (res.get("meta") or {}).get("currency"), "rows": rows}
+    ind = (res.get("indicators", {}).get("quote") or [{}])[0]
+    col = lambda k: ind.get(k) or [None] * len(q)  # noqa: E731
+    bars = [(_day(t), o, h, lo, c, v) for t, o, h, lo, c, v in
+            zip(res["timestamp"], col("open"), col("high"), col("low"), q, col("volume")) if c is not None]
+    return {"currency": (res.get("meta") or {}).get("currency"), "rows": rows, "bars": bars}
 
 
 def parse_alphavantage(payload: dict) -> dict:
@@ -124,12 +131,34 @@ def parse_alphavantage(payload: dict) -> dict:
     series = next((v for k, v in (payload or {}).items() if "Time Series" in k), None)
     if not series:
         raise MarketDataError("alphavantage: no data")
-    rows = []
+    rows, bars = [], []
+    num = lambda r, k: float(r[k]) if r.get(k) not in (None, "") else None  # noqa: E731
     for d, r in series.items():
         c = r.get("4. close")
         if c is not None:
             rows.append((d, float(c), float(r.get("5. adjusted close", c))))
-    return {"currency": "USD", "rows": sorted(rows)}
+            bars.append((d, num(r, "1. open"), num(r, "2. high"), num(r, "3. low"), float(c), num(r, "5. volume") or num(r, "6. volume")))
+    return {"currency": "USD", "rows": sorted(rows), "bars": sorted(bars)}
+
+
+def quote_from_bars(bars: list[tuple], as_of: str, source: str) -> dict | None:
+    """The as_of day's bar, the previous close, 52-week range and 3-month average volume.
+    bars: [(date, open, high, low, close, volume)], any order; later dates are ignored."""
+    bars = sorted(b for b in bars if b[0] <= as_of and b[4] is not None)
+    if not bars:
+        return None
+    d, o, h, lo, c, v = bars[-1]
+    cut = (date.fromisoformat(d) - timedelta(days=365)).isoformat()
+    year = [b for b in bars if b[0] > cut]
+    full_year = bars[0][0] <= (date.fromisoformat(d) - timedelta(days=358)).isoformat()
+    highs = [(b[2] if b[2] is not None else b[4], b[0]) for b in year]
+    lows = [(b[3] if b[3] is not None else b[4], b[0]) for b in year]
+    vols = [b[5] for b in bars if b[0] > (date.fromisoformat(d) - timedelta(days=91)).isoformat() and b[5]]
+    return {"source": source, "date": d, "close": c, "open": o, "day_high": h, "day_low": lo, "volume": v,
+            "prev_close": bars[-2][4] if len(bars) > 1 else None,
+            "wk52_high": max(highs)[0] if full_year else None, "wk52_high_date": max(highs)[1] if full_year else None,
+            "wk52_low": min(lows)[0] if full_year else None, "wk52_low_date": min(lows)[1] if full_year else None,
+            "avg_volume_3m": sum(vols) / len(vols) if vols else None}
 
 
 def parse_fundamentals(payload: dict) -> dict:
@@ -226,8 +255,12 @@ class MarketAdapter:
             beta = (m.get("metric") or {}).get("beta")
         except (MarketDataError, ValueError):
             beta = None
+        f = lambda k: float(q[k]) if isinstance(q.get(k), (int, float)) and q[k] else None  # noqa: E731
         return {"source": "finnhub", "currency": "USD", "price": float(q["c"]), "price_date": on.isoformat(),
                 "monthly": [], "index": {"symbol": None, "monthly": []},
+                "quote": {"source": "finnhub", "date": on.isoformat(), "close": float(q["c"]), "open": f("o"),
+                          "day_high": f("h"), "day_low": f("l"), "prev_close": f("pc"), "volume": None,
+                          "wk52_high": None, "wk52_high_date": None, "wk52_low": None, "wk52_low_date": None, "avg_volume_3m": None},
                 "beta_reported": float(beta) if isinstance(beta, (int, float)) else None}
 
     def fundamentals(self, ticker: str, as_of: str) -> dict:
@@ -265,7 +298,8 @@ class MarketAdapter:
     def _series(self, which: str, ticker: str, as_of: date) -> dict:
         sym = yahoo_symbol(ticker) if which == "yahoo" else av_symbol(ticker)
         fetch = self.yahoo if which == "yahoo" else self.alphavantage
-        daily = [r for r in fetch(sym, as_of - timedelta(days=14), as_of, "1d")["rows"] if r[0] <= as_of.isoformat()]
+        got = fetch(sym, as_of - timedelta(days=372 if which == "yahoo" else 14), as_of, "1d")   # a year: the 52-week range
+        daily = [r for r in got["rows"] if r[0] <= as_of.isoformat()]
         if not daily:
             raise MarketDataError(f"{which}: no close for {ticker} in the two weeks to {as_of}")
         start = date(as_of.year - BETA_YEARS, as_of.month, 1) - timedelta(days=31)
@@ -274,7 +308,8 @@ class MarketAdapter:
         idx = fetch(idx_sym, start, as_of, "1mo")
         cut = lambda rows: [(d, a) for d, _, a in rows if d <= as_of.isoformat()]  # noqa: E731
         return {"source": which, "currency": m.get("currency"), "price": daily[-1][1], "price_date": daily[-1][0],
-                "monthly": _months(cut(m["rows"])), "index": {"symbol": idx_sym, "monthly": _months(cut(idx["rows"]))}}
+                "monthly": _months(cut(m["rows"])), "index": {"symbol": idx_sym, "monthly": _months(cut(idx["rows"]))},
+                "quote": quote_from_bars(got.get("bars") or [], as_of.isoformat(), which)}
 
     def _close_on(self, which: str, ticker: str, on: str) -> tuple[str, float] | None:
         d = date.fromisoformat(on)

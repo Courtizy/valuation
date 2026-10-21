@@ -279,3 +279,20 @@ def test_showcase_publish_skips_runs_with_backfill(tmp_path):
     (run / "company_detail.json").write_text(json.dumps({"backfill": [{"concept": "ebitda"}], "views": {}, "analysis": {}}))
     out = publish(tmp_path / "data", tmp_path / "site")
     assert not any(c.startswith("DELL") for c in out["copied"])
+
+
+def test_quote_from_bars_gives_the_days_range_previous_close_and_52_weeks():
+    from datetime import date, timedelta
+    from valuation.L0_ingest.market import quote_from_bars
+    start = date(2025, 9, 1)
+    bars = [((start + timedelta(days=i)).isoformat(), 100 + i * 0.1, 101 + i * 0.1, 99 + i * 0.1, 100.5 + i * 0.1, 1000 + i)
+            for i in range(400)]
+    bars[50] = (bars[50][0], 100, 300, 50, 120, 1000)          # a spike inside the year: the 52-week high
+    q = quote_from_bars(bars, "2026-10-02", "yahoo")
+    assert q["date"] == "2026-10-02" and q["prev_close"] == bars[395][4] and q["open"] == bars[396][1]
+    assert q["wk52_high"] == 300 and q["wk52_high_date"] == bars[50][0]
+    assert q["wk52_low"] == min(b[3] for b in bars[:397] if b[0] > "2025-10-02")
+    assert 1300 < q["avg_volume_3m"] < 1400
+    short = quote_from_bars(bars[-30:], "2026-10-02", "alphavantage")
+    assert short["wk52_high"] is None and short["prev_close"] is not None           # under a year: no 52-week range
+    assert quote_from_bars(bars, "2025-01-01", "yahoo") is None

@@ -10,6 +10,8 @@ All notable changes to the Valuation Model. Newest first.
 - Statements: Income Statement / Balance Sheet / Cash Flow / Dividends / All toggles, each with a chart of its main lines (revenue, operating and net income; assets, liabilities, debt and cash; CFO, CFI, CFF and FCF; dividends and buybacks against earnings and FCF). The Dividends view adds dividends per share, payout ratio, total payout and FCF coverage. Cash from investing and financing added to the Cash Flow statement.
 - Ratios: each framework opens on a chart of the ratios that carry it (RNOA, ROCE and NOPM; the operating cycle and cash conversion cycle; DuPont ROE, ROA and margin; Debt/EBITDA, interest cover and Altman Z; cash vs. accrual earnings), with a line on how to read it.
 - A $K / $M / $B switch on Results sets the unit of every dollar table, remembered in this browser. Selected toggles are highlighted in the accent color.
+- Market Snapshot on the Valuation page: price and change, previous close, open, day's range, 52-week range, volume and 3-month average, market cap, enterprise value, net debt, shares, beta, EPS, P/E, EV/Sales, EV/EBITDA, price/book and dividend yield. Point-in-time: the trading figures are for the as-of close, from a year of daily bars.
+- The football field adds the 52-week trading range as an unweighted market reference row, as on the course Summary sheet.
 - Sector screens in the browser read EDGAR's SIC lists from site/data/sic_members.json, which the weekly Refresh now publishes; the SEC refuses that EDGAR page to the proxy.
 
 ## [0.3.0] - 2026-10-21
