@@ -17,13 +17,14 @@ permissions:
   pages: write
   id-token: write
 
-concurrency:
-  group: pages
-  cancel-in-progress: true
-
 jobs:
   deploy:
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    # Job-level, so a run skipped by the `if` above never joins the group. At workflow level,
+    # a skipped run (after a cancelled or failed Pipeline) cancelled the deploy in progress.
+    concurrency:
+      group: pages
+      cancel-in-progress: true
     runs-on: ubuntu-latest
     environment:
       name: github-pages
