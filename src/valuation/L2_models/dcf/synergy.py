@@ -76,7 +76,7 @@ class DCFSynergy:
         cost_pct = syn["cost_pct"]
         if cost_pct is None:
             if cost_base <= 0:
-                raise DealError("no COGS or SG&A to apply cost synergies to: set synergies.cost_pct")
+                raise DealError("the filings give no COGS, SG&A or other operating costs to cut, so cost synergies can't be applied here (set synergies.cost_pct to force a cut); Just Synergies still values them")
             cost_pct = syn["annual_cost"] / cost_base
             names = {"cogs": "COGS", "sga": "SG&A", "rnd": "R&D", "other_opex": "other operating costs"}
             notes.append(f"cost cut {cost_pct:.2%} = annual cost synergies over the base year's "

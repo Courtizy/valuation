@@ -63,7 +63,7 @@ def deal_summary(by_model: dict, detail: dict | None, deal: dict) -> dict:
     q = market.get("quote") or {}
     values = {m: _triple(by_model.get(m)) for m in set(STANDALONE) | set(OFFER) | set(by_model)}
     rows = (((by_model.get("precedents") or {}).get("details") or {}).get("summary_rows") or {})
-    values.update({m: tuple(v) for m, v in rows.items() if v})     # transaction comps fill five rows
+    values.update({m: tuple(v) for m, v in rows.items() if v and all(x is not None for x in v)})     # transaction comps fill five rows
     if pre and q.get("wk52_low") and q.get("wk52_high"):
         values["trading_range"] = (q["wk52_low"], pre, q["wk52_high"])
     w = deal.get("weights") or {}

@@ -92,7 +92,8 @@ def central_rows(deals: list[dict], t: dict, opts: dict) -> dict:
     for row, (field, metric) in ROWS.items():
         xs = [d[field] for d in deals if d.get(field) is not None]
         ks = pct["ev_sales" if metric == "sales" else "ev_ebitda"]
-        ranges[row] = [implied(percentile(xs, k), t.get(metric), t) for k in ks] if xs else None
+        vals = [implied(percentile(xs, k), t.get(metric), t) for k in ks] if xs else []
+        ranges[row] = vals if vals and all(v is not None for v in vals) else None
     prem = stats([d["premium"] for d in deals])
     ranges["premium"] = ([t["price"] * (1 + prem[q]) for q in ("q1", "median", "q3")]
                          if prem and t.get("price") else None)
