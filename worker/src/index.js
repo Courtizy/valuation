@@ -1,7 +1,7 @@
 // valuation (proxy): GET /?url=<https URL> for a short allowlist of public sources.
 // - only the hosts and paths below; GET only; https only
 // - only the Decision Models site (ALLOWED_ORIGINS) gets CORS headers
-// - adds the contact User-Agent the SEC requires (secret SEC_USER_AGENT)
+// - adds the contact User-Agent the SEC requires (secret SEC_USER_AGENT, else the SEC_CONTACT var)
 // - caches responses at the edge, and spaces upstream SEC calls so one visitor can't
 //   exceed the SEC's 10 requests a second from this Worker
 // No market data passes through here: prices in the browser come from the visitor's own key.
@@ -43,7 +43,8 @@ export default {
     }
     const rule = ALLOW.find((r) => r.host === target.hostname && r.path.test(target.pathname));
     if (target.protocol !== "https:" || !rule) return fail(403, "not an allowed source", ch);
-    if (SEC_HOSTS.has(target.hostname) && !env.SEC_USER_AGENT) return fail(500, "SEC_USER_AGENT secret not set", ch);
+    const contact = env.SEC_USER_AGENT || env.SEC_CONTACT;
+    if (SEC_HOSTS.has(target.hostname) && !contact) return fail(500, "no SEC contact: set SEC_CONTACT in wrangler.toml", ch);
 
     const cache = caches.default;
     const key = new Request(target.toString(), { method: "GET" });
@@ -55,7 +56,7 @@ export default {
         lastSec = Date.now();
       }
       const headers = { Accept: "application/json, text/html;q=0.9, text/csv;q=0.9, */*;q=0.5" };
-      if (SEC_HOSTS.has(target.hostname)) headers["User-Agent"] = env.SEC_USER_AGENT;
+      if (contact) headers["User-Agent"] = contact;   // the SEC requires it; FRED and NYU get the same polite contact
       const up = await fetch(target.toString(), { headers });
       res = new Response(up.body, up);
       res.headers.set("Cache-Control", `public, max-age=${rule.ttl}`);
