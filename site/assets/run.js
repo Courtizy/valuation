@@ -1,8 +1,61 @@
+import { PROXY_URL } from "./config.js";
+import { clearDevice, deviceIndex, runHere, saveDevice } from "./device.js";
 import { actionsUrl, dispatchPipeline, gh, setStatus } from "./github.js";
 import { esc } from "./format.js";
 import { $, state, store } from "./state.js";
 
-// ---- Run page (owner) -------------------------------------------------------------
+let showDevice = null, route = null;    // injected by main.js (avoids a circular import)
+export function setRunHooks(hooks) { ({ showDevice, route } = hooks); }
+
+// ---- Run in this browser (anyone) -------------------------------------------------
+const proxyUrl = () => ($("h-proxy").value.trim() || PROXY_URL).replace(/\/+$/, "");
+
+function renderSaved() {
+  const list = deviceIndex()?.companies || [];
+  $("h-saved").innerHTML = list.length
+    ? `Saved on this device: ${list.map((c) => `<b>${esc(c.ticker)}</b> (${c.runs.length} run${c.runs.length > 1 ? "s" : ""})`).join(", ")}.
+       <button type="button" class="linkish" id="h-clear">Clear</button>`
+    : '<span class="muted">Nothing saved on this device yet.</span>';
+  const clear = $("h-clear");
+  if (clear) clear.onclick = async () => {
+    if (!confirm("Remove every run saved in this browser?")) return;
+    await clearDevice(); renderSaved(); await showDevice?.(null);
+  };
+}
+
+export function setupHereForm() {
+  $("h-proxy").value = store.get("proxy_url") || "";
+  $("h-asof").value = new Date().toISOString().slice(0, 10);
+  renderSaved();
+  $("here-form").onsubmit = async (e) => {
+    e.preventDefault();
+    const status = $("h-status"), go = $("h-go");
+    const ticker = $("h-ticker").value.trim().toUpperCase();
+    store.set("proxy_url", $("h-proxy").value.trim() || null);
+    if (!/^[A-Z][A-Z0-9.\-]{0,9}$/.test(ticker)) { setStatus(status, { ok: false, msg: "Enter a valid ticker." }); return; }
+    if (!proxyUrl()) { setStatus(status, { ok: false, msg: "The data proxy isn't set up yet: add its URL under Data Proxy." }); return; }
+    go.disabled = true;
+    status.className = "status"; status.textContent = "Starting…";
+    try {
+      const out = await runHere({ ticker, asOf: $("h-asof").value, models: "dcf", proxy: proxyUrl() },
+        (msg) => { status.textContent = msg; });
+      const failed = out.report.filter(([, st]) => st === "failed");
+      if (!out.files[`${ticker}/${$("h-asof").value}/company_detail.json`] && failed.length) {
+        throw new Error(failed.map(([step, , msg]) => `${step}: ${msg}`).join("; "));
+      }
+      await saveDevice(out.files);
+      renderSaved();
+      setStatus(status, { ok: !failed.length, msg: failed.length
+        ? `Done, with problems: ${failed.map(([step, , msg]) => `${step} (${msg})`).join("; ")}`
+        : `Done. ${ticker} is saved on this device.` });
+      await showDevice?.(ticker);
+    } catch (err) {
+      setStatus(status, { ok: false, msg: `Run failed: ${err.message}` });
+    } finally { go.disabled = false; }
+  };
+}
+
+// ---- Publish to the site (owner) -------------------------------------------------------------
 export function repoGuess() {
   const h = location.hostname;
   if (h.endsWith(".github.io")) return { owner: h.split(".")[0], repo: location.pathname.split("/").filter(Boolean)[0] || `${h}` };

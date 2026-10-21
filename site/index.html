@@ -48,7 +48,7 @@
       <button class="tab" role="tab" id="tab-overview" aria-controls="panel-overview" data-tab="overview">Overview</button>
       <button class="tab" role="tab" id="tab-results" aria-controls="panel-results" data-tab="results">Results</button>
       <button class="tab" role="tab" id="tab-method" aria-controls="panel-method" data-tab="method">Method</button>
-      <a class="run-link" href="#run" id="run-link" title="Owner tool: start a pipeline run on GitHub">Run ▸</a>
+      <a class="run-link" href="#run" id="run-link" title="Run a company in this browser, or publish one (owner)">Run ▸</a>
     </nav>
   </div>
 
@@ -156,9 +156,29 @@
     </section>
 
     <!-- Run pipeline -->
-    <section id="panel-run" class="panel" aria-label="Run the pipeline" hidden>
+    <section id="panel-run" class="panel" aria-label="Run a company" hidden>
       <div class="card">
-        <div class="card-head"><h2>Run the Pipeline</h2></div>
+        <div class="card-head"><h2>Run in This Browser</h2></div>
+        <p class="muted">Values any US-listed company from its SEC filings, right here: the same engine as the pipeline, running in your browser. Results are saved <b>on this device only</b> and appear in the company list marked "on this device". Nothing is published or sent to GitHub, and no token is needed.</p>
+        <form id="here-form" autocomplete="off">
+          <div class="form-grid">
+            <div class="field"><label for="h-ticker">Ticker</label><input type="text" id="h-ticker" pattern="[A-Za-z][A-Za-z0-9.\-]{0,9}" placeholder="AAPL" required></div>
+            <div class="field"><label for="h-asof">As Of</label><input type="date" id="h-asof"></div>
+          </div>
+          <p class="hint" style="margin-top:8px">Builds company details and the DCF. Market prices aren't fetched (data terms), so the DCF uses Damodaran's industry beta and implied equity risk premium, and the 10-year Treasury from FRED.</p>
+          <details style="margin-top:8px"><summary class="small">Data Proxy</summary>
+            <div class="field" style="margin-top:8px"><label for="h-proxy">Proxy URL <span class="hint">the Cloudflare Worker in <code>worker/</code></span></label>
+              <input type="url" id="h-proxy" placeholder="https://valuation-proxy.example.workers.dev"></div>
+          </details>
+          <div class="actions">
+            <button type="submit" class="primary" id="h-go">Run Here</button>
+            <span id="h-status" class="status" role="status"></span>
+          </div>
+        </form>
+        <div id="h-saved" class="small" style="margin-top:12px"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>Publish to the Site (Owner)</h2></div>
         <p class="muted">Starts the <code>Pipeline</code> GitHub Action. It fetches SEC filings, builds company detail, publishes the results here and redeploys the site. That usually takes a few minutes.</p>
         <form id="run-form" autocomplete="off">
           <div class="seg" id="r-mode" role="group" aria-label="What to run" style="margin-bottom:12px">

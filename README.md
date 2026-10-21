@@ -17,6 +17,7 @@ The Valuation Model turns a company's SEC filings into normalized statements, ra
 - **Analyzes statements three ways.** Standard ratios, managerial (working capital) ratios and reformulated operating/financing ratios, with definitions taken from MBA course workbooks.
 - **Values with a simulated DCF.** 2,000 seeded runs over near-term growth, WACC and terminal growth. Bear and Bull are the 10th and 90th percentiles.
 - **Compares methods.** Public comparables, plus reconciliation into a football field that explains why the methods differ.
+- **Runs in your browser.** Anyone can value a company from the Run page with no token. The same Python engine runs in the browser through Pyodide, and the results are saved on that device only.
 - **Screens sectors.** GICS-style groups of SEC industry codes, with benchmarks and a peer picker that saves comps peer lists back to the repo.
 
 ## Status
@@ -29,6 +30,7 @@ The Valuation Model turns a company's SEC filings into normalized statements, ra
 | L2 Models | Precedent transactions, LBO, IPO | Scaffolded, not built |
 | L2 Models | Excel export, memo PDF, back-testing | Planned |
 | L3 App | Static site on GitHub Pages (Overview, Results, Method), demo and tour | Built |
+| L3 App | Run in this browser (Pyodide, Cloudflare Worker proxy, saved on the device) | Built; the proxy needs deploying |
 
 The public site runs in **showcase mode**: it publishes SEC-derived figures only, with no licensed market prices. Price-dependent outputs (market multiples, upside to price) appear in the demo and in private runs.
 
@@ -130,7 +132,8 @@ Each layer talks to the next only through JSON files that record their inputs' h
 |---|---|---|
 | `src/valuation/` | both | The engine: layers L0–L3, `runner/`, and `_core/` (shared math, imports nothing else from the app) |
 | `configs/public/` | public | Hand-edited assumptions, comps peers, packs, sectors and `universe.json` (what Refresh builds) |
-| `scripts/export_site.py` | public | Copies `brand/` into `site/brand`, rebuilds the demo, writes `site/data/changelog.json`, refreshes the index |
+| `scripts/export_site.py` | public | Copies `brand/` into `site/brand`, rebuilds the demo, writes `site/data/changelog.json`, refreshes the index, packs the engine into `site/py/valuation.zip` |
+| `worker/` | public | Cloudflare Worker proxy for the in-browser Run (SEC, FRED and Damodaran only) |
 | `scripts/refresh_universe.py`, `scripts/site_data.sh` | public | Weekly build of `universe.json`; load and save the `site-data` branch |
 | `site/` | public | Static Pages site; displays the JSON only |
 | `brand/` | public | Decision Models brand kit (CSS, JS palette, icons) |

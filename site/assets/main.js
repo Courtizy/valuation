@@ -1,8 +1,9 @@
 import { renderCashChart, renderCompany, renderMarginChart, renderRatios, renderReturnsChart, renderRevenueChart, renderStatements } from "./company.js";
 import { esc } from "./format.js";
-import { fillSectorList, setupRunForm } from "./run.js";
+import { fillSectorList, setRunHooks, setupHereForm, setupRunForm } from "./run.js";
 import { loadSector } from "./sector.js";
-import { $, banner, getJSON, state, store } from "./state.js";
+import { deviceIndex, loadDevice } from "./device.js";
+import { $, banner, getJSON, runRoot, state, store } from "./state.js";
 import { renderValuation } from "./valuation.js";
 import { setTourHooks, startTour } from "./tour.js";
 import { renderMethod, renderOverview } from "./pages.js";
@@ -31,6 +32,41 @@ async function chooseMode() {
   $("mode-strip").hidden = !state.demoMode;
   $("tour-start").onclick = startTour;
   setTourHooks({ selectCompany, route });
+  setRunHooks({ showDevice, route });
+}
+
+// Companies run in this browser are listed after the published ones, marked "on this device".
+// Their key is "device:TICKER", so a ticker can be both published and run here.
+const keyOf = (c) => (c.device ? `device:${c.ticker}` : c.ticker);
+
+function withDevice(index) {
+  const published = index.companies.filter((c) => !c.device);
+  const mine = state.demoMode ? [] : (deviceIndex()?.companies || []).map((c) => ({ ...c, device: true }));
+  return { ...index, companies: [...published, ...mine] };
+}
+
+function fillCompanies() {
+  $("company").innerHTML = state.index.companies.map((c) =>
+    `<option value="${esc(keyOf(c))}">${esc(c.ticker)} · ${esc(c.name)}${c.device ? " (on this device)" : c.demo && !/synthetic/i.test(c.name) ? " (demo)" : ""}</option>`).join("");
+}
+
+/** After a run in this browser: list it and open it. */
+export async function showDevice(ticker) {
+  if (state.emptied) {                  // the pages were replaced by the "no results" card: start over
+    if (ticker) store.set("ticker", `device:${ticker}`);
+    location.hash = "#valuation";
+    location.reload();
+    return;
+  }
+  state.index = withDevice(state.index);
+  fillCompanies();
+  if (!ticker) {
+    if (state.company?.device) await selectCompany(state.index.companies[0] ? keyOf(state.index.companies[0]) : "");
+    return;
+  }
+  $("company").value = `device:${ticker}`;
+  await selectCompany(`device:${ticker}`);
+  route("valuation");
 }
 
 async function init() {
@@ -40,6 +76,7 @@ async function init() {
   setupSegments();
   setupCollapsibles();
   setupRunForm();
+  setupHereForm();
   try {
     [state.index, state.concepts, state.companies, state.taxonomy] = await Promise.all([getJSON(`${state.root}index.json`),
       getJSON(`${state.root}concepts.json`).catch(() => ({})), getJSON(`${state.root}companies.json`).catch(() => ({ companies: [] })),
@@ -48,14 +85,15 @@ async function init() {
     banner(`Couldn't load ${state.root}index.json (${e.message}). Run the pipeline, or "python scripts/export_site.py", then reload.`);
     state.index = { companies: [] };
   }
+  if (!state.demoMode) await loadDevice();
+  state.index = withDevice(state.index);
   fillSectorList();
   $("footer-market").textContent = state.index.market_data === "real" ? "Market prices: Yahoo, checked against Alpha Vantage."
     : state.index.market_data === "demo" ? "Demo: synthetic companies and synthetic market data, run through the real pipeline."
       : "Market prices aren't published here (data terms); the Demo uses synthetic market figures.";
   $("generated").textContent = state.index.generated_at ? `Data index updated ${state.index.generated_at.replace("T", " ").replace("+00:00", " UTC")}.` : "";
   const sel = $("company");
-  sel.innerHTML = state.index.companies.map((c) =>
-    `<option value="${esc(c.ticker)}">${esc(c.ticker)} · ${esc(c.name)}${c.demo && !/synthetic/i.test(c.name) ? " (demo)" : ""}</option>`).join("");
+  fillCompanies();
   sel.onchange = () => selectCompany(sel.value);
   $("asof").onchange = () => selectRun($("asof").value);
   if (!state.index.companies.length) {
@@ -63,15 +101,16 @@ async function init() {
     return;
   }
   const remembered = store.get(state.demoMode ? "ticker:demo" : "ticker");
-  const first = state.index.companies.find((c) => c.ticker === remembered) || state.index.companies[0];
-  sel.value = first.ticker;
-  await selectCompany(first.ticker);
+  const first = state.index.companies.find((c) => keyOf(c) === remembered) || state.index.companies[0];
+  sel.value = keyOf(first);
+  await selectCompany(keyOf(first));
 }
 
-export async function selectCompany(ticker) {
+export async function selectCompany(key) {
   state.secLevel = state.peerLevel = undefined;   // each company starts at its default comparison level
-  state.company = state.index.companies.find((c) => c.ticker === ticker);
-  store.set(state.demoMode ? "ticker:demo" : "ticker", ticker);
+  state.company = state.index.companies.find((c) => keyOf(c) === key);
+  if (!state.company) { renderEmptyEverywhere(); return; }
+  store.set(state.demoMode ? "ticker:demo" : "ticker", key);
   $("asof").innerHTML = state.company.runs.map((r) => `<option>${esc(r.as_of)}</option>`).join("");
   await selectRun(state.company.runs[0].as_of);
 }
@@ -82,11 +121,11 @@ export async function selectRun(asOf) {
   banner("");
   try {
     // one round trip: every file this run needs, fetched together
-    const base = `${state.root}${state.company.ticker}/${state.run.as_of}/model_results`;
+    const root = runRoot(), base = `${root}${state.company.ticker}/${state.run.as_of}/model_results`;
     const opt = (cond, path) => (cond ? getJSON(path).catch(() => null) : Promise.resolve(null));
     [state.detail, state.comparison, state.comps, state.dcf] = await Promise.all([
-      getJSON(`${state.root}${state.run.detail}`),
-      opt(state.run.comparison, `${state.root}${state.run.comparison}`),
+      getJSON(`${root}${state.run.detail}`),
+      opt(state.run.comparison, `${root}${state.run.comparison}`),
       opt(state.run.models?.includes("comps"), `${base}/comps.json`),
       opt(state.run.models?.includes("dcf"), `${base}/dcf.json`),
       loadSector(),
@@ -106,6 +145,7 @@ export async function selectRun(asOf) {
 }
 
 function renderEmptyEverywhere() {
+  state.emptied = true;
   const msg = `<div class="card empty"><h2>No Published Results Yet</h2>
     <p>Use <b>Run ▸</b> to fetch a company, or press <b>Demo</b> at the top to explore every feature on synthetic companies.</p></div>`;
   for (const id of ["panel-company", "panel-valuation"]) $(id).innerHTML = msg;

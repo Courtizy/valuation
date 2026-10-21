@@ -4,7 +4,7 @@ import { simulationSummary } from "./pages.js";
 import { NA, NM, esc, estLabel, fin, label, millions, money, mult, num, pct, periodLabel, price, sentence, sourceLine, times, titleCase } from "./format.js";
 import { dispatchPipeline, gh, readRepoJSON, setStatus, writeRepoJSON } from "./github.js";
 import { levelBar, levelOptions, levelRows, sectorMe, sectorPicker, wireLevelBar, wireSectorPicker } from "./sector.js";
-import { $, getJSON, state } from "./state.js";
+import { $, fileHref, getJSON, runRoot, state } from "./state.js";
 import { acct, cellOf, finRow } from "./tables.js";
 
 // ---------------------------------------------------------------- valuation
@@ -509,7 +509,7 @@ function whyTheyDiffer(methods) {
 function renderSide() {
   const side = $("val-side");
   if (!side) return;
-  const co = state.company, e = state.detail.entity || {}, s = simulationSummary(), base = `${state.root}${co.ticker}/${state.run.as_of}`;
+  const co = state.company, e = state.detail.entity || {}, s = simulationSummary(), base = `${runRoot()}${co.ticker}/${state.run.as_of}`;
   const rng = (spec, f) => (spec?.dist === "triangular" ? `${f(spec.low)}–${f(spec.high)}` : spec?.dist ? esc(spec.dist) : NA);
   side.innerHTML = `
     <div class="side-block"><div class="eyebrow">Company</div>
@@ -524,9 +524,9 @@ function renderSide() {
         <span class="muted">Latest filing ${esc(state.detail.latest?.annual || "")}${state.detail.latest?.ttm ? ` · ${esc(state.detail.latest.ttm.replace("TTM", "LTM"))}` : ""}</span></p></div>
     <div class="side-block"><div class="eyebrow">Downloads</div>
       <ul class="downloads">
-        ${state.dcf ? `<li><a href="${base}/model_results/dcf.json" download>DCF results (JSON)</a></li>` : ""}
-        ${state.run.comparison ? `<li><a href="${state.root}${esc(state.run.comparison)}" download>Reconciliation (JSON)</a></li>` : ""}
-        ${state.run.full ? `<li><a href="${state.root}${esc(state.run.full)}" download>Company detail, full history (JSON)</a></li>` : ""}
+        ${state.dcf ? `<li><a href="${esc(fileHref(`${base}/model_results/dcf.json`))}" download>DCF results (JSON)</a></li>` : ""}
+        ${state.run.comparison ? `<li><a href="${esc(fileHref(runRoot() + state.run.comparison))}" download>Reconciliation (JSON)</a></li>` : ""}
+        ${state.run.full ? `<li><a href="${esc(fileHref(runRoot() + state.run.full))}" download>Company detail, full history (JSON)</a></li>` : ""}
       </ul></div>`;
 }
 

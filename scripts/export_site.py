@@ -6,6 +6,7 @@
   2. the pre-loaded demo: synthetic companies through the real pipeline -> site/demo/data/
   3. CHANGELOG.md -> site/data/changelog.json (the Method page's changelog)
   4. site/data index refreshed (publish over what's there; demo data never stays in it)
+  5. site/py/valuation.zip: the engine and configs/public, for the in-browser Run (Pyodide)
 
 Real companies reach site/data through the Pipeline workflow (SEC filings, showcase mode).
 The site only displays JSON; all math stays in src/valuation/.
@@ -16,6 +17,7 @@ import json
 import re
 import shutil
 import sys
+import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -45,6 +47,17 @@ def changelog(limit: int = 8) -> list[dict]:
     return out[:limit]
 
 
+def web_package(out: Path = SITE / "py" / "valuation.zip") -> Path:
+    """src/valuation and configs/public, laid out as in the repo so the package finds its configs."""
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
+        for base in (ROOT / "src" / "valuation", ROOT / "configs" / "public"):
+            for f in sorted(base.rglob("*")):
+                if f.is_file() and "__pycache__" not in f.parts and f.suffix in (".py", ".json"):
+                    z.write(f, f.relative_to(ROOT).as_posix())
+    return out
+
+
 def main() -> int:
     copy_brand()
     print("brand -> site/brand")
@@ -53,6 +66,7 @@ def main() -> int:
     (SITE / "data" / "changelog.json").write_text(json.dumps({"releases": changelog()}, indent=1))
     publish(ROOT / "data-not-in-repo", SITE)   # refresh index.json / companies.json over the published data
     print("site/data index refreshed")
+    print("engine ->", web_package().relative_to(ROOT))
     return 0
 
 

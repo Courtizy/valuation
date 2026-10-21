@@ -16,8 +16,8 @@ call the SEC directly: it sends no CORS headers and requires a contact User-Agen
 2. **Root directory:** `worker`. Build command: leave blank. Deploy command: `npx wrangler deploy`.
 3. After the first deploy: the Worker → **Settings → Variables and Secrets → Add → Secret**
    `SEC_USER_AGENT` = `Jason Courtoy your@email.com`.
-4. Note the Worker URL (`https://valuation-proxy.<your-subdomain>.workers.dev`); the site's in-browser
-   Run reads it from its config.
+4. Put the Worker URL (`https://valuation-proxy.<your-subdomain>.workers.dev`) in `PROXY_URL` in
+   `site/assets/config.js`. Until then a visitor can paste it under **Data Proxy** on the Run page.
 
 Every push to `main` that changes `worker/` redeploys it.
 
