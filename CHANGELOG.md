@@ -8,6 +8,8 @@ All notable changes to the Valuation Model. Newest first.
 - Prior deals (transaction comps): upload a deal list as CSV or paste it from Excel (an SDC export works as is). Best deals give lowest / average / highest implied values; all deals give the course's central tendency (premium quartiles, multiples at the percentile where the target's own multiple ranks). They fill five rows of the summary. Matches Best_TC_Comps and Cent_Tend_TC in the course workbooks.
 - Sensitivity grids: % of cost synergies realized × revenue growth added, and the lasting share × annual synergies.
 - The demo includes a synthetic bid for DEMO and a synthetic list of 24 deals (five marked best), so the Deal view shows every part.
+- Ratios: the line charts are replaced by Against the Sector: each framework's nearest figures from the sector screen (quartiles, gap to the median, a position bar), the way a peer benchmark table reads.
+- A run's outcome (Done, or Done with problems) stays in view after the page redraws.
 
 ## [0.3.1] - 2026-10-21
 - One pull does it all: Run Here (and Build from a sector table) picks the company's six closest peers from its sector and runs comps with the DCF. The peer picker opens on those peers to change them.
