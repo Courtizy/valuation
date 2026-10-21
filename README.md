@@ -92,6 +92,24 @@ gh workflow run pipeline.yml -f sector=sector:technology
 
 Both need the repository secret `SEC_USER_AGENT`. Published data lives on the `site-data` branch, replaced by a single commit on each save, so `main` stays code only and the history doesn't grow ([docs/L3_site.md](docs/L3_site.md)). Comps peer lists live in `configs/public/assumptions/{TICKER}/comps.json`; the site's peer picker can save them there.
 
+## Data and licensing
+
+Only government data reaches the public site. Third-party market data is used in private runs on your own machine and is never committed or published.
+
+| Source | What it provides | Public site | Private runs |
+|---|---|---|---|
+| [SEC EDGAR](https://www.sec.gov/search-filings/edgar-application-programming-interfaces) (XBRL company facts, industry codes) | Financial statements, share counts, sector membership | Yes | Yes |
+| [FRED](https://fred.stlouisfed.org/series/DGS10) (10-year Treasury, DGS10) | Risk-free rate | Yes | Yes |
+| Yahoo Finance (unofficial chart and fundamentals endpoints) | Prices, beta, backfill for items the filings lack | No | Yes |
+| [Alpha Vantage](https://www.alphavantage.co/) (optional, your own key) | Backup prices and a price cross-check | No | Yes |
+
+- **SEC and FRED** are US government data. Requests carry a contact User-Agent and stay within the SEC's fair-access limit of 10 requests a second.
+- **Showcase mode** (the default for the public site) never fetches Yahoo or Alpha Vantage. If a run did carry their values, publish strips the prices and anything derived from them, and skips any company with Yahoo backfill. Price-based outputs on the public site appear only in the synthetic demo.
+- **Private runs** (`app/run_private.py`) write only to `private/`, which is gitignored. Keys stay in environment variables or repository secrets, never in the code.
+- The repository ships code, configuration and the synthetic demo. It does not ship a third-party dataset.
+
+This is a personal, educational project and analysis of method, not investment advice. Data comes without warranty.
+
 ## Layers
 
 ```
