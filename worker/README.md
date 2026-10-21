@@ -6,7 +6,7 @@ call the SEC directly: it sends no CORS headers and requires a contact User-Agen
 - **Allowlist only:** `data.sec.gov` (companyfacts, frames, submissions), `www.sec.gov` (ticker list,
   EDGAR company browse), `fred.stlouisfed.org` (fredgraph.csv) and Damodaran's two pages. Anything else gets 403.
 - **Only the site may call it from a browser:** CORS headers are sent only to `ALLOWED_ORIGINS` (`wrangler.toml`). A script can fake an Origin, so the allowlist and the edge cache are what actually bound it: it can only ever fetch these public pages.
-- **Polite to the SEC:** adds `SEC_USER_AGENT`, caches responses at the edge (12 h for filings), and
+- **Polite to the SEC:** adds the contact User-Agent (`SEC_CONTACT` in `wrangler.toml`, or a `SEC_USER_AGENT` secret if set), caches responses at the edge (12 h for filings), and
   spaces SEC calls per isolate.
 - **No market data.** Prices in the browser come from the visitor's own API key, fetched directly by their browser.
 
@@ -14,8 +14,8 @@ call the SEC directly: it sends no CORS headers and requires a contact User-Agen
 
 1. Cloudflare dashboard → **Workers & Pages → Create → Import a repository** → `Courtizy/valuation`.
 2. **Root directory:** `worker`. Build command: leave blank. Deploy command: `npx wrangler deploy`.
-3. After the first deploy: the Worker → **Settings → Variables and Secrets → Add → Secret**
-   `SEC_USER_AGENT` = `Jason Courtoy your@email.com`.
+3. The SEC contact is `SEC_CONTACT` in `wrangler.toml`, so it deploys with the code. To keep it out of
+   the repo instead, add a **Secret** `SEC_USER_AGENT` under the Worker's Settings → Variables and Secrets; it wins.
 4. The Worker URL (`https://valuation.jason-courtoy.workers.dev`) is `PROXY_URL` in
    `site/assets/config.js`. A visitor can paste another under **Data Proxy** on the Run page.
 

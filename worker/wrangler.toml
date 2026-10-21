@@ -6,5 +6,8 @@ main = "src/index.js"
 compatibility_date = "2026-10-01"
 
 [vars]
-# Sites allowed to call the proxy. The SEC_USER_AGENT secret is set in the Cloudflare dashboard.
+# Sites allowed to call the proxy.
 ALLOWED_ORIGINS = "https://courtizy.github.io,http://localhost:8000,http://127.0.0.1:8000"
+# The contact the SEC asks for in every User-Agent. A SEC_USER_AGENT secret set in the dashboard,
+# if there is one, takes precedence (a var can't share a secret's name, hence SEC_CONTACT).
+SEC_CONTACT = "Jason Courtoy courtizy@gmail.com"
