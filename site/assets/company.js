@@ -143,7 +143,7 @@ export const SHOWN_YEARS = [1, 2, 3, 4, 5, 10];
 // valuation), otherwise the trend case calculated in L1 from history.
 export const PROJ_MAP = { revenue: "revenue", cost_of_goods_and_services_sold: "cogs", gross_profit: "gross_profit",
   research_and_development_expenses: "rnd", selling_general_and_admin_expenses: "sga", operating_income_loss: "ebit",
-  depreciation_amortization_cf: "depreciation", ebitda: "ebitda", pretax_income_loss: "ebt", income_taxes: "income_taxes",
+  depreciation_amortization_cf: "depreciation", ebitda: "ebitda", interest_expense: "interest_expense", interest_income: "interest_income", pretax_income_loss: "ebt", income_taxes: "income_taxes",
   net_income: "net_income", capital_expenses: "capex" };
 
 export function projection() {
@@ -214,13 +214,21 @@ export function renderRevenueChart() {
     growth.push(g); l *= 1 + g - step; h *= 1 + g + step; low.push(l); high.push(h); prev = r.revenue;
   }
   const cats = ps.map(periodLabel).concat(est.map((_, i) => estLabel(proj.base, i + 1)));
-  $("rev-title").textContent = view === "ttm" ? "Revenue, Last Twelve Months" : view === "quarterly" ? "Revenue by Quarter" : "Revenue";
+  chartTitle("rev-title", "revenue", view === "ttm" ? "Revenue, Last Twelve Months" : view === "quarterly" ? "Revenue by Quarter" : "Revenue");
   $("rev-sub").textContent = cats.length ? `${cats[0]} to ${cats.at(-1)}${est.length ? ` · dashed = ${proj.name}, band = growth ±${(step * 100).toFixed(0)} pt` : ""}` : "";
   areaChart($("rev-chart"), {
     categories: cats,
     values: ps.map((p) => p.values.revenue).concat(est.map((r) => r.revenue)),
     estimate: ps.map(() => false).concat(est.map(() => true)),
     low, high, growth, format: money, pctFormat: (x) => pct(x), label: "Revenue", bandLabel: "Bear – Bull" });
+}
+
+// Chart titles: the engine's one-line finding (company_detail.json headlines) in the Annual view,
+// which is what those sentences describe; the plain label otherwise or when there's no sentence.
+function chartTitle(id, key, plain) {
+  const h = state.view === "annual" ? state.detail.headlines?.[key] : null;
+  $(id).textContent = h || plain;
+  $(id).classList.toggle("action-title", !!h);
 }
 
 // RNOA and ROCE with the gap shaded: ROCE − RNOA = FLEV × (RNOA − NBC), the financing
@@ -233,6 +241,7 @@ export function renderReturnsChart() {
   const an = (rolling ? state.detail.analysis.ttm.slice(-12) : state.detail.analysis.annual).filter((a) => a.ratios.reformulated.avg);
   const qByEnd = new Map((state.detail.views.quarterly || []).map((p) => [p.end, p]));
   const lab = (x) => (view === "quarterly" && qByEnd.has(x.end) ? periodLabel(qByEnd.get(x.end)) : analysisLabel(x));
+  chartTitle("ret-title", "returns", "Returns");
   $("ret-sub").textContent = rolling ? "Average Balances, Rolling LTM" : "Average Balances, Annual";
   const a = { name: "RNOA", color: "var(--series-1)", values: an.map((x) => x.ratios.reformulated.avg.rnoa) };
   const b = { name: "ROCE", color: "var(--series-2)", values: an.map((x) => x.ratios.reformulated.avg.roce) };
@@ -256,6 +265,7 @@ export function renderMarginChart() {
     ["Operating Margin", "var(--series-3)", (v) => m(v.operating_income_loss, v.revenue), (r) => m(r.ebit, r.revenue)],
   ].map(([name, color, fa, fe]) => ({ name, color, values: ann.map((p) => fa(p.values)).concat(est.map(fe)) }));
   $("mar-legend").innerHTML = series.map((x) => `<span><span class="key" style="background:${x.color}"></span>${x.name}</span>`).join("");
+  chartTitle("mar-title", "margins", "Margins");
   $("mar-sub").textContent = cats.length ? `${cats[0]} to ${cats.at(-1)}${est.length ? ` · dashed = ${proj.name}` : ""}` : "";
   lineChart($("mar-chart"), { categories: cats, series, format: pct, label: "Margins, reported and projected", splitAt: ann.length });
 }
@@ -264,6 +274,7 @@ export function renderMarginChart() {
 export function renderCashChart() {
   const ann = chartPeriods(state.view);
   const ni = ann.map((p) => p.values.net_income), fcf = ann.map((p) => p.values.free_cash_flow);
+  chartTitle("cash-title", "cash", "Cash Conversion");
   const series = [{ name: "Net Income", color: "var(--series-1)", values: ni }, { name: "FCF (CFO − Capex)", color: "var(--series-3)", values: fcf }];
   $("cash-legend").innerHTML = series.map((x) => `<span><span class="key" style="background:${x.color}"></span>${x.name}</span>`).join("");
   groupedBarChart($("cash-chart"), { categories: ann.map(periodLabel), series, format: money, label: "Net income and free cash flow",
@@ -445,7 +456,7 @@ export const RATIO_ROWS = {
     ],
   },
   risk: {
-    note: "Altman Z public needs a market price (not published on this site); the private-firm form uses book equity. Zones: Z < 1.2 distress, < 2.9 grey.",
+    note: "Altman Z public needs the market value of equity at the statement date, so it shows only for the latest year (at the as-of price) when a run pulled one; the private-firm form uses book equity. Zones: Z < 1.2 distress, < 2.9 grey.",
     rows: [
       ["group", "Distress"],
       ["Altman Z (Private Form)", (a) => a.ratios.risk.altman_z.private, num, { kind: "key" }],

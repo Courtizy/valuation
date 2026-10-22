@@ -361,13 +361,9 @@ table.sens td, table.sens th { text-align: center; }
 table.sens td:first-child, table.sens th:first-child { text-align: left; }
 table.sens td.base { outline: 2px solid var(--ink); outline-offset: -2px; font-weight: 700; }
 
-/* ---- collapsible sections */
-.collapse-btn { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font: inherit; color: inherit; }
-.collapse-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: var(--radius); }
-.chev { width: 7px; height: 7px; border-right: 2px solid var(--ink-2); border-bottom: 2px solid var(--ink-2); transform: rotate(45deg); transition: transform .15s; margin: 0 2px 3px; }
-.collapsed .chev { transform: rotate(-45deg); margin-bottom: 0; }
-.card.collapsed .card-head { margin-bottom: 0; }
-.card.collapsed .card-head > :not(h2) { display: none; }
+/* ---- Company Detail: the period switch drives the charts and the Detail tabs */
+.company-bar { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-bottom: 12px; }
+#company-detail { margin-top: 24px; }
 .subsection + .subsection { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
 .subsection h3 { margin: 0 0 8px; }
 .subsection h4 { margin: 0 0 6px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
@@ -504,3 +500,68 @@ table.deal-sum tr.na td { color: var(--muted); }
 .status:empty { display: none; }
 #panel-deal textarea { width: 100%; font: 12px/1.4 var(--font-mono, monospace); }
 #pd-table td:nth-child(2), #pd-table td:nth-child(3), #pd-table th:nth-child(2), #pd-table th:nth-child(3) { text-align: left; }
+
+/* ---- action titles: each section's title states its finding (written by the engine) ---- */
+h2.action-title { font-size: 17px; line-height: 1.35; font-weight: 600; text-wrap: balance; max-width: 72ch; }
+.card-head h2.action-title + .muted { flex-basis: 100%; }
+h3.block-title { font-size: 14px; color: var(--ink); font-weight: 600; line-height: 1.4; margin: 0 0 10px; text-wrap: balance; }
+
+/* ---- page one of a view: the finding, the numbers, the main charts ---- */
+.card.sheet { display: grid; gap: 18px; border-top: 3px solid var(--series-1); }
+.card.sheet > .eyebrow { margin-bottom: -10px; }
+.card.sheet h2.action-title { font-size: clamp(18px, 2.4vw, 22px); }
+.card.sheet .kpis { margin-bottom: 0; }
+.sheet-block { min-width: 0; }
+.sheet-two { gap: 22px; }
+.sheet-two > .sheet-block { border-top: 1px solid var(--border); padding-top: 14px; }
+
+/* deal football field: grouped blocks, standalone vs. transaction colors */
+.ff-group { font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink); padding: 12px 0 4px; border-bottom: 1px solid var(--axis); }
+.deal-ff .ff-row.of .ff-bar .rng { background: var(--series-2); }
+.deal-ff .ff-row.total .ff-bar .rng { background: var(--ink-2); }
+.deal-ff .ff-row.total { border-top: 1px solid var(--axis); }
+.ff-bar .px.offer { border-left: 2px solid var(--series-3); }
+.legend .key.line { height: 0; width: 16px; border-top: 2px dashed var(--ink-2); border-radius: 0; background: none; }
+.legend .key.line.offer { border-top: 2px solid var(--series-3); }
+
+/* value bridge and premiums-paid strip */
+.deal-svg { width: 100%; height: auto; display: block; overflow: visible; }
+.deal-svg .grid { stroke: var(--grid); stroke-width: 1; }
+.deal-svg .axis { fill: var(--ink-2); font-size: 10.5px; font-family: var(--font); }
+.deal-svg .val { fill: var(--ink); font-size: 11.5px; font-family: var(--mono); }
+.deal-svg .link { stroke: var(--ink-2); stroke-dasharray: 2 2; }
+.deal-svg .wf.base { fill: var(--ink-2); fill-opacity: .55; }
+.deal-svg .wf.up { fill: var(--series-2); }
+.deal-svg .wf.total { fill: var(--series-1); }
+.deal-svg .wf.over { fill: var(--series-3); }
+.deal-svg .wf.kept { fill: var(--series-2); fill-opacity: .5; }
+.deal-svg .wf.offer { fill: var(--ink); fill-opacity: .8; }
+.deal-svg .band { fill: var(--series-1); fill-opacity: .14; }
+.deal-svg .med { stroke: var(--ink); stroke-width: 2; }
+.deal-svg .deal-dot { fill: var(--series-2); fill-opacity: .9; }
+.deal-svg .bid { stroke: var(--series-3); stroke-width: 2; }
+.deal-svg .bidlbl { fill: var(--series-3); font-size: 11px; font-weight: 600; font-family: var(--font); }
+
+/* ---- tab sets: method detail and the appendix ---- */
+.tabset { margin-top: 20px; }
+.tabset-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-bottom: 10px; }
+.tabset-title { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
+.tabset-bar button { min-height: 36px; }
+.tabset-panel > .card:first-child { margin-top: 0; }
+.tabset-panel > * + * { margin-top: 16px; }
+
+/* inputs tucked under the answer */
+details.inputs-card { margin-top: 20px; }
+details.inputs-card > summary { cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; list-style: none; min-height: 32px; }
+details.inputs-card > summary::-webkit-details-marker { display: none; }
+details.inputs-card > summary h2::before { content: "▸ "; color: var(--ink-2); }
+details.inputs-card[open] > summary h2::before { content: "▾ "; }
+details.inputs-card[open] > summary { margin-bottom: 12px; }
+@media (max-width: 640px) {
+  .tabset-bar { width: 100%; }
+  .tabset-bar button { flex: 1 0 auto; min-height: 44px; }
+}
+.val-moves { margin-top: 16px; grid-template-columns: repeat(auto-fit, minmax(min(560px, 100%), 1fr)); }
+.val-moves > div > .card { height: 100%; margin-bottom: 0; }
+#val-sheet .headline { margin-top: 0; }
+#val-sheet .card-head { margin-bottom: 8px; }

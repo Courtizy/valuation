@@ -3,6 +3,7 @@ import { deviceAssumptions, saveAssumption } from "./device.js";
 import { setStatus } from "./status.js";
 import { runInBrowser } from "./run.js";
 import { $, state } from "./state.js";
+import { tabSet, wireTabs } from "./tabs.js";
 import { acct, cellOf, finRow } from "./tables.js";
 
 // ---- Deal view: the acquisition side of the course model ------------------------------------
@@ -63,7 +64,7 @@ function inputsCard(d, demo) {
   const s = d?.synergies || {}, px = state.detail.market?.price;
   const f = (id, lbl, val, hint, attrs = 'step="any"') => `<div class="field"><label for="${id}">${lbl}${hint ? ` <span class="hint">${hint}</span>` : ""}</label>
     <input type="number" id="${id}" ${attrs} value="${val ?? ""}"></div>`;
-  return `<div class="card"><div class="card-head"><h2>Deal Inputs</h2><span class="muted small">Saved on this device; dollar amounts in ${esc(unit().label.replace("$ ", ""))} (the $K / $M / $B switch)</span></div>
+  return `<p class="muted small">Dollar amounts in ${esc(unit().label.replace("$ ", ""))} (the $K / $M / $B switch).</p>
     <form id="deal-form" autocomplete="off">
       <h3>Deal</h3>
       <div class="form-grid">
@@ -91,7 +92,7 @@ function inputsCard(d, demo) {
       <p class="legend-note">Runs the whole-firm DCF with synergies and the just-synergies DCF in this browser, on top of
         ${esc(state.company.ticker)}'s standalone DCF inputs, then rebuilds the summary below. Cost synergies cut COGS and SG&amp;A
         (costs rise by the same amount in the closing year for integration, then phase in); revenue synergies last.</p>
-    </form></div>`;
+    </form>`;
 }
 
 function readForm() {
@@ -117,7 +118,7 @@ function rangeRows(rows, prem) {
 function summaryCard(s, d) {
   const total = (lbl, r, extra = "") => `<tr class="sub"><td>${lbl}</td>${r ? ["conservative", "best_guess", "aggressive"].map((k) => `<td><b>${price(r[k])}</b></td>`).join("") : "<td colspan=3>No method has a value yet</td>"}<td></td><td></td>${extra}</tr>`;
   const offerPx = d?.offer_price;
-  return `<div class="card"><div class="card-head"><h2>Summary</h2><span class="muted small">Standalone value vs. what to offer, value per share</span></div>
+  return `<div class="card"><div class="card-head"><h2>Offer Table</h2><span class="muted small">The course summary: each method's range, its weight, and what the offer range implies</span></div>
     <div class="table-wrap"><table class="list deal-sum" id="deal-sum">
       <thead><tr><th>Valuation Approach</th><th>Conservative</th><th>Best Guess</th><th>Aggressive</th><th>Weight (%)</th><th>Used</th></tr></thead>
       <tbody>
@@ -142,23 +143,122 @@ function summaryCard(s, d) {
   </div>`;
 }
 
-function fieldCard(s, d) {
-  const rows = [...s.st.filter((r) => r.values).map((r) => ({ ...r, group: "st" })),
-    s.stRange && { name: "Standalone Range", values: [s.stRange.conservative, s.stRange.best_guess, s.stRange.aggressive], total: true },
-    ...s.of.filter((r) => r.values).map((r) => ({ ...r, group: "of" })),
-    s.offer && { name: "Offer Price Range", values: [s.offer.conservative, s.offer.best_guess, s.offer.aggressive], total: true }].filter(Boolean);
-  if (!rows.length) return "";
+/** Football field: standalone methods, then transaction methods, each block ending in its weighted range,
+ *  with the pre-announcement price (dashed) and the offer (solid) through every row. */
+function fieldBody(s, d) {
+  const block = (label, rows, total, totalName, group) => [
+    { head: label },
+    ...rows.filter((r) => r.values).map((r) => ({ ...r, group })),
+    total && { name: totalName, values: [total.conservative, total.best_guess, total.aggressive], total: true, group }];
+  const rows = [...block("Standalone", s.st, s.stRange, "Standalone Range", "st"),
+    ...block("Transaction", s.of, s.offer, "Offer Price Range", "of")].filter(Boolean);
+  const bars = rows.filter((r) => r.values);
+  if (!bars.length) return "";
   const offerPx = d?.offer_price;
-  const vals = rows.flatMap((r) => [r.values[0], r.values[2]]).concat([s.pre, offerPx].filter(fin));
+  const vals = bars.flatMap((r) => [r.values[0], r.values[2]]).concat([s.pre, offerPx].filter(fin));
   const lo = Math.min(...vals) * 0.97, hi = Math.max(...vals) * 1.03, x = (v) => `${((v - lo) / (hi - lo)) * 100}%`;
   const marks = `${fin(s.pre) ? `<span class="px" style="left:${x(s.pre)}" title="Pre-announcement ${price(s.pre)}"></span>` : ""}${fin(offerPx) ? `<span class="px offer" style="left:${x(offerPx)}" title="Offer ${price(offerPx)}"></span>` : ""}`;
-  return `<div class="card"><div class="card-head"><h2>Football Field</h2><span class="muted small">Bar = conservative to aggressive, tick = best guess · dashed = pre-announcement ${price(s.pre)}${fin(offerPx) ? ` · solid = offer ${price(offerPx)}` : ""}</span></div>
-    <div class="ff">${rows.map((r) => `<div class="ff-row ${r.total ? "total" : r.adjusted_weight ? "" : "ref"}">
-        <div class="ff-name"><b>${esc(r.name)}</b>${r.total ? "" : `<div class="muted small">${r.group === "st" ? "Standalone" : "Offer"} · ${pct(r.adjusted_weight, true)}</div>`}</div>
+  return `<div class="legend deal-legend"><span><span class="key" style="background:var(--series-1)"></span>Standalone methods</span>
+      <span><span class="key" style="background:var(--series-2)"></span>Transaction methods</span>
+      ${fin(s.pre) ? `<span><span class="key line"></span>Pre-announcement ${price(s.pre)}</span>` : ""}
+      ${fin(offerPx) ? `<span><span class="key line offer"></span>Offer ${price(offerPx)}</span>` : ""}
+      <span class="muted">Bar = conservative to aggressive, tick = best guess</span></div>
+    <div class="ff deal-ff">${rows.map((r) => r.head ? `<div class="ff-group">${r.head}</div>` : `<div class="ff-row ${r.total ? "total" : r.adjusted_weight ? "" : "ref"} ${r.group}">
+        <div class="ff-name"><b>${esc(r.name)}</b>${r.total ? "" : `<div class="muted small">Weight ${pct(r.adjusted_weight, true)}</div>`}</div>
         <div class="ff-bar ${r.total ? "blend" : ""}"><span class="rng" style="left:${x(r.values[0])};width:calc(${x(r.values[2])} - ${x(r.values[0])})"></span>
           <span class="tick" style="left:${x(r.values[1])}"></span>${marks}</div>
         <div class="ff-num">${price(r.values[0])} – ${price(r.values[2])}</div><div class="ff-num"><b>${price(r.values[1])}</b></div>
-        <div class="ff-num">${fin(s.pre) ? pct(r.values[1] / s.pre - 1) : ""}</div></div>`).join("")}</div></div>`;
+        <div class="ff-num">${fin(s.pre) ? pct(r.values[1] / s.pre - 1) : ""}</div></div>`).join("")}</div>`;
+}
+
+const synergyPerShare = () => state.deal?.just_synergy?.details?.synergy_per_share;
+
+/** Value bridge: pre-announcement price + the synergies' value per share = the most a buyer can pay,
+ *  against the offer. Figures from the just-synergies model. */
+function bridgeChart(s, d) {
+  const syn = synergyPerShare(), pre = s.pre, offerPx = d?.offer_price;
+  if (!fin(syn) || !fin(pre)) return "";
+  const cap = pre + syn;
+  const steps = [{ name: ["Pre-announcement", "price"], from: 0, to: pre, cls: "base" },
+    { name: ["Synergies", "per share"], from: pre, to: cap, cls: "up" },
+    { name: ["Most a buyer", "can pay"], from: 0, to: cap, cls: "total" }];
+  if (fin(offerPx)) {
+    steps.push(offerPx >= cap ? { name: ["Paid above", "synergies"], from: cap, to: offerPx, cls: "over" }
+      : { name: ["Kept by", "the buyer"], from: offerPx, to: cap, cls: "kept" });
+    steps.push({ name: ["Offer", ""], from: 0, to: offerPx, cls: "offer" });
+  }
+  const top = Math.max(...steps.map((t) => t.to)), floor = Math.min(pre, ...(fin(offerPx) ? [offerPx] : [])) * 0.85;
+  const raw = (top - floor) / 4, mag = 10 ** Math.floor(Math.log10(raw)), step = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((v) => v >= raw);
+  const lo = Math.floor(floor / step) * step, hi = Math.ceil(top * 1.04 / step) * step;
+  const W = 440, H = 250, B = 196, T = 24, X0 = 46, bw = 52;
+  const y = (v) => B - ((Math.max(v, lo) - lo) / (hi - lo)) * (B - T);
+  const gap = (W - X0 - 8 - steps.length * bw) / Math.max(1, steps.length - 1);
+  let g = "";
+  for (let t = lo; t <= hi + step / 2; t += step) g += `<line class="grid" x1="${X0 - 4}" x2="${W - 4}" y1="${y(t)}" y2="${y(t)}"/><text class="axis" x="${X0 - 8}" y="${y(t) + 4}" text-anchor="end">$${+t.toFixed(2)}</text>`;
+  steps.forEach((t, i) => {
+    const x0 = X0 + i * (bw + gap), yt = y(Math.max(t.from, t.to)), yb = y(Math.min(t.from, t.to) || lo);
+    const lbl = t.cls === "up" || t.cls === "over" ? `+${price(t.to - t.from)}` : t.cls === "kept" ? `−${price(t.to - t.from)}` : price(t.to);
+    g += `<rect class="wf ${t.cls}" x="${x0}" y="${yt}" width="${bw}" height="${Math.max(2, yb - yt)}"/>
+      <text class="val" x="${x0 + bw / 2}" y="${yt - 6}" text-anchor="middle">${lbl}</text>
+      ${t.name.map((n, k) => `<text class="axis" x="${x0 + bw / 2}" y="${B + 15 + k * 12}" text-anchor="middle">${esc(n)}</text>`).join("")}`;
+    if (i < steps.length - 1) {
+      const lvl = t.cls === "kept" ? y(t.from) : yt;
+      g += `<line class="link" x1="${x0 + bw}" x2="${x0 + bw + gap}" y1="${lvl}" y2="${lvl}"/>`;
+    }
+  });
+  return `<svg class="deal-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Value bridge from the pre-announcement price to the most a buyer can pay${fin(offerPx) ? " and the offer" : ""}">${g}
+    <text class="axis" x="${X0 - 8}" y="10">Axis from ${price(lo)}</text></svg>`;
+}
+
+/** Premiums paid: each prior deal's premium as a dot, the middle half shaded, the median and the bid marked. */
+function premiumStrip(s, d) {
+  const r = state.deal?.precedents?.details, st = r?.central?.stats?.premium;
+  if (!r || !st) return "";
+  const prem = r.deals.map((x) => x.premium).filter(fin);
+  const bid = fin(d?.offer_price) && fin(s.pre) ? d.offer_price / s.pre - 1 : null;
+  const top = Math.max(...prem, bid ?? 0), hi = Math.ceil((top + 0.05) * 10) / 10;
+  const W = 420, H = 160, L = 14, R = 14, cy = 78, x = (v) => L + (v / hi) * (W - L - R);
+  let g = "";
+  for (let t = 0; t <= hi + 1e-9; t += hi > 0.6 ? 0.2 : 0.1) g += `<line class="grid" x1="${x(t)}" x2="${x(t)}" y1="30" y2="124"/><text class="axis" x="${x(t)}" y="140" text-anchor="middle">${Math.round(t * 100)}%</text>`;
+  g += `<rect class="band" x="${x(st.q1)}" y="${cy - 22}" width="${x(st.q3) - x(st.q1)}" height="44"/>
+    <line class="med" x1="${x(st.median)}" x2="${x(st.median)}" y1="${cy - 26}" y2="${cy + 26}"/>`;
+  const seen = {};
+  prem.forEach((p) => { const k = Math.round(p * 60); seen[k] = (seen[k] || 0) + 1; const n = seen[k] - 1, dy = n ? (n % 2 ? 1 : -1) * Math.ceil(n / 2) * 9 : 0;
+    g += `<circle class="deal-dot" cx="${x(p)}" cy="${cy + dy}" r="4.5"/>`; });
+  if (fin(bid)) g += `<line class="bid" x1="${x(bid)}" x2="${x(bid)}" y1="26" y2="124"/><text class="bidlbl" x="${x(bid)}" y="20" text-anchor="${bid > hi * 0.7 ? "end" : "start"}">Bid ${pct(bid)}</text>`;
+  g += `<text class="axis" x="${x(st.median)}" y="${fin(bid) && Math.abs(x(bid) - x(st.median)) < 70 ? 152 : 20}" text-anchor="middle">Median ${pct(st.median)}</text>`;
+  return `<svg class="deal-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Premiums paid in ${prem.length} prior deals">${g}</svg>
+    <p class="legend-note">Shaded = middle half of deals (${pct(st.q1)}–${pct(st.q3)}); line = median.</p>`;
+}
+
+function kpiRow(s, d) {
+  const offerPx = d?.offer_price;
+  const tile = (l, v, sub, main = false) => `<div class="kpi ${main ? "kpi--main" : ""}"><div class="label">${l}</div><div class="kpi__value num">${v}</div><div class="muted small">${sub}</div></div>`;
+  return `<div class="kpis">
+    ${tile("Standalone Value", s.stRange ? price(s.stRange.best_guess) : NA, s.stRange ? `Range ${price(s.stRange.conservative)} – ${price(s.stRange.aggressive)}` : "No standalone method yet")}
+    ${tile("Offer Price Range", s.offer ? price(s.offer.best_guess) : NA, s.offer ? `Range ${price(s.offer.conservative)} – ${price(s.offer.aggressive)}` : "No offer method yet", true)}
+    ${fin(offerPx) ? tile("Initial Offer", price(offerPx), `${pct(s.prem(offerPx))} over ${price(s.pre)} pre-announcement`)
+      : tile("Pre-Announcement Price", price(s.pre), "Enter the offer under Deal Inputs to test it")}
+    ${fin(offerPx) && s.offer ? tile("Synergies Paid Away", pct(s.share(offerPx), true), "Share of the gap to the top of the offer range")
+      : tile("Premium at Best Guess", s.offer ? pct(s.premium.best_guess) : NA, "Over the pre-announcement price")}
+  </div>`;
+}
+
+/** Page one of the deal: the finding, four numbers, the football field, the bridge and premiums paid. */
+function summarySheet(s, d, edited) {
+  const h = state.comparison?.deal?.headlines || {};
+  const bridge = bridgeChart(s, d), prem = premiumStrip(s, d);
+  return `<div class="card sheet">
+    <div class="eyebrow">Offer analysis · ${esc(state.company.ticker)} · $ per share</div>
+    <h2 class="action-title">${esc(h.summary || "Deal Summary")}</h2>
+    ${edited ? `<p class="legend-note">Headlines describe the last run's weights; the numbers below follow your edits. Save Weights and run the deal again to rewrite them.</p>` : ""}
+    ${kpiRow(s, d)}
+    <div class="sheet-block"><h3 class="block-title">${esc(h.field || "Football Field")}</h3>${fieldBody(s, d)}</div>
+    ${bridge || prem ? `<div class="grid-2 sheet-two">
+      ${bridge ? `<div class="sheet-block"><h3 class="block-title">${esc(h.bridge || "Value Bridge")}</h3>${bridge}</div>` : ""}
+      ${prem ? `<div class="sheet-block"><h3 class="block-title">${esc(h.premiums || "Premiums Paid in Prior Deals")}</h3>${prem}</div>` : ""}
+    </div>` : ""}
+  </div>`;
 }
 
 function grid(rowsAxis, colsAxis, values, fr, fc, baseR, baseC, corner) {
@@ -177,7 +277,8 @@ function wholeFirmCard(r) {
   const idx = [...new Set([1, 2, 3, 4, 5, 10, n].filter((y) => y <= n))];
   const base = state.dcf?.details?.base_period;
   const row = (name, f, o) => finRow(name, idx.map((y) => cellOf(acct(f(P[y - 1])))), o);
-  return `<div class="card"><div class="card-head"><h2>Whole Firm DCF with Synergies</h2><span class="muted small">The standalone DCF with synergies in its drivers</span></div>
+  const h = state.comparison?.deal?.headlines || {};
+  return `<div class="card"><div class="card-head"><h2 class="action-title">${esc(h.whole_firm || "Whole Firm DCF with Synergies")}</h2><span class="muted small">Whole firm DCF with synergies: the standalone DCF with synergies in its drivers</span></div>
     <div class="tiles">
       ${tile("Value per Share", price(rg.expected), `Range ${price(rg.conservative)} – ${price(rg.aggressive)}`)}
       ${tile("Standalone DCF", price(d.standalone_per_share), "Same inputs, no synergies")}
@@ -198,7 +299,8 @@ function justSynergyCard(r) {
   if (!d) return "";
   const g = d.sensitivity, rg = d.range, Y = d.years;
   const baseRow = g.cost_forever.findIndex((f) => Math.abs(f - d.synergies.cost_forever) < 1e-9);
-  return `<div class="card"><div class="card-head"><h2>Just Synergies</h2><span class="muted small">Pre-announcement price + the synergies' DCF value per share</span></div>
+  const h = state.comparison?.deal?.headlines || {};
+  return `<div class="card"><div class="card-head"><h2 class="action-title">${esc(h.just_synergy || "Just Synergies")}</h2><span class="muted small">Just synergies: pre-announcement price + the synergies' DCF value per share</span></div>
     <div class="tiles">
       ${tile("Value per Share", price(rg.expected), `Range ${price(rg.conservative)} – ${price(rg.aggressive)}`)}
       ${tile("Synergies per Share", price(d.synergy_per_share), `On ${price(d.pre_announcement_price)} pre-announcement`)}
@@ -228,11 +330,11 @@ function savedDeals() {
 const CHOICES = { 0: "Best deals for standalone, all deals for the offer (course default)", 1: "Best deals only", 2: "All deals only" };
 const xm = (v) => (fin(v) ? `${v.toFixed(1)}x` : NA);
 
-function priorDealsCard(r, demo) {
+function priorDealsInputs(r, demo) {
   const d = r?.details, mine = savedDeals();
   const choice = mine?.choice ?? d?.choice ?? 0;
-  const best = new Set(d?.best || []);
-  const inputs = `<div class="form-grid">
+  return `<h3>Prior Deals</h3>
+    <div class="form-grid">
       <div class="field"><label for="pd-file">Deal List <span class="hint">CSV, or a sheet saved as CSV; an SDC export works as is</span></label>
         <input type="file" id="pd-file" accept=".csv,.tsv,.txt,text/csv,text/plain"></div>
       <div class="field"><label for="pd-choice">Which Deals Feed the Summary</label>
@@ -246,27 +348,38 @@ function priorDealsCard(r, demo) {
     </div>
     <p class="legend-note">Columns are matched by name: target, acquirer, year or date, offer price per share, price 1 week (and 4 weeks) before
       the announcement, shares, net debt, sales, EBITDA, and the EV at the offer price if your source reports it. Keep each row in one unit
-      (SDC uses $ millions); only ratios cross over to ${esc(state.company.ticker)}. Mark the most comparable deals in a "Best" column or tick them below.</p>`;
-  if (!d) return `<div class="card"><div class="card-head"><h2>Prior Deals (Transaction Comps)</h2><span class="muted small">Upload the deals to compare against</span></div>${inputs}</div>`;
-  const deals = d.deals, c = d.central, b = d.best_rows, t = d.target;
-  const st = (k, q, f) => f(c.stats[k]?.[q]);
-  const qs = [["mean", "Mean"], ["min", "Minimum"], ["q1", "1st Quartile"], ["median", "Median"], ["q3", "3rd Quartile"], ["max", "Maximum"]];
-  const rowNames = { pre_sales: "Pre-announcement EV/Sales", pre_ebitda: "Pre-announcement EV/EBITDA", tx_sales: "Transaction EV/Sales",
-    tx_ebitda: "Transaction EV/EBITDA", premium: "Premium Paid" };
+      (SDC uses $ millions); only ratios cross over to ${esc(state.company.ticker)}. Mark the most comparable deals in a "Best" column, or tick them in the appendix's deal list.</p>`;
+}
+
+const ROW_NAMES = { pre_sales: "Pre-announcement EV/Sales", pre_ebitda: "Pre-announcement EV/EBITDA", tx_sales: "Transaction EV/Sales",
+  tx_ebitda: "Transaction EV/EBITDA", premium: "Premium Paid" };
+
+/** Method tab: the implied value per share from best deals and from all deals. */
+function priorDealsResults(r) {
+  const d = r?.details;
+  if (!d) return null;
+  const c = d.central, b = d.best_rows, t = d.target, h = state.comparison?.deal?.headlines || {};
   const rng = (x) => (x ? x.map((v) => `<td>${price(v)}</td>`).join("") : `<td colspan="3" class="na">${NA}</td>`);
-  return `<div class="card"><div class="card-head"><h2>Prior Deals (Transaction Comps)</h2>
-      <span class="muted small">${deals.length} deals · ${best.size} most comparable · target ${price(t.price)}, EV/Sales ${xm(t.ev_sales)}, EV/EBITDA ${xm(t.ev_ebitda)}</span></div>
-    ${inputs}
-    <h3 style="margin-top:16px">Implied Value per Share</h3>
-    <div class="table-wrap"><table class="list deal-sum"><thead><tr><th></th><th colspan="3">Best Deals: Lowest · Average · Highest</th>
+  return `<div class="card"><div class="card-head"><h2 class="action-title">${esc(h.prior_deals || "Prior Deals (Transaction Comps)")}</h2>
+      <span class="muted small">Prior deals: target ${price(t.price)}, EV/Sales ${xm(t.ev_sales)}, EV/EBITDA ${xm(t.ev_ebitda)}</span></div>
+    <div class="table-wrap"><table class="list deal-sum"><thead><tr><th>Implied Value per Share</th><th colspan="3">Best Deals: Lowest · Average · Highest</th>
       <th colspan="3">All Deals: Central Tendency</th></tr></thead><tbody>
-      ${Object.entries(rowNames).map(([k, n]) => `<tr><td>${n}</td>${rng(b.ranges[k])}${rng(c.ranges[k])}</tr>`).join("")}
+      ${Object.entries(ROW_NAMES).map(([k, n]) => `<tr><td>${n}</td>${rng(b.ranges[k])}${rng(c.ranges[k])}</tr>`).join("")}
     </tbody></table></div>
     <p class="legend-note">Central tendency: premium at the 1st quartile, median and 3rd quartile; multiples at the ${pct(c.percentiles.ev_sales[1], true)} (EV/Sales) and
       ${pct(c.percentiles.ev_ebitda[1], true)} (EV/EBITDA) percentile ±10 points, where ${esc(state.company.ticker)}'s own multiples rank among the deals' pre-announcement multiples.
-      Best deals rebuild each deal's EV from offer × shares + net debt.${r.notes?.length ? " " + esc(r.notes.map(sentence).join(" ")) : ""}</p>
-    <h3 style="margin-top:16px">All Deals</h3>
-    <div class="table-wrap"><table class="list deal-sum"><thead><tr><th></th><th>Premium</th><th>Trans. EV/Sales</th><th>Trans. EV/EBITDA</th>
+      Best deals rebuild each deal's EV from offer × shares + net debt. The full list and its statistics are in the appendix.${r.notes?.length ? " " + esc(r.notes.map(sentence).join(" ")) : ""}</p></div>`;
+}
+
+/** Appendix: every deal (tick the most comparable) and the statistics across them. */
+function priorDealsList(r) {
+  const d = r?.details;
+  if (!d) return null;
+  const deals = d.deals, c = d.central, best = new Set(d.best || []);
+  const st = (k, q, f) => f(c.stats[k]?.[q]);
+  const qs = [["mean", "Mean"], ["min", "Minimum"], ["q1", "1st Quartile"], ["median", "Median"], ["q3", "3rd Quartile"], ["max", "Maximum"]];
+  return `<div class="card"><div class="card-head"><h2>Deal List</h2><span class="muted small">${deals.length} deals · ${best.size} most comparable (ticked)</span></div>
+    <div class="table-wrap"><table class="list deal-sum"><thead><tr><th>All Deals</th><th>Premium</th><th>Trans. EV/Sales</th><th>Trans. EV/EBITDA</th>
       <th>Pre-ann. EV/Sales</th><th>Pre-ann. EV/EBITDA</th><th>EBITDA Margin</th></tr></thead><tbody>
       ${qs.map(([q, n]) => `<tr><td>${n}</td><td>${st("premium", q, pct)}</td><td>${st("tx_ev_sales", q, xm)}</td><td>${st("tx_ev_ebitda", q, xm)}</td>
         <td>${st("pre_ev_sales", q, xm)}</td><td>${st("pre_ev_ebitda", q, xm)}</td><td>${st("ebitda_margin", q, pct)}</td></tr>`).join("")}
@@ -278,8 +391,7 @@ function priorDealsCard(r, demo) {
         <td>${xm(x.tx_ev_sales)}</td><td>${xm(x.tx_ev_ebitda)}</td><td>${xm(x.pre_ev_ebitda)}</td><td>${pct(x.ebitda_margin)}</td></tr>`).join("")}
     </tbody></table></div>
     <p class="legend-note">Premium = offer over the price 1 week (or 4 weeks, whichever is larger) before the announcement; a negative premium counts as 10% and anything over 100% as 100%.
-      Tick the most comparable deals (up to about five) and press Save and Run Prior Deals.</p>
-  </div>`;
+      Tick the most comparable deals (up to about five) and press Save and Run Prior Deals under Deal Inputs.</p></div>`;
 }
 
 async function runPriorDeals() {
@@ -306,11 +418,21 @@ export function renderDeal() {
   const d = currentDeal(), base = state.comparison?.deal, demo = !!(state.company.demo || state.detail.demo);
   const w = d?.weights || {};
   const s = base ? summarize(base, w, d?.relative_power ?? base.relative_power ?? 0.5) : null;
-  box.innerHTML = `${inputsCard(d, demo)}
-    ${s ? `<div id="deal-sumbox">${fieldCard(s, d) + summaryCard(s, d)}</div>` : `<div class="card empty"><h2>No Deal Run Yet</h2><p>Enter the expected synergies above and press <b>Save and Run Deal</b>.
-      The standalone values (DCF, comps, 52-week range) fill the summary's standalone side; the synergy models and prior deals fill the offer side.</p></div>`}
-    ${priorDealsCard(state.deal?.precedents, demo)}${wholeFirmCard(state.deal?.dcf_synergy)}${justSynergyCard(state.deal?.just_synergy)}`;
+  const pr = state.deal?.precedents;
+  const methods = tabSet("deal-methods", [
+    { key: "prior", label: "Prior Deals", html: priorDealsResults(pr) },
+    { key: "whole", label: "Whole Firm with Synergies", html: wholeFirmCard(state.deal?.dcf_synergy) || null },
+    { key: "just", label: "Just Synergies", html: justSynergyCard(state.deal?.just_synergy) || null },
+  ], { title: "Method Detail" });
+  const appendix = tabSet("deal-appendix", [{ key: "deals", label: "Deal List", html: priorDealsList(pr) }], { title: "Appendix" });
+  box.innerHTML = `${s ? `<div id="deal-sumbox">${summarySheet(s, d) + summaryCard(s, d)}</div>` : `<div class="card empty"><h2>No Deal Run Yet</h2><p>Enter the expected synergies under <b>Deal Inputs</b> below and press <b>Save and Run Deal</b>.
+      The standalone values (DCF, comps, 52-week range) fill the standalone side; the synergy models and prior deals fill the offer side.</p></div>`}
+    ${methods}
+    <details class="card inputs-card" id="deal-inputs" ${s ? "" : "open"}><summary><h2>Deal Inputs</h2><span class="muted small">Synergies, the offer and the prior-deal list, saved on this device</span></summary>
+      ${inputsCard(d, demo)}<div class="subsection">${priorDealsInputs(pr, demo)}</div></details>
+    ${appendix}`;
   $("pd-run").onclick = runPriorDeals;
+  wireTabs(box);
   wire(base);
 }
 
@@ -346,7 +468,7 @@ function wireSummary(base) {
   table.querySelectorAll(".dw").forEach((x) => { x.onchange = () => requestAnimationFrame(() => {
     // redraw the football field and summary with the edited weights (kept on Save Weights)
     const d = { ...(currentDeal() || {}), weights: current() }, s = summarize(base, d.weights, d.relative_power ?? 0.5);
-    $("deal-sumbox").innerHTML = fieldCard(s, d) + summaryCard(s, d);
+    $("deal-sumbox").innerHTML = summarySheet(s, d, true) + summaryCard(s, d);
     wireSummary(base);
   }); });
   $("dw-save").onclick = async () => {

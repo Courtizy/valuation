@@ -9,6 +9,7 @@ Builds comparison.json with:
   - assumption differences: fields present in 2+ models whose values differ,
     which is how a value gap gets split into "inputs" vs "method"
   - with a deal (deal.json): the standalone and offer price ranges (deal.py)
+  - headlines: one sentence per section stating its finding (headlines.py)
 """
 from __future__ import annotations
 
@@ -16,9 +17,10 @@ import json
 from pathlib import Path
 
 from .deal import deal_summary
+from .headlines import deal_headlines, valuation_headlines
 from .methods import method_plan
 
-COMPARISON_SCHEMA_VERSION = "0.3.0"
+COMPARISON_SCHEMA_VERSION = "0.4.0"
 
 
 def _flatten(d: dict, prefix: str = "") -> dict:
@@ -82,7 +84,8 @@ def build_comparison(result_paths: list[str | Path], detail: dict | None = None,
         price_source = "dcf assumptions" if price else None
     upside = {k: v / price - 1 for k, v in blend.items()} if blend and price else None
 
-    return {
+    deal_sum = deal_summary(by_model, detail, deal or {}) if deal or "precedents" in by_model else None
+    out = {
         "schema_version": COMPARISON_SCHEMA_VERSION,
         "ticker": tickers.pop(),
         "profile": profile,
@@ -97,6 +100,10 @@ def build_comparison(result_paths: list[str | Path], detail: dict | None = None,
             for r in sorted(results, key=lambda r: r["model"])
         ],
         "assumption_differences": differences,
-        "deal": deal_summary(by_model, detail, deal or {}) if deal or "precedents" in by_model else None,
+        "deal": deal_sum,
         "warnings": warnings,
     }
+    out["headlines"] = valuation_headlines(out, by_model)
+    if deal_sum:
+        deal_sum["headlines"] = deal_headlines(deal_sum, by_model)
+    return out

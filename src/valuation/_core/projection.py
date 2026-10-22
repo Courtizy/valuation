@@ -411,6 +411,7 @@ def statement_row(y: dict) -> dict:
         "year": y["year"], "revenue": y["revenue"], "cogs": y["cogs"], "gross_profit": y["revenue"] - y["cogs"],
         "rnd": y["rnd"], "sga": y["sga"], "other_opex": y["other_opex"], "ebitda": y["ebitda"],
         "depreciation": y["depreciation"] + y["amortization"], "ebit": y["ebit"],
+        "interest_expense": y["interest_expense"], "interest_income": y["interest_income"],
         "interest_net": y["interest_expense"] - y["interest_income"], "ebt": y["ebt"],
         "income_taxes": y["income_taxes"], "net_income": y["net_income"], "capex": y["capex"],
         "change_in_nwc": y["free_cash_flow"]["change_in_nwc"], "fcf": y["free_cash_flow"]["fcf"],

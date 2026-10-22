@@ -81,6 +81,13 @@
         </div>
       </div>
     <div id="panel-company" class="view" hidden>
+      <div class="company-bar"><span class="small muted">Period</span>
+        <div class="seg" id="view-seg" role="group" aria-label="Period view">
+            <button type="button" data-view="annual" aria-pressed="true">Annual</button>
+            <button type="button" data-view="quarterly" aria-pressed="false">Quarterly</button>
+            <button type="button" data-view="ttm" aria-pressed="false">LTM</button>
+          </div>
+      </div>
       <div id="tiles" class="tiles"></div>
       <div class="grid-2">
         <div class="card">
@@ -88,33 +95,32 @@
           <div id="rev-chart"></div>
         </div>
         <div class="card">
-          <div class="card-head"><h2>Returns</h2><span class="muted small" id="ret-sub">Average Balances, Annual</span></div>
+          <div class="card-head"><h2 id="ret-title">Returns</h2><span class="muted small" id="ret-sub">Average Balances, Annual</span></div>
           <div class="legend" id="ret-legend"></div>
           <div id="ret-chart"></div>
         </div>
       </div>
       <div class="grid-2" style="margin-top:16px">
         <div class="card">
-          <div class="card-head"><h2>Margins</h2><span class="muted small" id="mar-sub"></span></div>
+          <div class="card-head"><h2 id="mar-title">Margins</h2><span class="muted small" id="mar-sub"></span></div>
           <div class="legend" id="mar-legend"></div>
           <div id="mar-chart"></div>
         </div>
         <div class="card">
-          <div class="card-head"><h2>Cash Conversion</h2><span class="muted small">Net income vs. FCF (CFO − Capex), $</span></div>
+          <div class="card-head"><h2 id="cash-title">Cash Conversion</h2><span class="muted small">Net income vs. FCF (CFO − Capex), $</span></div>
           <div class="legend" id="cash-legend"></div>
           <div id="cash-chart"></div>
         </div>
       </div>
-      <div class="card collapsible" data-collapse="statements" style="margin-top:16px">
-        <div class="card-head">
-          <h2>Statements</h2>
-          <div class="seg spacer" id="view-seg" role="group" aria-label="Period view">
-            <button type="button" data-view="annual" aria-pressed="true">Annual</button>
-            <button type="button" data-view="quarterly" aria-pressed="false">Quarterly</button>
-            <button type="button" data-view="ttm" aria-pressed="false">LTM</button>
-          </div>
-        </div>
-        <div class="card-body">
+      <div class="tabset" data-set="company-detail" id="company-detail">
+        <div class="tabset-head"><h2 class="tabset-title">Detail</h2>
+          <div class="seg tabset-bar" role="tablist" aria-label="Company detail">
+            <button type="button" role="tab" id="tab-company-detail-statements" aria-controls="tp-company-detail-statements" aria-selected="true" aria-pressed="true" data-tab-key="statements">Statements</button>
+            <button type="button" role="tab" id="tab-company-detail-ratios" aria-controls="tp-company-detail-ratios" aria-selected="false" aria-pressed="false" data-tab-key="ratios">Ratios</button>
+            <button type="button" role="tab" id="tab-company-detail-sector" aria-controls="tp-company-detail-sector" aria-selected="false" aria-pressed="false" data-tab-key="sector">Sector</button>
+          </div></div>
+        <div class="tabset-panel" role="tabpanel" id="tp-company-detail-statements" aria-labelledby="tab-company-detail-statements">
+          <div class="card">
         <div class="seg" id="stmt-seg" role="group" aria-label="Statement" style="margin-bottom:12px">
           <button type="button" data-stmt="income" aria-pressed="true">Income Statement</button>
           <button type="button" data-stmt="balance" aria-pressed="false">Balance Sheet</button>
@@ -132,31 +138,31 @@
         <p class="legend-note" id="stmt-note"></p>
         <p class="legend-note" id="stmt-full"></p>
         <p class="legend-note" id="stmt-checks"></p>
+          </div>
         </div>
-      </div>
-      <div class="card collapsible" data-collapse="ratios">
-        <div class="card-head">
-          <h2>Ratios</h2>
-          <div class="seg spacer" id="ratio-seg" role="group" aria-label="Ratio framework">
+        <div class="tabset-panel" role="tabpanel" id="tp-company-detail-ratios" aria-labelledby="tab-company-detail-ratios" hidden>
+          <div class="card">
+            <div class="card-head"><h2>Ratios</h2>
+            <div class="seg spacer" id="ratio-seg" role="group" aria-label="Ratio framework">
             <button type="button" data-fw="reformulated" aria-pressed="true">Reformulated</button>
             <button type="button" data-fw="managerial" aria-pressed="false">Managerial</button>
             <button type="button" data-fw="traditional" aria-pressed="false">Traditional</button>
             <button type="button" data-fw="risk" aria-pressed="false">Risk</button>
             <button type="button" data-fw="signals" aria-pressed="false">Signals</button>
           </div>
-        </div>
-        <div class="card-body">
+            </div>
         <div id="ratio-bench" class="subsection"></div>
         <div class="table-wrap"><table id="ratio-table"></table></div>
         <p class="legend-note" id="ratio-note"></p>
+          </div>
         </div>
-      </div>
-      <div class="card collapsible" data-collapse="sector" id="sector-section">
-        <div class="card-head"><h2>Sector</h2><span id="sector-pick-slot"></span></div>
-        <div class="card-body">
-          <div id="sector-levels"></div>
-          <div id="bench-card" class="subsection"></div>
-          <div id="sector-card" class="subsection"></div>
+        <div class="tabset-panel" role="tabpanel" id="tp-company-detail-sector" aria-labelledby="tab-company-detail-sector" hidden>
+          <div class="card" id="sector-section">
+            <div class="card-head"><h2>Sector</h2><span id="sector-pick-slot"></span></div>
+            <div id="sector-levels"></div>
+            <div id="bench-card" class="subsection"></div>
+            <div id="sector-card" class="subsection"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -168,7 +174,7 @@
     <div id="panel-valuation" class="view" hidden>
       <div class="results-grid">
         <aside id="val-side" class="results-side" aria-label="Run details"></aside>
-        <div class="results-main"><div id="val-kpis"></div><div id="val-body"></div></div>
+        <div class="results-main"><div id="val-body"></div></div>
       </div>
     </div>
     </section>
