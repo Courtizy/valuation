@@ -296,3 +296,19 @@ def test_quote_from_bars_gives_the_days_range_previous_close_and_52_weeks():
     short = quote_from_bars(bars[-30:], "2026-10-02", "alphavantage")
     assert short["wk52_high"] is None and short["prev_close"] is not None           # under a year: no 52-week range
     assert quote_from_bars(bars, "2025-01-01", "yahoo") is None
+
+
+def test_parse_analyst_growth_estimates():
+    import pytest as _pt
+    from valuation.L0_ingest.market import MarketDataError, parse_av_estimates, parse_earnings_trend
+    yahoo = {"quoteSummary": {"result": [{"earningsTrend": {"trend": [
+        {"period": "0y", "growth": {"raw": 0.09}}, {"period": "+5y", "growth": {"raw": 0.112, "fmt": "11.20%"}},
+        {"period": "-5y", "growth": {"raw": 0.2181}}]}}], "error": None}}
+    assert parse_earnings_trend(yahoo) == {"growth_5y": 0.112, "growth_past_5y": 0.2181}
+    with _pt.raises(MarketDataError):
+        parse_earnings_trend({"quoteSummary": {"result": [{"earningsTrend": {"trend": []}}]}})
+    av = {"symbol": "IBM", "estimates": [{"date": "2026-12-31", "horizon": "current fiscal year", "eps_estimate_average": "10.00"},
+                                         {"date": "2027-12-31", "horizon": "next fiscal year", "eps_estimate_average": "11.00"}]}
+    assert parse_av_estimates(av)["growth_1y"] == _pt.approx(0.10)
+    with _pt.raises(MarketDataError):
+        parse_av_estimates({"Information": "rate limit"})

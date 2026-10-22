@@ -566,7 +566,10 @@ details.inputs-card[open] > summary { margin-bottom: 12px; }
 #val-sheet .headline { margin-top: 0; }
 #val-sheet .card-head { margin-bottom: 8px; }
 
-/* ---- comps: how close each peer is */
-.match-table td.m-hit span { color: var(--good); font-weight: 700; }
-.match-table td.m-miss { color: var(--ink-2); }
-.match-table td.m-miss span { color: var(--ink-2); }
+/* ---- comps: how close each peer is (stoplight; series colours never carry good/bad) */
+.m-icon { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-left: 3px; vertical-align: 0; border: 2px solid currentColor; box-sizing: border-box; }
+.m-green { color: var(--good); } .m-green .m-icon { background: currentColor; }
+.m-yellow { color: var(--warning-ink); } .m-yellow .m-icon { background: linear-gradient(90deg, currentColor 50%, transparent 50%); }
+.m-red { color: var(--critical); }
+.match-table th { white-space: normal; min-width: 64px; vertical-align: bottom; }
+.match-table td.m-green, .match-table td.m-yellow, .match-table td.m-red { font-weight: 600; }

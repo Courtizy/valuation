@@ -79,7 +79,10 @@ def _market_block(raw_market: dict | None, as_of: str, views: dict, risk_free: d
              "shares_outstanding": shares, "market_cap": mcap,
              "beta": b and {**b, "index": (raw_market.get("index") or {}).get("symbol")},
              "source": raw_market.get("source"), "fallback": bool(raw_market.get("fallback")),
-             "check": raw_market.get("check"), "wacc": None, "quote": _quote(raw_market, price, price_date)}
+             "check": raw_market.get("check"), "wacc": None, "quote": _quote(raw_market, price, price_date),
+             # analysts' earnings growth (L0 estimates): today's consensus, so a past as_of says so
+             "estimates": raw_market.get("estimates") and {**raw_market["estimates"],
+                                                           "fetched": (raw_market.get("fetched_at") or "")[:10] or None}}
     if b and mcap and risk_free and risk_free.get("value") is not None:
         ttm = (views.get("ttm") or views.get("annual") or [{}])[-1].get("values", {})
         debt = (ttm.get("short_term_debt") or 0) + (ttm.get("long_term_debt") or 0)

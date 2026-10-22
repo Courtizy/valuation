@@ -27,17 +27,32 @@ Two peer sets
 Both are valued the same way; the sector set is this model's value, the closest set is
 reported under details.closest and shown as its own football-field row.
 
-How close each peer is (the course's Pub_Comps comparison rows)
-----------------------------------------------------------------
-Each peer is checked against the target on five figures; a figure matches when it is
-within the tolerance (MATCH, overridable as "match" in comps.json):
+How close each peer is: the underlying value method (course Pub_Comps rows)
+--------------------------------------------------------------------------
+EV/EBITDA is a DCF over current EBITDA, so a good comparable has a similar DCF profile, not
+just the same industry or size. Each peer is rated against the target on the drivers:
 
-    revenue growth   within 3 points        EBITDA margin   within 3 points
-    net debt / EV    within 5 points        size (sales)    0.5x to 2x the target's
-    levered beta     within 0.3
+    analysts' 5-year earnings growth   pre-terminal growth          green within 2 points
+    past 5-year earnings growth        a check on that forecast     green within 5 points
+    discount rate (WACC from beta)     the rate                     green within 0.5 points
+    EBITDA margin                      the long run: high margins   green within 3 points
+                                       drift back to the mean
+    net debt / EV                      capital structure, so EV     green within 5 points
+                                       and market-value multiples
+                                       compare alike
 
-A peer matching 2 or fewer of the figures it has is flagged "weak": it stays in the range
-(untick it in the peer picker to drop it). Fewer than 3 figures to compare = "unchecked".
+A figure within the tolerance is green, within twice it yellow, beyond that red (the course's
+stoplight). Closeness = (greens + half the yellows) / figures compared, 0 to 1. "match" in
+comps.json changes a tolerance; a peer's or the target's figures can be typed there too
+(growth_5y, growth_past_5y, discount_rate), which is how analysts' growth gets in when no
+source has it. Size (sales against the target's) is shown, not rated: the course calls size
+a poor proxy for performance.
+
+Peers are weighted by closeness (the course: "weight public comparables based on how close
+you can get"); "peer_weights": "equal" in comps.json weights them equally. Both values are
+reported: details.blend (weighted, the model's value) and details.blend_equal. A peer with
+fewer than 3 figures to compare is "unchecked" and gets a neutral 0.5; closeness below 0.5
+flags a peer "weak".
 
 Range
 -----
@@ -63,13 +78,14 @@ MULTIPLES = {
 DEFAULT_MULTIPLES = ["ev_ebitda", "ev_sales"]
 # (label, row key, kind, tolerance): "diff" = absolute difference, "ratio" = peer / target within [1/x, x]
 MATCH = {
-    "revenue_growth": ("Revenue Growth", "diff", 0.03),
+    "growth_5y": ("5-Yr Growth (Forecast)", "diff", 0.02),
+    "growth_past_5y": ("5-Yr Growth (Past)", "diff", 0.05),
+    "discount_rate": ("Discount Rate", "diff", 0.005),
     "ebitda_margin": ("EBITDA Margin", "diff", 0.03),
     "net_debt_to_ev": ("Net Debt / EV", "diff", 0.05),
-    "size": ("Size (Sales)", "ratio", 2.0),
-    "beta": ("Beta", "diff", 0.3),
 }
-WEAK_AT = 2         # matching this many figures or fewer flags a peer
+WEAK_BELOW = 0.5    # closeness below this flags a peer
+UNCHECKED_WEIGHT = 0.5
 
 
 class CompsError(ValueError):
@@ -101,29 +117,40 @@ def peer_row(f: dict) -> dict:
 
 
 def match(target: dict, peer: dict, rules: dict | None = None) -> dict:
-    """How close a peer row is to the target row on the MATCH figures."""
+    """Stoplight rating of a peer row against the target row on the MATCH figures, plus size."""
     rules = {**MATCH, **{k: (MATCH[k][0], MATCH[k][1], v) for k, v in (rules or {}).items() if k in MATCH}}
-    out, n, hits, gaps = {}, 0, 0, []
-    for k, (_, kind, tol) in rules.items():
-        a, b = (peer.get("sales"), target.get("sales")) if k == "size" else (peer.get(k), target.get(k))
+    out, n, score = {}, 0, 0.0
+    for k, (_, _, tol) in rules.items():
+        a, b = peer.get(k), target.get(k)
         if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
-            out[k] = {"peer": a, "target": b, "close": None}
+            out[k] = {"peer": a, "target": b, "light": None}
             continue
-        if kind == "ratio":
-            close = a > 0 and b > 0 and 1 / tol <= a / b <= tol
-            out[k] = {"peer": a / b if b else None, "target": 1.0, "close": close}
-            if a > 0 and b > 0:
-                gaps.append(abs(math.log(a / b)) / math.log(tol))
-        else:
-            close = abs(a - b) <= tol + 1e-12
-            out[k] = {"peer": a, "target": b, "close": close}
-            gaps.append(abs(a - b) / tol)
+        gap = abs(a - b)
+        light = "green" if gap <= tol + 1e-12 else "yellow" if gap <= 2 * tol + 1e-12 else "red"
+        out[k] = {"peer": a, "target": b, "gap": a - b, "light": light}
         n += 1
-        hits += close
-    flag = "unchecked" if n < 3 else "weak" if hits <= WEAK_AT else "ok"
-    # distance: the average gap in tolerances (1.0 = on the edge of every tolerance), to order peers
-    return {"figures": out, "matched": hits, "checked": n, "flag": flag,
-            "distance": sum(gaps) / len(gaps) if gaps else None}
+        score += {"green": 1.0, "yellow": 0.5, "red": 0.0}[light]
+    ps, ts = peer.get("sales"), target.get("sales")
+    size = ps / ts if isinstance(ps, (int, float)) and isinstance(ts, (int, float)) and ts > 0 else None
+    closeness = score / n if n else None
+    flag = "unchecked" if n < 3 else "weak" if closeness < WEAK_BELOW else "ok"
+    return {"figures": out, "size": size, "checked": n, "greens": sum(1 for f in out.values() if f["light"] == "green"),
+            "closeness": closeness, "flag": flag,
+            "weight": UNCHECKED_WEIGHT if flag == "unchecked" else closeness}
+
+
+def _peer_average(target: dict, rows: list[dict], w: dict[str, float]) -> dict:
+    """Simple and closeness-weighted peer averages of the rated figures, against the target
+    (the course compares the comp average with the target)."""
+    out = {}
+    for k in list(MATCH) + ["ev_sales", "ev_ebitda"]:
+        get = (lambda r: r["multiples"].get(k)) if k in ("ev_sales", "ev_ebitda") else (lambda r: r.get(k))  # noqa: E731
+        xs = [(get(r), w.get(r["ticker"], 0.0)) for r in rows if isinstance(get(r), (int, float))]
+        ws = sum(x for _, x in xs)
+        out[k] = {"average": sum(v for v, _ in xs) / len(xs) if xs else None,
+                  "weighted": sum(v * x for v, x in xs) / ws if ws else None,
+                  "target": target["multiples"].get(k) if k in ("ev_sales", "ev_ebitda") else target.get(k)}
+    return out
 
 
 def implied_price(multiple_id: str, multiple: float, target: dict) -> float | None:
@@ -136,6 +163,36 @@ def implied_price(multiple_id: str, multiple: float, target: dict) -> float | No
     if multiple_id == "pe":
         return multiple * metric / target["shares"]
     return (multiple * metric - net_debt) / target["shares"]
+
+
+def _wquantile(pairs: list[tuple[float, float]], q: float) -> float:
+    """Weighted quantile, interpolated between the weighted midpoints of the sorted values (equal
+    weights give the same answer as the inclusive method of statistics.quantiles)."""
+    pairs = sorted((v, w) for v, w in pairs if w > 0)
+    if len(pairs) == 1:
+        return pairs[0][0]
+    total = sum(w for _, w in pairs)
+    cum, pos = 0.0, []
+    for v, w in pairs:
+        pos.append((cum + w / 2 - pairs[0][1] / 2) / (total - pairs[0][1] / 2 - pairs[-1][1] / 2))
+        cum += w
+    t = q
+    for i in range(1, len(pairs)):
+        if t <= pos[i]:
+            lo, hi = pos[i - 1], pos[i]
+            f = (t - lo) / (hi - lo) if hi > lo else 0.0
+            return pairs[i - 1][0] + f * (pairs[i][0] - pairs[i - 1][0])
+    return pairs[-1][0]
+
+
+def _wrange(pairs: list[tuple[float, float]], method: str) -> dict:
+    """Range from (implied value, peer weight) pairs: lowest / weighted median / highest, or
+    weighted Q1 / median / Q3. Peers with no weight are left out."""
+    live = [(v, w) for v, w in pairs if w > 0] or [(v, 1.0) for v, _ in pairs]
+    xs = [v for v, _ in live]
+    if method == "quartiles" and len(xs) >= 4:
+        return {"conservative": _wquantile(live, 0.25), "expected": _wquantile(live, 0.5), "aggressive": _wquantile(live, 0.75)}
+    return {"conservative": min(xs), "expected": _wquantile(live, 0.5), "aggressive": max(xs)}
 
 
 def _range(values: list[float], method: str) -> dict:
@@ -154,10 +211,12 @@ def _avg_positive(xs):
 
 
 def _value_set(live: list[dict], target: dict, wanted: list[str], weights: dict, method: str,
-               notes: list[str]) -> tuple[dict, dict, str]:
-    """Implied values per multiple and the blended range for one peer set."""
+               notes: list[str], peer_w: dict[str, float] | None = None) -> tuple[dict, dict, dict, str]:
+    """Implied values per multiple and the blended range for one peer set, with each peer
+    weighted by peer_w (closeness), and the same with equal weights under "equal"."""
     if method == "auto":
         method = "quartiles" if len(live) >= 4 else "min_max"
+    peer_w = peer_w or {r["ticker"]: 1.0 for r in live}
     per_multiple = {}
     for mid in wanted:
         if mid not in MULTIPLES:
@@ -172,18 +231,25 @@ def _value_set(live: list[dict], target: dict, wanted: list[str], weights: dict,
             notes.append(f"{MULTIPLES[mid][0]} dropped: no peer has a positive multiple")
             continue
         avg_mult = _avg_positive([r["multiples"][mid] for r in live])
+        mults = [(r["multiples"][mid], peer_w.get(r["ticker"], 0.0)) for r in live if r["multiples"][mid]]
+        wsum = sum(w for _, w in mults)
         per_multiple[mid] = {
             "label": MULTIPLES[mid][0], "weight": weights.get(mid, 0.0),
-            "peer_average": avg_mult, "peer_median": statistics.median([r["multiples"][mid] for r in live if r["multiples"][mid]]),
+            "peer_average": avg_mult, "peer_median": statistics.median([m for m, _ in mults]),
+            "peer_weighted_average": sum(m * w for m, w in mults) / wsum if wsum else avg_mult,
             "implied_at_average": implied_price(mid, avg_mult, target),
-            "implied": implied, **_range(vals, method),
+            "implied": implied,
+            **_wrange([(implied[t], peer_w.get(t, 0.0)) for t, x in implied.items() if x is not None], method),
+            "equal": _range(vals, method),
         }
     used = {k: v for k, v in per_multiple.items() if v["weight"] > 0}
     if not used:
         raise CompsError("no usable multiple: check the target's sales, EBITDA and earnings")
     total = sum(v["weight"] for v in used.values())
-    blend = {k: sum(v["weight"] * v[k] for v in used.values()) / total for k in ("conservative", "expected", "aggressive")}
-    return per_multiple, blend, method
+    keys = ("conservative", "expected", "aggressive")
+    blend = {k: sum(v["weight"] * v[k] for v in used.values()) / total for k in keys}
+    blend_equal = {k: sum(v["weight"] * v["equal"][k] for v in used.values()) / total for k in keys}
+    return per_multiple, blend, blend_equal, method
 
 
 class Comps:
@@ -210,11 +276,18 @@ class Comps:
         target_row = peer_row({**target, "ticker": (detail.get("entity") or {}).get("ticker", ""), "name": "target"})
         rules = a.get("match")
 
+        # figures typed for a ticker in either list apply wherever it appears
+        typed = {}
+        for e in (a.get("peers") or []) + (a.get("closest") or []):
+            if isinstance(e, dict) and e.get("ticker"):
+                typed.setdefault(e["ticker"].upper(), {}).update({k: v for k, v in e.items() if k != "ticker"})
+
         def rows_for(entries):
             rows = []
             for e in entries:
                 e = {"ticker": e} if isinstance(e, str) else dict(e)
                 t = e.get("ticker", "").upper()
+                e = {**typed.get(t, {}), **e}
                 f = company_figures(by_ticker.get(t), e)
                 f["ticker"] = t
                 f.setdefault("name", ((by_ticker.get(t) or {}).get("entity") or {}).get("name") or t)
@@ -234,12 +307,14 @@ class Comps:
                                "fetches no market prices), or run with market data")
         weak = [r["ticker"] for r in live if r["match"]["flag"] == "weak"]
         if weak:
-            notes.append(f"weak match (2 or fewer of {len(MATCH)} figures close to the target): {', '.join(weak)}")
+            notes.append(f"weak match (closeness below {WEAK_BELOW:.0%} on growth, discount rate, margin and leverage): {', '.join(weak)}")
+        equal = a.get("peer_weights") == "equal"
+        weigh = lambda rows: {r["ticker"]: 1.0 if equal else r["match"]["weight"] for r in rows}  # noqa: E731
 
         wanted = a.get("multiples") or DEFAULT_MULTIPLES
         weights = a.get("weights") or {m: 1.0 for m in wanted}
         method = a.get("range", "auto")
-        per_multiple, blend, method = _value_set(live, target, wanted, weights, method, notes)
+        per_multiple, blend, blend_equal, method = _value_set(live, target, wanted, weights, method, notes, weigh(live))
         used = {k: v for k, v in per_multiple.items() if v["weight"] > 0}
         total = sum(v["weight"] for v in used.values())
 
@@ -250,8 +325,10 @@ class Comps:
             if c_live:
                 c_notes: list[str] = []
                 try:
-                    c_mult, c_blend, c_method = _value_set(c_live, target, wanted, weights, a.get("range", "auto"), c_notes)
-                    closest = {"peers": c_rows, "multiples": c_mult, "blend": c_blend, "range_method": c_method,
+                    c_mult, c_blend, c_equal, c_method = _value_set(c_live, target, wanted, weights, a.get("range", "auto"),
+                                                                    c_notes, weigh(c_live))
+                    closest = {"peers": c_rows, "multiples": c_mult, "blend": c_blend, "blend_equal": c_equal,
+                               "range_method": c_method, "peer_average": _peer_average(target_row, c_live, weigh(c_live)),
                                "notes": c_notes, "source": (a.get("sources") or {}).get("closest")}
                 except CompsError as e:
                     notes.append(f"closest-match set not valued: {e}")
@@ -271,9 +348,10 @@ class Comps:
             },
             lineage={},
             notes=notes + [f"range = {'lowest / median / highest' if method == 'min_max' else 'Q1 / median / Q3'} implied price across peers"],
-            details={"target": target_row, "peers": rows, "multiples": per_multiple, "blend": blend,
+            details={"target": target_row, "peers": rows, "multiples": per_multiple, "blend": blend, "blend_equal": blend_equal,
+                     "peer_weights": "equal" if equal else "closeness", "peer_average": _peer_average(target_row, live, weigh(live)),
                      "market_price": target.get("price"), "range_method": method, "closest": closest,
-                     "match_rules": {k: {"label": lbl, "kind": kind, "tolerance": (a.get("match") or {}).get(k, tol)}
+                     "match_rules": {k: {"label": lbl, "tolerance": (a.get("match") or {}).get(k, tol)}
                                      for k, (lbl, kind, tol) in MATCH.items()}},
         )
 

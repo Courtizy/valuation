@@ -65,7 +65,7 @@ SECTOR_PEERS = ("ZZA", "ZZB", "ZZC", "ZZF")
 
 
 def closest_peers(detail: dict, details: dict, n: int = 4) -> list[str]:
-    """The demo's closest-match set: the peers matching the most comps figures, the smallest gaps on ties."""
+    """The demo's closest-match set: the peers rated closest on the comps figures, nearest in size on ties."""
     from valuation._core.figures import company_figures
     from valuation.L2_models.comps import match, peer_row
     me = peer_row(company_figures(detail))
@@ -73,7 +73,7 @@ def closest_peers(detail: dict, details: dict, n: int = 4) -> list[str]:
     for t in PEERS:
         row = peer_row(company_figures(details[t]))
         m = match(me, row)
-        scored.append((-m["matched"], m["distance"], t))
+        scored.append((-(m["closeness"] or 0), abs(m["size"] - 1) if m["size"] else 9, t))
     return [t for *_, t in sorted(scored)[:n]]
 
 
@@ -126,7 +126,7 @@ def build_demo_data(data_dir: Path) -> dict:
             others = list(PEERS)
             a = {"peers": list(SECTOR_PEERS) + [MANUAL_PEER], "closest": closest_peers(detail, details),
                  "sources": {"peers": "synthetic demo peers from the same sector; prices from the synthetic market data",
-                             "closest": "the four synthetic peers matching the most figures (growth, margin, leverage, size, beta)"}}
+                             "closest": "the four synthetic peers rated closest on growth, discount rate, margin and leverage"}}
             comps = get_model("comps").run(detail, a, [details[o] for o in others]).to_dict()
             results.append(_write(out / "model_results" / "comps.json", {**comps, "lineage": LINEAGE, "demo": True}))
         deal = demo_deal(detail) if t == "DEMO" else None

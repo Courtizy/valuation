@@ -329,36 +329,45 @@ export async function renderSimilar(root) {
 
 // Two peer sets: the sector set (the model's value) and the set closest on fundamentals
 // (details.closest). The toggle picks which one the dot plot and tables show; both are on the
-// football field. "How Close Each Peer Is" is the course's Pub_Comps comparison rows: each figure
-// against the target, ✓ when within the tolerance, and a Weak Match flag at 2 or fewer.
-const MATCH_FMT = { revenue_growth: pct, ebitda_margin: pct, net_debt_to_ev: pct, size: (v) => (fin(v) ? `${v.toFixed(2)}×` : NA), beta: (v) => (fin(v) ? v.toFixed(2) : NA) };
-const tolText = (k, r) => (r.kind === "ratio" ? `${(1 / r.tolerance).toFixed(1)}× to ${r.tolerance.toFixed(1)}× the target` : k === "beta" ? `within ${r.tolerance.toFixed(1)}` : `within ${(r.tolerance * 100).toFixed(0)} points`);
+// football field. "How Close Each Peer Is" is the course's underlying value method: each peer's
+// DCF drivers against the target's, rated green / yellow / red (the stoplight), the closeness
+// that weights the peer, and the peer averages against the target.
+const LIGHTS = { green: ["m-green", "Close"], yellow: ["m-yellow", "Near"], red: ["m-red", "Far"] };
+const pts = (v) => `${(v * 100).toFixed(1)} pts`;
 
 function matchTable(d, peers) {
   const rules = d.match_rules || {};
   const keys = Object.keys(rules);
   if (!keys.length) return "";
-  const tgt = (k) => (k === "size" ? 1 : d.target[k]);
+  const src = d.target.figure_sources || {};
   const cell = (p, k) => {
     const f = p.match?.figures?.[k];
-    if (!f || f.close === null || f.close === undefined) return `<td class="na">${NA}</td>`;
-    return `<td class="${f.close ? "m-hit" : "m-miss"}" title="${f.close ? "Within" : "Outside"} the tolerance (${tolText(k, rules[k])})">${MATCH_FMT[k](f.peer)} <span aria-hidden="true">${f.close ? "✓" : "·"}</span></td>`;
+    if (!f || !f.light) return `<td class="na" title="No figure: type it in comps.json (${esc(k)})">${NA}</td>`;
+    const [cls, word] = LIGHTS[f.light];
+    const why = `${word}: ${f.gap >= 0 ? "+" : "−"}${pts(Math.abs(f.gap))} vs. the target (green within ${pts(rules[k].tolerance)}, yellow within ${pts(2 * rules[k].tolerance)})${p.figure_sources?.[k] ? `. Source: ${p.figure_sources[k]}` : ""}`;
+    return `<td class="${cls}" title="${esc(why)}">${pct(f.peer)} <span class="m-icon" role="img" aria-label="${word}"></span></td>`;
   };
-  const flag = (m) => (m?.flag === "weak" ? ` <span class="badge" title="2 or fewer figures close to the target">⚠ Weak Match</span>`
-    : m?.flag === "unchecked" ? ` <span class="muted small">Too few figures to check</span>` : "");
+  const flag = (m) => (m?.flag === "weak" ? ` <span class="badge" title="Closeness below 50%: a weak comparable">⚠ Weak</span>`
+    : m?.flag === "unchecked" ? ` <span class="muted small" title="Fewer than 3 figures to rate: weighted at 50%">Unrated</span>` : "");
+  const avg = d.peer_average || {};
+  const avgRow = (label, kind) => `<tr class="sub"><td>${label}</td>${keys.map((k) => `<td>${pct(avg[k]?.[kind])}</td>`).join("")}<td></td><td></td><td></td></tr>`;
+  const totalW = peers.filter((p) => !p.excluded).reduce((s2, p) => s2 + (d.peer_weights === "equal" ? 1 : p.match?.weight || 0), 0);
   return `<h3 class="block-title" style="margin-top:16px">How Close Each Peer Is</h3>
     <div class="table-wrap"><table class="list match-table">
-      <thead><tr><th>Company</th>${keys.map((k) => `<th title="${esc(tolText(k, rules[k]))}">${esc(rules[k].label)}</th>`).join("")}<th>Close On</th></tr></thead>
-      <tbody><tr class="key target"><td>${esc(d.target.ticker || "")} <span class="muted small">Target</span></td>${keys.map((k) => `<td>${MATCH_FMT[k](tgt(k))}</td>`).join("")}<td>–</td></tr>
-        ${peers.map((p) => `<tr class="${p.excluded ? "na" : ""}"><td>${esc(p.ticker)} <span class="muted small">${esc(p.source === "manual" ? "Manual Figures" : (p.name || ""))}</span></td>
-          ${keys.map((k) => cell(p, k)).join("")}<td>${p.match ? `${p.match.matched} of ${p.match.checked}` : NA}${flag(p.match)}</td></tr>`).join("")}</tbody></table></div>
-    <p class="legend-note">✓ = within the tolerance: ${keys.map((k) => `${esc(rules[k].label)} ${esc(tolText(k, rules[k]))}`).join(" · ")}. A peer close on 2 or fewer of the figures it has is flagged; it stays in the range until you untick it in the peer picker.</p>`;
+      <thead><tr><th>Company</th>${keys.map((k) => `<th title="${esc(src[k] ? `Target: ${src[k]}` : "")}">${esc(rules[k].label)}</th>`).join("")}<th>Size vs. Target</th><th>Closeness</th><th>Weight</th></tr></thead>
+      <tbody><tr class="key target"><td>${esc(d.target.ticker || "")} <span class="muted small">Target</span></td>${keys.map((k) => `<td title="${esc(src[k] || "")}">${pct(d.target[k])}</td>`).join("")}<td>1.00×</td><td>–</td><td>–</td></tr>
+        ${peers.map((p) => { const m = p.match || {}, w = d.peer_weights === "equal" ? 1 : m.weight || 0; return `<tr class="${p.excluded ? "na" : ""}"><td>${esc(p.ticker)} <span class="muted small">${esc(p.source === "manual" ? "Manual Figures" : (p.name || ""))}</span></td>
+          ${keys.map((k) => cell(p, k)).join("")}<td>${fin(m.size) ? `${m.size.toFixed(2)}×` : NA}</td>
+          <td>${fin(m.closeness) ? pct(m.closeness, true) : NA}${flag(m)}</td><td>${p.excluded || !totalW ? NA : pct(w / totalW, true)}</td></tr>`; }).join("")}
+        ${avgRow("Peer Average", "average")}${d.peer_weights === "equal" ? "" : avgRow("Weighted by Closeness", "weighted")}</tbody></table></div>
+    <p class="legend-note">A multiple is a DCF over current earnings, so a good comparable shares the target's DCF drivers: analysts' 5-year growth, past growth as a check, the discount rate, EBITDA margin (where the long run starts: high margins tend to fall back) and net debt / EV (so EV and market-value multiples compare alike). <span class="m-green"><span class="m-icon"></span> close</span>, <span class="m-yellow"><span class="m-icon"></span> near</span> (within twice the tolerance), <span class="m-red"><span class="m-icon"></span> far</span>. Closeness = share of figures close (near counts half); peers are weighted by it. Size is shown, not rated. Hover a cell for the gap and the source; a missing figure can be typed into comps.json.</p>`;
 }
 
 export function renderCompsCard() {
   const r = state.comps, base = r?.details;
   if (!base?.peers || !$("val-comps")) return;
-  const sets = { sector: base, ...(base.closest ? { closest: { ...base.closest, target: base.target, market_price: base.market_price, match_rules: base.match_rules } } : {}) };
+  const sets = { sector: base, ...(base.closest ? { closest: { ...base.closest, target: base.target, market_price: base.market_price,
+    match_rules: base.match_rules, peer_weights: base.peer_weights } } : {}) };
   const which = sets[state.compsSet] ? state.compsSet : "sector";
   const d = sets[which];
   const mids = Object.keys(d.multiples);
@@ -394,8 +403,10 @@ export function renderCompsCard() {
       <div class="dp-row dp-head"><div></div><div class="muted small">Dots = each peer's implied price · band = range · tick = median${fin(d.market_price) ? " · line = share price" : ""}</div>
         <div class="ff-num">Range</div><div class="ff-num">Median</div></div>
       ${dots}
-      <div class="dp-row total"><div class="dp-name"><b>Blended ${setNames[which]} Value</b><div class="muted small">Weights above</div></div><div></div>
+      <div class="dp-row total"><div class="dp-name"><b>Blended ${setNames[which]} Value</b><div class="muted small">${d.peer_weights === "equal" ? "Peers weighted equally" : "Peers weighted by closeness"}</div></div><div></div>
         <div class="ff-num">${price(d.blend.conservative)} – ${price(d.blend.aggressive)}</div><div class="ff-num"><b>${price(d.blend.expected)}</b></div></div>
+      ${d.blend_equal && d.peer_weights !== "equal" ? `<div class="dp-row"><div class="dp-name">Equal Weights<div class="muted small">Every peer counts the same</div></div><div></div>
+        <div class="ff-num">${price(d.blend_equal.conservative)} – ${price(d.blend_equal.aggressive)}</div><div class="ff-num">${price(d.blend_equal.expected)}</div></div>` : ""}
     </div>
     ${matchTable(d, d.peers)}
     <h3 class="block-title" style="margin-top:16px">Multiples and Implied Values</h3>
@@ -446,14 +457,21 @@ export function renderPeerPicker() {
       ${inView.length ? "Ticked = the peers in the current comps run." : "The six closest are ticked to start."}
       A peer needs a share price until a market-data source is added; type one here or in comps.json.</p>
     <div class="table-wrap"><table class="list" id="pp-table"><thead><tr><th>Use</th><th>Company</th><th>Similarity</th><th>Traits Shared</th>
-      <th>Revenue</th><th>3Y CAGR</th><th>Op. Margin</th><th>Debt/EBITDA</th><th>Price</th></tr></thead><tbody>
+      <th>Revenue</th><th>3Y CAGR</th><th>Op. Margin</th><th>Debt/EBITDA</th><th>Price</th><th title="Analysts' earnings growth per year, next 5 years (Yahoo Analysis). Blank = the market-data figure, if any">5-Yr Growth %</th></tr></thead><tbody>
       ${ranked.map((r) => { const c = r.c, cur = current.get(c.ticker); return `<tr>
         <td><input type="checkbox" value="${esc(c.ticker)}" ${ticked.has(c.ticker) ? "checked" : ""} aria-label="Use ${esc(c.ticker)}"></td>
         <td><b>${esc(c.ticker)}</b> <span class="muted small">${esc(c.name || "")}</span></td>
         <td>${fin(r.score) ? pct(r.score, true) : NA}</td><td title="${Object.entries(c.traits).map(([k, x]) => `${TRAIT_NAMES[k] || k}: ${titleCase(x)}`).join("\n")}">${r.traits} of 4</td>
         <td>${money(c.revenue)}</td><td>${pct(c.revenue_cagr)}</td><td>${pct(c.operating_margin)}</td><td>${mult(c.debt_to_ebitda)}</td>
-        <td><input type="number" class="pp-price" data-t="${esc(c.ticker)}" min="0" step="0.01" placeholder="Market" value="${cur?.price ?? ""}" aria-label="${esc(c.ticker)} price"></td></tr>`; }).join("")}
+        <td><input type="number" class="pp-price" data-t="${esc(c.ticker)}" min="0" step="0.01" placeholder="Market" value="${cur?.price ?? ""}" aria-label="${esc(c.ticker)} price"></td>
+        <td><input type="number" class="pp-growth" data-t="${esc(c.ticker)}" step="0.1" placeholder="${fin(cur?.growth_5y) ? (cur.growth_5y * 100).toFixed(1) : "Analysts"}"
+          value="${cur?.figure_sources?.growth_5y === "typed in comps.json" && fin(cur.growth_5y) ? (cur.growth_5y * 100).toFixed(1) : ""}" aria-label="${esc(c.ticker)} analysts' 5-year growth, %"></td></tr>`; }).join("")}
     </tbody></table></div>
+    <p class="small"><label>${esc(state.company.ticker)}'s analysts' 5-year growth, %
+      <input type="number" id="pp-target-growth" step="0.1" style="width:90px"
+        placeholder="${fin(state.comps?.details?.target?.growth_5y) ? (state.comps.details.target.growth_5y * 100).toFixed(1) : "Analysts"}"
+        value="${state.comps?.details?.target?.figure_sources?.growth_5y === "typed in comps.json" ? (state.comps.details.target.growth_5y * 100).toFixed(1) : ""}"></label>
+      <span class="muted">Blank uses market data (Yahoo's Analysis page, else Alpha Vantage's estimates). Typed figures win.</span></p>
     <div class="actions">
       <button type="button" class="primary" id="pp-save" ${demo ? "disabled" : ""}>Save Peers</button>
       <button type="button" id="pp-run" ${demo ? "disabled" : ""}>Run Comps</button>
@@ -476,6 +494,7 @@ export async function savePeers(quiet = false) {
   const st = $("pp-status"), t = state.company.ticker;
   const picks = [...document.querySelectorAll("#pp-table input[type=checkbox]:checked")].map((x) => x.value);
   const prices = Object.fromEntries([...document.querySelectorAll(".pp-price")].filter((x) => x.value !== "").map((x) => [x.dataset.t, Number(x.value)]));
+  const growth = Object.fromEntries([...document.querySelectorAll(".pp-growth")].filter((x) => x.value !== "").map((x) => [x.dataset.t, Number(x.value) / 100]));
   if (!picks.length) { setStatus(st, { ok: false, msg: "Tick at least one peer." }); return false; }
   st.className = "status"; st.textContent = "Saving…";
   // keep what this picker didn't show: hand-entered peers and peers outside the level in view
@@ -487,8 +506,12 @@ export async function savePeers(quiet = false) {
     d.peers = [...kept, ...picks.map((p) => {
       const e = { ...(old.get(p) || { ticker: p }) };
       if (prices[p] != null) e.price = prices[p];
+      if (growth[p] != null) e.growth_5y = growth[p];
       return e;
     })];
+    const tg = $("pp-target-growth")?.value;
+    if (tg !== undefined && tg !== "") d.target = { ...(d.target || {}), growth_5y: Number(tg) / 100 };
+    else if (tg === "" && d.target) delete d.target.growth_5y;
     d.sources = { ...(d.sources || {}), peers: `picked from ${state.sector.label} (screened ${state.sectorMeta.as_of}) on ${new Date().toISOString().slice(0, 10)}` };
     return d;
   };
