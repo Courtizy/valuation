@@ -1,4 +1,5 @@
 import { $M } from "./company.js";
+import { tabSet, wireTabs } from "./tabs.js";
 import { histogramChart } from "./charts.js";
 import { simulationSummary } from "./pages.js";
 import { NA, NM, esc, estLabel, fin, label, millions, money, mult, num, pct, periodLabel, price, sentence, sourceLine, times, titleCase, unit, unitShort } from "./format.js";
@@ -19,6 +20,8 @@ export const SCENARIOS = { p10: "Bear", p50: "Base", p90: "Bull" };
 export const TRAIT_NAMES = { stage: "Stage", predictability: "Cash-Flow Predictability", asset_intensity: "Asset Intensity",
   capital_structure: "Capital Structure" };
 
+/** The engine's headline for a section, else its plain label. */
+export const headline = (k, label) => esc(state.comparison?.headlines?.[k] || label);
 export const methodName = (m) => (m.model === "dcf" ? MODEL_NAMES.dcf : titleCase(m.name));
 export function signed(v) { return fin(v) ? `${v >= 0 ? "+" : "−"}${Math.abs(v * 100).toFixed(1)}%` : NA; }
 export function upClass(v, band = 0.005) { return !fin(v) || Math.abs(v) < band ? "" : v > 0 ? "up" : "down"; }
@@ -41,9 +44,25 @@ export function renderValuation() {
     return;
   }
   state.scn = state.scn || "p50";
-  body.innerHTML = `<div id="val-quote"></div><div id="val-ff"></div><div id="val-spread"></div><div id="val-sens"></div>
-    <div id="val-head"></div><div id="val-profile"></div><div id="val-comps"></div><div id="val-peers"></div>
-    <div id="val-dcf"></div><div id="val-similar"></div><div id="val-diffs"></div>`;
+  // page one (the answer and the football field), what moves the value, then the methods and the appendix behind tabs
+  body.innerHTML = `<div class="card sheet" id="val-sheet">
+      <div class="eyebrow">Valuation · ${esc(state.company.ticker)} · $ per share</div>
+      <h2 class="action-title">${headline("answer", "Value vs. Price")}</h2>
+      <div id="val-head"></div><div id="val-ff" class="sheet-block"></div></div>
+    <div class="grid-2 val-moves"><div id="val-spread"></div><div id="val-sens"></div></div>
+    ${tabSet("val-methods", [
+      { key: "dcf", label: "DCF", html: '<div id="val-dcf"></div>' },
+      { key: "comps", label: "Public Comps", html: '<div id="val-comps"></div><div id="val-peers"></div>' },
+      { key: "similar", label: "Similar Companies", html: '<div id="val-similar"></div>' },
+    ], { title: "Method Detail" })}
+    ${tabSet("val-appendix", [
+      { key: "quote", label: "Market Snapshot", html: '<div id="val-quote"></div>' },
+      { key: "profile", label: "Company Profile", html: '<div id="val-profile"></div>' },
+      { key: "sim", label: "Simulation", html: '<div class="card"><div class="card-head"><h2>DCF Simulation</h2><span class="muted small">Value per share across the simulated runs</span></div><div id="val-kpis"></div></div>' },
+      { key: "inputs", label: "Inputs Compared", html: '<div id="val-diffs"></div>' },
+    ], { title: "Appendix" })}`;
+  wireTabs(body);
+  renderKpis();
   renderQuote($("val-quote"));
   renderField();
   renderSpread();
@@ -123,8 +142,7 @@ export function renderHeadline() {
   const c = state.comparison, k = state.scn, blend = c.blend;
   const primary = (c.plan?.methods || []).filter((m) => m.weight > 0);
   const up = c.upside?.[k];
-  $("val-head").innerHTML = `<div class="card">
-    <div class="card-head"><h2>Value vs. Price</h2><span class="muted small">Scenario set on the football field below</span></div>
+  $("val-head").innerHTML = `<div>
     <div class="headline">
       <div><div class="label">Share Price</div><div class="big num">${price(c.price)}</div>
         <div class="muted small">${c.price_source === "market data" ? marketLine(state.detail.market)
@@ -166,8 +184,8 @@ export function renderField() {
       ${m.reason ? `<div class="ff-reason">${esc(m.reason.charAt(0).toUpperCase() + m.reason.slice(1))}.</div>` : ""}</div>`;
   };
   const b = c.blend;
-  $("val-ff").innerHTML = `<div class="card">
-    <div class="card-head"><h2>Where the Methods Agree</h2><span class="muted small">Value per share: bar = Bear to Bull, tick = ${SCENARIOS[k]}, line = share price</span>
+  $("val-ff").innerHTML = `<div>
+    <div class="card-head"><h3 class="block-title">${headline("field", "Where the Methods Agree")}</h3><span class="muted small">Value per share: bar = Bear to Bull, tick = ${SCENARIOS[k]}, line = share price; the scenario also sets the values above</span>
       <div class="spacer">${scenarioToggle()}</div></div>
     <div class="ff">
       <div class="ff-row ff-head"><div></div>
@@ -334,7 +352,7 @@ export function renderCompsCard() {
       <div class="ff-num">${price(x0.conservative)} – ${price(x0.aggressive)}</div><div class="ff-num"><b>${price(x0.expected)}</b></div></div>`;
   }).join("");
   $("val-comps").innerHTML = `<div class="card">
-    <div class="card-head"><h2>Public Comps</h2><span class="muted small">${esc(d.range_method === "min_max" ? "Range = lowest to highest implied price (fewer than 4 peers)" : "Range = Q1 to Q3 implied price")}</span></div>
+    <div class="card-head"><h2 class="action-title">${headline("comps", "Public Comps")}</h2><span class="muted small">${esc(d.range_method === "min_max" ? "Range = lowest to highest implied price (fewer than 4 peers)" : "Range = Q1 to Q3 implied price")}</span></div>
     <div class="dp">
       <div class="dp-row dp-head"><div></div><div class="muted small">Dots = each peer's implied price · band = range · tick = median${fin(d.market_price) ? " · line = share price" : ""}</div>
         <div class="ff-num">Range</div><div class="ff-num">Median</div></div>
@@ -510,7 +528,7 @@ export function renderDcfCard() {
   card.className = "card";
   const tile = (l, v, sub = "") => `<div class="tile"><div class="label">${esc(l)}</div><div class="value">${v}</div>${sub ? `<div class="delta">${esc(sub)}</div>` : ""}</div>`;
   card.innerHTML = `
-    <div class="card-head"><h2>DCF Detail</h2>
+    <div class="card-head"><h2 class="action-title">${headline("dcf", "DCF Detail")}</h2>
       <span class="muted small">${esc(d.mode === "implied" ? "Implied Mode: growth solved to match the price" : "Forecast Mode")} · Base ${esc(d.base_period.kind === "fiscal" ? String(d.base_period.fiscal_year) : d.base_period.label)}${d.default_case
         ? ` · <span class="tile-tag" title="No configs/public/assumptions/${esc(state.company.ticker)}/dcf.json: growth from the company's history, rates from the data. Add a dcf.json to set your own.">Default Assumptions</span>` : ""}</span></div>
     <div class="tiles">
@@ -608,7 +626,7 @@ function renderSpread() {
   if (!box) return;
   if (!sim?.histogram) { box.innerHTML = ""; return; }
   const h = sim.histogram, ps = sim.per_share, px = state.comparison?.price;
-  box.innerHTML = `<div class="card"><div class="card-head"><h2>Spread of Simulated Outcomes</h2>
+  box.innerHTML = `<div class="card"><div class="card-head"><h2 class="action-title">${headline("spread", "Spread of Simulated Outcomes")}</h2>
       <span class="muted small">DCF value per share, share of ${sim.runs_used.toLocaleString()} runs</span></div>
     <div id="spread-chart"></div>
     <p class="legend-note">Solid bars = middle 90% (${price(ps.p5)}–${price(ps.p95)}); faded = tails.${h.below + h.above ? ` ${h.below + h.above} extreme runs fall outside the axis.` : ""}
@@ -620,6 +638,6 @@ function renderSpread() {
 function renderSensitivity() {
   const box = $("val-sens"), d = state.dcf?.details;
   if (!box) return;
-  box.innerHTML = d?.bridge ? `<div class="card"><div class="card-head"><h2>Sensitivity</h2><span class="muted small">Discount rate × terminal growth, value per share</span></div>
+  box.innerHTML = d?.bridge ? `<div class="card"><div class="card-head"><h2 class="action-title">${headline("sensitivity", "Sensitivity")}</h2><span class="muted small">Discount rate × terminal growth, value per share</span></div>
     ${sensitivityTable(d, d.bridge.value_per_share)}</div>` : "";
 }

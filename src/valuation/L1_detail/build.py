@@ -26,6 +26,7 @@ from valuation.lineage import lineage_block
 
 from .analysis import _one_year_apart, analyze_view, load_classification
 from .backfill import backfill_records
+from .headlines import company_headlines
 from .validate import validation, warnings_for
 from .periods import build_views
 from .forecast import trend_case
@@ -178,6 +179,7 @@ def build_detail(canonical: dict, as_of: str, raw_market: dict | None = None, pa
                                   if erp.get("value") is not None else None)
     doc["profile"] = build_profile(doc, load_rules(((pack or {}).get("l1") or {}).get("profile_rules")))
     doc["projection"] = trend_case(doc)
+    doc["headlines"] = company_headlines(doc)
     return doc
 
 

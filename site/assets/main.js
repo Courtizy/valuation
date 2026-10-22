@@ -7,6 +7,7 @@ import { $, banner, device, getJSON, runRoot, state, store } from "./state.js";
 import { renderValuation } from "./valuation.js";
 import { setTourHooks, startTour } from "./tour.js";
 import { renderMethod, renderOverview } from "./pages.js";
+import { restoreTab, wireTabs } from "./tabs.js";
 
 // Demo mode: the pre-loaded demo (site/demo/data, rebuilt on every deploy) instead of the real data.
 // Chosen by ?demo=1 / ?demo=0, else the viewer's last choice, else demo when there's no real data yet.
@@ -93,7 +94,7 @@ async function init() {
   setupTheme();
   setupTabs();
   setupSegments();
-  setupCollapsibles();
+  setupDetailTabs();
   setupHereForm();
   try {
     [state.index, state.concepts, state.companies, state.taxonomy] = await Promise.all([getJSON(`${state.root}index.json`),
@@ -249,27 +250,11 @@ function setupTheme() {
   };
 }
 
-// Collapsible sections: the heading toggles the body. First visit: Statements open, Ratios and
-// Sector closed; after that each viewer's choice is remembered in this browser.
-const COLLAPSE_DEFAULT = { statements: true, ratios: false, sector: false };
-
-function setupCollapsibles() {
-  document.querySelectorAll(".card[data-collapse]").forEach((card) => {
-    const key = card.dataset.collapse, h = card.querySelector(".card-head h2"), body = card.querySelector(".card-body");
-    const id = `sec-body-${key}`;
-    body.id = id;
-    h.innerHTML = `<button type="button" class="collapse-btn" aria-controls="${id}"><span class="chev" aria-hidden="true"></span>${esc(h.textContent)}</button>`;
-    const btn = h.firstChild;
-    const set = (open, save) => {
-      card.classList.toggle("collapsed", !open);
-      btn.setAttribute("aria-expanded", String(open));
-      body.hidden = !open;
-      if (save) store.set(`open:${key}`, open ? "1" : "0");
-    };
-    const saved = store.get(`open:${key}`);
-    set(saved === null ? COLLAPSE_DEFAULT[key] ?? true : saved === "1", false);
-    btn.onclick = () => set(card.classList.contains("collapsed"), true);
-  });
+// Company Detail's Statements · Ratios · Sector tab set is written into the page; the open tab is
+// remembered in this browser. Charts in a panel redraw when it opens (ResizeObserver).
+function setupDetailTabs() {
+  wireTabs($("panel-company"));
+  restoreTab("company-detail");
 }
 
 function setupSegments() {
