@@ -28,6 +28,7 @@ class Step:
 
 
 DEAL_MODELS = ("dcf_synergy", "just_synergy")
+DCF_INPUT_MODELS = DEAL_MODELS + ("lbo",)     # models that start from dcf.json (or the default case)
 
 
 def has_deal(paths: Paths, ticker: str) -> bool:
@@ -43,13 +44,14 @@ def load_peers(paths: Paths, ticker: str) -> list[str]:
     if not p.exists():
         return []
     out = []
-    for e in json.loads(p.read_text()).get("peers", []):
+    doc = json.loads(p.read_text())
+    for e in doc.get("peers", []) + doc.get("closest", []):
         # a peer is a ticker, or {"ticker": ..., "price": ..., ...}; "sec": false = manual figures only
         if isinstance(e, str):
             out.append(e.upper())
         elif e.get("ticker") and e.get("sec", True):
             out.append(e["ticker"].upper())
-    return out
+    return list(dict.fromkeys(out))
 
 
 def _read_json(p: Path, default=None):
@@ -134,16 +136,18 @@ def plan(
         def run_model(m=m):
             model = get_model(m)
             detail = _read_json(paths.detail(ticker, as_of))
-            a_path = paths.model_assumptions(ticker, "dcf" if m in DEAL_MODELS else m)
+            a_path = paths.model_assumptions(ticker, "dcf" if m in DCF_INPUT_MODELS else m)
             if a_path.exists():
                 assumptions = _read_json(a_path, {})
-            elif m == "dcf" or m in DEAL_MODELS:
+            elif m == "dcf" or m in DCF_INPUT_MODELS:
                 from valuation.L2_models.dcf import default_assumptions   # no dcf.json: the default case from the data
                 assumptions = default_assumptions(detail)
             else:
                 raise FileNotFoundError(f"{a_path} not found; copy configs/public/assumptions/_template/{m}.json and fill it in")
-            if m in DEAL_MODELS or m == "precedents":   # standalone inputs (or the deal list) plus the deal
+            if m in DCF_INPUT_MODELS or m == "precedents":   # standalone inputs (or the deal list) plus the deal
                 assumptions = {**assumptions, "deal": _read_json(paths.model_assumptions(ticker, "deal"), None)}
+            if m == "lbo":                                   # the sponsor's assumptions, when saved
+                assumptions = {**assumptions, "lbo": _read_json(paths.model_assumptions(ticker, "lbo"), None)}
             peer_details = [d for d in (_read_json(paths.detail(p, as_of)) for p in peers) if d] if model.needs_peers else None
             result = model.run(detail, assumptions, peer_details)
             result.lineage = lineage_block(as_of, [paths.detail(ticker, as_of)])

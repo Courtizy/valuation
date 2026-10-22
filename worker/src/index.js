@@ -13,11 +13,25 @@ const ALLOW = [
   { host: "fred.stlouisfed.org", path: /^\/graph\/fredgraph\.csv/, ttl: 6 * 3600 },
   { host: "pages.stern.nyu.edu", path: /^\/~adamodar\/New_Home_Page\/datafile\/(Betas|histimpl)\.html$/, ttl: 7 * 24 * 3600 },
   { host: "query1.finance.yahoo.com", path: /^\/(v8\/finance\/chart\/|ws\/fundamentals-timeseries\/)/, ttl: 15 * 60, yahoo: true },
+  // analysts' growth estimates (earningsTrend only): Yahoo wants a session cookie and crumb, fetched below
+  { host: "query2.finance.yahoo.com", path: /^\/v10\/finance\/quoteSummary\/[^/]+$/, ttl: 12 * 3600, yahoo: true, crumb: true },
 ];
 const BROWSER_UA = "Mozilla/5.0 (compatible; valuation-model/0.1)";
 const SEC_HOSTS = new Set(["data.sec.gov", "www.sec.gov"]);
 const MIN_GAP_MS = 150;            // per isolate: at most ~7 SEC requests a second
 let lastSec = 0;
+
+// Yahoo's quoteSummary needs the cookie fc.yahoo.com sets and a crumb tied to it; kept per isolate for an hour.
+let yahooSession = null;
+async function yahooCrumb() {
+  if (yahooSession && Date.now() - yahooSession.at < 3600 * 1000) return yahooSession;
+  const r = await fetch("https://fc.yahoo.com/", { headers: { "User-Agent": BROWSER_UA }, redirect: "manual" });
+  const cookie = (r.headers.get("set-cookie") || "").split(";")[0];
+  const c = await fetch("https://query2.finance.yahoo.com/v1/test/getcrumb", { headers: { "User-Agent": BROWSER_UA, Cookie: cookie } });
+  const crumb = c.ok ? (await c.text()).trim() : "";
+  yahooSession = crumb ? { cookie, crumb, at: Date.now() } : null;
+  return yahooSession;
+}
 
 function cors(origin, env) {
   const allowed = (env.ALLOWED_ORIGINS || "").split(",").map((s) => s.trim());
@@ -46,6 +60,7 @@ export default {
     }
     const rule = ALLOW.find((r) => r.host === target.hostname && r.path.test(target.pathname));
     if (target.protocol !== "https:" || !rule) return fail(403, "not an allowed source", ch);
+    if (rule.crumb && target.searchParams.get("modules") !== "earningsTrend") return fail(403, "only modules=earningsTrend", ch);
     const contact = env.SEC_USER_AGENT || env.SEC_CONTACT;
     if (SEC_HOSTS.has(target.hostname) && !contact) return fail(500, "no SEC contact: set SEC_CONTACT in wrangler.toml", ch);
 
@@ -62,7 +77,16 @@ export default {
       if (contact) headers["User-Agent"] = contact;   // the SEC requires it; FRED and NYU get the same polite contact
       if (SEC_HOSTS.has(target.hostname)) headers["Accept-Encoding"] = "gzip, deflate";   // as the SEC's fair-access page asks
       if (rule.yahoo) headers["User-Agent"] = BROWSER_UA;
-      const up = await fetch(target.toString(), { headers });
+      let upstream = target;
+      if (rule.crumb) {
+        const s = await yahooCrumb();
+        if (!s) return fail(502, "yahoo: no session crumb", ch);
+        headers.Cookie = s.cookie;
+        upstream = new URL(target);
+        upstream.searchParams.set("crumb", s.crumb);
+      }
+      const up = await fetch(upstream.toString(), { headers });
+      if (rule.crumb && up.status === 401) yahooSession = null;     // crumb expired: the next call gets a new one
       res = new Response(up.body, up);
       res.headers.set("Cache-Control", `public, max-age=${rule.ttl}`);
       if (up.ok) ctx.waitUntil(cache.put(key, res.clone()));

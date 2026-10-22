@@ -156,6 +156,7 @@ tr.memo td { color: var(--ink-2); font-style: italic; }
 
 /* "(1,234.5)" for negatives; positives reserve the ")" width */
 .ap::after { content: ")"; visibility: hidden; }
+.legend-note .ap::after, p .ap::after { content: none; }
 
 td.neg { color: var(--ink); }
 .mark { color: var(--accent-ink); font-size: 10px; position: absolute; right: 1px; top: 2px; }
@@ -565,3 +566,28 @@ details.inputs-card[open] > summary { margin-bottom: 12px; }
 .val-moves > div > .card { height: 100%; margin-bottom: 0; }
 #val-sheet .headline { margin-top: 0; }
 #val-sheet .card-head { margin-bottom: 8px; }
+
+/* ---- comps: how close each peer is (stoplight; series colours never carry good/bad) */
+.m-icon { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-left: 3px; vertical-align: 0; border: 2px solid currentColor; box-sizing: border-box; }
+.m-green { color: var(--good); } .m-green .m-icon { background: currentColor; }
+.m-yellow { color: var(--warning-ink); } .m-yellow .m-icon { background: linear-gradient(90deg, currentColor 50%, transparent 50%); }
+.m-red { color: var(--critical); }
+.match-table th { white-space: normal; min-width: 64px; vertical-align: bottom; }
+.match-table td.m-green, .match-table td.m-yellow, .match-table td.m-red { font-weight: 600; }
+
+/* tornado: one-at-a-time swings around the stated case */
+.tornado { margin-top: 6px; }
+.tn-row { display: grid; grid-template-columns: minmax(170px, 1.3fr) minmax(200px, 3fr) 150px; gap: 12px; align-items: center;
+  padding: 6px 0; border-bottom: 1px solid var(--line); }
+.tn-name { font-size: 13px; }
+.tn-track { position: relative; height: 18px; }
+.tn-bar { position: absolute; top: 3px; height: 12px; border-radius: var(--radius); background: var(--series-1); }
+.tn-base { position: absolute; top: -3px; height: 24px; border-left: 2px solid var(--ink); }
+table.checks td:first-child { white-space: nowrap; }
+table.checks td:nth-child(3) { white-space: nowrap; }
+table.checks td:last-child { white-space: normal; min-width: 240px; }
+@media (max-width: 640px) {
+  .tn-row { grid-template-columns: 1fr; gap: 4px; }
+  table.checks td:first-child { white-space: normal; }
+  table.wrap-names td:first-child { white-space: normal; }
+}

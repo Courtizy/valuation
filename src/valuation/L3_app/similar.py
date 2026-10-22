@@ -1,4 +1,5 @@
-"""One similarity ranking for the site: Similar Companies and the comps peer picker.
+"""One similarity ranking for the site: Similar Companies, the comps peer picker and the
+closest-match comps set.
 
 Closeness = root-mean-square z-score distance over six figures every company has
 on the same basis, whether it comes from full company detail or a sector screen:
@@ -63,11 +64,22 @@ def from_card(card: dict) -> dict:
             **{k: v.get(k) for k in KEYS if k != "log_revenue"}}
 
 
+def _size_gap(target: dict, c: dict) -> float:
+    a, b = _value(target, "log_revenue"), _value(c, "log_revenue")
+    return abs(a - b) if a is not None and b is not None else math.inf
+
+
 def pick_peers(sector: dict, ticker: str, n: int = 6) -> dict | None:
-    """Comps peers for a ticker from a sector screen, as the peer picker would tick them: the
-    narrowest level (industry, then group, then sector) with at least six companies, ranked by
-    closeness, the n closest. {level, label, peers: [{ticker, score}]}, or None if the ticker
-    isn't in the screen."""
+    """Comps peers for a ticker from a sector screen: two sets.
+
+    sector set   the traditional pick: the narrowest level (industry, then group, then sector)
+                 with at least n companies, the n nearest in size (revenue)
+    closest set  closest on fundamentals from the whole screen, whatever the industry: the n
+                 best by the six-figure ranking above (growth, margins, cash-flow stability,
+                 capital intensity, leverage, size)
+
+    {level, label, sector, peers: [{ticker, score}], closest: [{ticker, score}]}, or None if the
+    ticker isn't in the screen."""
     rows = [r for r in sector.get("companies") or [] if r.get("ticker")]
     me = next((r for r in rows if r["ticker"] == ticker.upper()), None)
     if not me:
@@ -75,10 +87,16 @@ def pick_peers(sector: dict, ticker: str, n: int = 6) -> dict | None:
     mine = me.get("classification") or {}
     for level in ("industry", "group", "sector"):
         pool = [r for r in rows if mine.get(level) and (r.get("classification") or {}).get(level) == mine[level]]
-        if len(pool) >= n:
+        if len(pool) >= n:                  # counting the target, as the peer picker does
             break
     else:
         level, pool = "all", rows
-    ranked = [r for r in rank(me, pool) if r["ticker"]][:n]
+    pool = [r for r in pool if r is not me]
+    scores = {r["ticker"]: r["score"] for r in rank(me, rows)}
+    sector_set = sorted(pool, key=lambda r: _size_gap(me, r))[:n]
+    closest = [r for r in rank(me, rows) if r["ticker"] and r["score"] is not None][:n]
+    if not sector_set:
+        return None
     return {"level": level, "label": mine.get(level) or sector.get("label"), "sector": sector.get("label"),
-            "peers": [{"ticker": r["ticker"], "score": r["score"]} for r in ranked]} if ranked else None
+            "peers": [{"ticker": r["ticker"], "score": scores.get(r["ticker"])} for r in sector_set],
+            "closest": [{"ticker": r["ticker"], "score": r["score"]} for r in closest]}

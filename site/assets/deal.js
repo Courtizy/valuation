@@ -1,4 +1,4 @@
-import { NA, esc, estLabel, fin, num, pct, price, sentence, unit, unitShort } from "./format.js";
+import { NA, esc, estLabel, fin, mult, num, pct, price, sentence, times, unit, unitShort } from "./format.js";
 import { deviceAssumptions, saveAssumption } from "./device.js";
 import { setStatus } from "./status.js";
 import { runInBrowser } from "./run.js";
@@ -138,7 +138,7 @@ function summaryCard(s, d) {
     </div>
     <p class="legend-note">Weights follow the course model: a method with no value passes its weight to the others ("Used").
       The top of the offer range takes the synergy methods at their best guess, since paying for synergies beyond what you expect gives the whole gain away;
-      the best guess sits between the ends by the relative power of the target (${num(d?.relative_power ?? 0.5)}). The LBO joins once it's built.</p>
+      the best guess sits between the ends by the relative power of the target (${num(d?.relative_power ?? 0.5)}). The LBO shows what a financial buyer could pay; it carries no weight unless you give it one.</p>
     ${state.comparison?.deal?.notes?.length ? `<p class="legend-note">${state.comparison.deal.notes.map((n) => esc(sentence(n))).join(" ")}</p>` : ""}
   </div>`;
 }
@@ -261,14 +261,30 @@ function summarySheet(s, d, edited) {
   </div>`;
 }
 
-function grid(rowsAxis, colsAxis, values, fr, fc, baseR, baseC, corner) {
+function grid(rowsAxis, colsAxis, values, fr, fc, baseR, baseC, corner, fv = price, highIsGood = true) {
   const flat = values.flat().filter(fin), lo = Math.min(...flat), hi = Math.max(...flat);
-  const tone = (v) => (!fin(v) ? "" : `background-color: color-mix(in srgb, var(--series-1) ${Math.round(6 + 44 * (hi - v) / ((hi - lo) || 1))}%, var(--surface))`);
+  const tone = (v) => (!fin(v) ? "" : `background-color: color-mix(in srgb, var(--series-1) ${Math.round(6 + 44 * (highIsGood ? hi - v : v - lo) / ((hi - lo) || 1))}%, var(--surface))`);
   return `<div class="table-wrap"><table class="sens"><thead><tr><th>${corner}</th>${colsAxis.map((c) => `<th>${fc(c)}</th>`).join("")}</tr></thead>
-    <tbody>${values.map((row, i) => `<tr><td>${fr(rowsAxis[i])}</td>${row.map((v, j) => `<td class="${i === baseR && j === baseC ? "base" : ""}" style="${tone(v)}">${price(v)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+    <tbody>${values.map((row, i) => `<tr><td>${fr(rowsAxis[i])}</td>${row.map((v, j) => `<td class="${i === baseR && j === baseC ? "base" : ""}" style="${tone(v)}">${fv(v)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
 }
 
 const tile = (l, v, sub = "") => `<div class="tile"><div class="label">${esc(l)}</div><div class="value">${v}</div>${sub ? `<div class="delta">${esc(sub)}</div>` : ""}</div>`;
+
+/** Week 9 synergy checks: what it takes to reach a price, whether cost synergies can last, and the deal's
+ *  synergies against prior deals'. */
+function synergyChecks(c, kind) {
+  if (!c) return "";
+  const prior = state.deal?.precedents?.details?.synergy_stats, need = c.needed_for_price, last = c.lasting_cost;
+  const margin = state.comparison?.cross_checks?.normal_profit?.margin;
+  const rows = [];
+  if (need) rows.push(["Synergies Needed for " + price(need.price), kind === "whole"
+    ? (fin(need.cost_pct) ? `a ${pct(need.cost_pct)} cut to COGS and SG&A (${acct(need.annual_cost)} a year) with ${pct(need.revenue_growth_add)} added growth` : "no cut in range reaches it")
+    : (fin(need.annual_cost) ? `${acct(need.annual_cost)} a year in cost synergies (revenue synergies and one-time costs in proportion)` : "no amount in range reaches it")]);
+  if (fin(c.synergies_to_sales)) rows.push(["Synergies / Sales", `${pct(c.synergies_to_sales)} for this deal${prior ? `; prior deals ${pct(prior.median)} median, ${pct(prior.mean)} average (${prior.n} deals)` : ""}`]);
+  if (last) rows.push(["Cost Synergies That Can Last", `${pct(last.range[0], true)}–${pct(last.range[1])}: ${esc(sentence(last.note))}${margin ? ` ${esc(sentence(margin.note))}` : ""}`]);
+  if (!rows.length) return "";
+  return `<h3 style="margin-top:16px">Synergy Checks</h3><div class="table-wrap"><table class="list checks"><tbody>${rows.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join("")}</tbody></table></div>`;
+}
 
 function wholeFirmCard(r) {
   const d = r?.details;
@@ -290,6 +306,7 @@ function wholeFirmCard(r) {
         ${row("Unlevered FCF", (y) => y.fcf, { kind: "sub" })}${row("Present Value", (y) => y.pv, { kind: "memo", indent: 1 })}</tbody></table></div>
     <h3 style="margin-top:16px">Sensitivity: Cost Synergies Realized × Revenue Growth Added</h3>
     ${grid(g.realized, g.revenue_growth_add, g.values, (v) => pct(v, true), (v) => `${v < 0 ? "−" : "+"}${pct(Math.abs(v))}`, 3, 2, "Realized ↓ · Growth Added →")}
+    ${synergyChecks(d.checks, "whole")}
     <p class="legend-note">Range: conservative = realized ${pct(-rg.steps.realized, true)} and growth ${pct(-rg.steps.revenue_growth_add)}; aggressive the reverse (the course's sensitivity table).
       Terminal ROIC ${pct(d.terminal?.roic)} · terminal value ${pct(d.terminal_value_share)} of EV · WACC ${pct(d.rates.wacc)} (terminal ${pct(d.rates.wacc_terminal)}).${r.notes?.length ? " " + esc(r.notes.map(sentence).join(" ")) : ""}</p></div>`;
 }
@@ -316,9 +333,130 @@ function justSynergyCard(r) {
         ${finRow("Present Value", Y.map((y) => cellOf(acct(y.pv))), { kind: "memo", indent: 1 })}</tbody></table></div>
     <h3 style="margin-top:16px">Sensitivity: Lasting Share of Cost Synergies × Annual Cost Synergies</h3>
     ${grid(g.cost_forever, g.annual_cost, g.values, (v) => pct(v, true), (v) => `${acct(v)}`, baseRow, 3, `Lasting ↓ · Annual (${unitShort()}) →`)}
+    ${synergyChecks(d.checks, "just")}
     <p class="legend-note">Year 0 is the closing year (not discounted). Cost synergies phase in over ${d.synergies.years_to_full} years then grow with revenue (${pct(d.growth)});
       revenue synergies are ${pct(d.synergies.revenue_pct_of_cost)} of cost synergies and last; only ${pct(d.synergies.cost_forever)} of cost synergies enter the terminal value.
       Range: annual synergies ${pct(-rg.steps.annual_cost, true)} / +${pct(rg.steps.annual_cost, true)}.</p></div>`;
+}
+
+// ---- LBO: what a financial sponsor could pay ------------------------------------------------
+
+const TRANCHE = { senior: "Senior Debt", subordinated: "Subordinated Debt", mezzanine: "Mezzanine" };
+const signedX = (v) => `${v < 0 ? "−" : "+"}${Math.abs(v).toFixed(1)}x`;
+
+function lboCard(r) {
+  const d = r?.details;
+  if (!d) return null;
+  const P = d.schedule, debt = d.debt, pu = d.purchase, su = d.sources_uses, ex = d.exit, rg = d.range, inp = d.inputs;
+  const yrs = P.map((y) => `<th>Year ${y.year}</th>`).join("");
+  const row = (name, f, o) => finRow(name, P.map((y) => cellOf(acct(f(y)))), o);
+  const g1 = d.grids.max_price_by_irr_and_exit, g2 = d.grids.irr_by_exit_and_coverage;
+  const pctCell = (v) => (fin(v) ? pct(v) : NA);
+  return `<div class="card"><div class="card-head"><h2 class="action-title">${esc(state.comparison?.deal?.headlines?.lbo || "LBO: What a Financial Buyer Could Pay")}</h2>
+      <span class="muted small">A sponsor's ${pct(d.sponsor_irr, true)} target return in place of WACC, levered cash flows, and a sale after ${P.length} years</span></div>
+    <div class="tiles">
+      ${tile(`Max Price at ${pct(d.sponsor_irr, true)} IRR`, price(d.max_price), `Range ${price(rg.conservative)} (${pct(d.sponsor_irr + 0.05, true)}) – ${price(rg.aggressive)} (${pct(d.sponsor_irr - 0.05, true)})`)}
+      ${tile("Max Premium", pct(d.max_premium), `Over ${price(pu.price)}; standalone DCF ${price(d.standalone_per_share)}`)}
+      ${tile(`IRR at ${price(pu.offer_price)} Offer`, fin(d.irr_at_offer) ? pct(d.irr_at_offer) : NA, `${pct(pu.offer_premium)} premium · ${fin(d.money_multiple) ? d.money_multiple.toFixed(2) + "× money" : ""}`)}
+      ${tile("Debt / EBITDA", times(debt.total_leverage), `Coverage at close ${times(debt.coverage)} (target ${times(inp.coverage)})`)}
+    </div>
+    <div class="grid-2">
+      <div><h3>Sources and Uses (${unitShort()})</h3><div class="table-wrap"><table class="wrap-names"><tbody>
+        <tr class="group"><td colspan="3">Sources</td></tr>
+        ${Object.entries(TRANCHE).map(([k, n]) => finRow(`${n} (${pct(debt.rates[k])}, ${times(debt.leverage?.[k])})`, [cellOf(acct(su.sources[k]))], { indent: 1 })).join("")}
+        ${finRow("Sponsor Equity", [cellOf(acct(su.sources.sponsor_equity))], { indent: 1 })}
+        ${finRow("Total", [cellOf(acct(su.total))], { kind: "sub" })}
+        <tr class="group"><td colspan="3">Uses</td></tr>
+        ${finRow(`Purchase Equity (${price(pu.offer_price)} × ${num(pu.shares / 1e6)}M shares)`, [cellOf(acct(su.uses.purchase_equity))], { indent: 1 })}
+        ${finRow("Refinance Net Debt", [cellOf(acct(su.uses.refinance_net_debt))], { indent: 1 })}
+        ${finRow(`Fees (${pct(inp.fees, true)} of new debt)`, [cellOf(acct(su.uses.fees))], { indent: 1 })}
+        ${finRow("Total", [cellOf(acct(su.total))], { kind: "sub" })}
+      </tbody></table></div>
+      <p class="legend-note">Senior debt is capped by the securable assets (${acct(inp.securable_assets)}, ${esc(inp.securable_basis)}); subordinated is ${pct(inp.sub_to_senior, true)} of senior; mezzanine fills the rest until EBIT covers interest ${times(inp.coverage)}.</p></div>
+      <div><h3>Returns (${unitShort()})</h3><div class="table-wrap"><table class="wrap-names"><tbody>
+        ${finRow(`Exit EBITDA (Year ${P.length})`, [cellOf(acct(ex.ebitda))], { indent: 1 })}
+        ${finRow(`× Exit Multiple (today's ${mult(pu.multiple_at_current)} ${signedX(ex.multiple_change)})`, [cellOf(mult(ex.multiple))], { indent: 1 })}
+        ${finRow("Enterprise Value at Exit", [cellOf(acct(ex.enterprise_value))], { kind: "sub" })}
+        ${finRow("Less: Debt Remaining", [cellOf(acct(-ex.debt))], { indent: 1 })}
+        ${finRow("Sponsor Equity at Exit", [cellOf(acct(ex.equity))], { kind: "sub" })}
+        ${finRow("Sponsor Equity at Close", [cellOf(acct(d.sponsor_equity))], { indent: 1 })}
+        ${finRow(`IRR at the ${price(pu.offer_price)} Offer`, [cellOf(fin(d.irr_at_offer) ? pct(d.irr_at_offer) : NA)], { kind: "grand" })}
+        ${finRow(`Multiple at Offer / Today`, [cellOf(`${mult(pu.multiple_at_offer)} / ${mult(pu.multiple_at_current)}`)], { indent: 1, kind: "memo" })}
+      </tbody></table></div></div>
+    </div>
+    <h3 style="margin-top:16px">Cash Flow and Debt Paydown (${unitShort()})</h3>
+    <div class="table-wrap"><table><thead><tr><th>${unit().label}</th>${yrs}</tr></thead><tbody>
+      ${row("EBITDA", (y) => y.ebitda, { kind: "key" })}
+      ${row("Less: Capex", (y) => -y.capex, { indent: 1 })}
+      ${row("Less: Increase in NWC", (y) => -y.change_in_nwc, { indent: 1 })}
+      ${row("Less: Cash Interest", (y) => -y.total_interest, { indent: 1 })}
+      ${row("Less: Cash Taxes", (y) => -y.cash_taxes, { indent: 1 })}
+      ${row("Cash for Debt Repayment", (y) => y.cash_for_debt, { kind: "sub" })}
+      ${Object.entries(TRANCHE).map(([k, n]) => row(`${n}, End of Year`, (y) => y.end[k], { indent: 1 })).join("")}
+      ${row("Cash to the Sponsor", (y) => y.to_sponsor, { indent: 1, kind: "memo" })}
+      ${finRow("EBIT ÷ Interest", P.map((y) => cellOf(times(y.coverage))), { kind: "memo" })}
+    </tbody></table></div>
+    <h3 style="margin-top:16px">Sensitivity: Max Price by Sponsor IRR × Exit Multiple</h3>
+    ${grid(g1.sponsor_irr, g1.exit_multiple_change, g1.values, (v) => pct(v, true), (v) => signedX(v), g1.sponsor_irr.findIndex((x) => Math.abs(x - d.sponsor_irr) < 1e-9), 2, "IRR ↓ · Exit Multiple Change →")}
+    <h3 style="margin-top:16px">Sensitivity: IRR at the Offer by Coverage × Exit Multiple</h3>
+    ${grid(g2.coverage, g2.exit_multiple_change, g2.values, (v) => times(v), (v) => signedX(v), g2.coverage.findIndex((x) => Math.abs(x - inp.coverage) < 1e-9), 2, "Coverage ↓ · Exit Multiple Change →", pctCell, false)}
+    <p class="legend-note">Max price = (PEMV at the target IRR + LBO debt − net debt − fees) ÷ shares, where PEMV discounts the cash left for the sponsor and the exit equity (EBITDA × exit multiple − debt).
+      The offer premium changes neither the debt nor the exit multiple, so it moves the IRR but not the max price; the target IRR moves the max price but not the IRR.
+      Interest is on each year's average balance (the model's circularity, solved by iteration); the sweep pays senior first.${r.notes?.length ? " " + esc(r.notes.map(sentence).join(" ")) : ""}</p></div>`;
+}
+
+function savedLbo() {
+  try { return JSON.parse(deviceAssumptions()[`${state.company.ticker}/lbo.json`] || "null"); } catch { return null; }
+}
+
+function lboInputs(r, demo) {
+  const x = savedLbo() || r?.details?.inputs || {}, st = savedLbo()?.steps || r?.details?.steps || {};
+  const f = (id, lbl, val, hint, attrs = 'step="any"') => `<div class="field"><label for="${id}">${lbl}${hint ? ` <span class="hint">${hint}</span>` : ""}</label>
+    <input type="number" id="${id}" ${attrs} value="${val ?? ""}"></div>`;
+  const securable = savedLbo() ? x.securable_assets : null;
+  return `<h3>LBO</h3>
+    <div class="form-grid">
+      ${f("l-irr", "Sponsor Target IRR (%)", pctIn(x.sponsor_irr ?? 0.2), "15–25% typical")}
+      ${f("l-hold", "Years Held", x.hold_years ?? 5, "", 'step="1" min="1" max="10"')}
+      ${f("l-prem", "Offer Premium (%)", pctIn(x.offer_premium ?? 0.3), "for the IRR at the offer")}
+      ${f("l-exit", "Exit Multiple Change (x)", x.exit_multiple_change ?? 0, "added to today's EV/EBITDA")}
+      ${f("l-cov", "Interest Coverage (EBIT ÷ Interest)", x.coverage ?? 2, "lenders' floor", 'step="0.1" min="0.5"')}
+      ${f("l-sec", `Securable Assets (${unitShort()})`, dollarsIn(securable), "blank = PP&E + receivables + inventories")}
+      ${f("l-pctsec", "Share of Assets Secured (%)", pctIn(x.pct_secured ?? 1), "")}
+      ${f("l-sub", "Subordinated ÷ Senior (%)", pctIn(x.sub_to_senior ?? 0.6), "")}
+      ${f("l-rate", "Senior Rate (%)", savedLbo() ? pctIn(x.senior_rate) : "", "blank = the DCF's cost of debt")}
+      ${f("l-step", "Rate Step per Tranche (pts)", pctIn(x.rate_step ?? 0.03), "")}
+      ${f("l-fees", "Fees (% of New Debt)", pctIn(x.fees ?? 0.02), "")}
+    </div>
+    <h3 style="margin-top:12px">Sponsor's Improvements</h3>
+    <div class="form-grid">
+      ${f("l-g", "Revenue Growth Added (pts)", pctIn(st.growth_add ?? 0), "every year")}
+      ${f("l-m", "EBITDA Margin Added (pts)", pctIn(st.margin_add ?? 0), "from year 1")}
+      ${f("l-c", "Capex / Sales Added (pts)", pctIn(st.capex_add ?? 0), "negative = cut")}
+      ${f("l-n", "Working Capital Change in Year 1 (%)", pctIn(st.nwc_change ?? 0), "e.g. −25 releases a quarter")}
+    </div>
+    <div class="actions">
+      <button type="button" class="primary" id="l-run" ${demo ? "disabled" : ""}>Save and Run LBO</button>
+      <span class="status" role="status" id="l-status">${demo ? "Demo data: saving is off." : ""}</span>
+    </div>
+    <p class="legend-note">Starts from ${esc(state.company.ticker)}'s standalone DCF projection; the improvements are what a sponsor would have to deliver
+      (ask what it takes to justify the premium, and what other deals achieved).</p>`;
+}
+
+async function runLbo() {
+  const st = $("l-status"), t = state.company.ticker, btn = $("l-run");
+  const v = (id) => { const x = $(id).value.trim(); return x === "" ? null : Number(x); };
+  const p = (id) => (v(id) === null ? null : v(id) / 100);
+  const doc = { sponsor_irr: p("l-irr"), hold_years: v("l-hold"), offer_premium: p("l-prem"), exit_multiple_change: v("l-exit"),
+    coverage: v("l-cov"), securable_assets: v("l-sec") === null ? null : v("l-sec") * unit().scale, pct_secured: p("l-pctsec"),
+    sub_to_senior: p("l-sub"), senior_rate: p("l-rate"), rate_step: p("l-step"), fees: p("l-fees"),
+    steps: { growth_add: p("l-g"), margin_add: p("l-m"), capex_add: p("l-c"), nwc_change: p("l-n") } };
+  btn.disabled = true;
+  try {
+    await saveAssumption(`${t}/lbo.json`, doc);
+    const models = [...new Set([...(state.run.models || []).filter((m) => m !== "lbo"), "dcf", "lbo"])];
+    await runInBrowser({ ticker: t, models: models.join(",") }, st);
+  } catch (err) { setStatus(st, { ok: false, msg: `Couldn't save in this browser: ${err.message}` }); } finally { if (btn.isConnected) btn.disabled = false; }
 }
 
 // ---- prior deals (transaction comps) ------------------------------------------------------
@@ -329,6 +467,12 @@ function savedDeals() {
 
 const CHOICES = { 0: "Best deals for standalone, all deals for the offer (course default)", 1: "Best deals only", 2: "All deals only" };
 const xm = (v) => (fin(v) ? `${v.toFixed(1)}x` : NA);
+const ALIGN = { green: ["m-green", "Close"], yellow: ["m-yellow", "Near"], red: ["m-red", "Far"] };
+const alignCell = (a) => {
+  if (!a?.light) return `<td class="na">${NA}</td>`;
+  const [cls, word] = ALIGN[a.light];
+  return `<td class="${cls}" title="${esc(`${word}: ${a.gap >= 0 ? "+" : "−"}${Math.abs(a.gap * 100).toFixed(0)}% vs. the target's multiple`)}">${a.gap >= 0 ? "+" : "−"}${Math.abs(a.gap * 100).toFixed(0)}% <span class="m-icon" role="img" aria-label="${word}"></span></td>`;
+};
 
 function priorDealsInputs(r, demo) {
   const d = r?.details, mine = savedDeals();
@@ -368,7 +512,23 @@ function priorDealsResults(r) {
     </tbody></table></div>
     <p class="legend-note">Central tendency: premium at the 1st quartile, median and 3rd quartile; multiples at the ${pct(c.percentiles.ev_sales[1], true)} (EV/Sales) and
       ${pct(c.percentiles.ev_ebitda[1], true)} (EV/EBITDA) percentile ±10 points, where ${esc(state.company.ticker)}'s own multiples rank among the deals' pre-announcement multiples.
-      Best deals rebuild each deal's EV from offer × shares + net debt. The full list and its statistics are in the appendix.${r.notes?.length ? " " + esc(r.notes.map(sentence).join(" ")) : ""}</p></div>`;
+      Best deals rebuild each deal's EV from offer × shares + net debt. The full list and its statistics are in the appendix.${r.notes?.length ? " " + esc(r.notes.map(sentence).join(" ")) : ""}</p>
+    ${regressionBlock(d)}</div>`;
+}
+
+/** Week 9: premium paid regressed on the pre-announcement EV/EBITDA across the deals. */
+function regressionBlock(d) {
+  const g = d.regression;
+  if (!g) return "";
+  const t2 = (v) => (fin(v) ? v.toFixed(2) : NA);
+  return `<h3 style="margin-top:16px">Premium Paid vs. Pre-Announcement EV/EBITDA</h3>
+    <div class="table-wrap"><table class="list checks"><tbody>
+      <tr><td>Premium = a + b × EV/EBITDA</td><td>a = ${pct(g.intercept)} (t ${t2(g.t_intercept)}) · b = ${pct(g.slope)} per turn (t ${t2(g.t_slope)}) · R² ${t2(g.r_squared)} · ${g.n} deals</td></tr>
+      <tr><td>Implied for ${esc(state.company.ticker)} at ${xm(g.target_x)}</td><td>premium ${pct(g.implied_premium)} → ${price(g.implied_price)} per share</td></tr>
+      <tr><td>Sign</td><td><span class="${g.sign_ok ? "status--good" : "status--warning"}">${g.sign_ok ? "As expected" : "Check"}</span> ${g.sign_ok
+        ? "negative: a target already priced rich leaves less room for a premium (the underlying value method)"
+        : "positive in this list, unlike the usual negative link: read the implied premium with care"}</td></tr>
+    </tbody></table></div>`;
 }
 
 /** Appendix: every deal (tick the most comparable) and the statistics across them. */
@@ -376,6 +536,7 @@ function priorDealsList(r) {
   const d = r?.details;
   if (!d) return null;
   const deals = d.deals, c = d.central, best = new Set(d.best || []);
+  const align = Object.fromEntries((d.alignment || []).map((a) => [a.target, a]));
   const st = (k, q, f) => f(c.stats[k]?.[q]);
   const qs = [["mean", "Mean"], ["min", "Minimum"], ["q1", "1st Quartile"], ["median", "Median"], ["q3", "3rd Quartile"], ["max", "Maximum"]];
   return `<div class="card"><div class="card-head"><h2>Deal List</h2><span class="muted small">${deals.length} deals · ${best.size} most comparable (ticked)</span></div>
@@ -385,12 +546,14 @@ function priorDealsList(r) {
         <td>${st("pre_ev_sales", q, xm)}</td><td>${st("pre_ev_ebitda", q, xm)}</td><td>${st("ebitda_margin", q, pct)}</td></tr>`).join("")}
     </tbody></table></div>
     <div class="table-wrap" style="margin-top:12px"><table class="list deal-sum" id="pd-table"><thead><tr><th>Best</th><th>Target</th><th>Acquirer</th><th>Year</th>
-      <th>Premium</th><th>Trans. EV/Sales</th><th>Trans. EV/EBITDA</th><th>Pre-ann. EV/EBITDA</th><th>EBITDA Margin</th></tr></thead><tbody>
+      <th>Premium</th><th>Trans. EV/Sales</th><th>Trans. EV/EBITDA</th><th>Pre-ann. EV/EBITDA</th><th title="The deal's own pre-announcement EV/EBITDA against the target's: green within 15%, yellow within 30%">Lines Up with Target</th><th>EBITDA Margin</th></tr></thead><tbody>
       ${deals.map((x) => `<tr><td><input type="checkbox" value="${esc(x.target)}" ${best.has(x.target) ? "checked" : ""} aria-label="Best: ${esc(x.target)}"></td>
         <td>${esc(x.target)}</td><td class="muted">${esc(x.acquirer || "")}</td><td>${fin(x.year) ? x.year : ""}</td><td>${pct(x.premium)}</td>
-        <td>${xm(x.tx_ev_sales)}</td><td>${xm(x.tx_ev_ebitda)}</td><td>${xm(x.pre_ev_ebitda)}</td><td>${pct(x.ebitda_margin)}</td></tr>`).join("")}
+        <td>${xm(x.tx_ev_sales)}</td><td>${xm(x.tx_ev_ebitda)}</td><td>${xm(x.pre_ev_ebitda)}</td>${alignCell(align[x.target])}<td>${pct(x.ebitda_margin)}</td></tr>`).join("")}
     </tbody></table></div>
-    <p class="legend-note">Premium = offer over the price 1 week (or 4 weeks, whichever is larger) before the announcement; a negative premium counts as 10% and anything over 100% as 100%.
+    <p class="legend-note">Lines Up with Target: a transaction multiple only works when the deal's own pre-announcement EV/EBITDA is close to ${esc(state.company.ticker)}'s (${xm(d.target?.ev_ebitda)}).
+      <span class="m-green"><span class="m-icon"></span> within 15%</span>, <span class="m-yellow"><span class="m-icon"></span> within 30%</span>, <span class="m-red"><span class="m-icon"></span> further</span>.
+      Premium = offer over the price 1 week (or 4 weeks, whichever is larger) before the announcement; a negative premium counts as 10% and anything over 100% as 100%.
       Tick the most comparable deals (up to about five) and press Save and Run Prior Deals under Deal Inputs.</p></div>`;
 }
 
@@ -423,15 +586,17 @@ export function renderDeal() {
     { key: "prior", label: "Prior Deals", html: priorDealsResults(pr) },
     { key: "whole", label: "Whole Firm with Synergies", html: wholeFirmCard(state.deal?.dcf_synergy) || null },
     { key: "just", label: "Just Synergies", html: justSynergyCard(state.deal?.just_synergy) || null },
+    { key: "lbo", label: "LBO", html: lboCard(state.deal?.lbo) },
   ], { title: "Method Detail" });
   const appendix = tabSet("deal-appendix", [{ key: "deals", label: "Deal List", html: priorDealsList(pr) }], { title: "Appendix" });
   box.innerHTML = `${s ? `<div id="deal-sumbox">${summarySheet(s, d) + summaryCard(s, d)}</div>` : `<div class="card empty"><h2>No Deal Run Yet</h2><p>Enter the expected synergies under <b>Deal Inputs</b> below and press <b>Save and Run Deal</b>.
       The standalone values (DCF, comps, 52-week range) fill the standalone side; the synergy models and prior deals fill the offer side.</p></div>`}
     ${methods}
     <details class="card inputs-card" id="deal-inputs" ${s ? "" : "open"}><summary><h2>Deal Inputs</h2><span class="muted small">Synergies, the offer and the prior-deal list, saved on this device</span></summary>
-      ${inputsCard(d, demo)}<div class="subsection">${priorDealsInputs(pr, demo)}</div></details>
+      ${inputsCard(d, demo)}<div class="subsection">${priorDealsInputs(pr, demo)}</div><div class="subsection">${lboInputs(state.deal?.lbo, demo)}</div></details>
     ${appendix}`;
   $("pd-run").onclick = runPriorDeals;
+  $("l-run").onclick = runLbo;
   wireTabs(box);
   wire(base);
 }

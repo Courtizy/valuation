@@ -330,8 +330,12 @@ def credit_metrics(v: dict) -> dict:
     equity = _sub(v.get("assets"), tl)
     dtl = v.get("deferred_tax_non_current_liabilities") or 0
     ni = total_net_income(v)
+    cfo = v.get("operating_cash_flow")
     return {
         "ebit_to_interest": _div(ebit, v.get("interest_expense")),
+        "ebitda_to_interest": _div(ebitda, v.get("interest_expense")),
+        "cfo_to_debt": _div(cfo, debt),
+        "free_operating_cf_to_debt": _div(_sub(cfo, v.get("capital_expenses")), debt),
         "debt_to_ebitda": _div(debt, ebitda),
         "ffo_to_debt": _div(_add(ni, dep), debt),
         "return_on_capital": _div(ebit, _add(debt, equity)),
@@ -402,4 +406,42 @@ def analyze_view(periods: list[dict], cfg: dict, market_cap_at: dict | None = No
             prev = periods[i - 1]["values"] if i > 0 and _one_year_apart(periods[i - 1]["end"], p["end"]) else None
         mc = (market_cap_at or {}).get(p["end"])
         out.append({"label": p["label"], "end": p["end"], **analyze_period(p["values"], prev, cfg, mc)})
+    rnoa_change(out)
     return out
+
+
+def rnoa_change(view: list[dict]) -> None:
+    """What moved core RNOA from one year to the next (MBA 733):
+        core RNOA       = core NOPM x NOAT (average NOA)
+        margin effect   = change in core NOPM x last year's NOAT
+        turnover effect = change in NOAT x this year's core NOPM
+    The two add up to the change in core RNOA exactly. TTM views compare with the TTM a year earlier."""
+    for i, cur in enumerate(view):
+        prev = next((p for p in reversed(view[:i]) if _one_year_apart(p["end"], cur["end"])), None)
+        if prev is None:
+            continue
+        r0, r1 = prev["ratios"]["reformulated"], cur["ratios"]["reformulated"]
+        pm0, pm1 = r0.get("core_nopm"), r1.get("core_nopm")
+        at0, at1 = (r0.get("avg") or {}).get("noat"), (r1.get("avg") or {}).get("noat")
+        if None in (pm0, pm1, at0, at1):
+            continue
+        margin, turnover = (pm1 - pm0) * at0, (at1 - at0) * pm1
+        r1["rnoa_change"] = {"core_rnoa": pm1 * at1, "core_rnoa_prior": pm0 * at0, "change": pm1 * at1 - pm0 * at0,
+                             "margin_effect": margin, "turnover_effect": turnover}
+
+
+def value_added(view: list[dict], wacc: float | None, basis: str | None = None) -> None:
+    """Economic value added (MBA 772 / 730): EVA = NOPAT - WACC x invested capital
+    = (RNOA - WACC) x average NOA. Positive means the firm earns more than its cost of capital
+    (above normal profits); negative, less. Market value added is the present value of future EVA."""
+    if wacc is None:
+        return
+    for a in view:
+        r = a["ratios"]["reformulated"]
+        avg = r.get("avg") or {}
+        nopat = a["reformulated_income_statement"].get("nopat")
+        noa = _div(nopat, avg.get("rnoa")) if avg.get("rnoa") else None
+        if nopat is None or not noa:
+            continue
+        r["value_added"] = {"wacc": wacc, "wacc_basis": basis, "invested_capital": noa,
+                            "capital_charge": wacc * noa, "eva": nopat - wacc * noa, "spread": avg["rnoa"] - wacc}

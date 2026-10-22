@@ -54,7 +54,8 @@ def valuation_headlines(c: dict, by_model: dict, ticker: str = "") -> dict:
         lo = min(methods, key=lambda m: m["value_per_share"]["p50"])
         hi = max(methods, key=lambda m: m["value_per_share"]["p50"])
         a, b = lo["value_per_share"]["p50"], hi["value_per_share"]["p50"]
-        nm = lambda m: "the DCF" if m["model"] == "dcf" else str(m.get("name") or m["model"]).lower()  # noqa: E731
+        short = {"dcf": "the DCF", "comps": "sector comps", "comps_closest": "closest-match comps"}
+        nm = lambda m: short.get(m["model"]) or str(m.get("name") or m["model"]).lower()  # noqa: E731
         if b / a - 1 < 0.10:
             out["field"] = f"The weighted methods agree within {usd(b - a)} a share: {nm(lo)} at {usd(a)}, {nm(hi)} at {usd(b)}."
         else:
@@ -109,6 +110,13 @@ def valuation_headlines(c: dict, by_model: dict, ticker: str = "") -> dict:
             core = f"Peers' multiples imply {usd(v['p50'])} a share" if _ok(v.get("p50")) else "Peers' multiples"
             rng = f" (range {usd(v['p10'])}–{usd(v['p90'])})" if _ok(v.get("p10"), v.get("p90")) else ""
             out["comps"] = f"{core}{rng}; {label} gives the highest median at {usd(exp[hi_k])}."
+            cb = (cd.get("closest") or {}).get("blend") or {}
+            if _ok(v.get("p50"), cb.get("expected")):
+                n = sum(1 for r in cd["closest"].get("peers") or [] if not r.get("excluded"))
+                gap = cb["expected"] / v["p50"] - 1
+                where = "about the same" if abs(gap) < 0.02 else f"{pct(abs(gap), 0)} {'more' if gap > 0 else 'less'}"
+                out["comps"] = (f"Sector peers imply {usd(v['p50'])} a share{rng}; the {n} peers closest on fundamentals "
+                                f"give {usd(cb['expected'])}, {where}.")
     return out
 
 

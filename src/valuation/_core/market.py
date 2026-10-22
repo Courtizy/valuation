@@ -3,6 +3,8 @@
 Beta (the common 5-year monthly convention):
     r_t = adj_close_t / adj_close_{t-1} - 1 for the stock and the index,
     over the months both have; beta = cov(r_stock, r_index) / var(r_index).
+    R-squared = cov^2 / (var_index x var_stock): the share of the stock's variance the
+    market explains (used for a private owner's total beta, beta / sqrt(R-squared)).
     Needs at least MIN_MONTHS returns, else None.
 
 WACC estimate (for comparing companies, not the DCF's own rate):
@@ -47,7 +49,9 @@ def beta(stock: list[dict], index: list[dict], months: int = 60) -> dict | None:
     if not var:
         return None
     cov = sum((x - mx) * (y - my) for x, y in zip(xs, ys))
-    return {"value": cov / var, "months": len(common), "from": common[0], "to": common[-1]}
+    var_s = sum((y - my) ** 2 for y in ys)
+    r2 = cov * cov / (var * var_s) if var_s else None
+    return {"value": cov / var, "r_squared": r2, "months": len(common), "from": common[0], "to": common[-1]}
 
 
 def wacc_estimate(*, beta_value: float, risk_free: float, market_cap: float, debt: float,

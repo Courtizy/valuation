@@ -52,6 +52,12 @@ A method with no value passes its weight to the rest. Standalone range = weighte
 
 `tests/test_course_parity.py`: Just Syn year-by-year PVs, total, per share and max premium; Firm DCF Syn revenue, EBITDA, FCF, EV and price per share; the Summary sheet's standalone and offer ranges, premium and synergy share, fed the sheet's own rows. Passing on the TSYS (v73) and Tower (v80) workbooks. v73's standalone best guess is the midpoint of the range; v80 weights the best guesses, which is what the model does.
 
-## Not yet
+## Synergy checks (`details.checks`)
 
-The LBO. Its row shows in the summary with no value until then.
+- **Synergies needed for the price:** the cost synergies (whole firm: % of cost realized; just synergies: annual cost) that make the model's value equal the offer price, solved by bisection.
+- **Lasting cost synergies (the normal-profit test):** cost synergies only last forever while they bring the firm up to normal profits. If terminal ROIC is below the terminal WACC, the share that can last is min(1, (WACC_T - ROIC_T) × invested capital / (annual cost × (1 - tax))); at or above normal profits it is 0. The second test compares the EBITDA margin with the public comps' average (`comparison.json` → `cross_checks.normal_profit`).
+- **Synergies / target sales** against prior deals' announced synergies (`precedents` → `synergy_stats`).
+
+## LBO
+
+See [L2_lbo.md](L2_lbo.md). It fills the summary's LBO row; its offer weight is 0 by default (set `weights.offer.lbo` to use it).

@@ -1,0 +1,14 @@
+{
+  "sponsor_irr": 0.20,
+  "hold_years": 5,
+  "offer_premium": 0.30,
+  "exit_multiple_change": 0.0,
+  "coverage": 2.0,
+  "securable_assets": null,
+  "pct_secured": 1.0,
+  "sub_to_senior": 0.6,
+  "senior_rate": null,
+  "rate_step": 0.03,
+  "fees": 0.02,
+  "steps": {"growth_add": 0.0, "margin_add": 0.0, "capex_add": 0.0, "nwc_change": 0.0}
+}

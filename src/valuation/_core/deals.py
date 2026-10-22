@@ -15,6 +15,7 @@ Per deal
                          offer price x shares + net debt
     pre-announcement EV = price 1 week before x shares + net debt
     multiples          = EV / sales, EV / EBITDA, each kept only when positive
+    synergies / sales  = announced annual synergies over the target's sales (when the list has them)
 """
 from __future__ import annotations
 
@@ -41,9 +42,11 @@ ALIASES = {
     "net_debt": ["net debt"],
     "shares": ["shares out", "shares outstanding", "shares"],
     "premium": ["premium"],
+    "synergies": ["announced synergies", "expected synergies", "total synergies", "synergies"],
     "best": ["best", "use", "selected"],
 }
-NUMERIC = {"year", "ev", "sales", "ebitda", "net_income", "offer_price", "price_1w", "price_4w", "net_debt", "shares", "premium"}
+NUMERIC = {"year", "ev", "sales", "ebitda", "net_income", "offer_price", "price_1w", "price_4w", "net_debt", "shares", "premium",
+           "synergies"}
 
 
 class DealListError(ValueError):
@@ -139,7 +142,8 @@ def deal_figures(d: dict) -> dict:
             "tx_ev_sales": _pos(tx_ev, s), "tx_ev_ebitda": _pos(tx_ev, e),
             "built_ev_sales": _pos(built_ev, s), "built_ev_ebitda": _pos(built_ev, e),
             "pre_ev_sales": _pos(pre_ev, s), "pre_ev_ebitda": _pos(pre_ev, e),
-            "ebitda_margin": e / s if e is not None and s else None}
+            "ebitda_margin": e / s if e is not None and s else None,
+            "synergies_to_sales": d["synergies"] / s if d.get("synergies") is not None and s else None}
 
 
 # ------------------------------------------------------------ Excel's statistics

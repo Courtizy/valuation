@@ -127,4 +127,7 @@ MARKET = {
 }
 # One made-up peer without SEC data, to show manual figures alongside filed ones.
 MANUAL_PEER = {"ticker": "MANUALCO", "sec": False, "name": "Manual peer (synthetic)", "price": 30.0, "shares": 2.0e8,
-               "debt": 4.0e8, "cash": 2.0e8, "sales": 2.4e9, "ebitda": 4.4e8, "net_income": 2.4e8}
+               "debt": 4.0e8, "cash": 2.0e8, "sales": 2.4e9, "ebitda": 4.4e8, "net_income": 2.4e8,
+               # typed comparison figures, as from Yahoo's Analysis page: a faster grower with a higher
+               # discount rate, so the closeness rating flags it as a weak comparable
+               "growth_5y": 0.15, "growth_past_5y": 0.02, "discount_rate": 0.11}

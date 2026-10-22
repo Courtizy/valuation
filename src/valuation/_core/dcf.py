@@ -17,10 +17,16 @@ Capex is taken net of its tax shield because in steady state it replaces
 depreciation; NWC grows with sales at rate g. WACC_T is the terminal-year
 rate from core.cost_of_capital.
 
+A private firm without a succession plan may not last forever: with a life of
+L years after the terminal year, the terminal value is a growing annuity,
+    TV = FCF_T * (1 + g) / (WACC_T - g) * (1 - ((1 + g) / (1 + WACC_T))^L)
+
 Bridge
 ------
     equity = EV - net debt,  net debt = debt - excess cash
-    price  = equity / diluted shares
+    price  = equity x (1 - private-firm discount) / diluted shares
+The private-firm discount (illiquidity, 20-30% in the course; 0 for a public firm)
+applies to the equity value.
 
 Scenarios
 ---------
@@ -48,27 +54,31 @@ def _exponents(t: int, convention: str) -> tuple[float, float]:
 
 
 def terminal_value(last: dict, *, terminal_growth: float, wacc_terminal: float, tax_rate: float,
-                   capex_to_sales: float, nwc_to_sales_change: float, tv_weight: float = 1.0) -> dict:
+                   capex_to_sales: float, nwc_to_sales_change: float, tv_weight: float = 1.0,
+                   life_years: float | None = None) -> dict:
     if wacc_terminal <= terminal_growth:
         raise ValueError(f"terminal WACC {wacc_terminal:.4f} must exceed terminal growth {terminal_growth:.4f}")
     s = last["revenue"]
     fcf_t = (last["ebitda"] * (1 - tax_rate) - s * capex_to_sales * (1 - tax_rate)
              - s * terminal_growth * nwc_to_sales_change)
     tv = fcf_t * (1 + terminal_growth) / (wacc_terminal - terminal_growth) * tv_weight
-    return {"fcf_for_terminal": fcf_t, "terminal_value": tv}
+    if life_years is not None:
+        tv *= 1 - ((1 + terminal_growth) / (1 + wacc_terminal)) ** life_years
+    return {"fcf_for_terminal": fcf_t, "terminal_value": tv, "life_years": life_years}
 
 
 def value_firm(projection: dict, *, wacc: float, wacc_terminal: float, terminal_growth: float, tax_rate: float,
                capex_to_sales_terminal: float, nwc_to_sales_change: float, net_debt: float, shares: float,
                tv_weight: float = 1.0, convention: str = "closing_year_zero",
-               invested_capital_to_sales: float | None = None) -> dict:
+               invested_capital_to_sales: float | None = None, life_years: float | None = None,
+               equity_discount: float = 0.0) -> dict:
     years = projection["years"]
     if not years:
         raise ValueError("projection has no years")
     last = years[-1]
     tv = terminal_value(last, terminal_growth=terminal_growth, wacc_terminal=wacc_terminal, tax_rate=tax_rate,
                         capex_to_sales=capex_to_sales_terminal, nwc_to_sales_change=nwc_to_sales_change,
-                        tv_weight=tv_weight)
+                        tv_weight=tv_weight, life_years=life_years)
     rows, pv_fcf = [], 0.0
     for y in years:
         e_cf, e_tv = _exponents(y["year"], convention)
@@ -81,6 +91,7 @@ def value_firm(projection: dict, *, wacc: float, wacc_terminal: float, terminal_
     pv_tv = tv["terminal_value"] / (1 + wacc) ** e_tv
     ev = pv_fcf + pv_tv
     equity = ev - net_debt
+    equity_after = equity * (1 - equity_discount)
     out = {
         "enterprise_value": ev,
         "pv_fcf": pv_fcf,
@@ -88,8 +99,9 @@ def value_firm(projection: dict, *, wacc: float, wacc_terminal: float, terminal_
         "terminal_value_share": pv_tv / ev if ev else None,
         "net_debt": net_debt,
         "equity_value": equity,
+        "equity_discount": equity_discount,
         "shares": shares,
-        "value_per_share": equity / shares if shares else None,
+        "value_per_share": equity_after / shares if shares else None,
         "terminal": {
             **tv,
             "growth": terminal_growth,
@@ -98,6 +110,8 @@ def value_firm(projection: dict, *, wacc: float, wacc_terminal: float, terminal_
             "ev_to_ebitda": tv["terminal_value"] / last["ebitda"] if last["ebitda"] else None,
             "roic": (last["ebit"] * (1 - tax_rate) / (invested_capital_to_sales * last["revenue"])
                      if invested_capital_to_sales else None),
+            "invested_capital": invested_capital_to_sales * last["revenue"] if invested_capital_to_sales else None,
+            "revenue_growth": (last["revenue"] / years[-2]["revenue"] - 1) if len(years) > 1 and years[-2]["revenue"] else None,
         },
         "wacc": wacc,
         "convention": convention,

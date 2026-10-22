@@ -387,7 +387,7 @@ export const $M = (v, o) => acct(v, o);   // $ millions, accounting style
 
 export const RATIO_ROWS = {
   reformulated: {
-    note: "Operating vs financial split. NOPAT = net income + after-tax net interest. ROCE = RNOA + FLEV × (RNOA − NBC).",
+    note: "Operating vs financial split. NOPAT = net income + after-tax net interest. ROCE = RNOA + FLEV × (RNOA − NBC). The margin and turnover effects add up to the change in core RNOA. EVA above zero means the firm earns more than its cost of capital (above normal profits).",
     rows: [
       ["group", "Margins"],
       ["Operating Margin (NOPM)", (a) => a.ratios.reformulated.nopm, pct, { kind: "key" }],
@@ -402,6 +402,15 @@ export const RATIO_ROWS = {
       ["OLLEV", (a) => a.ratios.reformulated.avg?.ollev, num],
       ["ROOA", (a) => a.ratios.reformulated.avg?.rooa, pct],
       ["OLSPREAD", (a) => a.ratios.reformulated.avg?.olspread, pct],
+      ["group", "What Moved Core RNOA"],
+      ["Core RNOA (Core NOPM × NOAT)", (a) => a.ratios.reformulated.rnoa_change?.core_rnoa, pct, { kind: "key" }],
+      ["Change from Last Year", (a) => a.ratios.reformulated.rnoa_change?.change, pct],
+      ["Margin Effect (ΔNOPM × Last Year's NOAT)", (a) => a.ratios.reformulated.rnoa_change?.margin_effect, pct, { indent: 1 }],
+      ["Turnover Effect (ΔNOAT × This Year's NOPM)", (a) => a.ratios.reformulated.rnoa_change?.turnover_effect, pct, { indent: 1 }],
+      ["group", "Economic Value Added"],
+      ["Cost of Capital (WACC)", (a) => a.ratios.reformulated.value_added?.wacc, pct],
+      ["RNOA − WACC", (a) => a.ratios.reformulated.value_added?.spread, pct, { kind: "key" }],
+      ["EVA ($M): NOPAT − WACC × Average NOA", (a) => a.ratios.reformulated.value_added?.eva, $M, { kind: "key" }],
       ["group", "Beginning Balances"],
       ["NOAT", (a) => a.ratios.reformulated.beg?.noat, times],
       ["RNOA", (a) => a.ratios.reformulated.beg?.rnoa, pct],
@@ -464,6 +473,9 @@ export const RATIO_ROWS = {
       ["Altman Z (Public Form)", (a) => a.ratios.risk.altman_z.public, num],
       ["group", "Credit Metrics"],
       ["EBIT / Interest", (a) => a.ratios.risk.credit.ebit_to_interest, times],
+      ["EBITDA / Interest", (a) => a.ratios.risk.credit.ebitda_to_interest, times],
+      ["Cash from Operations / Debt", (a) => a.ratios.risk.credit.cfo_to_debt, pct],
+      ["Free Operating Cash Flow / Debt", (a) => a.ratios.risk.credit.free_operating_cf_to_debt, pct],
       ["Debt / EBITDA", (a) => a.ratios.risk.credit.debt_to_ebitda, times],
       ["FFO / Debt", (a) => a.ratios.risk.credit.ffo_to_debt, pct],
       ["Return on Capital", (a) => a.ratios.risk.credit.return_on_capital, pct],

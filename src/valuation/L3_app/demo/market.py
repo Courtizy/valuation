@@ -12,7 +12,7 @@ from __future__ import annotations
 import random
 from datetime import date
 
-from valuation.L3_app.demo.companies import AS_OF, MARKET
+from valuation.L3_app.demo.companies import AS_OF, MARKET, SPECS
 
 RISK_FREE = {"series": "DGS10 (synthetic)", "value": 0.045, "date": AS_OF, "source": "synthetic"}
 MONTHS = 61
@@ -52,6 +52,10 @@ def raw_market(ticker: str) -> dict:
            "index": {"symbol": "^GSPC", "monthly": _series(4800.0, idx)}, "errors": [], "fundamentals": None,
            "check": {"source": "alphavantage", "tolerance": 0.02, "status": "ok", "price": round(price * 1.002, 2),
                      "price_date": AS_OF, "diff_pct": 0.002}}
+    # analysts' five-year earnings growth: the company's revenue growth plus a little operating leverage
+    doc["estimates"] = {"source": "synthetic", "horizon": "5y",
+                        "growth_5y": round(SPECS[ticker]["growth"] + rng.uniform(0.0, 0.02), 4)}
+    doc["fetched_at"] = f"{AS_OF}T00:00:00+00:00"
     year = [m["adj_close"] for m in doc["monthly"][-12:]] + [price]
     prev = round(price / (1 + rng.gauss(0, 0.012)), 2)
     doc["quote"] = {"source": doc["source"], "date": AS_OF, "close": price, "prev_close": prev, "open": round((prev + price) / 2, 2),

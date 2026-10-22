@@ -75,6 +75,11 @@ Runs on every 12-month period (annual and TTM). Average-based ratios use the per
 
 Also: FCF = NOPAT − ΔNOA.
 
+### What moved core RNOA and economic value added
+
+- `reformulated.rnoa_change`: core RNOA = core NOPM × NOAT. Against the period a year earlier (the TTM a year earlier for TTM views), margin effect = ΔNOPM × last year's NOAT, turnover effect = ΔNOAT × this year's NOPM; the two add up to the change exactly.
+- `reformulated.value_added`: EVA = NOPAT - WACC × average NOA, with the spread RNOA - WACC. WACC is the market WACC estimate, else risk-free + industry beta × ERP (`wacc_basis` says which). Positive means above normal profits.
+
 ### Traditional
 
 - Profit margin = (NI + interest expense × (1 − t)) / sales
@@ -83,6 +88,8 @@ Also: FCF = NOPAT − ΔNOA.
 - ROE
 
 ### Risk
+
+Credit adds EBITDA / interest, CFO / debt and free operating cash flow / debt (CFO - capex), the rating agencies' cash-flow coverage.
 
 - **Altman Z (public):** 1.2 WC/TA + 1.4 RE/TA + 3.3 EBIT/TA + 0.6 MVE/TL + 1.0 S/TA. Needs market data. Zones: < 1.8 distress, < 2.99 grey.
 - **Altman Z (private):** 0.717, 0.847, 3.107, 0.420 × BVE/TL, 0.998. Zones: < 1.2 distress, < 2.9 grey.

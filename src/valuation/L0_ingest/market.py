@@ -33,7 +33,9 @@ Rules
 raw_market.json
 ---------------
   {schema_version, ticker, as_of, source, fallback, currency, price, price_date,
-   monthly: [{month, adj_close}], index: {symbol, monthly}, quote, check, errors, fetched_at}
+   monthly: [{month, adj_close}], index: {symbol, monthly}, quote, check, estimates, errors, fetched_at}
+  estimates: {source, horizon "5y" | "1y", growth_5y | growth_1y, growth_past_5y} analysts' earnings
+  growth (Yahoo earningsTrend, else Alpha Vantage EPS estimates); today's consensus, not point-in-time
 """
 from __future__ import annotations
 
@@ -54,6 +56,10 @@ AV_URL = "https://www.alphavantage.co/query?function={function}&symbol={symbol}{
 FINNHUB_QUOTE_URL = "https://finnhub.io/api/v1/quote?symbol={symbol}&token={key}"
 FINNHUB_METRIC_URL = "https://finnhub.io/api/v1/stock/metric?symbol={symbol}&metric=all&token={key}"
 FINNHUB_MAX_AGE_DAYS = 7
+# analysts' growth estimates: Yahoo's earningsTrend (+5y: next five years per annum, -5y: past five),
+# else Alpha Vantage's EPS estimates (current to next fiscal year: a one-year horizon, said so)
+YAHOO_TREND_URL = "https://query2.finance.yahoo.com/v10/finance/quoteSummary/{symbol}?modules=earningsTrend"
+AV_ESTIMATES_URL = "https://www.alphavantage.co/query?function=EARNINGS_ESTIMATES&symbol={symbol}&apikey={key}"
 FRED_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}&cosd={start}&coed={end}"
 FUNDAMENTALS_URL = ("https://query1.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/{symbol}"
                     "?type={types}&period1={p1}&period2={p2}")
@@ -174,6 +180,31 @@ def parse_fundamentals(payload: dict) -> dict:
     return out
 
 
+def parse_earnings_trend(payload: dict) -> dict:
+    """Yahoo quoteSummary earningsTrend -> {growth_5y, growth_past_5y} (decimals; None when absent)."""
+    res = ((payload.get("quoteSummary") or {}).get("result") or [None])[0] or {}
+    trend = {t.get("period"): t for t in (res.get("earningsTrend") or {}).get("trend") or []}
+    raw = lambda p: ((trend.get(p) or {}).get("growth") or {}).get("raw")  # noqa: E731
+    out = {"growth_5y": raw("+5y"), "growth_past_5y": raw("-5y")}
+    out = {k: float(v) for k, v in out.items() if isinstance(v, (int, float))}
+    if not out:
+        raise MarketDataError("yahoo: no five-year growth estimate")
+    return out
+
+
+def parse_av_estimates(payload: dict) -> dict:
+    """Alpha Vantage EARNINGS_ESTIMATES -> next fiscal year's EPS growth over the current year's."""
+    for k in ("Note", "Information", "Error Message"):
+        if k in payload:
+            raise MarketDataError(f"alphavantage: {payload[k]}")
+    by = {e.get("horizon"): e for e in payload.get("estimates") or []}
+    num = lambda h: float((by.get(h) or {}).get("eps_estimate_average") or "nan")  # noqa: E731
+    cur, nxt = num("current fiscal year"), num("next fiscal year")
+    if not (cur == cur and nxt == nxt) or cur <= 0:
+        raise MarketDataError("alphavantage: no usable EPS estimates")
+    return {"growth_1y": nxt / cur - 1}
+
+
 def parse_fred(text: str) -> list[tuple[str, float]]:
     out = []
     for row in csv.reader(io.StringIO(text)):
@@ -274,6 +305,27 @@ class MarketAdapter:
         series = {k: [r for r in v if r["end"] <= as_of] for k, v in series.items()}
         return {"source": "yahoo", "series": {k: v for k, v in series.items() if v}}
 
+    def estimates(self, ticker: str) -> dict:
+        """Analysts' earnings growth: Yahoo's five-year estimate, else Alpha Vantage's next-year EPS
+        growth (labelled one-year). Today's consensus only: no point-in-time history exists."""
+        errors = []
+        try:
+            sym = yahoo_symbol(ticker)
+            got = parse_earnings_trend(json.loads(self._get("yahoo", YAHOO_TREND_URL.format(symbol=quote(sym, safe="")),
+                                                            f"yahoo_trend_{sym}_{date.today()}")))
+            return {"source": "yahoo", "horizon": "5y", **got}
+        except (HttpError, MarketDataError, ValueError, KeyError, IndexError) as e:
+            errors.append(self._redact(f"yahoo: {e}"))
+        if self.av_key:
+            try:
+                sym = av_symbol(ticker)
+                got = parse_av_estimates(json.loads(self._get("alphavantage", AV_ESTIMATES_URL.format(symbol=quote(sym, safe=""), key=self.av_key),
+                                                              f"av_estimates_{sym}_{date.today()}")))
+                return {"source": "alphavantage", "horizon": "1y", **got, "errors": errors}
+            except (HttpError, MarketDataError, ValueError, KeyError) as e:
+                errors.append(self._redact(f"alphavantage: {e}"))
+        raise MarketDataError("; ".join(errors) or "no estimates source")
+
     def risk_free(self, as_of: str, series: str = "DGS10") -> dict:
         """Last 10-year Treasury yield on or before as_of, as a decimal."""
         end = date.fromisoformat(as_of)
@@ -332,6 +384,11 @@ class MarketAdapter:
             raise MarketDataError(f"{t}: no market data ({'; '.join(errors)})")
         doc["fallback"] = doc["source"] != "yahoo"
         doc["check"] = self.check(t, doc) if cross_check and not doc["fallback"] else None
+        try:
+            doc["estimates"] = self.estimates(t)
+        except (HttpError, MarketDataError, ValueError, KeyError) as e:
+            doc["estimates"] = None
+            errors.append(f"estimates: {e}")
         try:
             doc["fundamentals"] = self.fundamentals(t, as_of)
         except (HttpError, MarketDataError, ValueError, KeyError) as e:

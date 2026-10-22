@@ -16,6 +16,9 @@ Logic
        r_D,T = r_f,T + (r_D - r_f)
        WACC_T = r_E,T * %E + r_D,T * (1 - t) * %D
    When no terminal rate is given, r_f,T = r_f and the two WACCs match.
+6. Non-U.S. targets: a country risk premium (Damodaran's country default spreads and
+   risk premiums) is added to the cost of equity in both periods:
+       r_E = r_f + beta_TL * MRP + CRP
 """
 from __future__ import annotations
 
@@ -39,7 +42,8 @@ def wacc(cost_of_equity: float, pre_tax_cost_of_debt: float, tax_rate: float, de
 
 def discount_rates(*, risk_free: float, pre_tax_cost_of_debt: float, beta: float | None, equity_risk_premium: float,
                    tax_rate: float, current_debt_to_equity: float, target_debt_to_equity: float | None = None,
-                   risk_free_terminal: float | None = None, beta_unlevered: float | None = None) -> dict:
+                   risk_free_terminal: float | None = None, beta_unlevered: float | None = None,
+                   country_risk_premium: float = 0.0) -> dict:
     """All the course's discount-rate figures. Debt-to-equity uses market equity.
 
     `beta_unlevered` (an industry beta, e.g. Damodaran's) skips step 1: the observed beta is then
@@ -54,8 +58,9 @@ def discount_rates(*, risk_free: float, pre_tax_cost_of_debt: float, beta: float
     else:
         beta_u = unlever_beta(beta, current_debt_to_equity, tax_rate)
     beta_tl = relever_beta(beta_u, target, tax_rate)
-    re = capm(risk_free, beta_tl, equity_risk_premium)
-    re_t = capm(rf_t, beta_tl, equity_risk_premium)
+    crp = country_risk_premium or 0.0
+    re = capm(risk_free, beta_tl, equity_risk_premium) + crp
+    re_t = capm(rf_t, beta_tl, equity_risk_premium) + crp
     rd_t = rf_t + pre_tax_cost_of_debt - risk_free
     return {
         "beta_levered_observed": beta,
@@ -65,6 +70,7 @@ def discount_rates(*, risk_free: float, pre_tax_cost_of_debt: float, beta: float
         "target_debt_to_equity": target,
         "equity_weight": 1 / (1 + target),
         "debt_weight": target / (1 + target),
+        "country_risk_premium": crp,
         "cost_of_equity": re,
         "wacc": wacc(re, pre_tax_cost_of_debt, tax_rate, target),
         "risk_free_terminal": rf_t,

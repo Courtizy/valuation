@@ -6,7 +6,8 @@ own data root so it never mixes with real tickers.
 
 What it shows (every feature the site has):
   DEMO   mature manufacturer: your own dcf.json (forecast mode, price and beta filled from market
-         data), comps against six detailed industrial peers plus a hand-entered one, an
+         data), comps against a sector set (four industrial peers and a hand-entered one) and the
+         four peers closest on fundamentals, an
          market price checked against the backup source, and a synthetic bid for the Deal view:
          synergies and transaction comps on a synthetic deal list
   DEMOG  high-growth software: implied mode (growth solved to match the price), a price
@@ -60,6 +61,28 @@ def demo_deal(detail: dict) -> dict:
                           "cost_forever": 0.1, "revenue_growth_add": 0.005, "cost_realized": 1.0}}
 
 
+# a sponsor's view of DEMO: the course defaults, exit at today's multiple, and the operating
+# improvements a sponsor would claim (a point of margin, a tenth of working capital released)
+DEMO_LBO = {"sponsor_irr": 0.20, "hold_years": 5, "offer_premium": 0.20, "exit_multiple_change": 0.0, "coverage": 2.0,
+            "steps": {"margin_add": 0.01, "nwc_change": -0.10},
+            "sources": {"lbo": "synthetic demo assumptions (course defaults)"}}
+
+SECTOR_PEERS = ("ZZA", "ZZB", "ZZC", "ZZF")
+
+
+def closest_peers(detail: dict, details: dict, n: int = 4) -> list[str]:
+    """The demo's closest-match set: the peers rated closest on the comps figures, nearest in size on ties."""
+    from valuation._core.figures import company_figures
+    from valuation.L2_models.comps import match, peer_row
+    me = peer_row(company_figures(detail))
+    scored = []
+    for t in PEERS:
+        row = peer_row(company_figures(details[t]))
+        m = match(me, row)
+        scored.append((-(m["closeness"] or 0), abs(m["size"] - 1) if m["size"] else 9, t))
+    return [t for *_, t in sorted(scored)[:n]]
+
+
 def _canonical(ticker: str) -> tuple[dict, list[dict]]:
     """Synthetic filings; for DEMOU, two fiscal years of annual D&A are left out (the gap Yahoo fills)."""
     recs = synthetic_records(SPECS[ticker])
@@ -103,11 +126,13 @@ def build_demo_data(data_dir: Path) -> dict:
         dcf = get_model("dcf").run(detail, a).to_dict()
         results.append(_write(out / "model_results" / "dcf.json", {**dcf, "lineage": LINEAGE, "demo": True}))
         if t == "DEMO":
-            # comps against the six industrial peers plus one hand-entered peer (DEMOG and DEMOU are
-            # other industries, so they're left out, as an analyst would)
+            # two peer sets: the sector set (machinery and freight, the traditional industrial pick, plus
+            # one hand-entered peer) and the four closest on fundamentals among all six detailed
+            # peers, whatever their industry (DEMOG and DEMOU are other sectors, so they're left out)
             others = list(PEERS)
-            a = {"peers": others + [MANUAL_PEER],
-                 "sources": {"peers": "synthetic demo peers; prices from the synthetic market data"}}
+            a = {"peers": list(SECTOR_PEERS) + [MANUAL_PEER], "closest": closest_peers(detail, details),
+                 "sources": {"peers": "synthetic demo peers from the same sector; prices from the synthetic market data",
+                             "closest": "the four synthetic peers rated closest on growth, discount rate, margin and leverage"}}
             comps = get_model("comps").run(detail, a, [details[o] for o in others]).to_dict()
             results.append(_write(out / "model_results" / "comps.json", {**comps, "lineage": LINEAGE, "demo": True}))
         deal = demo_deal(detail) if t == "DEMO" else None
@@ -117,8 +142,9 @@ def build_demo_data(data_dir: Path) -> dict:
                                                         "sources": {"deals": "synthetic demo deal list"}}).to_dict()
             results.append(_write(out / "model_results" / "precedents.json", {**prec, "lineage": LINEAGE, "demo": True}))
             # an acquisition case: synergies sized off the company's own revenue
-            for m in ("dcf_synergy", "just_synergy"):
-                r = get_model(m).run(detail, {**dcf_a, "deal": deal}).to_dict()
+            for m in ("dcf_synergy", "just_synergy", "lbo"):
+                extra = {"lbo": DEMO_LBO} if m == "lbo" else {}
+                r = get_model(m).run(detail, {**dcf_a, "deal": deal, **extra}).to_dict()
                 results.append(_write(out / "model_results" / f"{m}.json", {**r, "lineage": LINEAGE, "demo": True}))
         comparison = build_comparison(results, detail, None, deal)
         _write(out / "comparison.json", {**comparison, "demo": True})

@@ -73,9 +73,9 @@ def test_web_comps_use_the_devices_peers_and_typed_prices(tmp_path):
     assert not any("alphavantage" in u or "yahoo" in u for u in calls)
 
 
-def test_web_auto_models_are_dcf_alone_without_peers(tmp_path):
+def test_web_auto_models_are_dcf_and_lbo_without_peers(tmp_path):
     out = run("MSFT", fetch_text([]), AS_OF, "auto", work=str(tmp_path / "w"))
-    assert [n for n, _, _ in out["report"] if n.startswith("model")] == ["model dcf"]
+    assert [n for n, _, _ in out["report"] if n.startswith("model")] == ["model dcf", "model lbo"]
 
 
 def test_web_sector_screen_on_the_device(tmp_path):
@@ -192,6 +192,13 @@ def test_pick_peers_takes_the_closest_in_the_narrowest_full_level():
     small["companies"] = small["companies"][:4] + small["companies"][-2:]     # 4 in its industry: widen to the group
     assert pick_peers(small, "MSFT")["level"] == "group"
     assert pick_peers(_screen(), "ZZZ") is None
+
+
+def test_pick_peers_closest_set_crosses_industries():
+    from valuation.L3_app.similar import pick_peers
+    pick = pick_peers(_screen(), "MSFT", n=3)
+    assert [p["ticker"] for p in pick["peers"]] == list("BCD")              # same industry, nearest in size
+    assert {"FAR1", "FAR2"} <= {p["ticker"] for p in pick["closest"]}       # same figures, other industry
 
 
 def test_web_auto_picks_peers_from_a_published_screen_and_runs_comps(tmp_path):
