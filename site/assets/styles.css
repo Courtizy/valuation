@@ -565,3 +565,8 @@ details.inputs-card[open] > summary { margin-bottom: 12px; }
 .val-moves > div > .card { height: 100%; margin-bottom: 0; }
 #val-sheet .headline { margin-top: 0; }
 #val-sheet .card-head { margin-bottom: 8px; }
+
+/* ---- comps: how close each peer is */
+.match-table td.m-hit span { color: var(--good); font-weight: 700; }
+.match-table td.m-miss { color: var(--ink-2); }
+.match-table td.m-miss span { color: var(--ink-2); }

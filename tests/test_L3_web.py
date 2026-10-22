@@ -194,6 +194,13 @@ def test_pick_peers_takes_the_closest_in_the_narrowest_full_level():
     assert pick_peers(_screen(), "ZZZ") is None
 
 
+def test_pick_peers_closest_set_crosses_industries():
+    from valuation.L3_app.similar import pick_peers
+    pick = pick_peers(_screen(), "MSFT", n=3)
+    assert [p["ticker"] for p in pick["peers"]] == list("BCD")              # same industry, nearest in size
+    assert {"FAR1", "FAR2"} <= {p["ticker"] for p in pick["closest"]}       # same figures, other industry
+
+
 def test_web_auto_picks_peers_from_a_published_screen_and_runs_comps(tmp_path):
     out = json.loads(run_json("MSFT", fetch_text([]), AS_OF, "auto", "{}", "{}", screens_json=json.dumps([json.dumps(_screen())])))
     rows = {n: (s, m) for n, s, m in out["report"]}

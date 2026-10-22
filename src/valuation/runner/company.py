@@ -43,13 +43,14 @@ def load_peers(paths: Paths, ticker: str) -> list[str]:
     if not p.exists():
         return []
     out = []
-    for e in json.loads(p.read_text()).get("peers", []):
+    doc = json.loads(p.read_text())
+    for e in doc.get("peers", []) + doc.get("closest", []):
         # a peer is a ticker, or {"ticker": ..., "price": ..., ...}; "sec": false = manual figures only
         if isinstance(e, str):
             out.append(e.upper())
         elif e.get("ticker") and e.get("sec", True):
             out.append(e["ticker"].upper())
-    return out
+    return list(dict.fromkeys(out))
 
 
 def _read_json(p: Path, default=None):

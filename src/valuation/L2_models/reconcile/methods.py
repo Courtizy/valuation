@@ -29,7 +29,8 @@ replace the weights; roles then follow the new weights.
 from __future__ import annotations
 
 METHOD_NAMES = {"dcf": "DCF (Standalone)", "dcf_synergy": "DCF with Synergies", "just_synergy": "Just Synergies",
-                "comps": "Public Comps", "precedents": "Precedent Transactions", "lbo": "LBO", "ipo": "IPO"}
+                "comps": "Public Comps: Sector Peers",
+                "comps_closest": "Public Comps: Closest Match", "precedents": "Precedent Transactions", "lbo": "LBO", "ipo": "IPO"}
 
 
 def _plan(profile: dict | None, context: str) -> tuple[list[tuple[str, str, float, str]], str]:
@@ -76,6 +77,11 @@ def _plan(profile: dict | None, context: str) -> tuple[list[tuple[str, str, floa
             "Medium predictability → DCF and comps weighted equally.")
 
 
+# rows shown in every plan without weight unless an override gives them one
+ALWAYS_REFERENCE = {"comps_closest": "peers closest on growth, margin, leverage, size and beta from anywhere in the sector: "
+                                     "a check on the sector set"}
+
+
 def method_plan(profile: dict | None, available: list[str], overrides: dict | None = None) -> dict:
     overrides = overrides or {}
     context = overrides.get("context", "standalone")
@@ -84,7 +90,7 @@ def method_plan(profile: dict | None, available: list[str], overrides: dict | No
             for m, role, w, why in plan}
     for m in available:                       # anything that ran but isn't in the plan
         rows.setdefault(m, {"model": m, "name": METHOD_NAMES.get(m, m), "role": "reference",
-                            "default_weight": 0.0, "reason": "not part of the plan for this profile"})
+                            "default_weight": 0.0, "reason": ALWAYS_REFERENCE.get(m, "not part of the plan for this profile")})
     raw = dict(overrides.get("weights") or {m: r["default_weight"] for m, r in rows.items()})
     for m in raw:
         rows.setdefault(m, {"model": m, "name": METHOD_NAMES.get(m, m), "role": "reference",

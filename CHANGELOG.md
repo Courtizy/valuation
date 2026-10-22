@@ -2,6 +2,11 @@
 
 All notable changes to the Valuation Model. Newest first.
 
+## [0.6.0] - 2026-10-22
+- Comps values two peer sets. **Sector Peers** is the traditional set from the target's own industry (picked automatically: nearest in size); **Closest Match** is the companies closest on fundamentals from anywhere in the sector. Both show on the Valuation and Deal football fields; the sector set carries the comps weight, the closest set is shown without weight to check it against.
+- How Close Each Peer Is: every peer against the target on revenue growth, EBITDA margin, net debt / EV, size and beta, with a check where it's within the tolerance (3 points, 3 points, 5 points, 0.5–2×, 0.3), as on the course's Pub_Comps sheet. A peer close on 2 or fewer is flagged Weak Match.
+- Beta is now one of each company's comps figures (from market data).
+
 ## [0.5.0] - 2026-10-22
 - Action titles: every chart and section on Valuation, Deal and Company Detail is headed by a sentence stating what it shows ("DEMO is worth about $44.96 a share, in line with the $45.00 share price"), written by the engine from the same figures (`comparison.json` and `company_detail.json` → `headlines`). Where a figure is missing the plain label stays.
 - Deal opens on one summary sheet: the answer, four key figures, the football field grouped into Standalone and Transaction, a value bridge (price → synergies → most a buyer can pay → offer) and where the bid's premium sits among past deals. The method detail (Prior Deals, Whole Firm with Synergies, Just Synergies) moves into tabs; the inputs fold into one section.

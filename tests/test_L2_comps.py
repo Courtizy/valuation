@@ -6,7 +6,7 @@ import json
 import pytest
 
 from valuation.L2_models.base import get_model
-from valuation.L2_models.comps import CompsError, implied_price, peer_row
+from valuation.L2_models.comps import CompsError, implied_price, match, peer_row
 from valuation.L3_app.demo import write_demo
 
 A = pytest.approx
@@ -80,3 +80,29 @@ def test_target_shares_from_the_filed_count_and_missing_prices_are_a_warning(det
     with pytest.raises(NoPeerPrices) as e:
         get_model("comps").run(d, {"peers": ["DEMOG"]}, [no_market])
     assert e.value.is_warning
+
+
+def test_match_counts_figures_within_tolerance():
+    t = {"revenue_growth": 0.08, "ebitda_margin": 0.22, "net_debt_to_ev": 0.03, "sales": 100.0, "beta": 1.0}
+    close = match(t, {"revenue_growth": 0.10, "ebitda_margin": 0.20, "net_debt_to_ev": 0.07, "sales": 190.0, "beta": 1.3})
+    assert close["matched"] == 5 and close["flag"] == "ok"
+    far = match(t, {"revenue_growth": 0.02, "ebitda_margin": 0.30, "net_debt_to_ev": 0.20, "sales": 300.0, "beta": 1.1})
+    assert far["matched"] == 1 and far["flag"] == "weak"
+    assert far["figures"]["size"] == {"peer": 3.0, "target": 1.0, "close": False}
+    few = match(t, {"ebitda_margin": 0.22, "sales": 100.0})
+    assert few["checked"] == 2 and few["flag"] == "unchecked"
+    assert match(t, {**t, "revenue_growth": 0.12}, {"revenue_growth": 0.05})["figures"]["revenue_growth"]["close"]
+
+
+def test_closest_set_is_valued_alongside_the_sector_set(tmp_path):
+    out = write_demo(tmp_path)
+    r = json.loads((out / "model_results" / "comps.json").read_text())
+    d = r["details"]
+    assert all("match" in p for p in d["peers"]) and d["closest"]["blend"]["expected"] > 0
+    assert any(p["match"]["flag"] == "weak" for p in d["peers"]) and any("weak match" in n for n in r["notes"])
+    assert r["assumptions_used"]["closest"] == [p["ticker"] for p in d["closest"]["peers"]]
+    c = json.loads((out / "comparison.json").read_text())
+    row = next(m for m in c["plan"]["methods"] if m["model"] == "comps_closest")
+    assert row["weight"] == 0 and row["value_per_share"]["p50"] == A(d["closest"]["blend"]["expected"])
+    assert any(m["method"] == "comps_closest" and m["weight"] == 0 for m in c["deal"]["standalone"]["methods"])
+    assert "closest on fundamentals" in c["headlines"]["comps"]

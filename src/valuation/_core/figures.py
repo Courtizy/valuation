@@ -31,6 +31,8 @@ def company_figures(detail: dict | None, manual: dict | None = None) -> dict:
         f["price"], f["price_source"] = mkt["price"], f"market data ({mkt.get('source')}, {mkt.get('price_date')})"
         if mkt.get("shares_outstanding"):
             f["shares"] = mkt["shares_outstanding"]
+    if (mkt.get("beta") or {}).get("value") is not None:
+        f["beta"] = mkt["beta"]["value"]
     for k, val in (manual or {}).items():
         if k in f or k in ("price", "beta", "name"):
             f[k] = val

@@ -20,6 +20,25 @@ Implied target value per share (per peer, per multiple)
     EV/EBITDA: (multiple x target EBITDA - target net debt) / target shares
     P/E:        multiple x target net income / target shares
 
+Two peer sets
+-------------
+"peers" is the sector set: companies from the target's own industry (the traditional pick).
+"closest" (optional) is the set closest on fundamentals, from anywhere in the sector screen.
+Both are valued the same way; the sector set is this model's value, the closest set is
+reported under details.closest and shown as its own football-field row.
+
+How close each peer is (the course's Pub_Comps comparison rows)
+----------------------------------------------------------------
+Each peer is checked against the target on five figures; a figure matches when it is
+within the tolerance (MATCH, overridable as "match" in comps.json):
+
+    revenue growth   within 3 points        EBITDA margin   within 3 points
+    net debt / EV    within 5 points        size (sales)    0.5x to 2x the target's
+    levered beta     within 0.3
+
+A peer matching 2 or fewer of the figures it has is flagged "weak": it stays in the range
+(untick it in the peer picker to drop it). Fewer than 3 figures to compare = "unchecked".
+
 Range
 -----
 "auto" (default): Q1 / median / Q3 with four or more peers, else lowest /
@@ -30,6 +49,7 @@ not positive (EBITDA or earnings below zero) is dropped with a note.
 """
 from __future__ import annotations
 
+import math
 import statistics
 
 from valuation._core.figures import _latest_values, company_figures  # noqa: F401  (re-exported)
@@ -41,6 +61,15 @@ MULTIPLES = {
     "pe": ("P / E", "net_income"),
 }
 DEFAULT_MULTIPLES = ["ev_ebitda", "ev_sales"]
+# (label, row key, kind, tolerance): "diff" = absolute difference, "ratio" = peer / target within [1/x, x]
+MATCH = {
+    "revenue_growth": ("Revenue Growth", "diff", 0.03),
+    "ebitda_margin": ("EBITDA Margin", "diff", 0.03),
+    "net_debt_to_ev": ("Net Debt / EV", "diff", 0.05),
+    "size": ("Size (Sales)", "ratio", 2.0),
+    "beta": ("Beta", "diff", 0.3),
+}
+WEAK_AT = 2         # matching this many figures or fewer flags a peer
 
 
 class CompsError(ValueError):
@@ -71,6 +100,32 @@ def peer_row(f: dict) -> dict:
     }
 
 
+def match(target: dict, peer: dict, rules: dict | None = None) -> dict:
+    """How close a peer row is to the target row on the MATCH figures."""
+    rules = {**MATCH, **{k: (MATCH[k][0], MATCH[k][1], v) for k, v in (rules or {}).items() if k in MATCH}}
+    out, n, hits, gaps = {}, 0, 0, []
+    for k, (_, kind, tol) in rules.items():
+        a, b = (peer.get("sales"), target.get("sales")) if k == "size" else (peer.get(k), target.get(k))
+        if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
+            out[k] = {"peer": a, "target": b, "close": None}
+            continue
+        if kind == "ratio":
+            close = a > 0 and b > 0 and 1 / tol <= a / b <= tol
+            out[k] = {"peer": a / b if b else None, "target": 1.0, "close": close}
+            if a > 0 and b > 0:
+                gaps.append(abs(math.log(a / b)) / math.log(tol))
+        else:
+            close = abs(a - b) <= tol + 1e-12
+            out[k] = {"peer": a, "target": b, "close": close}
+            gaps.append(abs(a - b) / tol)
+        n += 1
+        hits += close
+    flag = "unchecked" if n < 3 else "weak" if hits <= WEAK_AT else "ok"
+    # distance: the average gap in tolerances (1.0 = on the edge of every tolerance), to order peers
+    return {"figures": out, "matched": hits, "checked": n, "flag": flag,
+            "distance": sum(gaps) / len(gaps) if gaps else None}
+
+
 def implied_price(multiple_id: str, multiple: float, target: dict) -> float | None:
     if multiple is None or not target.get("shares"):
         return None
@@ -98,6 +153,39 @@ def _avg_positive(xs):
     return sum(xs) / len(xs) if xs else None
 
 
+def _value_set(live: list[dict], target: dict, wanted: list[str], weights: dict, method: str,
+               notes: list[str]) -> tuple[dict, dict, str]:
+    """Implied values per multiple and the blended range for one peer set."""
+    if method == "auto":
+        method = "quartiles" if len(live) >= 4 else "min_max"
+    per_multiple = {}
+    for mid in wanted:
+        if mid not in MULTIPLES:
+            raise CompsError(f"unknown multiple {mid!r}; choose from {sorted(MULTIPLES)}")
+        metric = target.get(MULTIPLES[mid][1])
+        if metric is None or metric <= 0:
+            notes.append(f"{MULTIPLES[mid][0]} dropped: target {MULTIPLES[mid][1].replace('_', ' ')} is not positive")
+            continue
+        implied = {r["ticker"]: implied_price(mid, r["multiples"][mid], target) for r in live}
+        vals = [x for x in implied.values() if x is not None]
+        if not vals:
+            notes.append(f"{MULTIPLES[mid][0]} dropped: no peer has a positive multiple")
+            continue
+        avg_mult = _avg_positive([r["multiples"][mid] for r in live])
+        per_multiple[mid] = {
+            "label": MULTIPLES[mid][0], "weight": weights.get(mid, 0.0),
+            "peer_average": avg_mult, "peer_median": statistics.median([r["multiples"][mid] for r in live if r["multiples"][mid]]),
+            "implied_at_average": implied_price(mid, avg_mult, target),
+            "implied": implied, **_range(vals, method),
+        }
+    used = {k: v for k, v in per_multiple.items() if v["weight"] > 0}
+    if not used:
+        raise CompsError("no usable multiple: check the target's sales, EBITDA and earnings")
+    total = sum(v["weight"] for v in used.values())
+    blend = {k: sum(v["weight"] * v[k] for v in used.values()) / total for k in ("conservative", "expected", "aggressive")}
+    return per_multiple, blend, method
+
+
 class Comps:
     name = "comps"
     needs_peers = True
@@ -119,56 +207,54 @@ class Comps:
         if not target.get("shares"):
             raise CompsError("no target share count: set target.shares in comps.json")
 
-        rows = []
-        for e in entries:
-            e = {"ticker": e} if isinstance(e, str) else dict(e)
-            t = e.get("ticker", "").upper()
-            f = company_figures(by_ticker.get(t), e)
-            f["ticker"] = t
-            f.setdefault("name", ((by_ticker.get(t) or {}).get("entity") or {}).get("name") or t)
-            f["source"] = "sec" if t in by_ticker else "manual"
-            row = peer_row(f)
-            if row["enterprise_value"] is None:
-                notes.append(f"{t}: no price or share count, left out (set price in comps.json)")
-                row["excluded"] = True
-            rows.append(row)
+        target_row = peer_row({**target, "ticker": (detail.get("entity") or {}).get("ticker", ""), "name": "target"})
+        rules = a.get("match")
+
+        def rows_for(entries):
+            rows = []
+            for e in entries:
+                e = {"ticker": e} if isinstance(e, str) else dict(e)
+                t = e.get("ticker", "").upper()
+                f = company_figures(by_ticker.get(t), e)
+                f["ticker"] = t
+                f.setdefault("name", ((by_ticker.get(t) or {}).get("entity") or {}).get("name") or t)
+                f["source"] = "sec" if t in by_ticker else "manual"
+                row = peer_row(f)
+                row["match"] = match(target_row, row, rules)
+                if row["enterprise_value"] is None:
+                    notes.append(f"{t}: no price or share count, left out (set price in comps.json)")
+                    row["excluded"] = True
+                rows.append(row)
+            return rows
+
+        rows = rows_for(entries)
         live = [r for r in rows if not r.get("excluded")]
         if not live:
             raise NoPeerPrices("no peer has a price: type peer prices in comps.json (the public site's showcase mode "
                                "fetches no market prices), or run with market data")
+        weak = [r["ticker"] for r in live if r["match"]["flag"] == "weak"]
+        if weak:
+            notes.append(f"weak match (2 or fewer of {len(MATCH)} figures close to the target): {', '.join(weak)}")
 
         wanted = a.get("multiples") or DEFAULT_MULTIPLES
         weights = a.get("weights") or {m: 1.0 for m in wanted}
         method = a.get("range", "auto")
-        if method == "auto":
-            method = "quartiles" if len(live) >= 4 else "min_max"
-        per_multiple = {}
-        for mid in wanted:
-            if mid not in MULTIPLES:
-                raise CompsError(f"unknown multiple {mid!r}; choose from {sorted(MULTIPLES)}")
-            metric = target.get(MULTIPLES[mid][1])
-            if metric is None or metric <= 0:
-                notes.append(f"{MULTIPLES[mid][0]} dropped: target {MULTIPLES[mid][1].replace('_', ' ')} is not positive")
-                continue
-            implied = {r["ticker"]: implied_price(mid, r["multiples"][mid], target) for r in live}
-            vals = [x for x in implied.values() if x is not None]
-            if not vals:
-                notes.append(f"{MULTIPLES[mid][0]} dropped: no peer has a positive multiple")
-                continue
-            avg_mult = _avg_positive([r["multiples"][mid] for r in live])
-            per_multiple[mid] = {
-                "label": MULTIPLES[mid][0], "weight": weights.get(mid, 0.0),
-                "peer_average": avg_mult, "peer_median": statistics.median([r["multiples"][mid] for r in live if r["multiples"][mid]]),
-                "implied_at_average": implied_price(mid, avg_mult, target),
-                "implied": implied, **_range(vals, method),
-            }
+        per_multiple, blend, method = _value_set(live, target, wanted, weights, method, notes)
         used = {k: v for k, v in per_multiple.items() if v["weight"] > 0}
-        if not used:
-            raise CompsError("no usable multiple: check the target's sales, EBITDA and earnings")
         total = sum(v["weight"] for v in used.values())
-        blend = {k: sum(v["weight"] * v[k] for v in used.values()) / total
-                 for k in ("conservative", "expected", "aggressive")}
-        target_row = peer_row({**target, "ticker": (detail.get("entity") or {}).get("ticker", ""), "name": "target"})
+
+        closest = None
+        if a.get("closest"):
+            c_rows = rows_for(a["closest"])
+            c_live = [r for r in c_rows if not r.get("excluded")]
+            if c_live:
+                c_notes: list[str] = []
+                try:
+                    c_mult, c_blend, c_method = _value_set(c_live, target, wanted, weights, a.get("range", "auto"), c_notes)
+                    closest = {"peers": c_rows, "multiples": c_mult, "blend": c_blend, "range_method": c_method,
+                               "notes": c_notes, "source": (a.get("sources") or {}).get("closest")}
+                except CompsError as e:
+                    notes.append(f"closest-match set not valued: {e}")
 
         return ModelResult(
             model=self.name,
@@ -181,11 +267,14 @@ class Comps:
                               "range": method},
                 "peers": [r["ticker"] for r in live],
                 "sources": a.get("sources", {}),
+                **({"closest": [r["ticker"] for r in closest["peers"] if not r.get("excluded")]} if closest else {}),
             },
             lineage={},
             notes=notes + [f"range = {'lowest / median / highest' if method == 'min_max' else 'Q1 / median / Q3'} implied price across peers"],
             details={"target": target_row, "peers": rows, "multiples": per_multiple, "blend": blend,
-                     "market_price": target.get("price"), "range_method": method},
+                     "market_price": target.get("price"), "range_method": method, "closest": closest,
+                     "match_rules": {k: {"label": lbl, "kind": kind, "tolerance": (a.get("match") or {}).get(k, tol)}
+                                     for k, (lbl, kind, tol) in MATCH.items()}},
         )
 
 

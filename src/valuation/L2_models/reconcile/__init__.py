@@ -4,7 +4,8 @@ Builds comparison.json with:
   - the method plan from the company profile: primary, cross-check and
     reference methods with reasons and weights (methods.py), a blended
     bear / base / bull value, and upside against the price
-  - each model's value range (football-field data)
+  - each model's value range (football-field data); comps' closest-match peer set is a row
+    of its own (comps_closest)
   - consistency warnings: different as_of dates or different input files
   - assumption differences: fields present in 2+ models whose values differ,
     which is how a value gap gets split into "inputs" vs "method"
@@ -34,6 +35,17 @@ def _flatten(d: dict, prefix: str = "") -> dict:
     return out
 
 
+def closest_comps(r: dict) -> dict | None:
+    """The comps model's second peer set (closest on fundamentals) as its own method row."""
+    c = (r.get("details") or {}).get("closest") if r.get("model") == "comps" else None
+    if not c or not c.get("blend"):
+        return None
+    b = c["blend"]
+    return {"model": "comps_closest", "ticker": r["ticker"], "as_of": r["as_of"], "lineage": r.get("lineage", {}),
+            "value_per_share": {"p10": b["conservative"], "p50": b["expected"], "p90": b["aggressive"], "mean": b["expected"]},
+            "assumptions_used": {}, "notes": c.get("notes") or [], "details": c}
+
+
 def build_comparison(result_paths: list[str | Path], detail: dict | None = None,
                      overrides: dict | None = None, deal: dict | None = None) -> dict:
     """`detail` (company_detail.json) supplies the profile and price;
@@ -42,6 +54,7 @@ def build_comparison(result_paths: list[str | Path], detail: dict | None = None,
     results = [json.loads(Path(p).read_text()) for p in result_paths]
     if not results:
         raise ValueError("no model results to reconcile")
+    results += [r for r in map(closest_comps, results) if r]
 
     warnings: list[str] = []
     tickers = {r["ticker"] for r in results}

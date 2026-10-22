@@ -327,9 +327,40 @@ export async function renderSimilar(root) {
   if (root.id === "val-similar") root.innerHTML = html; else root.insertAdjacentHTML("beforeend", html);
 }
 
+// Two peer sets: the sector set (the model's value) and the set closest on fundamentals
+// (details.closest). The toggle picks which one the dot plot and tables show; both are on the
+// football field. "How Close Each Peer Is" is the course's Pub_Comps comparison rows: each figure
+// against the target, ✓ when within the tolerance, and a Weak Match flag at 2 or fewer.
+const MATCH_FMT = { revenue_growth: pct, ebitda_margin: pct, net_debt_to_ev: pct, size: (v) => (fin(v) ? `${v.toFixed(2)}×` : NA), beta: (v) => (fin(v) ? v.toFixed(2) : NA) };
+const tolText = (k, r) => (r.kind === "ratio" ? `${(1 / r.tolerance).toFixed(1)}× to ${r.tolerance.toFixed(1)}× the target` : k === "beta" ? `within ${r.tolerance.toFixed(1)}` : `within ${(r.tolerance * 100).toFixed(0)} points`);
+
+function matchTable(d, peers) {
+  const rules = d.match_rules || {};
+  const keys = Object.keys(rules);
+  if (!keys.length) return "";
+  const tgt = (k) => (k === "size" ? 1 : d.target[k]);
+  const cell = (p, k) => {
+    const f = p.match?.figures?.[k];
+    if (!f || f.close === null || f.close === undefined) return `<td class="na">${NA}</td>`;
+    return `<td class="${f.close ? "m-hit" : "m-miss"}" title="${f.close ? "Within" : "Outside"} the tolerance (${tolText(k, rules[k])})">${MATCH_FMT[k](f.peer)} <span aria-hidden="true">${f.close ? "✓" : "·"}</span></td>`;
+  };
+  const flag = (m) => (m?.flag === "weak" ? ` <span class="badge" title="2 or fewer figures close to the target">⚠ Weak Match</span>`
+    : m?.flag === "unchecked" ? ` <span class="muted small">Too few figures to check</span>` : "");
+  return `<h3 class="block-title" style="margin-top:16px">How Close Each Peer Is</h3>
+    <div class="table-wrap"><table class="list match-table">
+      <thead><tr><th>Company</th>${keys.map((k) => `<th title="${esc(tolText(k, rules[k]))}">${esc(rules[k].label)}</th>`).join("")}<th>Close On</th></tr></thead>
+      <tbody><tr class="key target"><td>${esc(d.target.ticker || "")} <span class="muted small">Target</span></td>${keys.map((k) => `<td>${MATCH_FMT[k](tgt(k))}</td>`).join("")}<td>–</td></tr>
+        ${peers.map((p) => `<tr class="${p.excluded ? "na" : ""}"><td>${esc(p.ticker)} <span class="muted small">${esc(p.source === "manual" ? "Manual Figures" : (p.name || ""))}</span></td>
+          ${keys.map((k) => cell(p, k)).join("")}<td>${p.match ? `${p.match.matched} of ${p.match.checked}` : NA}${flag(p.match)}</td></tr>`).join("")}</tbody></table></div>
+    <p class="legend-note">✓ = within the tolerance: ${keys.map((k) => `${esc(rules[k].label)} ${esc(tolText(k, rules[k]))}`).join(" · ")}. A peer close on 2 or fewer of the figures it has is flagged; it stays in the range until you untick it in the peer picker.</p>`;
+}
+
 export function renderCompsCard() {
-  const r = state.comps, d = r?.details;
-  if (!d?.peers || !$("val-comps")) return;
+  const r = state.comps, base = r?.details;
+  if (!base?.peers || !$("val-comps")) return;
+  const sets = { sector: base, ...(base.closest ? { closest: { ...base.closest, target: base.target, market_price: base.market_price, match_rules: base.match_rules } } : {}) };
+  const which = sets[state.compsSet] ? state.compsSet : "sector";
+  const d = sets[which];
   const mids = Object.keys(d.multiples);
   const multName = (k) => ({ ev_sales: "EV/Sales", ev_ebitda: "EV/EBITDA", pe: "P/E" })[k] || k;
   const totalW = mids.reduce((sum, k) => sum + d.multiples[k].weight, 0);
@@ -337,7 +368,6 @@ export function renderCompsCard() {
     <td>${esc(p.ticker || "")} <span class="muted small">${esc(isTarget ? "Target" : p.source === "manual" ? "Manual Figures" : (p.name || ""))}</span></td>
     <td>${price(p.price)}</td><td>${millions(p.enterprise_value)}</td>
     <td>${mult(p.multiples.ev_sales)}</td><td>${mult(p.multiples.ev_ebitda)}</td><td>${mult(p.multiples.pe)}</td>
-    <td>${pct(p.ebitda_margin)}</td><td>${pct(p.revenue_growth)}</td>
     ${mids.map((m) => (isTarget ? `<td title="the peers' median implied value"><b>${price(d.multiples[m].expected)}</b></td>` : `<td>${price(d.multiples[m].implied[p.ticker])}</td>`)).join("")}</tr>`;
   // dot plot: each peer's implied price per multiple, the range band and the median tick, against the price
   const all = mids.flatMap((m) => Object.values(d.multiples[m].implied).filter(fin)).concat(fin(d.market_price) ? [d.market_price] : []);
@@ -351,22 +381,32 @@ export function renderCompsCard() {
         ${fin(d.market_price) ? `<span class="dp-price" style="left:${x(d.market_price)}"></span>` : ""}</div>
       <div class="ff-num">${price(x0.conservative)} – ${price(x0.aggressive)}</div><div class="ff-num"><b>${price(x0.expected)}</b></div></div>`;
   }).join("");
+  const setNames = { sector: "Sector Peers", closest: "Closest Match" };
+  const about = which === "sector" ? "Companies from the target's own sector: the traditional comps set, and the one weighted in the valuation."
+    : `The peers closest on fundamentals, whatever their industry: a check on the sector set${d.source ? ` (${esc(d.source)})` : ""}. Shown on the football field without weight.`;
+  const notes = which === "sector" ? r.notes : d.notes;
   $("val-comps").innerHTML = `<div class="card">
     <div class="card-head"><h2 class="action-title">${headline("comps", "Public Comps")}</h2><span class="muted small">${esc(d.range_method === "min_max" ? "Range = lowest to highest implied price (fewer than 4 peers)" : "Range = Q1 to Q3 implied price")}</span></div>
+    ${Object.keys(sets).length > 1 ? `<div class="seg" id="comps-set" role="group" aria-label="Peer set" style="margin-bottom:8px">${Object.keys(sets).map((k) =>
+      `<button type="button" data-set="${k}" aria-pressed="${k === which}">${setNames[k]} · ${price(sets[k].blend.expected)}</button>`).join("")}</div>` : ""}
+    <p class="muted small" style="margin:0 0 8px">${about}</p>
     <div class="dp">
       <div class="dp-row dp-head"><div></div><div class="muted small">Dots = each peer's implied price · band = range · tick = median${fin(d.market_price) ? " · line = share price" : ""}</div>
         <div class="ff-num">Range</div><div class="ff-num">Median</div></div>
       ${dots}
-      <div class="dp-row total"><div class="dp-name"><b>Blended Comps Value</b><div class="muted small">Weights above</div></div><div></div>
+      <div class="dp-row total"><div class="dp-name"><b>Blended ${setNames[which]} Value</b><div class="muted small">Weights above</div></div><div></div>
         <div class="ff-num">${price(d.blend.conservative)} – ${price(d.blend.aggressive)}</div><div class="ff-num"><b>${price(d.blend.expected)}</b></div></div>
     </div>
-    <div class="table-wrap" style="margin-top:12px"><table class="list">
-      <thead><tr><th>Company</th><th>Price</th><th>EV (${unitShort()})</th><th>EV/Sales</th><th>EV/EBITDA</th><th>P/E</th><th>EBITDA Margin</th><th>Revenue CAGR</th>
+    ${matchTable(d, d.peers)}
+    <h3 class="block-title" style="margin-top:16px">Multiples and Implied Values</h3>
+    <div class="table-wrap"><table class="list">
+      <thead><tr><th>Company</th><th>Price</th><th>EV (${unitShort()})</th><th>EV/Sales</th><th>EV/EBITDA</th><th>P/E</th>
         ${mids.map((m) => `<th>Implied (${multName(m)})</th>`).join("")}</tr></thead>
       <tbody>${row(d.target, true)}${d.peers.map((p) => row(p, false)).join("")}</tbody></table></div>
-    ${r.notes?.length ? `<p class="legend-note">${r.notes.map((n) => esc(sentence(n))).join(" · ")}</p>` : ""}
+    ${notes?.length ? `<p class="legend-note">${notes.map((n) => esc(sentence(n))).join(" · ")}</p>` : ""}
     ${sourceLine("peer prices from comps.json")}
   </div>`;
+  $("comps-set")?.querySelectorAll("button").forEach((b) => { b.onclick = () => { state.compsSet = b.dataset.set; renderCompsCard(); }; });
 }
 
 // ---- comps peer picker ------------------------------------------------------------
@@ -455,7 +495,8 @@ export async function savePeers(quiet = false) {
   try {                                 // the peers the current comps run used are the starting point
     const mine = deviceAssumptions()[`${t}/comps.json`];
     const base = mine ? JSON.parse(mine) : { multiples: ["ev_ebitda", "ev_sales"], range: "auto",
-      peers: (state.comps?.details?.peers || []).map((p) => ({ ticker: p.ticker })) };
+      peers: (state.comps?.details?.peers || []).map((p) => ({ ticker: p.ticker })),
+      ...(state.comps?.details?.closest ? { closest: state.comps.details.closest.peers.map((p) => ({ ticker: p.ticker })) } : {}) };
     await saveAssumption(`${t}/comps.json`, merge(base));
     if (!quiet) setStatus(st, { ok: true, msg: `Saved ${picks.length} peers on this device. Run Comps to value against them.` });
     return true;

@@ -127,12 +127,16 @@ def auto_peers(ticker: str, as_of: str, work_dir: Path, paths: Paths, client, sc
         if not pick:
             return ["pick peers", "warning", f"no peers found for {ticker} in {found[0].get('label')}"]
         doc = {"multiples": ["ev_ebitda", "ev_sales"], "range": "auto", "peers": [{"ticker": p["ticker"]} for p in pick["peers"]],
-               "sources": {"peers": f"picked automatically: the {len(pick['peers'])} closest in {pick['sector']} "
-                                    f"({pick['level']}: {pick['label']}) on {as_of}; change them in the peer picker"}}
+               "closest": [{"ticker": p["ticker"]} for p in pick["closest"]],
+               "sources": {"peers": f"picked automatically: the {len(pick['peers'])} nearest in size in {pick['sector']} "
+                                    f"({pick['level']}: {pick['label']}) on {as_of}; change them in the peer picker",
+                           "closest": f"picked automatically: the {len(pick['closest'])} closest on growth, margins, cash-flow "
+                                      f"stability, capital intensity, leverage and size anywhere in {pick['sector']} on {as_of}"}}
         target = paths.model_assumptions(ticker, "comps")
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(json.dumps(doc, indent=2))
-        return ["pick peers", "done", f"{how}: {', '.join(p['ticker'] for p in pick['peers'])}"]
+        return ["pick peers", "done", f"{how}: sector set {', '.join(p['ticker'] for p in pick['peers'])}; "
+                                      f"closest match {', '.join(p['ticker'] for p in pick['closest'])}"]
     except Exception as e:                           # comps is skipped; the DCF still runs
         return ["pick peers", "warning", f"comps skipped: {_explain(e)}"]
 
