@@ -415,12 +415,15 @@ def rnoa_change(view: list[dict]) -> None:
         core RNOA       = core NOPM x NOAT (average NOA)
         margin effect   = change in core NOPM x last year's NOAT
         turnover effect = change in NOAT x this year's core NOPM
-    The two add up to the change in core RNOA exactly."""
-    for prev, cur in zip(view, view[1:]):
+    The two add up to the change in core RNOA exactly. TTM views compare with the TTM a year earlier."""
+    for i, cur in enumerate(view):
+        prev = next((p for p in reversed(view[:i]) if _one_year_apart(p["end"], cur["end"])), None)
+        if prev is None:
+            continue
         r0, r1 = prev["ratios"]["reformulated"], cur["ratios"]["reformulated"]
         pm0, pm1 = r0.get("core_nopm"), r1.get("core_nopm")
         at0, at1 = (r0.get("avg") or {}).get("noat"), (r1.get("avg") or {}).get("noat")
-        if None in (pm0, pm1, at0, at1) or not _one_year_apart(prev["end"], cur["end"]):
+        if None in (pm0, pm1, at0, at1):
             continue
         margin, turnover = (pm1 - pm0) * at0, (at1 - at0) * pm1
         r1["rnoa_change"] = {"core_rnoa": pm1 * at1, "core_rnoa_prior": pm0 * at0, "change": pm1 * at1 - pm0 * at0,

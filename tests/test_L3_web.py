@@ -73,9 +73,9 @@ def test_web_comps_use_the_devices_peers_and_typed_prices(tmp_path):
     assert not any("alphavantage" in u or "yahoo" in u for u in calls)
 
 
-def test_web_auto_models_are_dcf_alone_without_peers(tmp_path):
+def test_web_auto_models_are_dcf_and_lbo_without_peers(tmp_path):
     out = run("MSFT", fetch_text([]), AS_OF, "auto", work=str(tmp_path / "w"))
-    assert [n for n, _, _ in out["report"] if n.startswith("model")] == ["model dcf"]
+    assert [n for n, _, _ in out["report"] if n.startswith("model")] == ["model dcf", "model lbo"]
 
 
 def test_web_sector_screen_on_the_device(tmp_path):

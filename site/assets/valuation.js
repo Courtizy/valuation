@@ -351,23 +351,28 @@ function matchTable(d, peers) {
     : m?.flag === "unchecked" ? ` <span class="muted small" title="Fewer than 3 figures to rate: weighted at 50%">Unrated</span>` : "");
   const avg = d.peer_average || {};
   const avgRow = (label, kind) => `<tr class="sub"><td>${label}</td>${keys.map((k) => `<td>${pct(avg[k]?.[kind])}</td>`).join("")}<td></td><td></td><td></td></tr>`;
-  const totalW = peers.filter((p) => !p.excluded).reduce((s2, p) => s2 + (d.peer_weights === "equal" ? 1 : p.match?.weight || 0), 0);
+  // the synthesized firm's weights come from the fit, not from closeness
+  const wOf = (p) => (d.peer_weights === "equal" ? 1 : d.weights ? d.weights[p.ticker] || 0 : p.match?.weight || 0);
+  const totalW = peers.filter((p) => !p.excluded).reduce((s2, p) => s2 + wOf(p), 0);
+  const synRow = d.figures ? `<tr class="sub"><td>Synthesized Firm</td>${keys.map((k) => { const f = d.figures[k]; if (!f) return `<td class="na">${NA}</td>`;
+    const [cls, word] = LIGHTS[f.light]; return `<td class="${cls}" title="${esc(`${word}: ${f.gap >= 0 ? "+" : "−"}${pts(Math.abs(f.gap))} vs. the target`)}">${pct(f.blend)} <span class="m-icon" role="img" aria-label="${word}"></span></td>`; }).join("")}<td></td><td></td><td></td></tr>` : "";
   return `<h3 class="block-title" style="margin-top:16px">How Close Each Peer Is</h3>
     <div class="table-wrap"><table class="list match-table">
       <thead><tr><th>Company</th>${keys.map((k) => `<th title="${esc(src[k] ? `Target: ${src[k]}` : "")}">${esc(rules[k].label)}</th>`).join("")}<th>Size vs. Target</th><th>Closeness</th><th>Weight</th></tr></thead>
       <tbody><tr class="key target"><td>${esc(d.target.ticker || "")} <span class="muted small">Target</span></td>${keys.map((k) => `<td title="${esc(src[k] || "")}">${pct(d.target[k])}</td>`).join("")}<td>1.00×</td><td>–</td><td>–</td></tr>
-        ${peers.map((p) => { const m = p.match || {}, w = d.peer_weights === "equal" ? 1 : m.weight || 0; return `<tr class="${p.excluded ? "na" : ""}"><td>${esc(p.ticker)} <span class="muted small">${esc(p.source === "manual" ? "Manual Figures" : (p.name || ""))}</span></td>
+        ${peers.map((p) => { const m = p.match || {}, w = wOf(p); return `<tr class="${p.excluded ? "na" : ""}"><td>${esc(p.ticker)} <span class="muted small">${esc(p.source === "manual" ? "Manual Figures" : (p.name || ""))}</span></td>
           ${keys.map((k) => cell(p, k)).join("")}<td>${fin(m.size) ? `${m.size.toFixed(2)}×` : NA}</td>
           <td>${fin(m.closeness) ? pct(m.closeness, true) : NA}${flag(m)}</td><td>${p.excluded || !totalW ? NA : pct(w / totalW, true)}</td></tr>`; }).join("")}
-        ${avgRow("Peer Average", "average")}${d.peer_weights === "equal" ? "" : avgRow("Weighted by Closeness", "weighted")}</tbody></table></div>
+        ${d.figures ? synRow : avgRow("Peer Average", "average") + (d.peer_weights === "equal" ? "" : avgRow("Weighted by Closeness", "weighted"))}</tbody></table></div>
     <p class="legend-note">A multiple is a DCF over current earnings, so a good comparable shares the target's DCF drivers: analysts' 5-year growth, past growth as a check, the discount rate, EBITDA margin (where the long run starts: high margins tend to fall back) and net debt / EV (so EV and market-value multiples compare alike). <span class="m-green"><span class="m-icon"></span> close</span>, <span class="m-yellow"><span class="m-icon"></span> near</span> (within twice the tolerance), <span class="m-red"><span class="m-icon"></span> far</span>. Closeness = share of figures close (near counts half); peers are weighted by it. Size is shown, not rated. Hover a cell for the gap and the source; a missing figure can be typed into comps.json.</p>`;
 }
 
 export function renderCompsCard() {
   const r = state.comps, base = r?.details;
   if (!base?.peers || !$("val-comps")) return;
-  const sets = { sector: base, ...(base.closest ? { closest: { ...base.closest, target: base.target, market_price: base.market_price,
-    match_rules: base.match_rules, peer_weights: base.peer_weights } } : {}) };
+  const extra = (x) => ({ ...x, target: base.target, market_price: base.market_price, match_rules: base.match_rules });
+  const sets = { sector: base, ...(base.closest ? { closest: extra({ ...base.closest, peer_weights: base.peer_weights }) } : {}),
+    ...(base.synthesized ? { synth: extra({ ...base.synthesized, peer_weights: "synthesized" }) } : {}) };
   const which = sets[state.compsSet] ? state.compsSet : "sector";
   const d = sets[which];
   const mids = Object.keys(d.multiples);
@@ -390,9 +395,11 @@ export function renderCompsCard() {
         ${fin(d.market_price) ? `<span class="dp-price" style="left:${x(d.market_price)}"></span>` : ""}</div>
       <div class="ff-num">${price(x0.conservative)} – ${price(x0.aggressive)}</div><div class="ff-num"><b>${price(x0.expected)}</b></div></div>`;
   }).join("");
-  const setNames = { sector: "Sector Peers", closest: "Closest Match" };
+  const setNames = { sector: "Sector Peers", closest: "Closest Match", synth: "Synthesized Firm" };
   const about = which === "sector" ? "Companies from the target's own sector: the traditional comps set, and the one weighted in the valuation."
+    : which === "synth" ? "The course's synthesized firm: peers from both sets weighted so their average growth, discount rate, margin and leverage come as close to the target's as possible. Shown on the football field without weight."
     : `The peers closest on fundamentals, whatever their industry: a check on the sector set${d.source ? ` (${esc(d.source)})` : ""}. Shown on the football field without weight.`;
+  const sve = d.sales_vs_ebitda;
   const notes = which === "sector" ? r.notes : d.notes;
   $("val-comps").innerHTML = `<div class="card">
     <div class="card-head"><h2 class="action-title">${headline("comps", "Public Comps")}</h2><span class="muted small">${esc(d.range_method === "min_max" ? "Range = lowest to highest implied price (fewer than 4 peers)" : "Range = Q1 to Q3 implied price")}</span></div>
@@ -403,7 +410,7 @@ export function renderCompsCard() {
       <div class="dp-row dp-head"><div></div><div class="muted small">Dots = each peer's implied price · band = range · tick = median${fin(d.market_price) ? " · line = share price" : ""}</div>
         <div class="ff-num">Range</div><div class="ff-num">Median</div></div>
       ${dots}
-      <div class="dp-row total"><div class="dp-name"><b>Blended ${setNames[which]} Value</b><div class="muted small">${d.peer_weights === "equal" ? "Peers weighted equally" : "Peers weighted by closeness"}</div></div><div></div>
+      <div class="dp-row total"><div class="dp-name"><b>Blended ${setNames[which]} Value</b><div class="muted small">${d.peer_weights === "equal" ? "Peers weighted equally" : d.peer_weights === "synthesized" ? "Peers weighted to match the target" : "Peers weighted by closeness"}</div></div><div></div>
         <div class="ff-num">${price(d.blend.conservative)} – ${price(d.blend.aggressive)}</div><div class="ff-num"><b>${price(d.blend.expected)}</b></div></div>
       ${d.blend_equal && d.peer_weights !== "equal" ? `<div class="dp-row"><div class="dp-name">Equal Weights<div class="muted small">Every peer counts the same</div></div><div></div>
         <div class="ff-num">${price(d.blend_equal.conservative)} – ${price(d.blend_equal.aggressive)}</div><div class="ff-num">${price(d.blend_equal.expected)}</div></div>` : ""}
@@ -414,6 +421,7 @@ export function renderCompsCard() {
       <thead><tr><th>Company</th><th>Price</th><th>EV (${unitShort()})</th><th>EV/Sales</th><th>EV/EBITDA</th><th>P/E</th>
         ${mids.map((m) => `<th>Implied (${multName(m)})</th>`).join("")}</tr></thead>
       <tbody>${row(d.target, true)}${d.peers.map((p) => row(p, false)).join("")}</tbody></table></div>
+    ${sve ? `<p class="legend-note"><b>EV/Sales vs. EV/EBITDA:</b> EV/Sales = EV/EBITDA × EBITDA margin, so the two differ only by margin: ${esc(d.target.ticker || "the target")} ${pct(sve.target_margin)} against the peers' ${pct(sve.peer_margin)}. ${esc(sentence(sve.note))}</p>` : ""}
     ${notes?.length ? `<p class="legend-note">${notes.map((n) => esc(sentence(n))).join(" · ")}</p>` : ""}
     ${sourceLine("peer prices from comps.json")}
   </div>`;
@@ -584,6 +592,39 @@ function sensitivityTable(d, base) {
     <p class="legend-note">Rows: discount rate (WACC), low to high; the pre-terminal and terminal rates move together. Columns: terminal growth, low to high. Darker = lower value; outlined cell = the stated case.</p>`;
 }
 
+const STATUS = { good: ["status--good", "OK"], warning: ["status--warning", "Check"], info: ["", "Info"] };
+
+/** The course's reasonableness checks: terminal value, rates and the first forecast year. */
+function checksList(d) {
+  const items = [...(d.checks || [])];
+  const ex = state.comparison?.cross_checks?.exit_multiple;
+  if (ex) items.push(ex);
+  const sz = d.seasonal;
+  if (sz && fin(sz.gap)) items.push({ label: "Year 1 Revenue vs. the Seasonal Model", status: Math.abs(sz.gap) <= 0.05 ? "good" : "warning",
+    value: sz.gap, note: `forecast ${millions(sz.year1_forecast)} against ${millions(sz.year1_estimate)} from ${sz.reported_quarters} reported quarter(s)${sz.reported_quarters < 4 ? " plus the Foster model (trend + persistence of last year's change)" : ""}: ${pct(sz.gap)} apart` });
+  if (!items.length) return "";
+  const val = (c) => (c.key === "exit_multiple" ? mult(c.value) : c.key === "tv_share" ? pct(c.value, true) : pct(c.value));
+  return `<h3 style="margin-top:16px">Course Checks</h3>
+    <div class="table-wrap"><table class="list checks"><tbody>${items.map((c) => { const [cls, word] = STATUS[c.status] || STATUS.info;
+      return `<tr><td>${esc(c.label)}</td><td class="num">${val(c)}</td><td><span class="${cls}">${word}</span></td><td class="muted small">${esc(sentence(c.note || ""))}</td></tr>`; }).join("")}</tbody></table></div>`;
+}
+
+/** Tornado: each input moved alone, low and high; bars sorted by the swing in value per share. */
+function tornadoChart(d) {
+  const t = d.tornado;
+  if (!t?.bars?.length) return "";
+  const vals = t.bars.flatMap((b) => [b.low_input_value, b.high_input_value]).concat(t.base);
+  const lo = Math.min(...vals), hi = Math.max(...vals), x = (v) => ((v - lo) / ((hi - lo) || 1)) * 100;
+  const stepTxt = (b) => (["capex", "ebitda_margin", "growth", "wacc", "terminal_growth", "terminal_wacc"].includes(b.key)
+    ? `±${(b.step * 100).toFixed(1)} pts` : `±${num(b.step)}`);
+  return `<h3 style="margin-top:16px">What Moves the Value Most</h3>
+    <div class="tornado">${t.bars.map((b) => { const a = Math.min(b.low_input_value, b.high_input_value), z = Math.max(b.low_input_value, b.high_input_value);
+      return `<div class="tn-row"><div class="tn-name">${esc(b.label)} <span class="muted small">${stepTxt(b)}</span></div>
+        <div class="tn-track"><span class="tn-bar" style="left:${x(a)}%;width:${x(z) - x(a)}%"></span><span class="tn-base" style="left:${x(t.base)}%"></span></div>
+        <div class="ff-num">${price(b.low_input_value)} / ${price(b.high_input_value)}</div></div>`; }).join("")}</div>
+    <p class="legend-note">Each input moved down and up on its own, everything else at the stated case (${price(t.base)}, the line). Values are at the low / high input. The longest bar is the assumption worth arguing about first.</p>`;
+}
+
 export function renderDcfCard() {
   const r = state.dcf, d = r?.details;
   if (!d?.bridge) return;
@@ -609,7 +650,10 @@ export function renderDcfCard() {
         ${finRow("Target Debt / Equity", [cellOf(num(rt.target_debt_to_equity))], { indent: 1 })}
         ${finRow("Cost of Equity", [cellOf(pct(rt.cost_of_equity))], { kind: "sub", indent: 1 })}
         <tr class="group"><td colspan="2">Cost of Debt</td></tr>
-        ${finRow(`Pre-Tax Cost of Debt (${esc({ interest_over_debt: "interest ÷ debt", given: "given", fallback: "fallback yield" }[rt.cost_of_debt_method] || "given")})`, [cellOf(pct(rt.pre_tax_cost_of_debt))], { indent: 1 })}
+        ${fin(rt.country_risk_premium) && rt.country_risk_premium ? finRow("Country Risk Premium (in cost of equity)", [cellOf(pct(rt.country_risk_premium))], { indent: 1 }) : ""}
+        ${rt.total_beta ? finRow(`Total Beta for a Private Owner (÷ √R², R² ${num(rt.total_beta.r_squared)})`, [cellOf(`× ${num(rt.total_beta.multiplier)}`)], { indent: 1 }) : ""}
+        ${finRow(`Pre-Tax Cost of Debt (${esc({ interest_over_debt: "interest ÷ debt", given: "given", fallback: "fallback yield", synthetic_rating: "risk-free + rating spread", no_debt: "no debt" }[rt.cost_of_debt_method] || "given")})`, [cellOf(pct(rt.pre_tax_cost_of_debt))], { indent: 1 })}
+        ${rt.synthetic_rating ? finRow(`Synthetic Rating (EBIT ÷ interest ${times(rt.synthetic_rating.coverage)})`, [cellOf(`${esc(rt.synthetic_rating.rating)} · +${pct(rt.synthetic_rating.spread)}`)], { indent: 1, kind: "memo" }) : ""}
         ${finRow("Weights: Equity / Debt", [cellOf(`${pct(rt.equity_weight)} / ${pct(rt.debt_weight)}`)], { indent: 1 })}
         ${finRow("WACC (Pre-Terminal)", [cellOf(pct(rt.wacc))], { kind: "grand" })}
         <tr class="group"><td colspan="2">Terminal Year</td></tr>
@@ -623,6 +667,9 @@ export function renderDcfCard() {
     <h3 style="margin-top:16px">Projection (${unitShort()})</h3>
     ${dcfProjectionTable(d)}
     <p class="legend-note">Free cash flow = EBITDA × (1 − t) + D&amp;A × t − capex − ΔNWC, so it isn't the simple sum of the lines above.</p>
+    ${d.private ? `<p class="legend-note"><b>Private firm:</b> ${pct(d.private.discount, true)} discount on equity value for illiquidity${d.private.life_years ? `; the terminal value covers ${d.private.life_years} years, not forever` : ""}.</p>` : ""}
+    ${checksList(d)}
+    ${tornadoChart(d)}
     <p class="legend-note">Year 1 is the closing year (not discounted). The values above are the stated case; the range comes from the simulation (Spread of Simulated Outcomes).${r.notes?.length ? " " + esc(r.notes.filter((n) => !n.startsWith("range =")).join(" ")) : ""}</p>`;
   ($("val-dcf") || $("val-body")).appendChild(card);
 }
@@ -682,7 +729,8 @@ function renderKpis() {
     ${tile("Middle 90%", s ? `${price(s.low)}–${price(s.high)}` : NA, "5th to 95th percentile")}
     ${tile("Terminal Value Share", s ? pct(s.tv) : NA, "Of enterprise value, average run")}
     ${tile("Runs Used", s ? s.used.toLocaleString() : NA, s ? `of ${s.runs.toLocaleString()} · seed ${s.seed}` : "")}
-  </div>`;
+  </div>
+  ${s?.ci ? `<p class="legend-note">Precision: the simulated mean is ${price(s.mean)} ± ${price(1.96 * s.se)} (95% interval ${price(s.ci[0])}–${price(s.ci[1])}, standard error ${price(s.se)}), so ${s.used.toLocaleString()} runs are enough: the spread above is the inputs' uncertainty, not simulation noise.</p>` : ""}`;
 }
 
 function renderSpread() {

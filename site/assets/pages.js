@@ -13,7 +13,8 @@ export function simulationSummary() {
   const s = state.dcf?.details?.simulation;
   if (!s?.per_share) return null;
   return { low: s.middle_90[0], high: s.middle_90[1], median: s.per_share.p50, tv: s.terminal_value_share,
-    runs: s.runs, used: s.runs_used, seed: s.seed, inputs: s.inputs };
+    runs: s.runs, used: s.runs_used, seed: s.seed, inputs: s.inputs,
+    mean: s.per_share.mean, se: s.per_share.standard_error, ci: s.per_share.mean_ci95 };
 }
 
 // ---------------------------------------------------------------- overview

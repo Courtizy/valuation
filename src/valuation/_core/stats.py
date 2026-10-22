@@ -49,7 +49,10 @@ def foster(quarters: list[float], ahead: int = 4) -> dict | None:
     d = [q[t] - q[t - 4] for t in range(4, len(q))]
     fit = ols(d[:-1], d[1:])
     if not fit:
-        return None
+        if len(set(d)) != 1:
+            return None
+        # growth exactly steady: every seasonal difference is the same, so phi = 0 and delta is that difference
+        fit = {"intercept": d[0], "slope": 0.0, "t_intercept": None, "t_slope": None, "r_squared": None}
     delta, phi = fit["intercept"], fit["slope"]
     series, diffs, out = list(q), list(d), []
     for _ in range(ahead):

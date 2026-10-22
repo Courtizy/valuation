@@ -164,7 +164,7 @@ def run(ticker: str, fetch_text: Callable[[str], str], as_of: str | None = None,
             first.append(auto_peers(t, as_of, work_dir, paths, client, screens, sic_lists))
             if first[-1][1] == "done":
                 picked = {f"{t}/comps.json": paths.model_assumptions(t, "comps").read_text()}
-        names = (["dcf"] + (["comps"] if load_peers(paths, t) else [])
+        names = (["dcf", "lbo"] + (["comps"] if load_peers(paths, t) else [])
                  + (["precedents"] if has_deal_list(paths, t) else [])
                  + (list(DEAL_MODELS) if has_deal(paths, t) else []))
     steps = plan(ticker, names, as_of, paths, _sector_adapter(client, sic_lists), "L2",

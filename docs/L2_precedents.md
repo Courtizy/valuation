@@ -45,6 +45,12 @@ Mean, minimum, quartiles and maximum of premium, transaction and pre-announcemen
 
 `tests/test_course_parity.py`: Cent_Tend_TC's statistics table, percentiles and implied ranges from the workbook's Orig_TC_Data, and Best_TC_Comps' per-deal implied values and averages. Passing on the TSYS, SNN and Tower workbooks.
 
+## Course checks
+
+- **Lines up with the target** (`details.alignment`): each deal's pre-announcement EV/EBITDA against the target's, green within 15%, yellow within 30%, red beyond. A red best deal gets a note: its transaction multiples mislead.
+- **Premium regression** (`details.regression`): premium = a + b × pre-announcement EV/EBITDA by OLS with t-statistics, and the premium and price it implies for the target. The underlying value method expects b < 0 (a target already priced rich leaves less room); `sign_ok` says whether it is.
+- **Announced synergies** (`details.synergy_stats`): an optional "Announced Synergies ($mil)" column gives synergies / target sales across deals, to check the bid's synergy estimate against.
+
 ## Not yet
 
-The premium regression on deal traits (recent deal, same industry, cash, tender offer) from the Regression sheet, and pulling deals from SEC merger filings.
+The premium regression on deal traits (recent deal, same industry, cash, tender offer), and pulling deals from SEC merger filings.

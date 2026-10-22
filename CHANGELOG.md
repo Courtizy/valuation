@@ -2,6 +2,17 @@
 
 All notable changes to the Valuation Model. Newest first.
 
+## [0.7.0] - 2026-10-22
+- **LBO** (Deal → LBO): what a financial sponsor could pay. Debt sized by collateral and a 2.0x coverage target (senior, subordinated, mezzanine), interest on the average balance, a cash sweep, an exit at today's multiple plus a change. Shows the max price at the sponsor's target IRR (range at ±5 points), the IRR at the offer, sources and uses, the debt paydown and two sensitivity grids. Inputs on the Deal page or in `lbo.json`.
+- **Course checks on the DCF**, each with a status icon: terminal growth band (capped at 4.5%), steady-state growth when the terminal value starts, terminal value share of EV (50-75%), implied exit EV/EBITDA against the comps, and year-1 revenue against a seasonal (Foster) model of the quarters.
+- **Tornado**: seven DCF inputs moved one at a time, sorted by swing.
+- **Discount rate options**: country risk premium, a synthetic rating from interest coverage when interest / debt can't be measured, and a private-firm mode (total beta, illiquidity discount). Finite-life terminal value.
+- **Synthesized firm**: a third comps set, peers weighted to match the target's growth, discount rate, margin and leverage. A note explains when EV/Sales and EV/EBITDA disagree (margins).
+- **Prior deals**: Lines Up with Target lights per deal, the premium regression on EV/EBITDA with its sign check, and announced synergies / sales.
+- **Synergy checks**: the synergies needed for the offer price, the share of cost synergies that can last (the normal-profit test), and synergies / sales against prior deals.
+- **Financial statement analysis**: what moved core RNOA (margin vs turnover effect), economic value added (NOPAT - WACC × NOA), EBITDA / interest and cash-flow coverage of debt.
+- The simulation reports the mean's standard error and 95% interval.
+
 ## [0.6.0] - 2026-10-22
 - Comps values two peer sets. **Sector Peers** is the traditional set from the target's own industry (picked automatically: nearest in size); **Closest Match** is the companies closest on fundamentals from anywhere in the sector. Both show on the Valuation and Deal football fields; the sector set carries the comps weight, the closest set is shown without weight to check it against.
 - How Close Each Peer Is, the course's underlying value method: a multiple is a DCF over current earnings, so each peer is rated against the target on its DCF drivers (analysts' 5-year earnings growth, past 5-year growth, discount rate, EBITDA margin for the long run, net debt / EV), green / yellow / red as on the course's stoplight. Size is shown, not rated. Peer averages (simple and weighted) sit under the target.

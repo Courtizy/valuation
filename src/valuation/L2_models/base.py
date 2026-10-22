@@ -7,8 +7,8 @@ from typing import Protocol
 
 RESULT_SCHEMA_VERSION = "0.1.0"
 MODEL_NAMES = ("dcf", "comps", "lbo", "ipo", "precedents", "dcf_synergy", "just_synergy")
-# models that live in another model's package (the synergy DCFs reuse the standalone DCF's inputs)
-_MODULE = {"dcf_synergy": "dcf", "just_synergy": "dcf"}
+# models that live in another model's package (the synergy DCFs and the LBO reuse the standalone DCF's inputs)
+_MODULE = {"dcf_synergy": "dcf", "just_synergy": "dcf", "lbo": "dcf"}
 
 
 @dataclass

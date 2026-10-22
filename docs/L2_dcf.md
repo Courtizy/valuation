@@ -65,9 +65,32 @@ Checked against the three course cases:
 | Scenario range (where the workbook's cached data tables are current) | matches |
 | Implied growth (solving g0 for the pre-announcement price) | recovers each workbook's growth input within 0.01% |
 
-## Not yet
+## Course checks (`_core/checks.py`, `details.checks`)
 
-- **Synergy models:** the DCF with synergies and the just-synergies model are next.
+Each check has a status (good / warning) the site shows with an icon and a label:
+
+| Check | Rule |
+|---|---|
+| Terminal growth | its band against a 4-6% nominal economy: with the economy 3.5-4.5%, slower 2.4-3.5%, flat real 1.5-2.4%, negative real 0-1.5%, rapid decline below 0. Above 4.5% is flagged: no firm outgrows the economy forever |
+| Growth when the terminal value starts | the last forecast year's growth should be at steady state, 5% or below |
+| Terminal value share of EV | usually 50-75% in a 10-year projection |
+| Implied exit EV/EBITDA vs public comps | within 25% of the comps average (`comparison.json` → `cross_checks.exit_multiple`); exit multiples are usually too high |
+| Year 1 revenue vs the seasonal model | reported quarters after the base year plus a Foster forecast for the rest, Q_t = Q_t-4 + δ + φ(Q_t-1 - Q_t-5), fit by OLS on the latest unbroken run of at least 10 quarters (`_core/stats.py`, `details.seasonal`) |
+
+## Tornado (`details.tornado`)
+
+Seven inputs moved one at a time, sorted by swing: WACC in both periods ±1.5 points, near-term revenue growth ±3 points, EBITDA margin ±2 points, terminal growth ±0.8 points, capex / sales ±1 point, terminal WACC ±0.5 points, ΔNWC / Δsales ±10%. Steps are in `TORNADO` in `L2_models/dcf/__init__.py`.
+
+## Discount-rate options
+
+- **Country risk premium:** `cost_of_capital.country_risk_premium` is added to the cost of equity in both periods.
+- **Synthetic rating:** when interest / debt can't be measured (or `cost_of_debt_method: "rating"`), the pre-tax cost of debt is the risk-free rate plus the spread for the rating EBIT / interest suggests (`RATING_TABLE`, Damodaran's large-firm shape; `cost_of_capital.rating_spreads` overrides). `details.synthetic_rating` shows the coverage, rating and spread either way.
+- **Private firm:** `"private": {"r_squared": 0.25, "discount": 0.25}` uses total beta = market beta / √R² (a private owner isn't diversified; `"total_beta": false` keeps the market beta) and takes the illiquidity discount (25% default) off the value per share.
+- **Finite life:** `forecast.life_years` turns the terminal value into a growing annuity over that many years: TV × (1 - ((1+g)/(1+r))^L).
+
+## Simulation precision
+
+`simulation.per_share` adds the standard deviation, the standard error of the mean and its 95% interval (mean ± 1.96 se), shown under the KPIs.
 
 ## Default case (no dcf.json)
 

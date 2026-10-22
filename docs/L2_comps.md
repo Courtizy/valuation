@@ -58,3 +58,9 @@ Within twice the tolerance is yellow, beyond it red (the course's stoplight). **
 The site's "Similar companies" table ranks every published company by the same kind of closeness as a starting list.
 
 **Share counts and missing prices.** Target and peer share counts come from the newest filed count (the 10-K/10-Q cover page, `shares_outstanding` in company detail), else the statements. If no peer has a price (the public site's showcase mode fetches none), comps raises `NoPeerPrices`, which the runner reports as a warning rather than a failure; type peer prices in `comps.json` to value against them.
+
+## Synthesized firm (third set)
+
+The course's synthesized firm: peers from both sets weighted (on the simplex, by projected gradient) so their weighted growth, discount rate, EBITDA margin and net debt / EV come as close to the target's as possible, each gap measured in its tolerance. `details.synthesized` holds the weights, the blend against the target with a light per figure, the fit, and the implied value at the blend. It is reconciled as `comps_synth`, shown on the football fields without weight. `"synthesized": false` in `comps.json` turns it off.
+
+**EV/Sales vs EV/EBITDA** (`details.sales_vs_ebitda`): EV/Sales is EV/EBITDA × EBITDA margin, so when the target's margin differs from the peers' the two multiples disagree; the note says which way and by how much.

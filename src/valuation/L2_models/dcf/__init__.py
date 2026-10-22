@@ -614,6 +614,7 @@ class DCF:
 
 MODEL = DCF()
 
+from valuation.L2_models.dcf.lbo import LBO  # noqa: E402
 from valuation.L2_models.dcf.synergy import DCFSynergy, JustSynergy  # noqa: E402
 
-MODELS = {"dcf": MODEL, "dcf_synergy": DCFSynergy(MODEL), "just_synergy": JustSynergy(MODEL)}
+MODELS = {"dcf": MODEL, "dcf_synergy": DCFSynergy(MODEL), "just_synergy": JustSynergy(MODEL), "lbo": LBO(MODEL)}

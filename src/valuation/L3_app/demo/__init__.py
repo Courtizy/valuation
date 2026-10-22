@@ -61,6 +61,12 @@ def demo_deal(detail: dict) -> dict:
                           "cost_forever": 0.1, "revenue_growth_add": 0.005, "cost_realized": 1.0}}
 
 
+# a sponsor's view of DEMO: the course defaults, exit at today's multiple, and the operating
+# improvements a sponsor would claim (a point of margin, a tenth of working capital released)
+DEMO_LBO = {"sponsor_irr": 0.20, "hold_years": 5, "offer_premium": 0.20, "exit_multiple_change": 0.0, "coverage": 2.0,
+            "steps": {"margin_add": 0.01, "nwc_change": -0.10},
+            "sources": {"lbo": "synthetic demo assumptions (course defaults)"}}
+
 SECTOR_PEERS = ("ZZA", "ZZB", "ZZC", "ZZF")
 
 
@@ -136,8 +142,9 @@ def build_demo_data(data_dir: Path) -> dict:
                                                         "sources": {"deals": "synthetic demo deal list"}}).to_dict()
             results.append(_write(out / "model_results" / "precedents.json", {**prec, "lineage": LINEAGE, "demo": True}))
             # an acquisition case: synergies sized off the company's own revenue
-            for m in ("dcf_synergy", "just_synergy"):
-                r = get_model(m).run(detail, {**dcf_a, "deal": deal}).to_dict()
+            for m in ("dcf_synergy", "just_synergy", "lbo"):
+                extra = {"lbo": DEMO_LBO} if m == "lbo" else {}
+                r = get_model(m).run(detail, {**dcf_a, "deal": deal, **extra}).to_dict()
                 results.append(_write(out / "model_results" / f"{m}.json", {**r, "lineage": LINEAGE, "demo": True}))
         comparison = build_comparison(results, detail, None, deal)
         _write(out / "comparison.json", {**comparison, "demo": True})
