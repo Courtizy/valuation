@@ -23,6 +23,16 @@ a percentile and +/- the spread around it. The percentile defaults to where the 
 pre-announcement multiple ranks among the deals' (Excel PERCENTRANK.EXC), so a target that
 trades rich gets a rich multiple. Transaction multiples use the EV the data source reports.
 
+Checks (Week 9 transaction comps review)
+    alignment   a transaction multiple only works when the deal's own pre-announcement
+                EV/EBITDA is close to the target's: each deal is rated green within 15%,
+                yellow within 30%, red beyond (the target's multiple at its pre-announcement price)
+    regression  premium paid on pre-announcement EV/EBITDA across all deals (OLS): the
+                coefficient should be negative (a target already priced rich gets less
+                premium); the fitted premium at the target's multiple gives an implied price
+    synergies   announced synergies / sales across the deals that report them, to judge the
+                synergies assumed for this deal
+
 Rows for the deal summary (details.summary_rows):
     precedents_pre_sales / precedents_pre_ebitda    standalone: pre-announcement multiples
     precedents_sales / precedents_ebitda / precedents_premium    offer: transaction multiples, premium
@@ -32,9 +42,11 @@ from __future__ import annotations
 
 from valuation._core.deals import DealListError, deal_figures, parse_deal_list, percentile, percentrank_exc, stats
 from valuation._core.figures import company_figures
+from valuation._core.stats import ols
 from valuation.L2_models.base import ModelResult
 
 BEST_MAX = 5
+ALIGN_TOLERANCE = 0.15
 SPREAD = (0.1, 0.1)
 ROWS = {"tx_sales": ("tx_ev_sales", "sales"), "tx_ebitda": ("tx_ev_ebitda", "ebitda"),
         "pre_sales": ("pre_ev_sales", "sales"), "pre_ebitda": ("pre_ev_ebitda", "ebitda")}
@@ -102,6 +114,37 @@ def central_rows(deals: list[dict], t: dict, opts: dict) -> dict:
     return {"percentiles": pct, "ranges": ranges, "stats": table, "notes": notes}
 
 
+def alignment(deals: list[dict], t: dict) -> list[dict]:
+    own = t.get("ev_ebitda")
+    out = []
+    for d in deals:
+        m = d.get("pre_ev_ebitda")
+        gap = m / own - 1 if m and own else None
+        light = (None if gap is None else "green" if abs(gap) <= ALIGN_TOLERANCE else
+                 "yellow" if abs(gap) <= 2 * ALIGN_TOLERANCE else "red")
+        out.append({"target": d["target"], "pre_ev_ebitda": m, "target_ev_ebitda": own, "gap": gap, "light": light})
+    return out
+
+
+def premium_regression(deals: list[dict], t: dict) -> dict | None:
+    pts = [(d["pre_ev_ebitda"], d["premium"]) for d in deals
+           if d.get("pre_ev_ebitda") is not None and d.get("premium") is not None]
+    fit = ols([x for x, _ in pts], [y for _, y in pts])
+    if not fit:
+        return None
+    own = t.get("ev_ebitda")
+    prem = fit["intercept"] + fit["slope"] * own if own is not None else None
+    fit.update(x="pre_ev_ebitda", y="premium", target_x=own, implied_premium=prem,
+               implied_price=t["price"] * (1 + prem) if prem is not None and t.get("price") else None,
+               sign_ok=fit["slope"] < 0)
+    return fit
+
+
+def synergy_stats(deals: list[dict]) -> dict | None:
+    xs = [d["synergies_to_sales"] for d in deals if d.get("synergies_to_sales") is not None]
+    return {**stats(xs), "deals": [d["target"] for d in deals if d.get("synergies_to_sales") is not None]} if xs else None
+
+
 def transaction_comps(deals_in: list[dict], t: dict, best: list[str] | None = None, choice: int = 0,
                       central: dict | None = None) -> dict:
     deals = [deal_figures(d) for d in deals_in]
@@ -115,7 +158,8 @@ def transaction_comps(deals_in: list[dict], t: dict, best: list[str] | None = No
             "precedents_sales": src_of["ranges"]["tx_sales"], "precedents_ebitda": src_of["ranges"]["tx_ebitda"],
             "precedents_premium": src_of["ranges"]["premium"]}
     return {"deals": deals, "best": [d["target"] for d in chosen], "best_rows": b, "central": c,
-            "choice": int(choice), "summary_rows": rows}
+            "choice": int(choice), "summary_rows": rows, "alignment": alignment(deals, t),
+            "regression": premium_regression(deals, t), "synergy_stats": synergy_stats(deals)}
 
 
 class Precedents:
@@ -136,6 +180,12 @@ class Precedents:
         if not prem:
             raise DealListError("no deal has both an offer price and a pre-announcement price, so no premium")
         notes.append(f"{len(out['deals'])} deals, {len(out['best'])} chosen as most comparable")
+        off = [x["target"] for x in out["alignment"] if x["target"] in out["best"] and x["light"] == "red"]
+        if off:
+            notes.append(f"best deals whose own EV/EBITDA is far from the target's (transaction multiples mislead): {', '.join(off)}")
+        reg = out["regression"]
+        if reg and not reg["sign_ok"]:
+            notes.append("premium rises with the pre-announcement multiple in this deal list, unlike the usual negative link")
         target = {k: t.get(k) for k in ("price", "price_source", "shares", "net_debt", "sales", "ebitda", "ev_sales", "ev_ebitda")}
         return ModelResult(
             model=self.name, ticker=(detail.get("entity") or {}).get("ticker") or "", as_of=detail.get("as_of", ""),

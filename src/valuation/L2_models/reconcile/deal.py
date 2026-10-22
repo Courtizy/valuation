@@ -23,10 +23,11 @@ hands to the target's shareholders.
 from __future__ import annotations
 
 # the course template's default weights; the closest-match comps set is shown unweighted (set a weight to use it)
-STANDALONE = {"comps": 0.2, "comps_closest": 0.0, "precedents_pre_sales": 0.1, "precedents_pre_ebitda": 0.1, "dcf": 0.4, "trading_range": 0.2}
+STANDALONE = {"comps": 0.2, "comps_closest": 0.0, "comps_synth": 0.0, "precedents_pre_sales": 0.1, "precedents_pre_ebitda": 0.1, "dcf": 0.4, "trading_range": 0.2}
 OFFER = {"precedents_sales": 0.02, "precedents_ebitda": 0.02, "precedents_premium": 0.30, "dcf_synergy": 0.33,
          "just_synergy": 0.33, "lbo": 0.0}
-NAMES = {"comps": "Public Comps: Sector Peers", "comps_closest": "Public Comps: Closest Match", "precedents_pre_sales": "Prior Deals: Pre-announcement EV/Sales",
+NAMES = {"comps": "Public Comps: Sector Peers", "comps_closest": "Public Comps: Closest Match",
+         "comps_synth": "Public Comps: Synthesized Firm", "precedents_pre_sales": "Prior Deals: Pre-announcement EV/Sales",
          "precedents_pre_ebitda": "Prior Deals: Pre-announcement EV/EBITDA", "dcf": "DCF (Standalone)",
          "trading_range": "52-Week Low, Current, High", "precedents_sales": "Prior Deals: Transaction EV/Sales",
          "precedents_ebitda": "Prior Deals: Transaction EV/EBITDA", "precedents_premium": "Prior Deals: Premium Paid",

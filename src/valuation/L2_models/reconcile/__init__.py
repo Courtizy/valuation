@@ -4,8 +4,11 @@ Builds comparison.json with:
   - the method plan from the company profile: primary, cross-check and
     reference methods with reasons and weights (methods.py), a blended
     bear / base / bull value, and upside against the price
-  - each model's value range (football-field data); comps' closest-match peer set is a row
-    of its own (comps_closest)
+  - each model's value range (football-field data); comps' closest-match peer set and its
+    synthesized firm are rows of their own (comps_closest, comps_synth)
+  - cross-checks between models (course): the DCF's implied exit EV/EBITDA against the
+    public comps' average, and the normal-profit tests (terminal ROIC against WACC, EBITDA
+    margin against the peers') that say how much of a cost synergy can last
   - consistency warnings: different as_of dates or different input files
   - assumption differences: fields present in 2+ models whose values differ,
     which is how a value gap gets split into "inputs" vs "method"
@@ -16,6 +19,8 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+
+from valuation._core.checks import exit_multiple_check, margin_vs_peers
 
 from .deal import deal_summary
 from .headlines import deal_headlines, valuation_headlines
@@ -35,15 +40,34 @@ def _flatten(d: dict, prefix: str = "") -> dict:
     return out
 
 
-def closest_comps(r: dict) -> dict | None:
-    """The comps model's second peer set (closest on fundamentals) as its own method row."""
-    c = (r.get("details") or {}).get("closest") if r.get("model") == "comps" else None
-    if not c or not c.get("blend"):
-        return None
-    b = c["blend"]
-    return {"model": "comps_closest", "ticker": r["ticker"], "as_of": r["as_of"], "lineage": r.get("lineage", {}),
-            "value_per_share": {"p10": b["conservative"], "p50": b["expected"], "p90": b["aggressive"], "mean": b["expected"]},
-            "assumptions_used": {}, "notes": c.get("notes") or [], "details": c}
+def comps_sets(r: dict) -> list[dict]:
+    """The comps model's other peer sets (closest on fundamentals, synthesized firm) as method rows."""
+    if r.get("model") != "comps":
+        return []
+    out = []
+    for key, model in (("closest", "comps_closest"), ("synthesized", "comps_synth")):
+        c = (r.get("details") or {}).get(key)
+        if not c or not c.get("blend"):
+            continue
+        b = c["blend"]
+        out.append({"model": model, "ticker": r["ticker"], "as_of": r["as_of"], "lineage": r.get("lineage", {}),
+                    "value_per_share": {"p10": b["conservative"], "p50": b["expected"], "p90": b["aggressive"],
+                                        "mean": b["expected"]},
+                    "assumptions_used": {}, "notes": c.get("notes") or [], "details": c})
+    return out
+
+
+def cross_checks(by_model: dict) -> dict:
+    dcf = (by_model.get("dcf") or {}).get("details") or {}
+    comps = (by_model.get("comps") or {}).get("details") or {}
+    avg = comps.get("peer_average") or {}
+    exit_m = (dcf.get("terminal") or {}).get("ev_to_ebitda")
+    comps_m = (avg.get("ev_ebitda") or {}).get("average")
+    margin = (avg.get("ebitda_margin") or {})
+    syn = ((by_model.get("dcf_synergy") or by_model.get("just_synergy") or {}).get("details") or {}).get("checks") or {}
+    return {"exit_multiple": exit_multiple_check(exit_m, comps_m),
+            "normal_profit": {"roic": syn.get("lasting_cost"),
+                              "margin": margin_vs_peers(margin.get("target"), margin.get("average"))}}
 
 
 def build_comparison(result_paths: list[str | Path], detail: dict | None = None,
@@ -54,7 +78,7 @@ def build_comparison(result_paths: list[str | Path], detail: dict | None = None,
     results = [json.loads(Path(p).read_text()) for p in result_paths]
     if not results:
         raise ValueError("no model results to reconcile")
-    results += [r for r in map(closest_comps, results) if r]
+    results += [row for r in results for row in comps_sets(r)]
 
     warnings: list[str] = []
     tickers = {r["ticker"] for r in results}
@@ -114,6 +138,7 @@ def build_comparison(result_paths: list[str | Path], detail: dict | None = None,
         ],
         "assumption_differences": differences,
         "deal": deal_sum,
+        "cross_checks": cross_checks(by_model),
         "warnings": warnings,
     }
     out["headlines"] = valuation_headlines(out, by_model)

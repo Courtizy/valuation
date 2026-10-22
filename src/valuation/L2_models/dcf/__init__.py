@@ -21,6 +21,15 @@ Steps
    debt (debt - cash not needed for operations), over diluted shares (TSM).
 5. Range: conservative / expected / aggressive from the two sensitivity
    moves, blended by the terminal value's share.
+6. Checks (core.checks): terminal growth against the economy, growth when the
+   terminal value starts, the terminal value's share of EV; a synthetic rating
+   from interest coverage; a one-at-a-time tornado of the main inputs; the
+   Foster seasonal model's next four quarters against year 1 of the forecast.
+
+Private firms (assumptions "private"): total beta = beta / sqrt(R-squared) for an
+owner with all their wealth in the business, a private-firm discount on equity
+(25% default), and optionally a finite life after the terminal year.
+Non-U.S. targets: cost_of_capital.country_risk_premium adds to the cost of equity.
 
 Modes
 -----
@@ -32,12 +41,16 @@ from __future__ import annotations
 
 from copy import deepcopy
 
+import math
+
+from valuation._core.checks import synthetic_rating, terminal_checks
 from valuation._core.cost_of_capital import discount_rates
 from valuation._core.dcf import scenario_range, sensitivity_grid, solve, value_firm
 from valuation._core.simulation import histogram, rng, sample, summarize
 from valuation._core.projection import base_from_detail, project
 from valuation._core.shares import treasury_stock_method
 from valuation._core.projection import statement_row
+from valuation._core.stats import foster
 from valuation.L2_models.base import ModelResult
 
 DEFAULT_NWC_RATIO = 0.20          # used when history can't give dNWC/dSales
@@ -88,6 +101,9 @@ DEFAULT_CREDIT_SPREAD = 0.015
 # and terminal growth. Runs where terminal WACC <= terminal growth + 0.5% are dropped.
 SIMULATION = {"runs": 2000, "seed": 7, "growth_spread": 0.03, "wacc_spread": 0.015, "terminal_growth_spread": 0.0075}
 DEFAULT_TERMINAL_GROWTH = 0.025
+DEFAULT_PRIVATE_DISCOUNT = 0.25
+# tornado: each input moved alone, low and high (the simulation's spreads for the first three)
+TORNADO = {"capex_step": 0.01, "margin_step": 0.02, "nwc_step": 0.10, "terminal_wacc_step": 0.005}
 DEFAULT_ERP = 0.05
 GROWTH_CAP = (-0.05, 0.20)
 
@@ -223,6 +239,26 @@ class DCF:
                 cc["beta"] = tb["value"]
                 sources["beta"] = f"{tb['value']:.2f}, {tb['basis']}"
                 warnings.append(f"beta not given and no market beta: using the {tb['basis']}, {tb['value']:.2f}")
+        # private firm: total beta for an owner with all their wealth in the business
+        priv = a.get("private") or {}
+        private = bool(priv) and priv.get("enabled", True)
+        total_beta = None
+        if private and priv.get("total_beta", True):
+            r2 = priv.get("r_squared")
+            if r2 is None:
+                r2 = (live.get("beta") or {}).get("r_squared")
+            if r2 and 0 < r2 <= 1:
+                k = 1 / math.sqrt(r2)
+                if beta_u is not None:
+                    beta_u *= k
+                else:
+                    cc["beta"] = _need(cc, "beta", "cost_of_capital") * k
+                total_beta = {"r_squared": r2, "multiplier": k}
+                sources["beta"] = sources.get("beta", "beta") + f"; total beta = beta / sqrt(R-squared {r2:.2f})"
+            else:
+                warnings.append("private firm: no R-squared for a total beta (set private.r_squared); the market beta is used")
+        if cc.get("country_risk_premium"):
+            sources["country_risk_premium"] = sources.get("country_risk_premium") or "assumptions (Damodaran's country risk premiums)"
         a["sources"] = sources
 
         # shares and bridge
@@ -257,7 +293,9 @@ class DCF:
                 # tiny or negative after buybacks, so book D/E would misstate leverage)
                 solve_de, current_de = True, 0.5
         rf = _need(cc, "risk_free", "cost_of_capital")
-        rd, rd_method = self.cost_of_debt(cc, v, debt, rf, warnings)
+        rating = synthetic_rating(v.get("operating_income_loss"), v.get("interest_expense") or v.get("interest_paid"),
+                                  cc.get("rating_spreads"))
+        rd, rd_method = self.cost_of_debt(cc, v, debt, rf, warnings, rating)
         rates = discount_rates(
             risk_free=rf,
             pre_tax_cost_of_debt=rd,
@@ -266,12 +304,14 @@ class DCF:
             equity_risk_premium=_need(cc, "equity_risk_premium", "cost_of_capital"),
             tax_rate=tax, current_debt_to_equity=current_de,
             target_debt_to_equity=cc.get("target_debt_to_equity"),
-            risk_free_terminal=cc.get("risk_free_terminal"))
-        rates.update(pre_tax_cost_of_debt=rd, cost_of_debt_method=rd_method)
+            risk_free_terminal=cc.get("risk_free_terminal"),
+            country_risk_premium=cc.get("country_risk_premium") or 0.0)
+        rates.update(pre_tax_cost_of_debt=rd, cost_of_debt_method=rd_method, synthetic_rating=rating, total_beta=total_beta)
         rate_args = dict(risk_free=rf, pre_tax_cost_of_debt=rd, beta=cc.get("beta"), beta_unlevered=beta_u,
                          equity_risk_premium=cc["equity_risk_premium"],
                          tax_rate=tax, target_debt_to_equity=cc.get("target_debt_to_equity"),
-                         risk_free_terminal=cc.get("risk_free_terminal"))
+                         risk_free_terminal=cc.get("risk_free_terminal"),
+                         country_risk_premium=cc.get("country_risk_premium") or 0.0)
 
         invested = (v.get("assets") or 0) - ((v.get("current_liabilities_total") or 0) - (v.get("short_term_debt") or 0))
         return {
@@ -284,20 +324,30 @@ class DCF:
             "mode": a.get("mode", "forecast"), "sensitivity": a.get("sensitivity", {}),
             "risk_free": rf, "default_case": bool(a.get("default_case")),
             "solve_de": solve_de, "rate_args": rate_args,
+            "private": {"discount": priv.get("discount", DEFAULT_PRIVATE_DISCOUNT), "life_years": priv.get("life_years"),
+                        "total_beta": total_beta} if private else None,
+            "equity_discount": priv.get("discount", DEFAULT_PRIVATE_DISCOUNT) if private else 0.0,
+            "life_years": priv.get("life_years") if private else None,
             "sources": a["sources"], "warnings": warnings,
         }
 
     @staticmethod
-    def cost_of_debt(cc: dict, v: dict, debt: float, risk_free: float, warnings: list[str]) -> tuple[float, str]:
+    def cost_of_debt(cc: dict, v: dict, debt: float, risk_free: float, warnings: list[str],
+                     rating: dict | None = None) -> tuple[float, str]:
         """Pre-tax cost of debt.
 
         1. An explicit cost_of_capital.pre_tax_cost_of_debt wins.
-        2. Otherwise interest expense / total debt from the base period (the usual method).
-        3. If that can't be measured, cost_of_capital.pre_tax_cost_of_debt_fallback
-           (e.g. yield to maturity on the company's bonds) is required.
+        2. cost_of_debt_method "rating": risk-free + the synthetic rating's spread.
+        3. Otherwise interest expense / total debt from the base period (the usual method).
+        4. If that can't be measured, cost_of_capital.pre_tax_cost_of_debt_fallback
+           (e.g. yield to maturity on the company's bonds), else the synthetic rating's spread.
         """
         if cc.get("pre_tax_cost_of_debt") is not None:
             return cc["pre_tax_cost_of_debt"], "given"
+        if cc.get("cost_of_debt_method") == "rating":
+            if not rating:
+                raise AssumptionError("cost_of_debt_method 'rating' needs operating income and interest expense")
+            return risk_free + rating["spread"], "synthetic_rating"
         interest = v.get("interest_expense")
         if interest is None:
             interest = v.get("interest_paid")
@@ -312,6 +362,10 @@ class DCF:
             # no debt: the debt weight is zero unless a target D/E says otherwise, so the rate barely matters
             warnings.append(f"no debt: cost of debt set to risk-free + {DEFAULT_CREDIT_SPREAD:.1%} (only used with a target D/E)")
             return risk_free + DEFAULT_CREDIT_SPREAD, "no_debt"
+        if fb is None and rating:
+            warnings.append(f"interest / debt not measurable; using risk-free + the {rating['rating']} spread "
+                            f"(interest coverage {rating['coverage']:.1f}x)")
+            return risk_free + rating["spread"], "synthetic_rating"
         if fb is None:
             raise AssumptionError("can't measure interest / debt from the filings: set "
                                   "cost_of_capital.pre_tax_cost_of_debt_fallback (e.g. bond yield to maturity)")
@@ -346,6 +400,54 @@ class DCF:
                 "terminal_value_share": tv_sorted[len(tv_sorted) // 2],
                 "histogram": histogram(per_share), "base_per_share": base_val["value_per_share"]}
 
+    def tornado(self, p: dict, base_val: dict, cfg: dict) -> dict:
+        """Each input moved alone to a low and a high value; bars sorted by the swing in value per share."""
+        c = {**SIMULATION, **TORNADO, **cfg}
+        r, rev = p["rates"], p["drivers"]["revenue"]
+        base = base_val["value_per_share"]
+        moves = [
+            ("growth", "Near-term revenue growth", rev["g0"], c["growth_spread"],
+             lambda x: self.value(p, g0=rev["g0"] + x)),
+            ("wacc", "WACC (both periods)", r["wacc"], c["wacc_spread"],
+             lambda x: self.value(p, wacc=r["wacc"] + x, wacc_terminal=r["wacc_terminal"] + x)),
+            ("terminal_growth", "Terminal growth", rev["g_terminal"], c["terminal_growth_spread"],
+             lambda x: self.value(p, g_terminal=rev["g_terminal"] + x)),
+            ("terminal_wacc", "Terminal WACC (long-run rates)", r["wacc_terminal"], c["terminal_wacc_step"],
+             lambda x: self.value(p, wacc_terminal=r["wacc_terminal"] + x)),
+            ("ebitda_margin", "EBITDA margin", base_val["projection"]["years"][0]["ebitda"]
+             / base_val["projection"]["years"][0]["revenue"], c["margin_step"], lambda x: self.value(p, tweak={"margin": x})),
+            ("capex", "CapEx / sales", p["capex"], c["capex_step"], lambda x: self.value(p, tweak={"capex": x})),
+            ("nwc", "dNWC / dSales", p["nwc"], c["nwc_step"], lambda x: self.value(p, tweak={"nwc": x})),
+        ]
+        bars = []
+        for key, label, at, step, f in moves:
+            try:
+                lo, hi = f(-step)["value_per_share"], f(step)["value_per_share"]
+            except ValueError:          # terminal WACC would fall below terminal growth
+                continue
+            bars.append({"key": key, "label": label, "base_input": at, "step": step,
+                         "low_input_value": lo, "high_input_value": hi, "swing": abs(hi - lo)})
+        bars.sort(key=lambda b: -b["swing"])
+        return {"base": base, "bars": bars}
+
+    @staticmethod
+    def seasonal_check(detail: dict, base_end: str, year1_revenue: float | None) -> dict | None:
+        """Foster model on quarterly revenue against the forecast's first year (the four quarters after
+        the base period): quarters already reported count as they are, the rest come from the model."""
+        quarters = (detail.get("views") or {}).get("quarterly") or []
+        after = [q["values"].get("revenue") for q in quarters if q["end"] > base_end][:4]
+        if None in after:
+            return None
+        f = foster([q["values"].get("revenue") for q in quarters], ahead=4 - len(after)) if len(after) < 4 else None
+        if len(after) < 4 and not f:
+            return None
+        f = f or {"forecast": []}
+        est = sum(after) + sum(f["forecast"])
+        f.update(reported_quarters=len(after), year1_estimate=est, year1_forecast=year1_revenue,
+                 gap=year1_revenue / est - 1 if year1_revenue and est else None)
+        f.pop("next_four_quarters", None)
+        return f
+
     def solve_debt_to_equity(self, p: dict, iterations: int = 40) -> float:
         """Fixed point: D/E = debt / equity value, where the equity value comes from a DCF at the
         WACC that D/E implies. Damped; equity value floored so a near-zero value can't explode D/E."""
@@ -364,8 +466,16 @@ class DCF:
         return p["rates"]["current_debt_to_equity"]
 
     def value(self, p: dict, g0: float | None = None, g_terminal: float | None = None,
-              wacc: float | None = None, wacc_terminal: float | None = None) -> dict:
+              wacc: float | None = None, wacc_terminal: float | None = None, tweak: dict | None = None) -> dict:
+        """`tweak` shifts other inputs for the tornado: {"capex": +x of sales, "margin": +x EBITDA
+        margin (COGS share down by x), "nwc": +x dNWC/dSales}."""
         d = deepcopy(p["drivers"])
+        tw = tweak or {}
+        capex, nwc = p["capex"] + tw.get("capex", 0.0), p["nwc"] + tw.get("nwc", 0.0)
+        if tw:
+            d["capex"]["value"] = capex
+            d["nwc"]["ratio"] = nwc
+            d["cogs"]["value"] -= tw.get("margin", 0.0)
         if g0 is not None:
             d["revenue"]["g0"] = g0
         if g_terminal is not None:
@@ -375,9 +485,10 @@ class DCF:
             proj, wacc=p["rates"]["wacc"] if wacc is None else wacc,
             wacc_terminal=p["rates"]["wacc_terminal"] if wacc_terminal is None else wacc_terminal,
             terminal_growth=d["revenue"]["g_terminal"], tax_rate=p["tax"],
-            capex_to_sales_terminal=p["capex"], nwc_to_sales_change=p["nwc"], net_debt=p["net_debt"],
+            capex_to_sales_terminal=capex, nwc_to_sales_change=nwc, net_debt=p["net_debt"],
             shares=p["shares"], tv_weight=p["tv_weight"], convention=p["convention"],
-            invested_capital_to_sales=p["ic_to_sales"])
+            invested_capital_to_sales=p["ic_to_sales"], life_years=p.get("life_years"),
+            equity_discount=p.get("equity_discount", 0.0))
         out["projection"] = proj
         return out
 
@@ -420,7 +531,15 @@ class DCF:
                 p, wacc=wacc, wacc_terminal=wacc_terminal, g_terminal=g_terminal)["value_per_share"],
             wacc=r["wacc"], wacc_terminal=r["wacc_terminal"], g_terminal=rev["g_terminal"])
 
+        tornado = self.tornado(p, base_val, assumptions.get("simulation") or {})
         years = base_val["projection"]["years"]
+        term = base_val["terminal"]
+        checks = terminal_checks(terminal_growth=rev["g_terminal"], last_year_growth=term.get("revenue_growth"),
+                                 tv_share=base_val["terminal_value_share"])
+        seasonal = self.seasonal_check(detail, p["period"]["end"], years[0]["revenue"])
+        if p["private"]:
+            notes.append(f"private firm: {p['private']['discount']:.0%} discount on equity value"
+                         + (f", terminal value over {p['private']['life_years']} years" if p["private"]["life_years"] else ""))
         growth_path = [y["revenue"] / (years[i - 1]["revenue"] if i else p["base"]["revenue"]) - 1
                        for i, y in enumerate(years)]
         assumptions_used = {
@@ -443,6 +562,7 @@ class DCF:
                 "target_debt_weight": r["debt_weight"],
                 "wacc": r["wacc"],
                 "wacc_terminal": r["wacc_terminal"],
+                "country_risk_premium": r.get("country_risk_premium") or 0.0,
             },
             "terminal": {"method": "gordon", "growth": rev["g_terminal"], "weight": p["tv_weight"]},
             "sources": p["sources"],
@@ -473,6 +593,11 @@ class DCF:
             "drivers": p["drivers"],
             "statements": [statement_row(y) for y in years],
             "sensitivity": grid,
+            "checks": checks,
+            "tornado": tornado,
+            "seasonal": seasonal,
+            "private": p["private"],
+            "synthetic_rating": r.get("synthetic_rating"),
         }
         return ModelResult(
             model=self.name,

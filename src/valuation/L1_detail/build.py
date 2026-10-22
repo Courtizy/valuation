@@ -24,7 +24,7 @@ from pathlib import Path
 from valuation._core.market import beta as _beta, wacc_estimate
 from valuation.lineage import lineage_block
 
-from .analysis import _one_year_apart, analyze_view, load_classification
+from .analysis import _one_year_apart, analyze_view, load_classification, value_added
 from .backfill import backfill_records
 from .headlines import company_headlines
 from .validate import validation, warnings_for
@@ -180,6 +180,18 @@ def build_detail(canonical: dict, as_of: str, raw_market: dict | None = None, pa
     doc["equity_risk_premium"] = ({"value": erp["value"], "year": erp.get("year"), "source": erp.get("source"),
                                    "basis": f"Damodaran implied ERP (FCFE), start of {erp['year'] + 1}"}
                                   if erp.get("value") is not None else None)
+    # EVA needs a cost of capital: the market WACC estimate, else an all-equity rate at the industry beta
+    w = (market or {}).get("wacc") or {}
+    if w.get("value") is not None:
+        wacc, basis = w["value"], "market WACC estimate"
+    elif (risk_free or {}).get("value") is not None and (doc["sector_beta"] or {}).get("value") is not None:
+        e = (doc["equity_risk_premium"] or {}).get("value") or 0.05
+        wacc = risk_free["value"] + doc["sector_beta"]["value"] * e
+        basis = f"risk-free + industry beta {doc['sector_beta']['value']:.2f} x ERP {e:.1%} (no market data)"
+    else:
+        wacc, basis = None, None
+    for view in doc["analysis"].values():
+        value_added(view, wacc, basis)
     doc["profile"] = build_profile(doc, load_rules(((pack or {}).get("l1") or {}).get("profile_rules")))
     doc["projection"] = trend_case(doc)
     doc["headlines"] = company_headlines(doc)

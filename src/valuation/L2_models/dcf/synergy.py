@@ -15,6 +15,14 @@ or the deal saved on this device):
         "cost_realized": 1.0,             # whole firm: share of the cost cut achieved
         "cost_pct": null}}                # whole firm: cut to COGS and SG&A; default annual_cost / (COGS + SG&A)
 
+Checks (Week 9 synergy review):
+  - synergies needed for a price: with deal.target_price (else deal.offer_price), the cost cut
+    (whole firm, at the given revenue growth add) or the annual synergies (just synergies)
+    that make the value equal that price
+  - lasting cost synergies: terminal ROIC against the terminal WACC suggests how much of the
+    cost synergies can last forever (core.checks.lasting_cost_share)
+  - this deal's synergies as a share of the target's sales, to set against prior deals'
+
 The math is in core.synergy. Ranges follow the course's sensitivity tables:
 whole firm moves % realized by 25 points and revenue synergy growth by half a
 point; just synergies moves the annual synergies by 25%.
@@ -23,6 +31,8 @@ from __future__ import annotations
 
 from copy import deepcopy
 
+from valuation._core.checks import lasting_cost_share
+from valuation._core.dcf import solve
 from valuation._core.synergy import cost_lines, just_synergies, synergy_drivers
 from valuation.L2_models.base import ModelResult
 
@@ -47,7 +57,24 @@ def deal_inputs(assumptions: dict) -> dict:
     syn["years_to_full"] = int(syn["years_to_full"])
     if syn["years_to_full"] < 1:
         raise DealError("deal: synergies.years_to_full must be at least 1")
-    return {"synergies": syn, "pre_announcement_price": deal.get("pre_announcement_price")}
+    return {"synergies": syn, "pre_announcement_price": deal.get("pre_announcement_price"),
+            "target_price": deal.get("target_price") or deal.get("offer_price")}
+
+
+def _try_solve(f, target, lo, hi):
+    try:
+        return solve(f, target, lo, hi)
+    except (ValueError, ZeroDivisionError):
+        return None
+
+
+def synergy_checks(p: dict, standalone_val: dict, syn: dict) -> dict:
+    t = standalone_val["terminal"]
+    total = syn["annual_cost"] * (1 + syn["revenue_pct_of_cost"])
+    return {"lasting_cost": lasting_cost_share(roic_terminal=t.get("roic"), wacc_terminal=p["rates"]["wacc_terminal"],
+                                               invested_capital=t.get("invested_capital"),
+                                               annual_cost=syn["annual_cost"], tax_rate=p["tax"]),
+            "synergies_to_sales": total / p["base"]["revenue"] if p["base"]["revenue"] else None}
 
 
 def _result(name, detail, p, low, mid, high, notes, details, assumptions_used) -> ModelResult:
@@ -82,15 +109,23 @@ class DCFSynergy:
             notes.append(f"cost cut {cost_pct:.2%} = annual cost synergies over the base year's "
                          f"{' + '.join(names[k] for k in lines)}")
 
-        def at(realized, growth_add, forever=syn["cost_forever"]):
+        def at(realized, growth_add, forever=syn["cost_forever"], cp=cost_pct):
             q = deepcopy(p)
-            q["drivers"] = synergy_drivers(p["drivers"], base, years, revenue_growth_add=growth_add, cost_pct=cost_pct,
+            q["drivers"] = synergy_drivers(p["drivers"], base, years, revenue_growth_add=growth_add, cost_pct=cp,
                                            realized=realized, cost_forever=forever, years_to_full=syn["years_to_full"])
             q["drivers"]["revenue"]["g_terminal"] = p["drivers"]["revenue"]["g_terminal"]
             return self.dcf.value(q)
 
         base_val = at(syn["cost_realized"], syn["revenue_growth_add"])
-        standalone = self.dcf.value(p)["value_per_share"]
+        standalone_val = self.dcf.value(p)
+        standalone = standalone_val["value_per_share"]
+        checks = synergy_checks(p, standalone_val, syn)
+        if deal["target_price"]:
+            need = _try_solve(lambda c: at(syn["cost_realized"], syn["revenue_growth_add"], cp=c)["value_per_share"],
+                              deal["target_price"], -0.5, 0.9)
+            checks["needed_for_price"] = {"price": deal["target_price"], "revenue_growth_add": syn["revenue_growth_add"],
+                                          "cost_pct": need,
+                                          "annual_cost": need * cost_base if need is not None else None}
         low = at(syn["cost_realized"] - REALIZED_STEP, syn["revenue_growth_add"] - REVENUE_STEP)["value_per_share"]
         high = at(syn["cost_realized"] + REALIZED_STEP, syn["revenue_growth_add"] + REVENUE_STEP)["value_per_share"]
         realized_axis = [syn["cost_realized"] + REALIZED_STEP * k for k in range(-3, 4)]
@@ -114,7 +149,7 @@ class DCFSynergy:
                            for y, cf in zip(proj, base_val["cash_flows"])],
             "range": {"conservative": low, "expected": base_val["value_per_share"], "aggressive": high,
                       "steps": {"realized": REALIZED_STEP, "revenue_growth_add": REVENUE_STEP}},
-            "sensitivity": grid, "sensitivity_forever": grid_forever,
+            "sensitivity": grid, "sensitivity_forever": grid_forever, "checks": checks,
         }
         used = {"synergies": syn, "cost_of_capital": {"wacc": p["rates"]["wacc"], "wacc_terminal": p["rates"]["wacc_terminal"]},
                 "forecast": {"tax_rate": p["tax"]}, "sources": p["sources"]}
@@ -154,6 +189,11 @@ class JustSynergy:
 
         v = at()
         low, high = at(1 - AMOUNT_STEP)["value_per_share"], at(1 + AMOUNT_STEP)["value_per_share"]
+        checks = synergy_checks(p, self.dcf.value(p), syn)
+        if deal["target_price"]:
+            k = _try_solve(lambda k: at(k)["value_per_share"], deal["target_price"], -5.0, 20.0)
+            checks["needed_for_price"] = {"price": deal["target_price"],
+                                          "annual_cost": syn["annual_cost"] * k if k is not None else None}
         amounts = [1 + AMOUNT_STEP * k for k in range(-3, 4)]
         forever_axis = [round(FOREVER_STEP * k, 4) for k in range(6)]
         t = p["years"] - 1
@@ -169,6 +209,7 @@ class JustSynergy:
                             "values": [[at(k, f)["value_per_share"] for k in amounts] for f in forever_axis]},
             "sensitivity_terminal": {"annual_cost": [syn["annual_cost"] * k for k in amounts], "terminal_year": term_axis,
                                      "values": [[at(k, terminal_year=y)["value_per_share"] for k in amounts] for y in term_axis]},
+            "checks": checks,
         }
         used = {"synergies": syn, "cost_of_capital": {"wacc": p["rates"]["wacc"], "wacc_terminal": p["rates"]["wacc_terminal"]},
                 "forecast": {"tax_rate": p["tax"]}, "sources": p["sources"]}

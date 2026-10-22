@@ -54,6 +54,22 @@ reported: details.blend (weighted, the model's value) and details.blend_equal. A
 fewer than 3 figures to compare is "unchecked" and gets a neutral 0.5; closeness below 0.5
 flags a peer "weak".
 
+A third set: the synthesized firm (course Case 3)
+-------------------------------------------------
+When no single peer looks like the target, build one: weights on the peers from both sets
+(non-negative, summing to 1) chosen so the weighted peer matches the target's rated figures as
+closely as possible, each gap measured in tolerances:
+    minimize  sum_k ((sum_i w_i x_ik - x_target,k) / tolerance_k)^2
+(projected gradient on the simplex). The weighted peer is then valued like the other sets and
+reported under details.synthesized, with how close the blend gets on each figure.
+
+EV/Sales against EV/EBITDA
+--------------------------
+EV/Sales = EV/EBITDA x EBITDA/Sales, so the two implied values differ only by the target's
+margin against the peers': implied by sales / implied by EBITDA ~ peer margin / target margin.
+EV/Sales is the better read when the target can reach the peers' margin on its own, or its
+current margin isn't representative of its future (details.sales_vs_ebitda).
+
 Range
 -----
 "auto" (default): Q1 / median / Q3 with four or more peers, else lowest /
@@ -252,6 +268,68 @@ def _value_set(live: list[dict], target: dict, wanted: list[str], weights: dict,
     return per_multiple, blend, blend_equal, method
 
 
+def _simplex(v: list[float]) -> list[float]:
+    """Euclidean projection onto {w >= 0, sum w = 1}."""
+    u = sorted(v, reverse=True)
+    css, rho, theta = 0.0, 0, 0.0
+    for i, x in enumerate(u, 1):
+        css += x
+        t = (css - 1) / i
+        if x - t > 0:
+            rho, theta = i, t
+    return [max(x - theta, 0.0) for x in v]
+
+
+def synthesize(target: dict, rows: list[dict], rules: dict | None = None, iterations: int = 4000) -> dict | None:
+    """Peer weights whose weighted figures come closest to the target's (in tolerances)."""
+    tol = {k: (rules or {}).get(k, t) for k, (_, _, t) in MATCH.items()}
+    keys = [k for k in MATCH if isinstance(target.get(k), (int, float))
+            and sum(isinstance(r.get(k), (int, float)) for r in rows) >= 3]
+    pool = [r for r in rows if all(isinstance(r.get(k), (int, float)) for k in keys)]
+    if len(keys) < 2 or len(pool) < 2:
+        return None
+    X = [[r[k] / tol[k] for k in keys] for r in pool]
+    t = [target[k] / tol[k] for k in keys]
+    n = len(pool)
+    lip = 2 * sum(x * x for row in X for x in row) or 1.0        # a safe step: 1 / Lipschitz bound
+    w = [1 / n] * n
+    for _ in range(iterations):
+        fit = [sum(w[i] * X[i][j] for i in range(n)) for j in range(len(keys))]
+        res = [f - y for f, y in zip(fit, t)]
+        grad = [2 * sum(X[i][j] * res[j] for j in range(len(keys))) for i in range(n)]
+        w = _simplex([wi - g / lip for wi, g in zip(w, grad)])
+    w = [x if x > 1e-4 else 0.0 for x in w]
+    s = sum(w)
+    w = [x / s for x in w]
+    figs = {}
+    for j, k in enumerate(keys):
+        blend = sum(w[i] * pool[i][k] for i in range(n))
+        gap = blend - target[k]
+        figs[k] = {"blend": blend, "target": target[k], "gap": gap,
+                   "light": "green" if abs(gap) <= tol[k] + 1e-12 else "yellow" if abs(gap) <= 2 * tol[k] + 1e-12 else "red"}
+    return {"weights": {pool[i]["ticker"]: w[i] for i in range(n)}, "figures": figs,
+            "fit": math.sqrt(sum(((f["gap"]) / tol[k]) ** 2 for k, f in figs.items()) / len(figs))}
+
+
+def sales_vs_ebitda(target: dict, rows: list[dict], w: dict[str, float]) -> dict | None:
+    pts = [(r["ebitda_margin"], w.get(r["ticker"], 0.0)) for r in rows if r.get("ebitda_margin")]
+    ws = sum(x for _, x in pts)
+    tm = target.get("ebitda_margin")
+    if not ws or not tm:
+        return None
+    pm = sum(m * x for m, x in pts) / ws
+    ratio = pm / tm
+    if abs(ratio - 1) <= 0.1:
+        note = "margins are similar, so EV/Sales and EV/EBITDA should agree"
+    elif ratio > 1:
+        note = ("peers earn a higher margin, so EV/Sales gives the higher value; it fits only if the target can "
+                "reach the peers' margin on its own")
+    else:
+        note = ("peers earn a lower margin, so EV/Sales gives the lower value; EV/EBITDA fits better unless the "
+                "target's margin is temporarily high")
+    return {"target_margin": tm, "peer_margin": pm, "ratio": ratio, "note": note}
+
+
 class Comps:
     name = "comps"
     needs_peers = True
@@ -329,9 +407,31 @@ class Comps:
                                                                     c_notes, weigh(c_live))
                     closest = {"peers": c_rows, "multiples": c_mult, "blend": c_blend, "blend_equal": c_equal,
                                "range_method": c_method, "peer_average": _peer_average(target_row, c_live, weigh(c_live)),
+                               "sales_vs_ebitda": sales_vs_ebitda(target_row, c_live, weigh(c_live)),
                                "notes": c_notes, "source": (a.get("sources") or {}).get("closest")}
                 except CompsError as e:
                     notes.append(f"closest-match set not valued: {e}")
+
+        synthesized = None
+        if a.get("synthesized", True):
+            pool = {r["ticker"]: r for r in live + ([r for r in closest["peers"] if not r.get("excluded")] if closest else [])}
+            syn = synthesize(target_row, list(pool.values()), rules)
+            if syn:
+                s_live = [pool[t] for t, x in syn["weights"].items() if x > 0]
+                s_notes: list[str] = []
+                try:
+                    s_mult, s_blend, s_equal, s_method = _value_set(s_live, target, wanted, weights, "min_max", s_notes,
+                                                                    {t: syn["weights"][t] for t in (r["ticker"] for r in s_live)})
+                    # the synthesized firm is one firm: its value is the weighted multiple applied to the target
+                    s_point = {mid: implied_price(mid, sum(syn["weights"][r["ticker"]] * r["multiples"][mid]
+                                                           for r in s_live if r["multiples"][mid])
+                                                  / (sum(syn["weights"][r["ticker"]] for r in s_live if r["multiples"][mid]) or 1),
+                                                  target) for mid in s_mult}
+                    synthesized = {**syn, "peers": [pool[t] for t in syn["weights"]], "multiples": s_mult,
+                                   "blend": s_blend, "blend_equal": s_equal, "range_method": s_method,
+                                   "implied_at_blend": s_point, "notes": s_notes}
+                except CompsError as e:
+                    notes.append(f"synthesized firm not valued: {e}")
 
         return ModelResult(
             model=self.name,
@@ -351,6 +451,8 @@ class Comps:
             details={"target": target_row, "peers": rows, "multiples": per_multiple, "blend": blend, "blend_equal": blend_equal,
                      "peer_weights": "equal" if equal else "closeness", "peer_average": _peer_average(target_row, live, weigh(live)),
                      "market_price": target.get("price"), "range_method": method, "closest": closest,
+                     "synthesized": synthesized,
+                     "sales_vs_ebitda": sales_vs_ebitda(target_row, live, weigh(live)),
                      "match_rules": {k: {"label": lbl, "tolerance": (a.get("match") or {}).get(k, tol)}
                                      for k, (lbl, kind, tol) in MATCH.items()}},
         )

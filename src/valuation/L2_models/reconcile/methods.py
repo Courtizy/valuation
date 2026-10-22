@@ -30,7 +30,7 @@ from __future__ import annotations
 
 METHOD_NAMES = {"dcf": "DCF (Standalone)", "dcf_synergy": "DCF with Synergies", "just_synergy": "Just Synergies",
                 "comps": "Public Comps: Sector Peers",
-                "comps_closest": "Public Comps: Closest Match", "precedents": "Precedent Transactions", "lbo": "LBO", "ipo": "IPO"}
+                "comps_closest": "Public Comps: Closest Match", "comps_synth": "Public Comps: Synthesized Firm", "precedents": "Precedent Transactions", "lbo": "LBO", "ipo": "IPO"}
 
 
 def _plan(profile: dict | None, context: str) -> tuple[list[tuple[str, str, float, str]], str]:
@@ -79,7 +79,9 @@ def _plan(profile: dict | None, context: str) -> tuple[list[tuple[str, str, floa
 
 # rows shown in every plan without weight unless an override gives them one
 ALWAYS_REFERENCE = {"comps_closest": "peers closest on growth, margin, leverage, size and beta from anywhere in the sector: "
-                                     "a check on the sector set"}
+                                     "a check on the sector set",
+                    "comps_synth": "peers weighted to match the target's growth, discount rate, margin and leverage "
+                                   "(the course's synthesized firm): a check on both sets"}
 
 
 def method_plan(profile: dict | None, available: list[str], overrides: dict | None = None) -> dict:

@@ -43,9 +43,17 @@ def percentile(sorted_values: list[float], p: float) -> float:
 
 
 def summarize(values: list[float], percentiles=(5, 10, 25, 50, 75, 90, 95)) -> dict[str, float]:
+    """Mean, percentiles, and how precisely the runs pin down the mean:
+    standard error = sd / sqrt(n), 95% interval = mean +/- 1.96 x standard error."""
     xs = sorted(values)
-    out = {"mean": sum(xs) / len(xs) if xs else math.nan}
+    n = len(xs)
+    mean = sum(xs) / n if xs else math.nan
+    out = {"mean": mean}
     out.update({f"p{p}": percentile(xs, p) for p in percentiles})
+    if n > 1:
+        sd = math.sqrt(sum((x - mean) ** 2 for x in xs) / (n - 1))
+        se = sd / math.sqrt(n)
+        out.update({"sd": sd, "standard_error": se, "mean_ci95": [mean - 1.96 * se, mean + 1.96 * se]})
     return out
 
 
