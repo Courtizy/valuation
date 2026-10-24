@@ -4,7 +4,7 @@
 
 [![Tests](https://github.com/Courtizy/valuation/actions/workflows/tests.yml/badge.svg)](https://github.com/Courtizy/valuation/actions/workflows/tests.yml)
 [![Pages](https://github.com/Courtizy/valuation/actions/workflows/pages.yml/badge.svg)](https://github.com/Courtizy/valuation/actions/workflows/pages.yml)
-![Status: In development](https://img.shields.io/badge/status-in%20development-4F46E5)
+![Status: Live](https://img.shields.io/badge/status-live-4F46E5)
 
 **[Open the model](https://courtizy.github.io/valuation/)** · **[Guided demo](https://courtizy.github.io/valuation/?demo=1)** · [Changelog](CHANGELOG.md)
 
