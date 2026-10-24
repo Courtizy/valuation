@@ -169,6 +169,22 @@ code, pre, .num { font-family: var(--font-mono); }
 .num { font-variant-numeric: tabular-nums; }
 .muted { color: var(--ink-secondary); }
 
+/* ---- Hub bar: first thing on every page except the hub itself ---- */
+.hub-bar { border-bottom: 1px solid var(--line); background: var(--page); font-size: 0.875rem; }
+.hub-bar__inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 16px;
+}
+.hub-bar a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: var(--ink); font-weight: 500; text-decoration: none; }
+.hub-bar a:hover { color: var(--accent, var(--ink)); }
+.hub-bar span { color: var(--ink-secondary); }
+
 /* ---- Header: icon tile, name, question, endorsement ---- */
 .brand-header {
   border-top: 6px solid var(--brand-fill);
