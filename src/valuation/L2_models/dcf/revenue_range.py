@@ -18,7 +18,13 @@ from functools import lru_cache
 from pathlib import Path
 from statistics import pstdev
 
-DEFAULT_PATH = Path(__file__).resolve().parents[4] / "configs" / "public" / "calibration" / "revenue_errors.json"
+CALIBRATION = Path(__file__).resolve().parents[4] / "configs" / "public" / "calibration"
+DEFAULT_PATH = CALIBRATION / "revenue_errors.json"
+SECTOR_PATH = CALIBRATION / "sector_growth.json"
+# SIC divisions, as the study groups them (finance has no sector leg: revenue means little for banks)
+DIVISIONS = [(1, 9, "Agriculture"), (10, 14, "Mining and energy"), (15, 17, "Construction"),
+             (20, 39, "Manufacturing"), (40, 49, "Transport, comms and utilities"), (50, 51, "Wholesale"),
+             (52, 59, "Retail"), (70, 89, "Services"), (90, 99, "Public administration")]
 HISTORY_YEARS = 6
 
 
@@ -30,6 +36,32 @@ def load_table(path: str | None = None) -> dict | None:
     t = json.loads(p.read_text())
     t["_horizons"] = sorted(int(h) for h in t["quantiles"])
     return t
+
+
+def division(sic) -> str | None:
+    s = str(sic or "")
+    if not s[:2].isdigit():
+        return None
+    two = int(s[:2])
+    return next((name for lo, hi, name in DIVISIONS if lo <= two <= hi), None)
+
+
+@lru_cache(maxsize=2)
+def _sectors(path: str | None = None) -> dict | None:
+    p = Path(path) if path else SECTOR_PATH
+    return json.loads(p.read_text()) if p.exists() else None
+
+
+def sector_growth(sic, year: int) -> dict | None:
+    """The study's median three-year revenue CAGR for the company's SIC division, latest year up to `year`."""
+    doc, d = _sectors(), division(sic)
+    rows = ((doc or {}).get("divisions") or {}).get(d) or {}
+    years = [int(y) for y in rows if int(y) <= year]
+    if not years:
+        return None
+    y = max(years)
+    return {"value": rows[str(y)]["median_cagr3"], "division": d, "year": y, "n": rows[str(y)]["n"],
+            "source": doc["source"]}
 
 
 def company_scale(detail: dict, table: dict) -> tuple[float, float]:

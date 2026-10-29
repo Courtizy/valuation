@@ -295,6 +295,37 @@ def test_unit_revenue_shock_changes_nothing(detail):
     assert m.value(p, revenue_shock=[1.0] * p["years"])["value_per_share"] == A(m.value(p)["value_per_share"])
 
 
+def test_blend_path_is_the_geometric_mean_then_the_fade():
+    from valuation._core.projection import revenue_path
+    d = {"method": "blend", "g0": 0.15, "g_terminal": 0.025, "fade_years": 10, "sector_growth": 0.03, "blend_years": 5}
+    blend, fade = revenue_path(d, 100.0, 10), revenue_path({**d, "method": "fade"}, 100.0, 10)
+    for t in range(5):
+        assert blend[t] == A((100.0 * fade[t] * 100.0 * 1.03 ** (t + 1)) ** (1 / 3))
+    for t in range(5, 10):
+        assert blend[t] / blend[t - 1] == A(fade[t] / fade[t - 1])          # then the fade's own rates
+    assert blend[4] < fade[4]                                                # a fast grower is pulled in
+    no_sector = revenue_path({**d, "sector_growth": None}, 100.0, 3)
+    assert no_sector[0] == A((100.0 * fade[0] ** 2) ** (1 / 3))
+
+
+def test_default_case_uses_the_blend_and_reports_momentum(detail):
+    from valuation.L2_models.dcf import default_assumptions
+    a = default_assumptions(detail)
+    assert a["forecast"]["revenue_method"] == "blend"
+    r = get_model("dcf").run(detail, {**a, "simulation": {"runs": 200}}).to_dict()
+    assert r["details"]["drivers"]["revenue"]["method"] == "blend"
+    assert r["details"]["momentum"]["value_per_share"] > 0
+    assert get_model("dcf").run(detail, assumptions()).to_dict()["details"]["momentum"] is None   # a dcf.json keeps the fade
+
+
+def test_sector_growth_lookup_takes_the_latest_year_up_to_the_base():
+    from valuation.L2_models.dcf.revenue_range import division, sector_growth
+    assert division("3571") == "Manufacturing" and division("6021") is None and division(None) is None
+    s = sector_growth("3571", 2019)
+    assert s["division"] == "Manufacturing" and s["year"] <= 2019 and s["n"] >= 5
+    assert sector_growth("3571", 1990) is None
+
+
 def test_core_simulation_helpers():
     from valuation._core.simulation import histogram, percentile, rng, sample, summarize
     xs = sample({"dist": "triangular", "low": 0, "mode": 1, "high": 2}, 1000, rng(3))
