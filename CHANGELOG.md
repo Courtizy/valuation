@@ -2,6 +2,9 @@
 
 All notable changes to the Valuation Model. Newest first.
 
+## [0.7.1] - 2026-10-29
+- Fix: a negative revenue fact in the latest year (bad tagging in a filing) made the profile's revenue CAGR a complex number and crashed stage classification. The stage is now "unknown" in that case. Found by the forecast-accuracy study in `Courtizy/research`.
+
 ## [0.7.0] - 2026-10-22
 - **LBO** (Deal → LBO): what a financial sponsor could pay. Debt sized by collateral and a 2.0x coverage target (senior, subordinated, mezzanine), interest on the average balance, a cash sweep, an exit at today's multiple plus a change. Shows the max price at the sponsor's target IRR (range at ±5 points), the IRR at the offer, sources and uses, the debt paydown and two sensitivity grids. Inputs on the Deal page or in `lbo.json`.
 - **Course checks on the DCF**, each with a status icon: terminal growth band (capped at 4.5%), steady-state growth when the terminal value starts, terminal value share of EV (50-75%), implied exit EV/EBITDA against the comps, and year-1 revenue against a seasonal (Foster) model of the quarters.

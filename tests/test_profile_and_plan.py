@@ -43,6 +43,14 @@ def test_profile_unknown_without_history():
     assert {t["label"] for t in p["traits"].values()} == {"unknown"}
 
 
+def test_profile_survives_a_negative_revenue_year():
+    # a mis-tagged negative revenue fact made the CAGR complex and crashed classify_stage
+    annual = [{"label": f"FY{y}", "end": f"{y}-12-31", "values": {"revenue": r, "operating_income_loss": 10.0}}
+              for y, r in ((2019, 100.0), (2020, 110.0), (2021, -5.0))]
+    p = build_profile({"views": {"annual": annual, "ttm": [], "quarterly": []}, "analysis": {"annual": [], "ttm": []}})
+    assert p["traits"]["stage"]["label"] == "unknown"
+
+
 def _profile(**labels):
     return {"traits": {k: {"label": v} for k, v in labels.items()}}
 
