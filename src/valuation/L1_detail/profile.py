@@ -123,7 +123,7 @@ def build_profile(detail: dict, rules: dict | None = None) -> dict:
 
     # ---- stage
     cagr = None
-    if len(annual) >= 2 and annual[0]["values"]["revenue"] > 0:
+    if len(annual) >= 2 and annual[0]["values"]["revenue"] > 0 and annual[-1]["values"]["revenue"] > 0:
         n = len(annual) - 1
         cagr = (annual[-1]["values"]["revenue"] / annual[0]["values"]["revenue"]) ** (1 / n) - 1
     margin = _div(v.get("operating_income_loss"), v.get("revenue"))
