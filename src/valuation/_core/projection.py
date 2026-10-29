@@ -82,6 +82,8 @@ def revenue_path(driver: dict, base_revenue: float, years: int) -> list[float]:
         if len(vals) < years:
             raise ProjectionError("revenue values shorter than the horizon")
         return vals[:years]
+    if m == "blend":
+        return _blend_path(driver, base_revenue, years)
     if m == "growth":
         rates = list(driver["rates"])
     elif m == "fade":
@@ -99,6 +101,22 @@ def revenue_path(driver: dict, base_revenue: float, years: int) -> list[float]:
     for g in rates[:years]:
         s = s * (1 + g)
         out.append(s)
+    return out
+
+
+def _blend_path(driver: dict, base_revenue: float, years: int) -> list[float]:
+    """Geometric mean of three forecasts for the first `blend_years`: no change, the fade, and the
+    sector's growth (the fade's own rate when no sector growth is given). After that, revenue grows
+    at the fade's rates, so the path still ends on terminal growth."""
+    fade = revenue_path({**driver, "method": "fade"}, base_revenue, years)
+    gs, n = driver.get("sector_growth"), int(driver.get("blend_years", 5))
+    out = []
+    for t in range(years):
+        if t < n:
+            sector = base_revenue * (1 + gs) ** (t + 1) if gs is not None else fade[t]
+            out.append((base_revenue * fade[t] * sector) ** (1 / 3))
+        else:
+            out.append(out[-1] * fade[t] / fade[t - 1])
     return out
 
 

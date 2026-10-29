@@ -100,13 +100,15 @@ When `configs/public/assumptions/{TICKER}/dcf.json` doesn't exist, the runner va
 | Input | Default |
 |---|---|
 | Mode | forecast |
-| Revenue growth | the company's historical revenue CAGR from the L1 trend case, capped to −5%…20%, fading to 2.5% over 10 years |
+| Revenue growth | **blend** for years 1–5: the geometric mean of no change, the fade (the company's historical revenue CAGR from the L1 trend case, capped to −5%…20%, fading to 2.5% over 10 years) and its sector's growth (median three-year CAGR of large filers in its SIC division, `configs/public/calibration/sector_growth.json`; the fade again when there's none). Years 6–10 grow at the fade's rates. Out of sample the blend beat no change by 7% three years out and 12% five years out; the fade alone did not, and it over-forecast the fastest growers by about 23% |
 | Equity risk premium | Damodaran's implied ERP (FCFE) for the start of the year (company detail `equity_risk_premium`), else 5% |
 | Risk-free | FRED 10-year Treasury on or before as_of (company detail `risk_free`) |
 | Beta | market beta when prices are allowed; else Damodaran's US unlevered industry beta (cash-corrected), relevered at the company's own D/E (`discount_rates(beta_unlevered=...)`); else the sector's illustrative beta |
 | Cost of debt | interest / debt from the filings, else risk-free + 1.5% |
 | Shares | newest filed share count (cover page) |
 | Costs, capex, tax, working capital | from the filings, as in any DCF |
+
+`details.momentum` keeps the fade-only value per share (the company's own growth carried forward) beside the blended base case. A `dcf.json` opts in with `"forecast": {"revenue_method": "blend", "sector_growth": 0.03}`.
 
 The result carries `default_case: true`, its first note says so, and the site tags the DCF card **Default Assumptions**. Adding a `dcf.json` always replaces the default case.
 

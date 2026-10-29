@@ -52,7 +52,7 @@ from valuation._core.shares import treasury_stock_method
 from valuation._core.projection import statement_row
 from valuation._core.stats import foster
 from valuation.L2_models.base import ModelResult
-from valuation.L2_models.dcf.revenue_range import band, company_scale, load_table, multipliers
+from valuation.L2_models.dcf.revenue_range import band, company_scale, load_table, multipliers, sector_growth
 
 DEFAULT_NWC_RATIO = 0.20          # used when history can't give dNWC/dSales
 NWC_HISTORY_YEARS = 4
@@ -121,19 +121,27 @@ def default_assumptions(detail: dict) -> dict:
     trend = ((detail or {}).get("projection") or {}).get("assumptions") or {}
     g0 = trend.get("revenue_growth_start")
     g0 = 0.05 if g0 is None else min(max(g0, GROWTH_CAP[0]), GROWTH_CAP[1])
+    annual = ((detail or {}).get("views") or {}).get("annual") or []
+    base_year = int(annual[-1]["end"][:4]) if annual else 9999
+    sector = sector_growth(((detail or {}).get("entity") or {}).get("sic"), base_year)
     erp_doc = (detail or {}).get("equity_risk_premium") or {}
     erp = erp_doc.get("value") if erp_doc.get("value") is not None else DEFAULT_ERP
     erp_source = f"{erp:.2%}, {erp_doc['basis']}" if erp_doc.get("value") is not None else f"default case: {DEFAULT_ERP:.0%}"
     return {
         "default_case": True, "mode": "forecast", "base_period": "annual",
         "market": {"price": None, "basic_shares": None, "options": []},
-        "forecast": {"years_to_terminal": 10, "revenue_growth": g0, "terminal_growth": DEFAULT_TERMINAL_GROWTH},
+        "forecast": {"years_to_terminal": 10, "revenue_growth": g0, "terminal_growth": DEFAULT_TERMINAL_GROWTH,
+                     "revenue_method": "blend", "sector_growth": sector["value"] if sector else None},
         "cost_of_capital": {"risk_free": None, "risk_free_terminal": None, "equity_risk_premium": erp, "beta": None,
                             "pre_tax_cost_of_debt": None, "pre_tax_cost_of_debt_fallback": None},
         "bridge": {"operating_cash_pct": 0.5, "include_longterm_investments": False},
         "terminal": {"method": "gordon", "weight": 1.0},
         "sources": {
-            "revenue_growth": f"default case: historical revenue CAGR {g0:.1%} (capped {GROWTH_CAP[0]:.0%} to {GROWTH_CAP[1]:.0%}), fading over 10 years",
+            "revenue_growth": (f"default case: years 1-5 blend no change, the company's CAGR {g0:.1%} (capped "
+                               f"{GROWTH_CAP[0]:.0%} to {GROWTH_CAP[1]:.0%}) fading over 10 years, and "
+                               + (f"its sector's {sector['value']:.1%} ({sector['division']}, median of {sector['n']} large filers, {sector['year']})"
+                                  if sector else "the fade again (no sector growth for this SIC)")
+                               + "; then the fade's rates"),
             "terminal_growth": f"default case: {DEFAULT_TERMINAL_GROWTH:.1%}",
             "equity_risk_premium": erp_source,
             "pre_tax_cost_of_debt": "interest expense / total debt from the filings, else risk-free + 1.5%",
@@ -188,6 +196,8 @@ class DCF:
             raise AssumptionError("forecast.years_to_terminal must be at least 1")
         revenue_driver = {"method": "fade", "g0": fc.get("revenue_growth", 0.0),
                           "g_terminal": _need(fc, "terminal_growth", "forecast"), "fade_years": n}
+        if fc.get("revenue_method") == "blend":
+            revenue_driver.update(method="blend", sector_growth=fc.get("sector_growth"), blend_years=5)
         if fc.get("growth_adjust") is not None:
             revenue_driver["adjust"] = fc["growth_adjust"]
         drivers = {
@@ -546,6 +556,14 @@ class DCF:
             wacc_step=s.get("wacc_step", 0.01), terminal_growth_step=s.get("terminal_growth_step", 0.005),
             terminal_wacc_step=s.get("terminal_wacc_step", 0.005))
         sim = self.simulate(p, base_val, assumptions.get("simulation") or {})
+        momentum = None
+        if rev["method"] == "blend":     # the company's own growth, faded, with no pull toward flat or the sector
+            fade_p = {**p, "drivers": {**p["drivers"], "revenue": {**rev, "method": "fade"}}}
+            momentum = {"value_per_share": self.value(fade_p)["value_per_share"],
+                        "sector_growth": rev.get("sector_growth"),
+                        "note": "fade only: the company's own growth carried forward, which the study found over-forecasts fast growers"}
+            notes.append("base case blends no change, the company's faded growth and its sector's growth for years 1-5 "
+                         f"(momentum view, fade only: {momentum['value_per_share']:.2f} a share)")
         notes.append(f"range = {sim['runs_used']:,} simulated runs (seed {sim['seed']}): Bear / Bull are the 10th / 90th "
                      "percentiles, Base is the deterministic case; the course scenarios are kept under details.scenarios")
         grid = sensitivity_grid(
@@ -608,6 +626,7 @@ class DCF:
             "terminal_value_share": base_val["terminal_value_share"],
             "scenarios": scen,
             "simulation": sim,
+            "momentum": momentum,
             "projection": [{"year": y["year"], "revenue": y["revenue"], "ebitda": y["ebitda"], "ebit": y["ebit"],
                             "capex": y["capex"], "change_in_nwc": y["free_cash_flow"]["change_in_nwc"],
                             "fcf": y["free_cash_flow"]["fcf"], "pv": cf["pv"]}

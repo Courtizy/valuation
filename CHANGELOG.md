@@ -2,6 +2,9 @@
 
 All notable changes to the Valuation Model. Newest first.
 
+## [0.9.0] - 2026-10-29
+- **Blended base case.** The default DCF's revenue for years 1–5 is the geometric mean of no change, the company's faded growth and its sector's growth (`configs/public/calibration/sector_growth.json`), then the fade's rates. Out of sample it beat no change by 7% three years out and 12% five years out, where the fade alone did not, and it removes the fade's over-forecast of fast growers. The fade-only value stays in `details.momentum`. The calibrated error table is re-centered on the blend.
+
 ## [0.8.0] - 2026-10-29
 - **Calibrated revenue range.** The DCF simulation draws revenue paths from the model's own past misses (`configs/public/calibration/revenue_errors.json`, from the forecast-accuracy study in `Courtizy/research`) instead of a ±3-point wobble in near-term growth. The old 80% range held about 14% of actual outcomes; a calibrated 90% range held 88–93% out of sample. Value ranges are wider as a result. `simulation.middle_80` and `simulation.revenue_range` are new; `"revenue_errors": false` restores the old draw.
 
