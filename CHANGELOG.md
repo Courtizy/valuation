@@ -2,7 +2,7 @@
 
 All notable changes to the Valuation Model. Newest first.
 
-## [Unreleased]
+## [0.7.1] - 2026-10-29
 - Fix: a negative revenue fact in the latest year (bad tagging in a filing) made the profile's revenue CAGR a complex number and crashed stage classification. The stage is now "unknown" in that case. Found by the forecast-accuracy study in `Courtizy/research`.
 
 ## [0.7.0] - 2026-10-22
