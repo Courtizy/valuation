@@ -694,6 +694,12 @@ function whyTheyDiffer(methods) {
   return parts.length ? `<p class="why"><b>Why they differ.</b> ${parts.join(". ")}.</p>` : "";
 }
 
+/** Calibrated revenue range three years out (80%), as a share of the stated case. */
+function revenueRange(rr) {
+  const b = rr?.bands?.["80"]?.find((x) => x.year === 3);
+  return `<dt>Revenue, 3 yrs out (80%)</dt><dd class="num">${b ? `${pct(b.low - 1)} to +${pct(b.high - 1)}` : NA}</dd>`;
+}
+
 /** Left column: company, key assumptions (simulated ranges), run info and downloads. */
 function renderSide() {
   const side = $("val-side");
@@ -704,7 +710,7 @@ function renderSide() {
     <div class="side-block"><div class="eyebrow">Company</div>
       <b>${esc(co.name)}</b><div class="muted small">${esc(co.ticker)}${e.sic ? ` · SIC ${esc(e.sic)}` : ""} · ${co.demo ? "synthetic" : "public filings"}</div></div>
     <div class="side-block"><div class="eyebrow">Key Assumptions</div>
-      ${s ? `<dl class="kv"><dt>Near-term growth</dt><dd class="num">${rng(s.inputs.growth, pct)}</dd>
+      ${s ? `<dl class="kv">${s.inputs.revenue ? revenueRange(state.dcf.details.simulation.revenue_range) : `<dt>Near-term growth</dt><dd class="num">${rng(s.inputs.growth, pct)}</dd>`}
         <dt>Discount rate</dt><dd class="num">${rng(s.inputs.wacc, pct)}</dd>
         <dt>Terminal growth</dt><dd class="num">${rng(s.inputs.terminal_growth, pct)}</dd></dl>`
         : '<p class="muted small">No DCF simulation for this run.</p>'}</div>
@@ -742,7 +748,7 @@ function renderSpread() {
       <span class="muted small">DCF value per share, share of ${sim.runs_used.toLocaleString()} runs</span></div>
     <div id="spread-chart"></div>
     <p class="legend-note">Solid bars = middle 90% (${price(ps.p5)}–${price(ps.p95)}); faded = tails.${h.below + h.above ? ` ${h.below + h.above} extreme runs fall outside the axis.` : ""}
-      Draws: near-term growth, discount rate and terminal growth, each triangular around the stated case.</p></div>`;
+      ${sim.revenue_range ? "Draws: revenue paths from the model's past misses on SEC filings (calibrated by years out and scaled to this company's revenue volatility), discount rate and terminal growth triangular around the stated case." : "Draws: near-term growth, discount rate and terminal growth, each triangular around the stated case."}</p></div>`;
   histogramChart($("spread-chart"), { counts: h.counts, edges: h.edges, band: [ps.p5, ps.p95], format: price, label: "Spread of simulated outcomes",
     markers: [{ label: "Median", value: ps.p50 }, ...(fin(px) ? [{ label: "Price", value: px, dash: true }] : [])] });
 }
