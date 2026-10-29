@@ -1,70 +1,194 @@
 # Valuation Model
 
-*What is the business worth, and how sure are we?* Part of **[Decision Models](https://courtizy.github.io/)** by Jason C. Courtoy.
+*What is the business worth, and how sure are we?* Part of **[Decision Models](https://courtizy.github.io/)**.
 
 [![Tests](https://github.com/Courtizy/valuation/actions/workflows/tests.yml/badge.svg)](https://github.com/Courtizy/valuation/actions/workflows/tests.yml)
 [![Pages](https://github.com/Courtizy/valuation/actions/workflows/pages.yml/badge.svg)](https://github.com/Courtizy/valuation/actions/workflows/pages.yml)
 ![Status: Live](https://img.shields.io/badge/status-live-4F46E5)
 
-**[Open the model](https://courtizy.github.io/valuation/)** · **[Guided demo](https://courtizy.github.io/valuation/?demo=1)** · [Changelog](CHANGELOG.md)
+**[Open the model](https://courtizy.github.io/valuation/)** · **[Guided demo](https://courtizy.github.io/valuation/?demo=1)** · [Architecture](docs/architecture.md) · [Changelog](CHANGELOG.md)
 
-The Valuation Model turns a company's SEC filings into normalized statements, ratio analysis, projections and a simulated value range, then compares methods side by side. Real companies and sector screens are built from public SEC data by a GitHub Actions pipeline. A synthetic demo company with a guided tour shows every feature. It is analysis of method, not investment advice.
+The Valuation Model values a public company from its SEC filings and shows how far the answer can move. It rebuilds the financial statements as they stood on a chosen date, analyzes them, runs a simulated DCF, prices the company against peers and past deals, and lines every method up on one football field that explains why they differ. An automated pipeline builds the published companies from SEC data, and the same Python engine runs in your browser on GitHub Pages. It is analysis of method, not investment advice.
 
-## What it does
+![Valuation view: the engine's one-line answer, value against price, and the football field of methods with their weights](docs/images/valuation.png)
 
-- **Reads SEC filings directly.** XBRL company facts and EDGAR industry codes, with a declared User-Agent, within the SEC's fair-access limits.
-- **Normalizes point in time.** Only facts filed on or before the as-of date count. One tag is chosen per period, restatements are flagged, and the balance sheet, gross profit and net income checks run on every build.
-- **Analyzes statements three ways.** Standard ratios, managerial (working capital) ratios and reformulated operating/financing ratios, with definitions taken from MBA course workbooks.
-- **Values with a simulated DCF.** 2,000 seeded runs over near-term growth, WACC and terminal growth. Bear and Bull are the 10th and 90th percentiles.
-- **Compares methods.** Public comparables, plus reconciliation into a football field that explains why the methods differ.
-- **Runs in your browser.** Anyone can value a company, screen a sector, pick comps peers and run comps from the site with no token. The same Python engine runs in the browser through Pyodide, and the results are saved on that device only. One pull builds the company, the DCF and comps against six peers picked automatically from its sector. SEC filings are the source; Yahoo fills gaps and cross-checks them.
-- **Screens sectors.** GICS-style groups of SEC industry codes, with benchmarks and a peer picker that saves comps peer lists back to the repo.
+## At a glance
 
-## Status
+| | |
+|---|---|
+| **Answer it gives** | A value range per share from several methods, the weight each one carries and why, and what moves the answer most |
+| **Data** | SEC EDGAR filings (XBRL company facts), FRED Treasury yields, Damodaran's published industry betas and equity risk premium |
+| **Engine** | Python, standard library only at runtime, seeded and reproducible |
+| **Pipeline** | Four GitHub Actions workflows: tests on every push, a weekly refresh of about 40 companies, on-demand runs, and the Pages deploy |
+| **Tests** | About 280 tests across 26 files, covering every layer on offline fixtures, plus architecture rules enforced as tests |
+| **Site** | Static GitHub Pages app; runs any SEC filer in the browser through Pyodide; synthetic demo with a guided tour |
 
-| Layer | Part | Status |
+## What you can do with it
+
+- **Read a company's financials as of any date.** Only facts filed on or before the as-of date count, so a past valuation can be rerun exactly as it would have looked then. Statements come in annual, quarterly and trailing-twelve-month views, with data checks against a second source.
+- **Analyze the statements three ways.** Standard ratios (DuPont, leverage, Altman Z), working-capital ratios (operating and cash conversion cycles), and reformulated operating vs. financing ratios (RNOA, ROCE, economic value added). Each framework shows where the company sits among its sector's quartiles.
+- **Value it with a simulated DCF.** A three-statement projection feeds a firm DCF that is rerun 2,000 times. You see the spread of outcomes, a sensitivity grid, a tornado of the inputs that matter most, and checks on the terminal value.
+- **Price it against public peers.** Comps run on sector peers picked by size and on the closest match on fundamentals, with each peer rated on how close it is.
+- **Look at it as a deal.** Enter synergies and an offer. The model values the target with synergies, prices it against an uploaded list of prior deals, and compares the standalone range with the offer range.
+- **Compare everything on one football field.** Methods are weighted by the company's profile, and every weight comes with a reason.
+- **Run any company yourself.** The Run page values any SEC filer in your browser with no account or token. Results stay on your device.
+
+<table>
+<tr>
+<td width="50%"><img src="docs/images/company-detail.png" alt="Company Detail: KPI tiles, revenue history with projection band, and returns on operating assets against WACC"></td>
+<td width="50%"><img src="docs/images/deal.png" alt="Deal view: standalone value, offer range, initial offer and share of synergies paid, over a football field of standalone and transaction methods"></td>
+</tr>
+<tr>
+<td><sub>Company Detail: statements, ratios and sector benchmarks, each chart titled with what it shows.</sub></td>
+<td><sub>Deal: standalone value against the offer range, with synergy and precedent methods.</sub></td>
+</tr>
+</table>
+
+## Architecture
+
+The engine is four layers. Each layer reads and writes JSON files only, so every step can run, be tested and be inspected on its own.
+
+```mermaid
+flowchart LR
+  subgraph Sources
+    SEC[SEC EDGAR]
+    FRED[FRED]
+    DAM[Damodaran]
+  end
+  Sources --> L0[L0 Ingest<br/>one adapter per source]
+  L0 -->|raw_filing.json| L1[L1 Company detail<br/>normalize · periods · ratios · profile]
+  L1 -->|company_detail.json| M
+  subgraph M[L2 Models]
+    DCF[DCF, simulated]
+    COMPS[Public comps]
+    SYN[Synergies]
+    PREC[Precedents]
+    LBO[LBO, in development]
+  end
+  M -->|model_results/*.json| REC[Reconcile]
+  REC -->|comparison.json| L3[L3 Site<br/>GitHub Pages]
+```
+
+| Layer | Does | Writes |
 |---|---|---|
-| L0 Ingest | SEC company facts, sector frames, risk-free rate, market data adapter | Built |
-| L1 Company detail | Normalize, annual / quarterly / TTM views, ratios, company profile, sector screens | Built |
-| L2 Models | DCF (simulated), public comps, reconcile | Built |
-| L2 Models | Whole firm DCF with synergies, just synergies, precedent transactions (uploaded deal list), standalone vs. offer summary | Built, course parity |
-| L2 Models | LBO, IPO | Scaffolded, not built |
-| L2 Models | Excel export, memo PDF, back-testing | Planned |
-| L3 App | Static site on GitHub Pages (Overview, Results, Method), demo and tour | Built |
-| L3 App | Run in this browser (Pyodide, Cloudflare Worker proxy, saved on the device) | Built; the proxy needs deploying |
+| **L0 Ingest** | Fetches and caches source data faithfully, with no interpretation | `raw_filing.json`, `raw_market.json` |
+| **L1 Company detail** | Normalizes point in time, then builds period views, ratios, the company profile and sector screens | `canonical_statements.json`, `company_detail.json` |
+| **L2 Models** | Each model forecasts, discounts and simulates on its own; reconcile reads only their result files | `model_results/{model}.json`, `comparison.json` |
+| **L3 App** | Static site that renders the JSON and holds no model logic | `site/` |
 
-The public site runs in **showcase mode**: it publishes SEC-derived figures only, with no licensed market prices. Price-dependent outputs (market multiples, upside to price) appear in the demo and in private runs.
+Design rules, most of them enforced by tests:
 
-## Validation
+- **Lineage on every file.** Each file from L1 on records `schema_version`, `as_of` and the SHA-256 of its inputs. Any run can be reproduced, and reconcile warns when two models used different versions of an input.
+- **Models are isolated.** A model imports only `L2_models.base` and `_core/`, never another model. Reconcile imports no model at all.
+- **Shared math lives in `_core/`** (projection, cost of capital, DCF, simulation, share dilution, deals, synergies). It imports nothing else from the package, so it can move into a shared library unchanged.
+- **The site never does math.** Every number on the page comes from the engine. In the browser the same Python package runs under Pyodide in a web worker, and a small Cloudflare Worker relays requests to sources that block browser calls.
+- **One engine, two front doors.** The public door publishes SEC, FRED and Damodaran data only. The private door (`app/run_private.py`) runs the same engine locally with market prices, writing only to a gitignored folder.
+
+## Pipeline
+
+```mermaid
+flowchart LR
+  PUSH[Push or PR] --> T[Tests<br/>pytest on Python 3.12]
+  CRON[Every Monday] --> R[Refresh<br/>~40 companies, 2 sectors]
+  DISPATCH[On demand] --> P[Pipeline<br/>one ticker or sector]
+  R --> D[(site-data branch)]
+  P --> D
+  PUSH --> PG[Pages<br/>export site and deploy]
+  D --> PG
+```
+
+- **Tests** run the full suite on every push and pull request.
+- **Refresh** builds every company and sector in [`configs/public/universe.json`](configs/public/universe.json) each week, so new filings show up without anyone running anything.
+- **Pipeline** builds one ticker or sector on demand, with the as-of date, models and stopping layer as inputs:
+
+  ```bash
+  gh workflow run pipeline.yml -f ticker=DELL -f models=dcf,comps -f stop_after=L2
+  gh workflow run pipeline.yml -f sector=sector:technology
+  ```
+
+- **Pages** rebuilds the demo from the current code, exports the site and deploys it on each push to `main` and after each successful Refresh or Pipeline run.
+- Published data lives on the `site-data` branch, replaced by a single commit on each save, so `main` stays code only and its history doesn't grow.
+- The runner reuses a peer's company detail when it already exists for the same as-of date, stops at the first failed step and marks the rest skipped, and has a `--dry-run` that prints the plan.
+
+## How the model is designed
+
+The central idea is that **no single method decides the value.** Each method owns its forecast, cost of capital and range. Reconciliation then decides how much each one counts, based on what kind of company it is.
+
+### Company detail
+
+- **Normalization.** Each XBRL fact maps to a canonical line item through a concept registry with ranked tags. One tag wins per period, restatements are flagged, and the balance sheet, gross profit and net income identities must tie on every build.
+- **Periods.** Quarterly is the base. Q4 is full year less the nine-month year to date, annual comes from 10-K values, and TTM sums four quarters. Balance-sheet items are never summed.
+- **Company profile.** Four measured traits (growth stage, cash-flow predictability, asset intensity, capital structure), each with the rule that fired. These set the method weights later.
+
+### Simulated DCF
+
+- **Projection.** Revenue grows at a near-term rate that fades to terminal growth. Costs hold their ratios to sales, and working capital moves with sales at a ratio measured from the company's own history.
+- **Discount rate.** Cost of equity from the 10-year Treasury, a beta unlevered at today's debt-to-equity and relevered at the target, and an equity risk premium. Options cover country risk, a synthetic credit rating from interest coverage, and private firms.
+- **Value.** Free cash flow discounted at WACC, a growing-perpetuity terminal value, an enterprise-to-equity bridge, and diluted shares by the treasury stock method.
+- **Simulation.** 2,000 seeded runs draw near-term growth, WACC and terminal growth from triangular distributions around the stated case. Bear and Bull are the 10th and 90th percentiles; the base case stays deterministic.
+- **Implied mode.** Solves for the growth rate today's price implies.
+
+### Public comparables
+
+- EV/Sales, EV/EBITDA and P/E from each peer's own filings, positive multiples only, giving low, median and high implied prices.
+- Each peer is rated against the target on the drivers a multiple stands in for (growth, discount rate, margin, leverage) and weighted by closeness. A third, synthesized peer set reweights peers to match the target.
+
+### Deal analysis
+
+- **Synergies.** Two views: the whole firm valued with synergies built into its growth and cost ratios, and the synergies valued on their own and added to the pre-announcement price. Both phase savings in, charge one-time integration costs, and test how much of the savings can last.
+- **Precedent transactions.** Upload a deal list as CSV or paste it from Excel; a standard deal-database export works as is. The model computes premiums and deal multiples, implied values from the closest deals, central tendency across all of them, and a premium regression.
+- **Offer summary.** Standalone range against offer range, with editable weights, the target's bargaining power, the premium and the share of synergies paid away.
+- **LBO (in development).** What a financial sponsor could pay at a target return, with debt sized by collateral and interest coverage. It is scaffolded in the engine and on the Deal page and is still being built out and checked.
+
+### Reconciliation
+
+| Company profile | Primary method | Cross-check |
+|---|---|---|
+| Financial-style balance sheet | Comps (P/B, P/E) | DCF as reference |
+| High growth or low predictability | Comps 60% | DCF 40% |
+| Mature with predictable cash flow | DCF 60% | Comps 40% |
+| Declining | DCF 50% | Comps 50% |
+
+Methods that didn't run drop out and the rest renormalize. Precedents and synergy values carry weight in the acquisition view and are reference rows for a standalone value. A per-company file can override the weights.
+
+## Testing and validation
 
 | Check | Where it runs |
 |---|---|
-| Unit and integration tests (L0 to L3, offline fixtures) | Every push, in CI |
+| Unit and integration tests for each layer, on recorded SEC, FRED, Damodaran and market fixtures (no network) | Every push and PR |
+| End-to-end runner tests, from ingest through reconcile | Every push and PR |
+| Model isolation and `_core/` independence, checked by import tests | Every push and PR |
+| Seeded, reproducible simulation | Every push and PR |
 | Statement identities tie on every normalization | Every pipeline run |
-| Models never import each other; `_core` imports nothing else from the app | Enforced by tests in CI |
-| Simulation is seeded and reproducible | Tests in CI |
-| Parity with MBA course workbooks | Locally, when the workbooks are present (below) |
+| Parity with reference spreadsheet models, to the cent | Locally (the workbooks aren't in the repo, so these 15 tests skip in CI) |
 
-### Course workbook parity
+<details>
+<summary>Running the parity tests</summary>
 
-The course workbooks are not in the repo. `tests/test_course_parity.py` reads them at test time and checks that the Python code reproduces their numbers. Without them those tests skip, which is why CI shows skips.
-
-| Course | Workbook (key in `course_cases.local.json`) | What it checks |
-|---|---|---|
-| MBA 772 | `projection_bs` | Projected balance sheet, managerial balance sheet, cash ties |
-| MBA 772 | `ratios_operating_financial` | Liquidity, working-capital and turnover ratios |
-| MBA 772 | `mbs_fcf` | NOPLAT, change in working capital, capex and free cash flow |
-| MBA 733 | `reformulated_ratios` | RNOA, ROCE, NOAT, FLEV and FCF on beginning and average balances |
-| MBA 789 | `firm_dcf` (one entry per case) | Projection rows, discount rates, EV-to-equity bridge, scenario range, implied growth, public comps |
-
-To run them, copy `tests/course_cases.example.json` to `tests/course_cases.local.json` (gitignored), point each key at your workbook, then:
+Copy `tests/course_cases.example.json` to `tests/course_cases.local.json` (gitignored), point each key at a workbook, then:
 
 ```bash
 pip install -e ".[dev,export]"
 VALUATION_COURSE_DIR=/path/to/workbooks pytest tests/test_course_parity.py
 ```
 
-Legacy `.xls` files are converted with LibreOffice if it is installed.
+</details>
+
+## Data and licensing
+
+Only government data and Damodaran's openly published datasets reach the public site. Third-party market data is used in private runs or in the visitor's own browser, and is never committed or published.
+
+| Source | Provides | Public site | Your browser / private runs |
+|---|---|---|---|
+| [SEC EDGAR](https://www.sec.gov/search-filings/edgar-application-programming-interfaces) | Statements, share counts, sector membership | Yes | Yes |
+| [FRED](https://fred.stlouisfed.org/series/DGS10) (DGS10) | Risk-free rate | Yes | Yes |
+| [Damodaran, NYU Stern](https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/Betas.html) | Industry betas, implied ERP | Yes, cited | Yes |
+| Yahoo Finance (unofficial endpoints) | Prices, beta, gaps in the filings, cross-check | No | Yes |
+| [Alpha Vantage](https://www.alphavantage.co/), [Finnhub](https://finnhub.io/) (your own key) | Backup prices, beta | No | Yes |
+
+- SEC requests carry a contact User-Agent and stay within the fair-access limit of 10 requests a second.
+- **Showcase mode**, the public default, never fetches market prices. If a run carried them, publish strips the prices and everything derived from them. Price-based outputs on the public site appear only in the synthetic demo.
+- The repository ships code, configuration and the synthetic demo, not any third-party dataset.
 
 ## Quick start
 
@@ -74,101 +198,48 @@ pytest -q
 export SEC_USER_AGENT="Your Name you@example.com"         # the SEC requires contact details
 python -m valuation run AAPL --stop-after L1               # data/AAPL/<today>/company_detail.json
 python -m valuation run AAPL --models dcf,comps            # through L2 and reconcile
-python -m valuation sector sector:technology               # data/sectors/sector-technology/<today>/sector.json
+python -m valuation sector sector:technology               # a sector screen
 python -m valuation.L3_app.publish --data-dir data --site-dir site
-python scripts/export_site.py                              # brand, demo, changelog, index
+python scripts/export_site.py                              # brand, demo, changelog, engine bundle
 python -m http.server -d site 8000                         # http://localhost:8000 (?demo=1 for the demo)
-python app/run_private.py --config private/inputs.json     # private door, real market data
 ```
 
-### Publishing real companies
+## Repository layout
 
-Two GitHub Actions workflows build real companies from SEC filings, and **Pages** redeploys after each:
-
-- **Refresh** (every Monday, or `gh workflow run refresh.yml`) builds every sector and company in [`configs/public/universe.json`](configs/public/universe.json), about 40 companies across Technology and Consumer Staples. Visitors browse these with no token.
-- **Pipeline** runs one ticker or sector on demand:
-
-```bash
-gh workflow run pipeline.yml -f ticker=DELL -f models=dcf,comps -f stop_after=L2
-gh workflow run pipeline.yml -f sector=sector:technology
-```
-
-Both need the repository secret `SEC_USER_AGENT`. Published data lives on the `site-data` branch, replaced by a single commit on each save, so `main` stays code only and the history doesn't grow ([docs/L3_site.md](docs/L3_site.md)). Comps peer lists live in `configs/public/assumptions/{TICKER}/comps.json`; the site's peer picker can save them there.
-
-## Data and licensing
-
-Only government data and Damodaran's openly published datasets reach the public site. Third-party market data is used in private runs on your own machine and is never committed or published.
-
-| Source | What it provides | Public site | Private runs |
-|---|---|---|---|
-| [SEC EDGAR](https://www.sec.gov/search-filings/edgar-application-programming-interfaces) (XBRL company facts, industry codes) | Financial statements, share counts, sector membership | Yes | Yes |
-| [FRED](https://fred.stlouisfed.org/series/DGS10) (10-year Treasury, DGS10) | Risk-free rate | Yes | Yes |
-| [Aswath Damodaran, NYU Stern](https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/Betas.html) (US industry betas, implied ERP) | Industry beta when no price-based beta is shown, ERP for the default DCF | Yes, cited | Yes |
-| Yahoo Finance (unofficial chart and fundamentals endpoints) | Prices, beta, backfill for items the filings lack | No | Yes |
-| [Alpha Vantage](https://www.alphavantage.co/) (optional, your own key) | Backup prices and a price cross-check; prices for runs in your browser | No (only on your device) | Yes |
-| [Finnhub](https://finnhub.io/) (optional, your own key) | Today's price and a reported beta, when the others have nothing | No (only on your device) | Yes |
-
-- **Damodaran's datasets** are published freely for teaching and updated each January. Each figure that uses them names the industry row and date.
-- **SEC and FRED** are US government data. Requests carry a contact User-Agent and stay within the SEC's fair-access limit of 10 requests a second.
-- **Showcase mode** (the default for the public site) never fetches Yahoo or Alpha Vantage. If a run did carry their values, publish strips the prices and anything derived from them, and skips any company with Yahoo backfill. Price-based outputs on the public site appear only in the synthetic demo.
-- **Runs in your browser** keep everything on your device. Prices, beta and statement items the filings lack come from Yahoo through the proxy, or from your own Alpha Vantage or Finnhub key, called straight from your browser. Yahoo's statement figures are also used to cross-check the SEC's, and shown as Data checks.
-- **Private runs** (`app/run_private.py`) write only to `private/`, which is gitignored. Keys stay in environment variables or repository secrets, never in the code.
-- The repository ships code, configuration and the synthetic demo. It does not ship a third-party dataset.
-
-This is a personal, educational project and analysis of method, not investment advice. Data comes without warranty.
-
-## Layers
-
-```
-L0  Ingest          SEC companyfacts, sector frames, market data → raw_filing.json, raw_market.json
-L1  Company detail  normalize → canonical_statements.json; build → company_detail.json
-L2  Models          dcf (simulated), comps, dcf_synergy, just_synergy, precedents; lbo, ipo scaffolded → model_results/
-                    reconcile reads model_results/*.json only → comparison.json
-L3  App             site/ on GitHub Pages; Actions run the pipeline and publish JSON
-```
-
-Each layer talks to the next only through JSON files that record their inputs' hashes and as-of dates, so any run can be reproduced and mismatched inputs are flagged.
-
-## Folder layout (two front doors)
-
-| Folder | Door | Purpose |
-|---|---|---|
-| `src/valuation/` | both | The engine: layers L0–L3, `runner/`, and `_core/` (shared math, imports nothing else from the app) |
-| `configs/public/` | public | Hand-edited assumptions, comps peers, packs, sectors and `universe.json` (what Refresh builds) |
-| `scripts/export_site.py` | public | Copies `brand/` into `site/brand`, rebuilds the demo, writes `site/data/changelog.json`, refreshes the index, packs the engine into `site/py/valuation.zip` |
-| `worker/` | public | Cloudflare Worker proxy for the in-browser Run (SEC, FRED and Damodaran only) |
-| `scripts/refresh_universe.py`, `scripts/site_data.sh` | public | Weekly build of `universe.json`; load and save the `site-data` branch |
-| `site/` | public | Static Pages site; displays the JSON only |
-| `brand/` | public | Decision Models brand kit (CSS, JS palette, icons) |
-| `app/run_private.py` | private | Same engine on `private/inputs.json`, real market data, output in `private/site` |
-| `private/` | private | Gitignored except the README and example. Personal-time data only; work data goes through official channels, never a repo |
+| Path | Purpose |
+|---|---|
+| `src/valuation/` | The engine: `L0_ingest/`, `L1_detail/`, `L2_models/`, `L3_app/`, `runner/`, and `_core/` (shared math) |
+| `configs/public/` | Hand-edited assumptions, comps peers, sector packs and taxonomy, and `universe.json` |
+| `site/` | The GitHub Pages app (Overview, Results, Method, Run) |
+| `worker/` | Cloudflare Worker proxy for runs in the browser |
+| `scripts/` | Site export, weekly universe refresh, `site-data` branch helpers |
+| `.github/workflows/` | Tests, Refresh, Pipeline, Pages |
+| `app/`, `private/` | Private door; `private/` is gitignored |
+| `tests/`, `docs/` | Tests per layer; a design doc per layer and model |
 
 ## Roadmap
 
-1. Review the weekly refresh's companies against published figures.
+1. Finish and check the LBO, then an IPO model.
 2. Excel export: a live-formula DCF workbook per run, then comps.
-3. Precedent transactions, then LBO, then IPO, each with course parity tests.
-4. Back-testing: score past DCF forecasts against what was later filed, using the as-of cutoff.
-5. One-page memo PDF per company.
-6. Move `_core/` into the Shared Core package (`courtoy-core`).
+3. Back-testing: score past DCF forecasts against what was later filed, using the as-of cutoff.
+4. A one-page memo PDF per company.
+5. Move `_core/` into the Shared Core package (`courtoy-core`).
 
 ## Docs
 
 | Doc | Covers |
 |---|---|
-| `docs/architecture.md` | layers, data layout, cross-cutting rules |
-| `docs/L0_ingestor_design.md` | SEC ingest |
-| `docs/L0_market.md` | market data: prices, beta, risk-free rate, cross-check |
-| `docs/L1_concepts.md`, `docs/L1_normalize.md` | concept registry, normalizer |
-| `docs/L1_build.md` | frequency views and ratio analysis |
-| `docs/L1_sector.md` | sector screens: sources, figures, benchmarks, site |
-| `docs/core_projection.md` | projection engine |
-| `docs/L2_dcf.md`, `docs/L2_comps.md`, `docs/L2_reconcile.md` | DCF and its simulation, comparables, reconciliation |
-| `docs/L3_site.md` | GitHub Pages app, Actions, setup |
-| `CHANGELOG.md` | releases (shown on the Method page) |
+| [`docs/architecture.md`](docs/architecture.md) | Layers, data layout, cross-cutting rules |
+| [`docs/L0_ingestor_design.md`](docs/L0_ingestor_design.md), [`docs/L0_market.md`](docs/L0_market.md) | SEC ingest; market data |
+| [`docs/L1_concepts.md`](docs/L1_concepts.md), [`docs/L1_normalize.md`](docs/L1_normalize.md), [`docs/L1_build.md`](docs/L1_build.md), [`docs/L1_sector.md`](docs/L1_sector.md) | Concept registry, normalizer, period views and ratios, sector screens |
+| [`docs/core_projection.md`](docs/core_projection.md) | Projection engine |
+| [`docs/L2_dcf.md`](docs/L2_dcf.md), [`docs/L2_comps.md`](docs/L2_comps.md) | DCF and its simulation; public comps |
+| [`docs/L2_synergy.md`](docs/L2_synergy.md), [`docs/L2_precedents.md`](docs/L2_precedents.md), [`docs/L2_lbo.md`](docs/L2_lbo.md) | Deal models |
+| [`docs/L2_reconcile.md`](docs/L2_reconcile.md) | Profile-driven weighting |
+| [`docs/L3_site.md`](docs/L3_site.md) | The site, workflows and setup |
 
 ## License
 
-[Apache 2.0](LICENSE). Stdlib-only at runtime.
+[Apache 2.0](LICENSE). Standard library only at runtime.
 
 <sub>Personal project · public or synthetic data only · not endorsed by DoD or the U.S. Air Force · analysis of method, not investment advice.</sub>
