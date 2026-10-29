@@ -2,6 +2,10 @@
 
 All notable changes to the Valuation Model. Newest first.
 
+## [0.10.0] - 2026-10-29
+- **Nested ranges with their tested hit rates.** The headline leads with the middle 80% of simulated values and shows the 90% beside it; the football field's DCF row adds a thin 5th–95th line around its 10th–90th bar (`value_per_share` gains `p5` / `p95`). The revenue ranges print how often they held in out-of-sample testing (`simulation.revenue_range.tested`, computed by the study, not typed).
+- **Yardsticks.** `details.yardstick.flat_revenue_per_share` values the company with revenue flat for five years, beside the momentum (fade-only) value; both show under the simulation chart.
+
 ## [0.9.0] - 2026-10-29
 - **Blended base case.** The default DCF's revenue for years 1–5 is the geometric mean of no change, the company's faded growth and its sector's growth (`configs/public/calibration/sector_growth.json`), then the fade's rates. Out of sample it beat no change by 7% three years out and 12% five years out, where the fade alone did not, and it removes the fade's over-forecast of fast growers. The fade-only value stays in `details.momentum`. The calibrated error table is re-centered on the blend.
 

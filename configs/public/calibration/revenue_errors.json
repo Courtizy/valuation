@@ -1222,5 +1222,76 @@
    6.10129,
    7.6058
   ]
+ },
+ "tested": {
+  "method": "expanding window: base years 2014 on, each scored with quantiles from errors known by then",
+  "levels": {
+   "80": {
+    "1": {
+     "coverage": 0.7719,
+     "n": 2963
+    },
+    "2": {
+     "coverage": 0.791,
+     "n": 2627
+    },
+    "3": {
+     "coverage": 0.8139,
+     "n": 2305
+    },
+    "4": {
+     "coverage": 0.8418,
+     "n": 1997
+    },
+    "5": {
+     "coverage": 0.8351,
+     "n": 1480
+    }
+   },
+   "90": {
+    "1": {
+     "coverage": 0.8836,
+     "n": 2963
+    },
+    "2": {
+     "coverage": 0.8995,
+     "n": 2627
+    },
+    "3": {
+     "coverage": 0.9323,
+     "n": 2305
+    },
+    "4": {
+     "coverage": 0.9314,
+     "n": 1997
+    },
+    "5": {
+     "coverage": 0.9291,
+     "n": 1480
+    }
+   },
+   "95": {
+    "1": {
+     "coverage": 0.9457,
+     "n": 2963
+    },
+    "2": {
+     "coverage": 0.9547,
+     "n": 2627
+    },
+    "3": {
+     "coverage": 0.9662,
+     "n": 2305
+    },
+    "4": {
+     "coverage": 0.9705,
+     "n": 1997
+    },
+    "5": {
+     "coverage": 0.9743,
+     "n": 1480
+    }
+   }
+  }
  }
 }
