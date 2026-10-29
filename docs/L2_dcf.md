@@ -53,7 +53,8 @@
 - A run is dropped when the terminal WACC is not at least 0.5 pt above terminal growth; `runs_used` reports what's left.
 - Override per ticker in `dcf.json`: `{"simulation": {"runs": 5000, "seed": 11, "wacc": {"dist": "triangular", "low": 0.08, "mode": 0.09, "high": 0.11}}}` (`growth`, `wacc`, `terminal_growth` take a full spec; `growth_spread` etc. take a width).
 - `details.simulation` = `{runs, runs_used, seed, inputs, per_share (mean, p5…p95), middle_80, middle_90, revenue_range, terminal_value_share, histogram {counts, edges, below, above}, base_per_share}`. The histogram spans p0.5–p99.5; runs outside it are counted in `below` / `above`.
-- The site's headline range is `middle_90` (5th–95th percentile); the football field's DCF Bear / Bull are p10 / p90.
+- The site's headline range is `middle_80` (10th–90th percentile) with `middle_90` beside it; the football field's DCF bar is p10–p90 with a thin p5–p95 line. `revenue_range.tested` carries the study's out-of-sample hit rates for the 80 / 90 / 95% revenue ranges, which the site prints beside them.
+- `details.momentum` (fade only) and `details.yardstick.flat_revenue_per_share` (revenue flat for five years, then the fade's rates) sit beside the blended base case.
 
 ## Parity (local workbooks)
 

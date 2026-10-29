@@ -161,7 +161,7 @@ export function renderField() {
   // offer-price methods (synergies) belong on the Deal view, not the standalone field
   const c = state.comparison, k = state.scn, methods = (c.plan?.methods || []).filter((m) => m.value_per_share && !DEAL_MODELS.includes(m.model));
   const q = state.detail.market?.quote, wk = q && fin(q.wk52_low) && fin(q.wk52_high) ? q : null;
-  const vals = methods.flatMap((m) => [m.value_per_share.p10, m.value_per_share.p90]).concat(fin(c.price) ? [c.price] : [])
+  const vals = methods.flatMap((m) => [m.value_per_share.p5 ?? m.value_per_share.p10, m.value_per_share.p95 ?? m.value_per_share.p90]).concat(fin(c.price) ? [c.price] : [])
     .concat(wk ? [wk.wk52_low, wk.wk52_high] : []);
   const vmin = Math.min(...vals), vmax = Math.max(...vals);
   const raw = (vmax - vmin) / 4 || 1, mag = 10 ** Math.floor(Math.log10(raw));
@@ -170,6 +170,7 @@ export function renderField() {
   const x = (v) => `${((v - lo) / (hi - lo)) * 100}%`;
   const ticks = []; for (let t = lo; t <= hi + step / 2; t += step) ticks.push(t);
   const bar = (v, cls) => `<div class="ff-bar ${cls}">
+      ${fin(v.p5) && fin(v.p95) ? `<span class="whisk" style="left:${x(v.p5)};width:calc(${x(v.p95)} - ${x(v.p5)})" title="90%: ${price(v.p5)} – ${price(v.p95)}"></span>` : ""}
       <span class="rng" style="left:${x(v.p10)};width:calc(${x(v.p90)} - ${x(v.p10)})"></span>
       <span class="tick" style="left:${x(v[k])}"></span>
 </div>`;
@@ -185,7 +186,7 @@ export function renderField() {
   };
   const b = c.blend;
   $("val-ff").innerHTML = `<div>
-    <div class="card-head"><h3 class="block-title">${headline("field", "Where the Methods Agree")}</h3><span class="muted small">Value per share: bar = Bear to Bull, tick = ${SCENARIOS[k]}, line = share price; the scenario also sets the values above</span>
+    <div class="card-head"><h3 class="block-title">${headline("field", "Where the Methods Agree")}</h3><span class="muted small">Value per share: bar = Bear to Bull (80%), thin line = 90% where simulated, tick = ${SCENARIOS[k]}, line = share price; the scenario also sets the values above</span>
       <div class="spacer">${scenarioToggle()}</div></div>
     <div class="ff">
       <div class="ff-row ff-head"><div></div>
@@ -200,7 +201,7 @@ export function renderField() {
         <div class="ff-num ${upClass(c.upside?.[k])}">${signed(c.upside?.[k])}</div></div>` : ""}
     </div>
     ${whyTheyDiffer(methods)}
-    <p class="legend-note"><b>Bear / Bull by model:</b> DCF = 10th and 90th percentiles of ${simulationSummary() ? simulationSummary().used.toLocaleString() : "the"} simulated runs, Base = the stated case; Comps uses the peer range (Q1–Q3 with 4+ peers, else lowest–highest); the Blended row weights each model's Bear, Base and Bull.</p>
+    <p class="legend-note"><b>Bear / Bull by model:</b> DCF = 10th and 90th percentiles of ${simulationSummary() ? simulationSummary().used.toLocaleString() : "the"} simulated runs (the thin line runs 5th to 95th), Base = the stated case; Comps uses the peer range (Q1–Q3 with 4+ peers, else lowest–highest); the Blended row weights each model's Bear, Base and Bull.</p>
     ${c.plan?.notes?.length ? `<p class="legend-note">${c.plan.notes.map((n) => esc(sentence(n))).join(" ")}</p>` : ""}
     <p class="legend-note">Weights: configs/public/assumptions/${esc(state.company.ticker)}/reconcile.json can override them (<code>{"weights": {"dcf": 0.7, "comps": 0.3}}</code>); the offer-price view (synergies, standalone vs. offer range) is under <a href="#deal">Deal</a>.</p>
   </div>`;
@@ -694,10 +695,21 @@ function whyTheyDiffer(methods) {
   return parts.length ? `<p class="why"><b>Why they differ.</b> ${parts.join(". ")}.</p>` : "";
 }
 
+/** The DCF's two comparison cases: the fade alone (momentum) and revenue held flat (the yardstick). */
+function yardsticks() {
+  const d = state.dcf?.details, m = d?.momentum, y = d?.yardstick;
+  if (!m && !y) return "";
+  return `<br>Base case ${price(d.simulation.base_per_share)} blends no change, the company's own growth and its sector's.`
+    + (m ? ` Momentum (own growth only): ${price(m.value_per_share)}.` : "")
+    + (y ? ` Flat revenue for five years: ${price(y.flat_revenue_per_share)}.` : "");
+}
+
 /** Calibrated revenue range three years out (80%), as a share of the stated case. */
 function revenueRange(rr) {
   const b = rr?.bands?.["80"]?.find((x) => x.year === 3);
-  return `<dt>Revenue, 3 yrs out (80%)</dt><dd class="num">${b ? `${pct(b.low - 1)} to +${pct(b.high - 1)}` : NA}</dd>`;
+  const hit = rr?.tested?.levels?.["80"]?.["3"]?.coverage;
+  return `<dt>Revenue, 3 yrs out (80%)</dt><dd class="num">${b ? `${pct(b.low - 1)} to +${pct(b.high - 1)}` : NA}</dd>`
+    + (fin(hit) ? `<dt class="muted small">Held in testing</dt><dd class="num muted small">${pct(hit)}</dd>` : "");
 }
 
 /** Left column: company, key assumptions (simulated ranges), run info and downloads. */
@@ -748,6 +760,7 @@ function renderSpread() {
       <span class="muted small">DCF value per share, share of ${sim.runs_used.toLocaleString()} runs</span></div>
     <div id="spread-chart"></div>
     <p class="legend-note">Solid bars = middle 90% (${price(ps.p5)}–${price(ps.p95)}); faded = tails.${h.below + h.above ? ` ${h.below + h.above} extreme runs fall outside the axis.` : ""}
+      ${yardsticks()}
       ${sim.revenue_range ? "Draws: revenue paths from the model's past misses on SEC filings (calibrated by years out and scaled to this company's revenue volatility), discount rate and terminal growth triangular around the stated case." : "Draws: near-term growth, discount rate and terminal growth, each triangular around the stated case."}</p></div>`;
   histogramChart($("spread-chart"), { counts: h.counts, edges: h.edges, band: [ps.p5, ps.p95], format: price, label: "Spread of simulated outcomes",
     markers: [{ label: "Median", value: ps.p50 }, ...(fin(px) ? [{ label: "Price", value: px, dash: true }] : [])] });

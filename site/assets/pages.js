@@ -12,7 +12,9 @@ const repoUrl = () => {
 export function simulationSummary() {
   const s = state.dcf?.details?.simulation;
   if (!s?.per_share) return null;
-  return { low: s.middle_90[0], high: s.middle_90[1], median: s.per_share.p50, tv: s.terminal_value_share,
+  const m80 = s.middle_80 || [s.per_share.p10, s.per_share.p90];
+  return { low: s.middle_90[0], high: s.middle_90[1], low80: m80[0], high80: m80[1], median: s.per_share.p50, tv: s.terminal_value_share,
+    tested: s.revenue_range?.tested?.levels || null,
     runs: s.runs, used: s.runs_used, seed: s.seed, inputs: s.inputs,
     mean: s.per_share.mean, se: s.per_share.standard_error, ci: s.per_share.mean_ci95 };
 }
@@ -25,12 +27,12 @@ export function renderOverview() {
   const s = simulationSummary(), co = state.company;
   const headline = s
     ? `<span class="eyebrow">Headline · ${esc(co.ticker)}${co.demo ? " (synthetic)" : ""}</span>
-       <span class="ov-range num">${price(s.low)}–${price(s.high)}</span>
-       <span>per share, middle 90% of simulated outcomes</span>
-       <span class="muted small">Median ${price(s.median)} · terminal value ${pct(s.tv)} of total · ${s.used.toLocaleString()} runs</span>`
+       <span class="ov-range num">${price(s.low80)}–${price(s.high80)}</span>
+       <span>per share, middle 80% of simulated outcomes · 90%: ${price(s.low)}–${price(s.high)}</span>
+       <span class="muted small">Median ${price(s.median)} · terminal value ${pct(s.tv)} of total · ${s.used.toLocaleString()} runs${s.tested ? ` · revenue ranges held ${pct(s.tested["80"]["3"].coverage)} (80%) and ${pct(s.tested["90"]["3"].coverage)} (90%) three years out in testing` : ""}</span>`
     : `<span class="eyebrow">Headline</span>
        <span class="ov-range num muted">[$L–$H]</span>
-       <span>per share, middle 90% of simulated outcomes</span>
+       <span>per share, middle 80% of simulated outcomes</span>
        <span class="muted small">${co ? `No DCF has run for ${esc(co.ticker)} yet.` : "No company published yet. Press Demo to see one."}</span>`;
   body.innerHTML = `
     <div class="ov-hero">
@@ -47,7 +49,7 @@ export function renderOverview() {
       <div class="ov-steps">
         ${step("01", "Normalize the filings", "SEC statements mapped to one consistent set of line items, with balance and tie-out checks on every run.")}
         ${step("02", "Value it three ways", "Discounted cash flow, trading comparables and precedent deals (precedents illustrative until that model is built).")}
-        ${step("03", "Simulate the range", "Near-term growth, discount rate and terminal growth drawn as ranges, 2,000 seeded runs; then reconcile where the methods disagree.")}
+        ${step("03", "Simulate the range", "Revenue drawn from the model's own past misses on SEC filings, discount rate and terminal growth as ranges, 2,000 seeded runs; then reconcile where the methods disagree.")}
       </div>
     </section>
     <div class="ov-pair">
