@@ -407,7 +407,7 @@ class DCF:
             specs["revenue"] = {"dist": "calibrated", "source": table["source"], "as_of": table["as_of"],
                                 "scale": scale, "volatility": p["revenue_volatility"]}
             revenue_range = {"method": "calibrated past misses", "source": table["source"], "as_of": table["as_of"],
-                             "scale": scale, "bands": band(table, scale)}
+                             "scale": scale, "bands": band(table, scale), "tested": table.get("tested")}
         per_share, tv_share = [], []
         for i, (g0, wacc, g_t) in enumerate(zip(g, w, gt)):
             wacc_t = r["wacc_terminal"] + (wacc - r["wacc"])
@@ -556,7 +556,7 @@ class DCF:
             wacc_step=s.get("wacc_step", 0.01), terminal_growth_step=s.get("terminal_growth_step", 0.005),
             terminal_wacc_step=s.get("terminal_wacc_step", 0.005))
         sim = self.simulate(p, base_val, assumptions.get("simulation") or {})
-        momentum = None
+        momentum = yardstick = None
         if rev["method"] == "blend":     # the company's own growth, faded, with no pull toward flat or the sector
             fade_p = {**p, "drivers": {**p["drivers"], "revenue": {**rev, "method": "fade"}}}
             momentum = {"value_per_share": self.value(fade_p)["value_per_share"],
@@ -564,6 +564,15 @@ class DCF:
                         "note": "fade only: the company's own growth carried forward, which the study found over-forecasts fast growers"}
             notes.append("base case blends no change, the company's faded growth and its sector's growth for years 1-5 "
                          f"(momentum view, fade only: {momentum['value_per_share']:.2f} a share)")
+        # yardstick: revenue held flat for five years, then the fade's own rates (the forecast every method must beat)
+        fade_path = revenue_path({**rev, "method": "fade"}, p["base"]["revenue"], p["years"])
+        flat, lvl = [], p["base"]["revenue"]
+        for t in range(p["years"]):
+            lvl = lvl if t < 5 else lvl * fade_path[t] / fade_path[t - 1]
+            flat.append(lvl)
+        flat_p = {**p, "drivers": {**p["drivers"], "revenue": {**rev, "method": "values", "values": flat}}}
+        yardstick = {"flat_revenue_per_share": self.value(flat_p)["value_per_share"],
+                     "note": "revenue flat for five years, then the fade's rates: the baseline the study scores every forecast against"}
         notes.append(f"range = {sim['runs_used']:,} simulated runs (seed {sim['seed']}): Bear / Bull are the 10th / 90th "
                      "percentiles, Base is the deterministic case; the course scenarios are kept under details.scenarios")
         grid = sensitivity_grid(
@@ -627,6 +636,7 @@ class DCF:
             "scenarios": scen,
             "simulation": sim,
             "momentum": momentum,
+            "yardstick": yardstick,
             "projection": [{"year": y["year"], "revenue": y["revenue"], "ebitda": y["ebitda"], "ebit": y["ebit"],
                             "capex": y["capex"], "change_in_nwc": y["free_cash_flow"]["change_in_nwc"],
                             "fcf": y["free_cash_flow"]["fcf"], "pv": cf["pv"]}
@@ -644,8 +654,8 @@ class DCF:
             model=self.name,
             ticker=(detail.get("entity") or {}).get("ticker") or "",
             as_of=detail.get("as_of", ""),
-            value_per_share={"p10": sim["per_share"]["p10"], "p50": scen["expected"],
-                             "p90": sim["per_share"]["p90"], "mean": sim["per_share"]["mean"]},
+            value_per_share={"p5": sim["per_share"]["p5"], "p10": sim["per_share"]["p10"], "p50": scen["expected"],
+                             "p90": sim["per_share"]["p90"], "p95": sim["per_share"]["p95"], "mean": sim["per_share"]["mean"]},
             assumptions_used=assumptions_used,
             lineage={},
             notes=notes,

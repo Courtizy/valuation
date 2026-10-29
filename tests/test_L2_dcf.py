@@ -314,7 +314,11 @@ def test_default_case_uses_the_blend_and_reports_momentum(detail):
     assert a["forecast"]["revenue_method"] == "blend"
     r = get_model("dcf").run(detail, {**a, "simulation": {"runs": 200}}).to_dict()
     assert r["details"]["drivers"]["revenue"]["method"] == "blend"
-    assert r["details"]["momentum"]["value_per_share"] > 0
+    assert r["details"]["momentum"]["value_per_share"] > 0 and r["details"]["yardstick"]["flat_revenue_per_share"] > 0
+    v = r["value_per_share"]
+    assert v["p5"] < v["p10"] < v["p90"] < v["p95"]
+    tested = r["details"]["simulation"]["revenue_range"]["tested"]["levels"]
+    assert 0.85 < tested["90"]["3"]["coverage"] < 0.97                      # the study's out-of-sample hit rate
     assert get_model("dcf").run(detail, assumptions()).to_dict()["details"]["momentum"] is None   # a dcf.json keeps the fade
 
 
