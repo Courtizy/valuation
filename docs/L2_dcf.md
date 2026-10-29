@@ -40,18 +40,19 @@
 
 ## Simulation
 
-`DCFModel.simulate` reruns the firm DCF many times with three inputs drawn from triangular distributions centred on the stated case. Draws go through `_core/simulation.py` (`rng(seed)`, `sample`, `summarize`, `histogram`), pure Python with the same interface as the Shared Core numpy version, so the same inputs and seed give the same numbers everywhere.
+`DCFModel.simulate` reruns the firm DCF many times. Revenue comes from a calibrated table of the model's past misses; WACC and terminal growth are drawn from triangular distributions centred on the stated case. Draws go through `_core/simulation.py` (`rng(seed)`, `sample`, `summarize`, `histogram`), pure Python with the same interface as the Shared Core numpy version, so the same inputs and seed give the same numbers everywhere.
 
 | Input | Default range | Note |
 |---|---|---|
-| Near-term growth (g0) | ±3 pts | the fade path shifts with it |
+| Revenue path | calibrated (below) | ±3 pts on g0 (triangular) when the table is off |
 | WACC | ±1.5 pts | the terminal WACC shifts by the same amount |
 | Terminal growth | ±0.75 pt | |
 
+- **Calibrated revenue.** `configs/public/calibration/revenue_errors.json` (from the forecast-accuracy study in `Courtizy/research`) holds quantiles of ln(actual / forecast) by years out (1–5), divided by a company scale = standard deviation of yearly log revenue growth over up to six years + 0.10. Each run draws one percentile u and multiplies every year's revenue by exp(quantile_h(u) × scale); years past 5 keep year 5's level. Out of sample, a range built this way for 90% held 88–93% of outcomes; the old ±3-pt growth wobble's 80% range held about 14%. `details.simulation.revenue_range.bands` gives the 80% and 90% revenue ranges by year as multipliers of the stated case. Turn it off with `"revenue_errors": false`, or by setting `growth` explicitly.
 - 2,000 runs, seed 7 (500 runs for demo peers to keep the deploy fast).
 - A run is dropped when the terminal WACC is not at least 0.5 pt above terminal growth; `runs_used` reports what's left.
 - Override per ticker in `dcf.json`: `{"simulation": {"runs": 5000, "seed": 11, "wacc": {"dist": "triangular", "low": 0.08, "mode": 0.09, "high": 0.11}}}` (`growth`, `wacc`, `terminal_growth` take a full spec; `growth_spread` etc. take a width).
-- `details.simulation` = `{runs, runs_used, seed, inputs, per_share (mean, p5…p95), middle_90, terminal_value_share, histogram {counts, edges, below, above}, base_per_share}`. The histogram spans p0.5–p99.5; runs outside it are counted in `below` / `above`.
+- `details.simulation` = `{runs, runs_used, seed, inputs, per_share (mean, p5…p95), middle_80, middle_90, revenue_range, terminal_value_share, histogram {counts, edges, below, above}, base_per_share}`. The histogram spans p0.5–p99.5; runs outside it are counted in `below` / `above`.
 - The site's headline range is `middle_90` (5th–95th percentile); the football field's DCF Bear / Bull are p10 / p90.
 
 ## Parity (local workbooks)

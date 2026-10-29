@@ -2,6 +2,9 @@
 
 All notable changes to the Valuation Model. Newest first.
 
+## [0.8.0] - 2026-10-29
+- **Calibrated revenue range.** The DCF simulation draws revenue paths from the model's own past misses (`configs/public/calibration/revenue_errors.json`, from the forecast-accuracy study in `Courtizy/research`) instead of a ±3-point wobble in near-term growth. The old 80% range held about 14% of actual outcomes; a calibrated 90% range held 88–93% out of sample. Value ranges are wider as a result. `simulation.middle_80` and `simulation.revenue_range` are new; `"revenue_errors": false` restores the old draw.
+
 ## [0.7.1] - 2026-10-29
 - Fix: a negative revenue fact in the latest year (bad tagging in a filing) made the profile's revenue CAGR a complex number and crashed stage classification. The stage is now "unknown" in that case. Found by the forecast-accuracy study in `Courtizy/research`.
 

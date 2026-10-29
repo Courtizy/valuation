@@ -125,7 +125,7 @@ The central idea is that **no single method decides the value.** Each method own
 - **Projection.** Revenue grows at a near-term rate that fades to terminal growth. Costs hold their ratios to sales, and working capital moves with sales at a ratio measured from the company's own history.
 - **Discount rate.** Cost of equity from the 10-year Treasury, a beta unlevered at today's debt-to-equity and relevered at the target, and an equity risk premium. Options cover country risk, a synthetic credit rating from interest coverage, and private firms.
 - **Value.** Free cash flow discounted at WACC, a growing-perpetuity terminal value, an enterprise-to-equity bridge, and diluted shares by the treasury stock method.
-- **Simulation.** 2,000 seeded runs draw near-term growth, WACC and terminal growth from triangular distributions around the stated case. Bear and Bull are the 10th and 90th percentiles; the base case stays deterministic.
+- **Simulation.** 2,000 seeded runs draw revenue paths from the model's own past misses on SEC filings (calibrated so a 90% range holds about 90% of outcomes), and WACC and terminal growth from triangular distributions around the stated case. Bear and Bull are the 10th and 90th percentiles; the base case stays deterministic.
 - **Implied mode.** Solves for the growth rate today's price implies.
 
 ### Public comparables

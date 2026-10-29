@@ -47,11 +47,12 @@ from valuation._core.checks import synthetic_rating, terminal_checks
 from valuation._core.cost_of_capital import discount_rates
 from valuation._core.dcf import scenario_range, sensitivity_grid, solve, value_firm
 from valuation._core.simulation import histogram, rng, sample, summarize
-from valuation._core.projection import base_from_detail, project
+from valuation._core.projection import base_from_detail, project, revenue_path
 from valuation._core.shares import treasury_stock_method
 from valuation._core.projection import statement_row
 from valuation._core.stats import foster
 from valuation.L2_models.base import ModelResult
+from valuation.L2_models.dcf.revenue_range import band, company_scale, load_table, multipliers
 
 DEFAULT_NWC_RATIO = 0.20          # used when history can't give dNWC/dSales
 NWC_HISTORY_YEARS = 4
@@ -314,7 +315,10 @@ class DCF:
                          country_risk_premium=cc.get("country_risk_premium") or 0.0)
 
         invested = (v.get("assets") or 0) - ((v.get("current_liabilities_total") or 0) - (v.get("short_term_debt") or 0))
+        table = load_table()
+        scale, vol = company_scale(detail, table) if table else (None, None)
         return {
+            "revenue_scale": scale, "revenue_volatility": vol,
             "period": period, "base": base, "drivers": drivers, "years": n + 1, "tax": tax, "nwc": nwc,
             "capex": capex, "rates": rates, "price": price, "shares": shares, "tsm": tsm,
             "net_debt": net_debt, "debt": debt, "cash": cash, "operating_cash_pct": op_cash,
@@ -373,22 +377,34 @@ class DCF:
         return fb, "fallback"
 
     def simulate(self, p: dict, base_val: dict, cfg: dict) -> dict:
-        """Monte Carlo on the base case: near-term growth, WACC and terminal growth drawn from
-        triangular ranges (seeded), everything else held at the base case."""
+        """Monte Carlo on the base case (seeded): revenue paths drawn from the calibrated table of the
+        model's past misses (revenue_range), WACC and terminal growth from triangular ranges, everything
+        else held at the base case. Without the table, or when the assumptions set "growth" or
+        "revenue_errors": false, near-term growth is drawn from a triangular range instead."""
         c = {**SIMULATION, **cfg}
         r, rev = p["rates"], p["drivers"]["revenue"]
         tri = lambda mode, spread: {"dist": "triangular", "low": mode - spread, "mode": mode, "high": mode + spread}  # noqa: E731
-        specs = {"growth": cfg.get("growth") or tri(rev["g0"], c["growth_spread"]),
+        table = None if cfg.get("growth") is not None or cfg.get("revenue_errors") is False else load_table()
+        specs = {"growth": rev["g0"] if table else (cfg.get("growth") or tri(rev["g0"], c["growth_spread"])),
                  "wacc": cfg.get("wacc") or tri(r["wacc"], c["wacc_spread"]),
                  "terminal_growth": cfg.get("terminal_growth") or tri(rev["g_terminal"], c["terminal_growth_spread"])}
         n, gen = int(c["runs"]), rng(int(c["seed"]))
         g, w, gt = (sample(specs[k], n, gen) for k in ("growth", "wacc", "terminal_growth"))
+        revenue_range = None
+        if table:
+            scale = p["revenue_scale"]
+            u = [gen.random() for _ in range(n)]
+            specs["revenue"] = {"dist": "calibrated", "source": table["source"], "as_of": table["as_of"],
+                                "scale": scale, "volatility": p["revenue_volatility"]}
+            revenue_range = {"method": "calibrated past misses", "source": table["source"], "as_of": table["as_of"],
+                             "scale": scale, "bands": band(table, scale)}
         per_share, tv_share = [], []
-        for g0, wacc, g_t in zip(g, w, gt):
+        for i, (g0, wacc, g_t) in enumerate(zip(g, w, gt)):
             wacc_t = r["wacc_terminal"] + (wacc - r["wacc"])
             if wacc_t <= g_t + 0.005 or wacc <= 0:
                 continue
-            v = self.value(p, g0=g0, g_terminal=g_t, wacc=wacc, wacc_terminal=wacc_t)
+            shock = multipliers(table, u[i], p["revenue_scale"], p["years"]) if table else None
+            v = self.value(p, g0=g0, g_terminal=g_t, wacc=wacc, wacc_terminal=wacc_t, revenue_shock=shock)
             per_share.append(v["value_per_share"])
             tv_share.append(v["terminal_value_share"])
         if not per_share:
@@ -396,7 +412,8 @@ class DCF:
         summary = summarize(per_share)
         tv_sorted = sorted(tv_share)
         return {"runs": n, "runs_used": len(per_share), "seed": int(c["seed"]), "inputs": specs,
-                "per_share": summary, "middle_90": [summary["p5"], summary["p95"]],
+                "per_share": summary, "middle_80": [summary["p10"], summary["p90"]],
+                "middle_90": [summary["p5"], summary["p95"]], "revenue_range": revenue_range,
                 "terminal_value_share": tv_sorted[len(tv_sorted) // 2],
                 "histogram": histogram(per_share), "base_per_share": base_val["value_per_share"]}
 
@@ -466,9 +483,11 @@ class DCF:
         return p["rates"]["current_debt_to_equity"]
 
     def value(self, p: dict, g0: float | None = None, g_terminal: float | None = None,
-              wacc: float | None = None, wacc_terminal: float | None = None, tweak: dict | None = None) -> dict:
+              wacc: float | None = None, wacc_terminal: float | None = None, tweak: dict | None = None,
+              revenue_shock: list[float] | None = None) -> dict:
         """`tweak` shifts other inputs for the tornado: {"capex": +x of sales, "margin": +x EBITDA
-        margin (COGS share down by x), "nwc": +x dNWC/dSales}."""
+        margin (COGS share down by x), "nwc": +x dNWC/dSales}. `revenue_shock` multiplies each
+        year's revenue (the simulation's calibrated draw); the cost ratios follow revenue."""
         d = deepcopy(p["drivers"])
         tw = tweak or {}
         capex, nwc = p["capex"] + tw.get("capex", 0.0), p["nwc"] + tw.get("nwc", 0.0)
@@ -480,6 +499,9 @@ class DCF:
             d["revenue"]["g0"] = g0
         if g_terminal is not None:
             d["revenue"]["g_terminal"] = g_terminal
+        if revenue_shock is not None:
+            path = revenue_path(d["revenue"], p["base"]["revenue"], p["years"])
+            d["revenue"] = {**d["revenue"], "method": "values", "values": [x * m for x, m in zip(path, revenue_shock)]}
         proj = project(p["base"], d, p["years"])
         out = value_firm(
             proj, wacc=p["rates"]["wacc"] if wacc is None else wacc,

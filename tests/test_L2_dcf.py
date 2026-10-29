@@ -269,6 +269,32 @@ def test_simulation_ranges_can_be_set_and_bad_runs_dropped(detail):
     assert s["runs_used"] < 300                                                # terminal growth above WACC dropped
 
 
+def test_simulation_draws_revenue_from_the_calibrated_table(detail):
+    from valuation.L2_models.dcf.revenue_range import load_table, multipliers
+    t = load_table()
+    assert t is not None and t["_horizons"] == [1, 2, 3, 4, 5]
+    s = get_model("dcf").run(detail, assumptions(simulation={"runs": 400, "seed": 3})).to_dict()["details"]["simulation"]
+    assert s["inputs"]["revenue"]["dist"] == "calibrated" and s["revenue_range"]["scale"] >= t["scale"]["floor"]
+    b80, b90 = s["revenue_range"]["bands"]["80"], s["revenue_range"]["bands"]["90"]
+    for lo, hi in zip(b80, b90):
+        assert hi["low"] < lo["low"] < 1 < lo["high"] < hi["high"]               # 90% wraps 80%, both straddle the base
+    assert b90[-1]["high"] - b90[-1]["low"] > b90[0]["high"] - b90[0]["low"]    # wider further out
+    assert s["middle_80"] == [s["per_share"]["p10"], s["per_share"]["p90"]]
+    m = multipliers(t, 0.5, 0.2, 12)
+    assert len(m) == 12 and m[5:] == [m[4]] * 7                                   # years past 5 hold year 5's level
+
+
+def test_triangular_growth_is_kept_when_asked(detail):
+    s = get_model("dcf").run(detail, assumptions(simulation={"runs": 300, "revenue_errors": False})).to_dict()["details"]["simulation"]
+    assert s["inputs"]["growth"]["dist"] == "triangular" and s["revenue_range"] is None
+
+
+def test_unit_revenue_shock_changes_nothing(detail):
+    m = get_model("dcf")
+    p = m.prepare(detail, assumptions())
+    assert m.value(p, revenue_shock=[1.0] * p["years"])["value_per_share"] == A(m.value(p)["value_per_share"])
+
+
 def test_core_simulation_helpers():
     from valuation._core.simulation import histogram, percentile, rng, sample, summarize
     xs = sample({"dist": "triangular", "low": 0, "mode": 1, "high": 2}, 1000, rng(3))
