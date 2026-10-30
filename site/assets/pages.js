@@ -96,7 +96,7 @@ const VALIDATION = [
   ["Simulation is seeded and reproducible", "Done", "Same inputs and seed give the same numbers"],
   ["Ratios, DCF, comps, synergy models, transaction comps and the deal summary match the course workbooks", "Done locally", "Parity tests need the workbooks, so they're skipped in CI"],
   ["Shared math imports nothing else from the app", "Done", "Enforced by a test until it moves to Shared Core"],
-  ["Revenue forecasts and ranges back-tested against later SEC filings", "In progress", "Study 01 found the ranges too narrow and drove the fix; Study 01b is being re-run on strictly point-in-time data",
+  ["Revenue forecasts and ranges back-tested against later SEC filings", "In progress", "Research Study 01 scores the forecasts and their 80% ranges against what companies later reported; final results in review",
     "https://courtizy.github.io/research/"],
   ["Live runs reviewed on real tickers against published estimates", "Planned", ""],
   ["Parity and seeded-run suites in CI", "Planned", ""],
