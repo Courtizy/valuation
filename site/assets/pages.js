@@ -57,7 +57,7 @@ export function renderOverview() {
         <p>It's analysis of method, not a buy or sell call. Built for non-financial operating companies; banks, REITs and biotech need different frameworks. Terminal value often dominates, so the range is only as good as the long-run assumptions.</p></div>
       <div class="ov-box"><h3>Built on</h3>
         <p>Public SEC filings (XBRL company facts), the FRED 10-year Treasury rate and a pure-Python engine. Runs privately as a Python app; this page shows precomputed results.</p>
-        <a href="${repoUrl()}" target="_blank" rel="noopener">Code on GitHub</a></div>
+        <a href="${repoUrl()}" target="_blank" rel="noopener">Code on GitHub</a> · <a href="https://courtizy.github.io/research/">How its forecasts are tested</a></div>
     </div>`;
 }
 
@@ -96,6 +96,8 @@ const VALIDATION = [
   ["Simulation is seeded and reproducible", "Done", "Same inputs and seed give the same numbers"],
   ["Ratios, DCF, comps, synergy models, transaction comps and the deal summary match the course workbooks", "Done locally", "Parity tests need the workbooks, so they're skipped in CI"],
   ["Shared math imports nothing else from the app", "Done", "Enforced by a test until it moves to Shared Core"],
+  ["Revenue forecasts and ranges back-tested against later SEC filings", "In progress", "Research Study 01 scores the forecasts and their 80% ranges against what companies later reported; final results in review",
+    "https://courtizy.github.io/research/"],
   ["Live runs reviewed on real tickers against published estimates", "Planned", ""],
   ["Parity and seeded-run suites in CI", "Planned", ""],
 ];
@@ -116,8 +118,8 @@ export async function renderMethod() {
         <section id="m-model" class="card"><h2>The model</h2>
           <div class="ov-steps">${MODEL.map(([t, x], i) => step(String(i + 1).padStart(2, "0"), t, x)).join("")}</div></section>
         <section id="m-validation" class="card"><h2>Validation</h2>
-          <ul class="checklist">${VALIDATION.map(([t, st, note]) => `<li><span class="vstat ${st === "Planned" ? "planned" : "done"}">${st}</span>
-            <span><b>${esc(t)}</b>${note ? `<span class="muted small"> · ${esc(note)}</span>` : ""}</span></li>`).join("")}</ul></section>
+          <ul class="checklist">${VALIDATION.map(([t, st, note, link]) => `<li><span class="vstat ${st.startsWith("Done") ? "done" : "planned"}">${st}</span>
+            <span><b>${esc(t)}</b>${note ? `<span class="muted small"> · ${esc(note)}</span>` : ""}${link ? ` <a class="small" href="${link}">Research &amp; Analysis →</a>` : ""}</span></li>`).join("")}</ul></section>
         <section id="m-limits" class="card"><h2>Limits</h2>
           <p>Analysis of method, not investment advice. Built for non-financial operating companies; banks, insurers, REITs and pre-revenue biotech need different frameworks. US GAAP filers only (no 20-F / IFRS). Terminal value usually carries most of the value, so long-run assumptions matter more than any single year. The public site shows no real market prices.</p></section>
         <section id="m-changelog" class="card"><h2>Changelog</h2><div id="m-changes" class="muted">Loading…</div></section>
