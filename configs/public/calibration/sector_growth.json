@@ -1,7 +1,7 @@
 {
  "what": "Median three-year revenue CAGR of large US filers by SIC division and base calendar year",
  "source": "Courtizy/research Study 1 panels: 377 companies, SEC filings",
- "as_of": "2026-10-29",
+ "as_of": "2026-10-30",
  "divisions": {
   "Construction": {
    "2010": {
