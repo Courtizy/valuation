@@ -4,7 +4,7 @@ Revenue paths are drawn from the model's own past misses instead of a +/-3% wobb
 configs/public/calibration/revenue_errors.json holds, for each year out (1-5), quantiles of
 ln(actual / forecast) divided by a company scale (revenue volatility + floor), measured on SEC
 filings by the forecast-accuracy study in Courtizy/research. Tested out of sample, a range built
-for 90% held 88-93% of outcomes; the triangular wobble's 80% range held about 14%.
+for 90% held 88-94% of outcomes (point in time); the triangular wobble's 80% range held about 14%.
 
 One draw u ~ U(0, 1) per run moves every year by the same percentile of its own horizon's errors,
 so a run that misses low in year 1 keeps missing low. Years after the last calibrated horizon
