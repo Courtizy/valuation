@@ -1,0 +1,1351 @@
+{
+  "generated_at": "2026-11-09T17:22:13+00:00",
+  "companies": [
+    {
+      "ticker": "AAPL",
+      "name": "Apple Inc.",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "AAPL/2026-11-09/company_detail.json",
+          "full": "AAPL/2026-11-09/company_detail_full.json",
+          "comparison": "AAPL/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2026",
+            "ttm": "TTM 2026-09-26"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "ADBE",
+      "name": "ADOBE INC.",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "ADBE/2026-11-09/company_detail.json",
+          "full": "ADBE/2026-11-09/company_detail_full.json",
+          "comparison": "ADBE/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-08-28"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "ADM",
+      "name": "Archer-Daniels-Midland Co",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "ADM/2026-11-09/company_detail.json",
+          "full": "ADM/2026-11-09/company_detail_full.json",
+          "comparison": "ADM/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-09-30"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "AMAT",
+      "name": "APPLIED MATERIALS INC /DE",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "AMAT/2026-11-09/company_detail.json",
+          "full": "AMAT/2026-11-09/company_detail_full.json",
+          "comparison": "AMAT/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-07-26"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "AMD",
+      "name": "ADVANCED MICRO DEVICES, INC",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "AMD/2026-11-09/company_detail.json",
+          "full": "AMD/2026-11-09/company_detail_full.json",
+          "comparison": "AMD/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-09-26"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "AVGO",
+      "name": "Broadcom Inc.",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "AVGO/2026-11-09/company_detail.json",
+          "full": "AVGO/2026-11-09/company_detail_full.json",
+          "comparison": "AVGO/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-08-02"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "CL",
+      "name": "COLGATE-PALMOLIVE COMPANY",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "CL/2026-11-09/company_detail.json",
+          "full": "CL/2026-11-09/company_detail_full.json",
+          "comparison": "CL/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-09-30"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "CPB",
+      "name": "The Campbell\u2019s Company",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "CPB/2026-11-09/company_detail.json",
+          "full": "CPB/2026-11-09/company_detail_full.json",
+          "comparison": "CPB/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2026",
+            "ttm": "TTM 2026-08-02"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "CRM",
+      "name": "Salesforce, Inc.",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "CRM/2026-11-09/company_detail.json",
+          "full": "CRM/2026-11-09/company_detail_full.json",
+          "comparison": "CRM/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2026",
+            "ttm": "TTM 2026-07-31"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "CSCO",
+      "name": "CISCO SYSTEMS, INC.",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "CSCO/2026-11-09/company_detail.json",
+          "full": "CSCO/2026-11-09/company_detail_full.json",
+          "comparison": "CSCO/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2026",
+            "ttm": "TTM 2026-07-25"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "CVS",
+      "name": "CVS HEALTH Corp",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "CVS/2026-11-09/company_detail.json",
+          "full": "CVS/2026-11-09/company_detail_full.json",
+          "comparison": "CVS/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-09-30"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "DELL",
+      "name": "Dell Technologies Inc.",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "DELL/2026-11-09/company_detail.json",
+          "full": "DELL/2026-11-09/company_detail_full.json",
+          "comparison": "DELL/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2026",
+            "ttm": "TTM 2026-07-31"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "GIS",
+      "name": "GENERAL MILLS, INC.",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "GIS/2026-11-09/company_detail.json",
+          "full": "GIS/2026-11-09/company_detail_full.json",
+          "comparison": "GIS/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2026",
+            "ttm": "TTM 2026-05-31"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "HPE",
+      "name": "HEWLETT PACKARD ENTERPRISE COMPANY",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "HPE/2026-11-09/company_detail.json",
+          "full": "HPE/2026-11-09/company_detail_full.json",
+          "comparison": "HPE/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-07-31"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "HPQ",
+      "name": "HP INC.",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "HPQ/2026-11-09/company_detail.json",
+          "full": "HPQ/2026-11-09/company_detail_full.json",
+          "comparison": "HPQ/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-07-31"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "HSY",
+      "name": "HERSHEY CO",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "HSY/2026-11-09/company_detail.json",
+          "full": "HSY/2026-11-09/company_detail_full.json",
+          "comparison": "HSY/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-09-27"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "IBM",
+      "name": "INTERNATIONAL BUSINESS MACHINES CORPORATION",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "IBM/2026-11-09/company_detail.json",
+          "full": "IBM/2026-11-09/company_detail_full.json",
+          "comparison": "IBM/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-09-30"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "INGM",
+      "name": "Ingram Micro Holding Corp",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "INGM/2026-11-09/company_detail.json",
+          "full": "INGM/2026-11-09/company_detail_full.json",
+          "comparison": null,
+          "models": [],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-09-26"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "INTC",
+      "name": "Intel Corporation",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "INTC/2026-11-09/company_detail.json",
+          "full": "INTC/2026-11-09/company_detail_full.json",
+          "comparison": "INTC/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-09-26"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "JBL",
+      "name": "JABIL INC",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "JBL/2026-11-09/company_detail.json",
+          "full": "JBL/2026-11-09/company_detail_full.json",
+          "comparison": "JBL/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2026",
+            "ttm": "TTM 2026-08-31"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "KDP",
+      "name": "Keurig Dr Pepper Inc.",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "KDP/2026-11-09/company_detail.json",
+          "full": "KDP/2026-11-09/company_detail_full.json",
+          "comparison": "KDP/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-09-30"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "KHC",
+      "name": "Kraft Heinz Co",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "KHC/2026-11-09/company_detail.json",
+          "full": "KHC/2026-11-09/company_detail_full.json",
+          "comparison": "KHC/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-09-26"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "KO",
+      "name": "COCA COLA CO",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "KO/2026-11-09/company_detail.json",
+          "full": "KO/2026-11-09/company_detail_full.json",
+          "comparison": "KO/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-10-02"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "KR",
+      "name": "KROGER CO",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "KR/2026-11-09/company_detail.json",
+          "full": "KR/2026-11-09/company_detail_full.json",
+          "comparison": "KR/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": null
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "LW",
+      "name": "LAMB WESTON HOLDINGS, INC.",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "LW/2026-11-09/company_detail.json",
+          "full": "LW/2026-11-09/company_detail_full.json",
+          "comparison": "LW/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2026",
+            "ttm": "TTM 2026-08-30"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "MDLZ",
+      "name": "Mondelez International, Inc.",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "MDLZ/2026-11-09/company_detail.json",
+          "full": "MDLZ/2026-11-09/company_detail_full.json",
+          "comparison": "MDLZ/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-09-30"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "MO",
+      "name": "Altria Group, Inc.",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "MO/2026-11-09/company_detail.json",
+          "full": "MO/2026-11-09/company_detail_full.json",
+          "comparison": "MO/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-09-30"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "MSFT",
+      "name": "MICROSOFT CORP",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "MSFT/2026-11-09/company_detail.json",
+          "full": "MSFT/2026-11-09/company_detail_full.json",
+          "comparison": "MSFT/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2026",
+            "ttm": "TTM 2026-09-30"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "MU",
+      "name": "Micron Technology, Inc.",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "MU/2026-11-09/company_detail.json",
+          "full": "MU/2026-11-09/company_detail_full.json",
+          "comparison": "MU/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2026",
+            "ttm": "TTM 2026-09-03"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "NVDA",
+      "name": "NVIDIA CORP",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "NVDA/2026-11-09/company_detail.json",
+          "full": "NVDA/2026-11-09/company_detail_full.json",
+          "comparison": "NVDA/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2026",
+            "ttm": "TTM 2026-07-26"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "ORCL",
+      "name": "ORACLE CORP",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "ORCL/2026-11-09/company_detail.json",
+          "full": "ORCL/2026-11-09/company_detail_full.json",
+          "comparison": "ORCL/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2026",
+            "ttm": "TTM 2026-08-31"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "PEP",
+      "name": "PEPSICO INC",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "PEP/2026-11-09/company_detail.json",
+          "full": "PEP/2026-11-09/company_detail_full.json",
+          "comparison": "PEP/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": null
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "PG",
+      "name": "PROCTER & GAMBLE Co",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "PG/2026-11-09/company_detail.json",
+          "full": "PG/2026-11-09/company_detail_full.json",
+          "comparison": "PG/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2026",
+            "ttm": "TTM 2026-09-30"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "PM",
+      "name": "Philip Morris International Inc.",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "PM/2026-11-09/company_detail.json",
+          "full": "PM/2026-11-09/company_detail_full.json",
+          "comparison": "PM/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-09-30"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "PPC",
+      "name": "PILGRIM\u2019S PRIDE CORPORATION",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "PPC/2026-11-09/company_detail.json",
+          "full": "PPC/2026-11-09/company_detail_full.json",
+          "comparison": "PPC/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-09-27"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "QCOM",
+      "name": "QUALCOMM INC/DE",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "QCOM/2026-11-09/company_detail.json",
+          "full": "QCOM/2026-11-09/company_detail_full.json",
+          "comparison": "QCOM/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2026",
+            "ttm": "TTM 2026-09-27"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "SNX",
+      "name": "TD SYNNEX CORPORATION",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "SNX/2026-11-09/company_detail.json",
+          "full": "SNX/2026-11-09/company_detail_full.json",
+          "comparison": "SNX/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-08-31"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "STX",
+      "name": "Seagate Technology Holdings plc",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "STX/2026-11-09/company_detail.json",
+          "full": "STX/2026-11-09/company_detail_full.json",
+          "comparison": "STX/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2026",
+            "ttm": "TTM 2026-10-02"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "STZ",
+      "name": "CONSTELLATION BRANDS, INC.",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "STZ/2026-11-09/company_detail.json",
+          "full": "STZ/2026-11-09/company_detail_full.json",
+          "comparison": null,
+          "models": [],
+          "latest": {
+            "annual": "FY2026",
+            "ttm": "TTM 2026-08-31"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "SYY",
+      "name": "Sysco Corporation",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "SYY/2026-11-09/company_detail.json",
+          "full": "SYY/2026-11-09/company_detail_full.json",
+          "comparison": "SYY/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2026",
+            "ttm": "TTM 2026-09-26"
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "TSN",
+      "name": "TYSON FOODS, INC.",
+      "demo": false,
+      "runs": [
+        {
+          "as_of": "2026-11-09",
+          "detail": "TSN/2026-11-09/company_detail.json",
+          "full": "TSN/2026-11-09/company_detail_full.json",
+          "comparison": "TSN/2026-11-09/comparison.json",
+          "models": [
+            "dcf"
+          ],
+          "latest": {
+            "annual": "FY2025",
+            "ttm": "TTM 2026-06-27"
+          }
+        }
+      ]
+    }
+  ],
+  "sectors": [
+    {
+      "id": "sector-consumer-staples",
+      "label": "Consumer Staples",
+      "kind": "sector",
+      "as_of": "2026-11-09",
+      "year": 2025,
+      "demo": false,
+      "path": "sectors/sector-consumer-staples/2026-11-09/sector.json",
+      "count": 195,
+      "members": [
+        "CVS",
+        "KR",
+        "PEP",
+        "SYY",
+        "PG",
+        "ACI",
+        "ADM",
+        "BG",
+        "PFGC",
+        "TSN",
+        "KO",
+        "PM",
+        "USFD",
+        "MDLZ",
+        "CHSCP",
+        "UNFI",
+        "KHC",
+        "MO",
+        "CL",
+        "PPC",
+        "GIS",
+        "CTVA",
+        "KDP",
+        "ECL",
+        "SFD",
+        "KVUE",
+        "EL",
+        "TAP",
+        "HRL",
+        "HSY",
+        "CAG",
+        "ANDE",
+        "CPB",
+        "STZ",
+        "SEB",
+        "DOLE",
+        "SJM",
+        "SFM",
+        "MNST",
+        "POST",
+        "ARKO",
+        "COKE",
+        "INGR",
+        "CLX",
+        "MKC",
+        "PRMB",
+        "LW",
+        "CHD",
+        "DAR",
+        "COTY",
+        "IMKTA",
+        "FLO",
+        "BF-B",
+        "WMK",
+        "DPZ",
+        "GO",
+        "DMC",
+        "CHEF",
+        "CENT",
+        "CALM",
+        "UVV",
+        "DIT",
+        "VSTS",
+        "BV",
+        "CELH",
+        "PYYX",
+        "SCL",
+        "VLGEA",
+        "BRBR",
+        "EPC",
+        "SAM",
+        "MZTI",
+        "BGS",
+        "YI",
+        "ELF",
+        "JJSF",
+        "SENEA",
+        "HAIN",
+        "DNUT",
+        "IPAR",
+        "SMPL",
+        "GRDN",
+        "UTZ",
+        "AVO",
+        "NGVC",
+        "HFFG",
+        "WEST",
+        "FIZZ",
+        "JBSS",
+        "GTBIF",
+        "FRPT",
+        "VRNO",
+        "ODD",
+        "VITL",
+        "TR",
+        "YSG",
+        "COCO",
+        "RLX",
+        "CASK",
+        "SDSYA",
+        "TPB",
+        "BRCC",
+        "MED",
+        "BBXIB",
+        "BYND",
+        "MLKWF",
+        "TSNDF",
+        "BRID",
+        "VFF",
+        "LWAY",
+        "DTCKF",
+        "PETS",
+        "AFRI",
+        "MAMA",
+        "ZVIA",
+        "LMNR",
+        "ITHUF",
+        "WYHG",
+        "HYFM",
+        "RDGT",
+        "ISPR",
+        "MSS",
+        "PLNH",
+        "JVA",
+        "HOST",
+        "CWGL",
+        "GGROU",
+        "SLSN",
+        "IVFH",
+        "KARX",
+        "CWBHF",
+        "LSF",
+        "LOCL",
+        "NHTC",
+        "DDC",
+        "TULP",
+        "WVVI",
+        "REED",
+        "GRUSF",
+        "BRLS",
+        "AXIL",
+        "FAMI",
+        "UCFI",
+        "RMCF",
+        "JSDA",
+        "EDUC",
+        "MGN",
+        "YCBD",
+        "CHSN",
+        "XXII",
+        "RYM",
+        "BRFH",
+        "BOF",
+        "RAVE",
+        "SEED",
+        "EDBL",
+        "BUDA",
+        "ORISF",
+        "NCRA",
+        "UG",
+        "IPST",
+        "TWG",
+        "TOFB",
+        "ESGH",
+        "WNW",
+        "SRXH",
+        "AGCC",
+        "EPSM",
+        "MWYN",
+        "MOJO",
+        "PFAI",
+        "CIRX",
+        "PLAG",
+        "DQWS",
+        "BSFC",
+        "QPRC",
+        "IBG",
+        "BYAH",
+        "MDWK",
+        "ZONE",
+        "XAGE",
+        "YHC",
+        "CUEN",
+        "SHFH",
+        "CVAT",
+        "SHMP",
+        "TRWD",
+        "EDVA",
+        "RAKR",
+        "ORIB",
+        "STKH",
+        "CABR",
+        "HCMC",
+        "LGSP",
+        "GWLL"
+      ],
+      "as_of_all": [
+        "2026-11-09",
+        "2026-10-21"
+      ]
+    },
+    {
+      "id": "sector-technology",
+      "label": "Technology",
+      "kind": "sector",
+      "as_of": "2026-11-09",
+      "year": 2025,
+      "demo": false,
+      "path": "sectors/sector-technology/2026-11-09/sector.json",
+      "count": 300,
+      "members": [
+        "AAPL",
+        "MSFT",
+        "NVDA",
+        "DELL",
+        "TYGO",
+        "IBM",
+        "ORCL",
+        "AVGO",
+        "SNX",
+        "CSCO",
+        "HPQ",
+        "INTC",
+        "INGM",
+        "TMO",
+        "QCOM",
+        "CRM",
+        "MU",
+        "AMD",
+        "HPE",
+        "JBL",
+        "AMAT",
+        "FLEX",
+        "DHR",
+        "XYZ",
+        "ADBE",
+        "LRCX",
+        "APH",
+        "SMCI",
+        "CTSH",
+        "ADP",
+        "INTU",
+        "TXN",
+        "LDOS",
+        "NTES",
+        "KD",
+        "NOW",
+        "DXC",
+        "CLS",
+        "NXPI",
+        "KLAC",
+        "STM",
+        "MSI",
+        "SHOP",
+        "ADI",
+        "VRT",
+        "WDAY",
+        "WDC",
+        "JKS",
+        "PANW",
+        "STX",
+        "ANET",
+        "CACI",
+        "ROK",
+        "MRVL",
+        "SANM",
+        "ROP",
+        "AME",
+        "SNDK",
+        "SAIC",
+        "ADSK",
+        "SNPS",
+        "XRX",
+        "NTAP",
+        "FTNT",
+        "AMKR",
+        "TTWO",
+        "PSN",
+        "SSNC",
+        "TOST",
+        "ON",
+        "HUBB",
+        "COHR",
+        "CSIQ",
+        "VLTO",
+        "EPAM",
+        "KEYS",
+        "CDNS",
+        "FSLR",
+        "TEAM",
+        "OTEX",
+        "CRWV",
+        "TWLO",
+        "DOX",
+        "GEN",
+        "GDDY",
+        "ARM",
+        "RBLX",
+        "LOGI",
+        "CRWD",
+        "CIEN",
+        "Q",
+        "MCHP",
+        "SNOW",
+        "FN",
+        "PLTR",
+        "NATL",
+        "BILI",
+        "FTV",
+        "SWKS",
+        "PLXS",
+        "MKSI",
+        "DBD",
+        "ST",
+        "P",
+        "TRMB",
+        "NXT",
+        "DDOG",
+        "LNWO",
+        "DOCU",
+        "VEEV",
+        "TER",
+        "HUBS",
+        "FFIV",
+        "VNT",
+        "VRSK",
+        "VSH",
+        "SCSC",
+        "LITE",
+        "NICE",
+        "OKTA",
+        "TTMI",
+        "CNXN",
+        "MPWR",
+        "PLTK",
+        "BHE",
+        "PTC",
+        "CHKP",
+        "VYX",
+        "ZS",
+        "UI",
+        "NTNX",
+        "DBX",
+        "RNG",
+        "MDB",
+        "CLVT",
+        "PLUS",
+        "JKHY",
+        "ITRI",
+        "TYL",
+        "RDDT",
+        "NET",
+        "JOYY",
+        "RAL",
+        "UCTT",
+        "PAYC",
+        "DT",
+        "CRUS",
+        "UIS",
+        "VISN",
+        "MBLY",
+        "PBI",
+        "U",
+        "AEIS",
+        "YMM",
+        "ACIW",
+        "PEGA",
+        "ESTC",
+        "IMMR",
+        "OSIS",
+        "TDC",
+        "VRSN",
+        "IOT",
+        "PATH",
+        "PCTY",
+        "FA",
+        "TSEM",
+        "VIAV",
+        "BSY",
+        "KE",
+        "MOMO",
+        "DIOD",
+        "ENPH",
+        "CRSR",
+        "BILL",
+        "SONO",
+        "PENG",
+        "KC",
+        "CRDO",
+        "PCOR",
+        "RBRK",
+        "ZETA",
+        "ARRY",
+        "GTM",
+        "KVYO",
+        "MNDY",
+        "GWRE",
+        "SYNA",
+        "OMCL",
+        "SEDG",
+        "CVLT",
+        "TASK",
+        "BOX",
+        "FIVN",
+        "EXTR",
+        "BLKB",
+        "WAY",
+        "ESE",
+        "ADTN",
+        "RDNW",
+        "MANH",
+        "SAIL",
+        "CCC",
+        "FIG",
+        "SMTC",
+        "DUOL",
+        "MEI",
+        "ALRM",
+        "ONTO",
+        "IPGP",
+        "S",
+        "TENB",
+        "CGNX",
+        "SSTK",
+        "PRGS",
+        "MTSI",
+        "GLBE",
+        "TTAN",
+        "GTLB",
+        "APPF",
+        "ICHR",
+        "EVTC",
+        "MIR",
+        "ATHM",
+        "BMI",
+        "MRCY",
+        "CARG",
+        "ACMR",
+        "YOU",
+        "ALGM",
+        "SIMO",
+        "WK",
+        "NVMI",
+        "RPD",
+        "NTCT",
+        "CXM",
+        "ALAB",
+        "PLAB",
+        "ECX",
+        "VREX",
+        "RBBN",
+        "ACLS",
+        "FRSH",
+        "NRDS",
+        "RAMP",
+        "GDRX",
+        "QTWO",
+        "ASAN",
+        "UPWK",
+        "FORM",
+        "SLAB",
+        "WOLF",
+        "COUR",
+        "LZ",
+        "TE",
+        "BAND",
+        "SPSC",
+        "VERX",
+        "BRZE",
+        "EGHT",
+        "DSGX",
+        "APPN",
+        "CARS",
+        "NTSK",
+        "CRCT",
+        "RMBS",
+        "NAVN",
+        "BL",
+        "NTGR",
+        "AOSL",
+        "BELFA",
+        "QLYS",
+        "DQ",
+        "VECO",
+        "KLIC",
+        "CLMB",
+        "OLED",
+        "DOCS",
+        "MQ",
+        "FSLY",
+        "VRNS",
+        "APLD",
+        "NCNO",
+        "AZTA",
+        "KN",
+        "EVCM",
+        "HNGE",
+        "SOHU",
+        "IBEX",
+        "ALNT",
+        "SSYS",
+        "BB",
+        "CTS",
+        "FROG",
+        "LSCC",
+        "SKIL",
+        "MAXNQ",
+        "NABL",
+        "INTA",
+        "CAMT",
+        "PD"
+      ],
+      "as_of_all": [
+        "2026-11-09",
+        "2026-10-21"
+      ]
+    }
+  ],
+  "market_data": "showcase"
+}
