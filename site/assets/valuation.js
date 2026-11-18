@@ -2,7 +2,7 @@ import { $M } from "./company.js";
 import { tabSet, wireTabs } from "./tabs.js";
 import { histogramChart } from "./charts.js";
 import { simulationSummary } from "./pages.js";
-import { NA, NM, esc, estLabel, fin, label, millions, money, mult, num, pct, periodLabel, price, sentence, sourceLine, times, titleCase, unit, unitShort } from "./format.js";
+import { discountingNote, esc, estLabel, fin, label, millions, money, mult, NA, NM, num, pct, periodLabel, price, sentence, sourceLine, times, titleCase, unit, unitShort } from "./format.js";
 import { deviceAssumptions, saveAssumption } from "./device.js";
 import { setStatus } from "./status.js";
 import { runInBrowser } from "./run.js";
@@ -562,7 +562,7 @@ export function bridgeRows(b) {
   ].join("");
 }
 
-// Years 1–4, Year 5, Year 10 and the terminal year, on fiscal-year headers (Year 1 = closing year).
+// Years 1–4, Year 5, Year 10 and the terminal year, on fiscal-year headers (Year 1 = fiscal year in progress).
 function dcfProjectionTable(d) {
   const P = d.projection, n = P.length;
   const idx = [...new Set([1, 2, 3, 4, 5, 10, n].filter((y) => y <= n))];
@@ -671,7 +671,7 @@ export function renderDcfCard() {
     ${d.private ? `<p class="legend-note"><b>Private firm:</b> ${pct(d.private.discount, true)} discount on equity value for illiquidity${d.private.life_years ? `; the terminal value covers ${d.private.life_years} years, not forever` : ""}.</p>` : ""}
     ${checksList(d)}
     ${tornadoChart(d)}
-    <p class="legend-note">Year 1 is the closing year (not discounted). The values above are the stated case; the range comes from the simulation (Spread of Simulated Outcomes).${r.notes?.length ? " " + esc(r.notes.filter((n) => !n.startsWith("range =")).join(" ")) : ""}</p>`;
+    <p class="legend-note">${discountingNote(d)} The values above are the stated case; the range comes from the simulation (Spread of Simulated Outcomes).${r.notes?.length ? " " + esc(r.notes.filter((n) => !n.startsWith("range =")).join(" ")) : ""}</p>`;
   ($("val-dcf") || $("val-body")).appendChild(card);
 }
 

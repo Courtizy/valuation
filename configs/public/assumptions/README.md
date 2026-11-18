@@ -9,11 +9,11 @@ file is missing and names the file it expected.
 | Key | Meaning |
 |---|---|
 | `mode` | `forecast` (your growth gives a value) or `implied` (solve growth so value = price) |
-| `base_period` | `annual` (default: the last reported fiscal year, so Year 1 = the fiscal year in progress, the closing year) or `ttm` (latest twelve months) |
+| `base_period` | `annual` (default: the last reported fiscal year, so Year 1 = the fiscal year in progress) or `ttm` (latest twelve months) |
 | `market.price`, `price_date` | share price used for market D/E, the TSM and implied mode. Leave null to use market data (last close on or before as_of) |
 | `market.basic_shares` | overrides the share count from filings |
 | `market.options` | `[[options_outstanding, weighted_avg_strike], ...]` for the treasury stock method |
-| `forecast.years_to_terminal` | N; the projection runs N + 1 years (year 1 is the closing year) |
+| `forecast.years_to_terminal` | N; the projection runs N + 1 years (year 1 is the fiscal year in progress) |
 | `forecast.revenue_growth` | near-term growth g0; fades linearly to terminal growth over N years |
 | `forecast.growth_adjust` | optional per-year adjustments replacing the fade (all zeros = constant g0) |
 | `forecast.terminal_growth` | Gordon growth after year N |
@@ -28,7 +28,7 @@ file is missing and names the file it expected.
 | `bridge.operating_cash_pct` | share of cash needed to run the business, not netted against debt (default 0.5) |
 | `bridge.include_longterm_investments` | count long-term investments (non-current marketable securities) as cash in the bridge (default false) |
 | `terminal.weight` | share of the terminal value to count (default 1) |
-| `discounting.convention` | `closing_year_zero` (default), `end_of_year`, `mid_year` |
+| `discounting.convention` | `end_of_year` (default for public companies: year t discounted t years), `mid_year`, or `closing_year_zero` (the course convention, year 1 not discounted; default for private firms) |
 | `sensitivity.*` | step sizes for the conservative / aggressive range |
 
 ## reconcile.json (optional)

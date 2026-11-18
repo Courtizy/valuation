@@ -270,7 +270,8 @@ def _value(wb, base, drivers, cols, rates=None, **override):
         terminal_growth=drivers["revenue"]["g_terminal"], tax_rate=c("F4"), capex_to_sales_terminal=c("V8"),
         nwc_to_sales_change=c("V4"), net_debt=c("B24"), shares=c("F24"),
         tv_weight=1.0 if tv_weight is None else float(tv_weight),
-        invested_capital_to_sales=(c("F23") - c("B23")) / c("M3"))
+        invested_capital_to_sales=(c("F23") - c("B23")) / c("M3"),
+        convention="closing_year_zero")                      # the course workbook's timeline
 
 
 @pytest.mark.parametrize("case", sorted(FIRM_DCF_CASES))

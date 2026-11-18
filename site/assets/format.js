@@ -85,3 +85,12 @@ export function label(id) {
 
 /** The one source line every card ends with. */
 export const sourceLine = (extra = "") => `<p class="source-line">Source: SEC filings via XBRL${extra ? `; ${esc(extra)}` : ""}.</p>`;
+
+// How the DCF discounted its years (details.convention from the engine). Results from before 0.11.0 carry no
+// convention and used the course's closing-year timeline.
+export function discountingNote(d) {
+  const c = d?.convention || "closing_year_zero";
+  if (c === "end_of_year") return "Discounting: end of year (Year t is discounted t years).";
+  if (c === "mid_year") return "Discounting: mid-year (Year t is discounted t − 0.5 years; the terminal value t years).";
+  return "Discounting: course convention (Year 1 is the closing year, not discounted).";
+}

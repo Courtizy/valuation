@@ -92,7 +92,8 @@ def test_dcf_carries_the_checks_tornado_and_seasonal_model(demo):
 def test_private_firm_mode(demo):
     a = {"mode": "forecast", "market": {"price": 40.0, "basic_shares": 100e6},
          "forecast": {"years_to_terminal": 10, "revenue_growth": 0.06, "terminal_growth": 0.03, "tax_rate": 0.21},
-         "cost_of_capital": {"risk_free": 0.04, "equity_risk_premium": 0.05, "beta": 1.0, "pre_tax_cost_of_debt": 0.05}}
+         "cost_of_capital": {"risk_free": 0.04, "equity_risk_premium": 0.05, "beta": 1.0, "pre_tax_cost_of_debt": 0.05},
+         "discounting": {"convention": "closing_year_zero"}}   # same timeline for both, so only the discount differs
     pub = get_model("dcf").run(demo["detail"], a).details
     priv = get_model("dcf").run(demo["detail"], {**a, "private": {"r_squared": 0.25, "discount": 0.25}}).details
     assert priv["rates"]["beta_levered_observed"] == A(2.0) and priv["rates"]["total_beta"]["multiplier"] == A(2.0)

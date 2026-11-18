@@ -8,7 +8,7 @@
 2. **Projection.** The model calls `core.projection`:
    - Revenue grows at g0, fading linearly to terminal growth over N years. Explicit per-year adjustments can replace the fade.
    - Working capital grows by (ΔNWC/ΔSales) × ΔSales. By default that ratio is measured from up to four years of managerial WCR history, falling back to 0.20.
-   - The projection runs N + 1 years, and year 1 is the closing year.
+   - The projection runs N + 1 years, and year 1 is the fiscal year in progress.
 3. **Discount rates.** The model calls `core.cost_of_capital`:
    - Pre-tax cost of debt is interest expense ÷ total debt from the base period, unless a number is given. If that can't be measured, a fallback (bond yield to maturity) is required. A rate below the risk-free rate is flagged.
    - Beta is unlevered at today's market D/E and relevered at the target D/E.
@@ -16,7 +16,8 @@
    - The pre-terminal WACC uses today's r_f.
    - The terminal-year WACC uses a normalized r_f,T, with the debt spread kept.
 4. **Value.** The model calls `core.dcf`:
-   - Each year's FCF is discounted at the pre-terminal WACC with exponent (t − 1).
+   - Each year's FCF is discounted at the pre-terminal WACC with exponent t (standard end-of-year discounting, the default for public companies). `discounting.convention` can choose `mid_year` (t − 0.5) or the course's `closing_year_zero` (t − 1, year 1 not discounted), which private firms keep by default.
+   - Check: a flat 100 a year at 10% with no growth is worth exactly 1,000 (`tests/test_L2_dcf.py`). Under `closing_year_zero` the same case is 1,100, which is why public companies no longer use it.
    - The terminal value is FCF_T × (1 + g) / (WACC_T − g), where FCF_T = EBITDA(1 − t) − Sales × capex%(1 − t) − Sales × g × ΔNWC/ΔSales. It is discounted with the last year's exponent.
    - Equity value = EV − (debt − cash beyond operating needs).
    - Value per share = equity value / diluted shares, with dilution by the treasury stock method.

@@ -29,7 +29,7 @@
   },
   "bridge": {"operating_cash_pct": 0.5, "include_longterm_investments": true},
   "terminal": {"method": "gordon", "weight": 1.0},
-  "discounting": {"convention": "closing_year_zero"},
+  "discounting": {"convention": "end_of_year"},
   "sensitivity": {"growth_step": 0.01, "wacc_step": 0.01, "terminal_growth_step": 0.005, "terminal_wacc_step": 0.005},
   "sources": {
     "price": "market data: the last close on or before as_of (Yahoo, checked against Alpha Vantage)",
