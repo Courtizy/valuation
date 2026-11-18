@@ -75,7 +75,7 @@ def test_value_firm_conventions_and_bridge():
     p = _proj()
     kw = dict(wacc=0.10, wacc_terminal=0.10, terminal_growth=0.0, tax_rate=0.25, capex_to_sales_terminal=0.05,
               nwc_to_sales_change=0.1, net_debt=20, shares=10)
-    v = value_firm(p, **kw)
+    v = value_firm(p, convention="closing_year_zero", **kw)
     fcf = p["years"][0]["free_cash_flow"]["fcf"]                  # flat sales: every year the same
     assert fcf == A(25 * 0.75 + 5 * 0.25 - 5)
     tv = terminal_value(p["years"][-1], terminal_growth=0.0, wacc_terminal=0.10, tax_rate=0.25,
@@ -338,3 +338,50 @@ def test_core_simulation_helpers():
     assert sum(histogram(xs, bins=10, trim=0)["counts"]) == 1000
     with pytest.raises(ValueError):
         sample({"dist": "lognormal"}, 1, rng(1))
+
+
+# ------------------------------------------------- discounting timing (2026-11-18)
+# Public companies use standard end-of-year discounting: projection year t is discounted with (1 + WACC)^t
+# and the terminal value with the last year's exponent. Expected values are derived by hand, not from the code.
+
+def _flat(n=5, fcf=100.0):
+    return {"years": [{"year": t, "revenue": 1000.0, "ebitda": fcf, "ebit": fcf, "free_cash_flow": {"fcf": fcf}}
+                      for t in range(1, n + 1)]}
+
+
+FLAT = dict(wacc=0.10, wacc_terminal=0.10, terminal_growth=0.0, tax_rate=0.0, capex_to_sales_terminal=0.0,
+            nwc_to_sales_change=0.0, net_debt=0.0, shares=1.0)
+
+
+def test_default_discounting_is_end_of_year_hand_calculation():
+    # A flat 100 forever at 10% is worth 100 / 0.10 = 1,000 today: five discounted years (379.08) plus the
+    # Gordon value 100 / 0.10 = 1,000 discounted five years (620.92).
+    v = value_firm(_flat(), **FLAT)
+    assert v["convention"] == "end_of_year"
+    assert v["enterprise_value"] == A(1000.0)
+    assert v["pv_fcf"] == A(379.0787, abs=1e-4) and v["pv_terminal_value"] == A(620.9213, abs=1e-4)
+
+
+def test_other_conventions_against_the_same_hand_case():
+    # closing_year_zero shifts every flow one year earlier: 1,000 x 1.1 = 1,100.
+    assert value_firm(_flat(), convention="closing_year_zero", **FLAT)["enterprise_value"] == A(1100.0)
+    # mid_year: flows at t - 0.5, terminal value at t = 5 -> 1,000 + 379.0787 x (1.1^0.5 - 1) = 1,018.502
+    assert value_firm(_flat(), convention="mid_year", **FLAT)["enterprise_value"] == A(1018.5024, abs=1e-4)
+
+
+def test_public_company_defaults_to_end_of_year(detail):
+    r = get_model("dcf").run(detail, assumptions())
+    d = r.details
+    assert d["convention"] == "end_of_year"
+    w = d["rates"]["wacc"]
+    proj = d["projection"]
+    pv = sum(y["fcf"] / (1 + w) ** y["year"] for y in proj)          # independent re-discounting
+    pv_tv = d["terminal"]["terminal_value"] / (1 + w) ** proj[-1]["year"]
+    assert d["bridge"]["enterprise_value"] == A(pv + pv_tv)
+
+
+def test_private_firm_keeps_the_course_convention_and_config_overrides(detail):
+    priv = get_model("dcf").run(detail, assumptions(private={"enabled": True, "r_squared": 0.4}))
+    assert priv.details["convention"] == "closing_year_zero"
+    mid = get_model("dcf").run(detail, assumptions(discounting={"convention": "mid_year"}))
+    assert mid.details["convention"] == "mid_year"

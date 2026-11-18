@@ -91,7 +91,7 @@ The site uses the Decision Models brand kit in `brand/` at the repo root, copied
 
 - Titles, headers, line items and buttons in Title Case (small words lower case, acronyms kept); notes in sentence case.
 - Periods: `2025` reported fiscal year, `Q3 2026` fiscal quarter, `LTM Jun 2026`, `2027E` estimate; in charts and tables alike.
-- Estimates shown: Years 1–4, then Year 5 and Year 10 (tagged), with LTM as a reference column. Year 1 is the fiscal year after the last 10-K (the closing year).
+- Estimates shown: Years 1–4, then Year 5 and Year 10 (tagged), with LTM as a reference column. Year 1 is the fiscal year after the last 10-K (the fiscal year in progress).
 - $ millions with one decimal in tables; $5.76B in tiles; percentages one decimal; valuation multiples one decimal (`11.1x`, `NM` on a negative base); turnover two decimals; `–` = no data.
 - Every card ends with a source line.
 

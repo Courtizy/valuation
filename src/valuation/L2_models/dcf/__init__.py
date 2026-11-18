@@ -12,12 +12,14 @@ Steps
 2. Projection (core.projection): revenue grows at g0 and fades linearly to
    terminal growth over the years to terminal (or follows explicit per-year
    adjustments); costs, D&A and capex stay at their ratios to sales;
-   working capital grows by (dNWC/dSales) x dSales. Year 1 is the closing
-   year, and the projection runs years_to_terminal + 1 years.
+   working capital grows by (dNWC/dSales) x dSales. Year 1 is the fiscal
+   year in progress, and the projection runs years_to_terminal + 1 years.
 3. Discount rates (core.cost_of_capital): beta unlevered at today's market
    D/E and relevered at the target; a pre-terminal WACC and a terminal-year
    WACC on the normalized long-run rate.
-4. Value (core.dcf): discounted FCF plus a Gordon terminal value, less net
+4. Value (core.dcf): discounted FCF plus a Gordon terminal value (end-of-year
+   discounting for public companies; private firms default to the course's
+   closing-year convention; discounting.convention overrides either), less net
    debt (debt - cash not needed for operations), over diluted shares (TSM).
 5. Range: conservative / expected / aggressive from the two sensitivity
    moves, blended by the terminal value's share.
@@ -333,7 +335,8 @@ class DCF:
             "capex": capex, "rates": rates, "price": price, "shares": shares, "tsm": tsm,
             "net_debt": net_debt, "debt": debt, "cash": cash, "operating_cash_pct": op_cash,
             "tv_weight": a.get("terminal", {}).get("weight", 1.0),
-            "convention": a.get("discounting", {}).get("convention", "closing_year_zero"),
+            # public companies: standard end-of-year discounting; private firms keep the course's closing-year convention
+            "convention": a.get("discounting", {}).get("convention", "closing_year_zero" if private else "end_of_year"),
             "ic_to_sales": (invested - cash) / rev if invested else None,
             "mode": a.get("mode", "forecast"), "sensitivity": a.get("sensitivity", {}),
             "risk_free": rf, "default_case": bool(a.get("default_case")),
@@ -619,6 +622,7 @@ class DCF:
         }
         details = {
             "mode": p["mode"],
+            "convention": p["convention"],
             "default_case": p["default_case"],
             "implied_growth": implied,
             "base_period": {"label": p["period"]["label"], "end": p["period"]["end"],

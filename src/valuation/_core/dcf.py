@@ -1,12 +1,14 @@
 """Discounted cash flow valuation on top of core.projection.
 
-Timeline (course convention, "closing_year_zero")
---------------------------------------------------
-Projection year 1 is the closing year. It is discounted with exponent 0, so
-year t uses (1 + WACC)^(t-1). The terminal value sits in the last projected
-year and is discounted with that year's exponent at the pre-terminal WACC.
-Other conventions: "end_of_year" (exponent t) and "mid_year" (t - 0.5 for
-cash flows, t for the terminal value).
+Timeline (default "end_of_year", the standard convention)
+---------------------------------------------------------
+Projection year t is discounted with (1 + WACC)^t. The terminal value sits in
+the last projected year and is discounted with that year's exponent at the
+pre-terminal WACC. Check: a flat 100 forever at 10% is worth exactly 1,000.
+Other conventions: "mid_year" (t - 0.5 for cash flows, t for the terminal
+value) and the course's "closing_year_zero" (exponent t - 1: year 1, the
+closing year, is not discounted, which raises value by a factor of about
+1 + WACC; kept for private-firm cases and the course workbook parity tests).
 
 Terminal value (steady state, Gordon growth)
 --------------------------------------------
@@ -69,7 +71,7 @@ def terminal_value(last: dict, *, terminal_growth: float, wacc_terminal: float, 
 
 def value_firm(projection: dict, *, wacc: float, wacc_terminal: float, terminal_growth: float, tax_rate: float,
                capex_to_sales_terminal: float, nwc_to_sales_change: float, net_debt: float, shares: float,
-               tv_weight: float = 1.0, convention: str = "closing_year_zero",
+               tv_weight: float = 1.0, convention: str = "end_of_year",
                invested_capital_to_sales: float | None = None, life_years: float | None = None,
                equity_discount: float = 0.0) -> dict:
     years = projection["years"]

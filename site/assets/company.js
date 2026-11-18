@@ -1,5 +1,5 @@
 import { areaChart, groupedBarChart, lineChart, spreadChart } from "./charts.js";
-import { NA, days, esc, estLabel, fin, label, millions, money, monthYear, num, pct, periodLabel, price, times, titleCase, unit, unitShort } from "./format.js";
+import { days, discountingNote, esc, estLabel, fin, label, millions, money, monthYear, NA, num, pct, periodLabel, price, times, titleCase, unit, unitShort } from "./format.js";
 import { renderRatioBench, renderSector } from "./sector.js";
 import { $, fileHref, runRoot, state } from "./state.js";
 import { acct, cellOf, finRow } from "./tables.js";
@@ -136,7 +136,7 @@ export const analysisLabel = (a) => (a.label.startsWith("TTM") ? `LTM ${monthYea
 // ---- projection: which estimate years are shown -------------------------------------
 // Statements show Years 1–4, then Year 5 and Year 10 (indexes into the projected rows);
 // charts plot every year. Years count from the base period: on a fiscal base Year 1 is
-// the fiscal year in progress (FY+1E), which is also the DCF's undiscounted closing year.
+// the fiscal year in progress (FY+1E); details.convention says how the DCF discounted it.
 export const SHOWN_YEARS = [1, 2, 3, 4, 5, 10];
 
 // Projected years: the DCF's projection when a DCF has run (the numbers behind the
@@ -151,8 +151,8 @@ export function projection() {
   if (d?.statements?.length) {
     return { kind: "dcf", rows: d.statements.slice(0, 10), base: d.base_period, name: "DCF Case",
       note: state.dcf.details?.default_case
-        ? "Estimates: DCF default case (no dcf.json: growth from the company's history, rates from the data; Year 1 is the undiscounted closing year)."
-        : `Estimates: DCF case from configs/public/assumptions/${state.company.ticker}/dcf.json (Year 1 is the undiscounted closing year).` };
+        ? `Estimates: DCF default case (no dcf.json: growth from the company's history, rates from the data). Year 1 is the fiscal year in progress. ${discountingNote(d)}`
+        : `Estimates: DCF case from configs/public/assumptions/${state.company.ticker}/dcf.json. Year 1 is the fiscal year in progress. ${discountingNote(d)}` };
   }
   const p = state.detail.projection;
   if (!p?.years?.length) return null;
