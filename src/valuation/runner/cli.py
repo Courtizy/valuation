@@ -55,11 +55,14 @@ def main(argv: list[str] | None = None,
     sl.add_argument("--data-dir", type=Path, default=Path("data"))
     sl.add_argument("--cache-dir", type=Path, default=Path(".cache/sec"))
     sl.add_argument("--user-agent", help="defaults to $SEC_USER_AGENT")
+    sl.add_argument("--time-budget", type=float, default=None, metavar="MINUTES",
+                    help="stop starting new EDGAR pages after this long; codes not reached keep their published lists")
     args = p.parse_args(argv)
 
     if args.cmd == "sic-lists":
         fac = adapter_factory or (lambda: SecSectorAdapter(cache=FileCache(args.cache_dir), user_agent=args.user_agent))
-        done, failed = sic_lists(args.as_of, Paths(args.data_dir, Path("configs/public/assumptions")), fac)
+        done, failed = sic_lists(args.as_of, Paths(args.data_dir, Path("configs/public/assumptions")), fac,
+                                 budget_seconds=None if args.time_budget is None else args.time_budget * 60)
         print(f"SIC lists: {done} fetched" + (f", {len(failed)} failed: {', '.join(failed)}" if failed else ""))
         return 0 if done else 1
 

@@ -2,6 +2,9 @@
 
 All notable changes to the Valuation Model. Newest first.
 
+## [0.11.1] - 2026-11-19
+- **Weekly Refresh no longer runs out the clock.** Three of the last four scheduled runs were cancelled at the 90-minute limit, so the live companies stopped updating. Two causes: on 2026-10-26 and 2026-11-02 FRED timed out and every company retried it for about two minutes before its DCF failed anyway; on 2026-11-16 EDGAR's SIC company-list pages stalled the first step for the whole run. The risk-free rate is now fetched once before the companies, and if FRED is down the companies are skipped at once and keep their last published results. The SIC lists stop after 20 minutes (`sic-lists --time-budget`); codes not reached keep their published lists, and the starting code rotates weekly.
+
 ## [0.11.0] - 2026-11-18
 - **Standard end-of-year discounting for public companies.** The DCF discounted year 1 (the fiscal year in progress) with exponent 0 and the terminal value with N − 1, the course's closing-year convention. That shifts every cash flow a year earlier and raises enterprise value by about 1 + WACC: a flat 100 a year at 10% came out at 1,100 instead of 1,000. Public companies now discount year t with (1 + WACC)^t, so their values fall by roughly that factor (about 8–10% at typical rates). Private firms keep the course convention by default; `discounting.convention` still overrides either, and `details.convention` reports the one used. `core.dcf.value_firm` defaults to `end_of_year`; the course parity tests pin `closing_year_zero`.
 

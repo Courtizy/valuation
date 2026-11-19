@@ -19,6 +19,7 @@ from __future__ import annotations
 import html
 import json
 import re
+import time
 from datetime import datetime, timezone
 
 from .http import HttpError
@@ -106,8 +107,9 @@ class SecSectorAdapter(SecCompanyFactsAdapter):
             "year": year, "tags": TAG_GROUPS, "frames": frames, "missing_frames": missing,
         }
 
-    def sic_members(self, sic: str) -> dict:
-        """{"sic", "description", "ciks"} from EDGAR's company list for an industry code."""
+    def sic_members(self, sic: str, deadline: float | None = None, clock=None) -> dict:
+        """{"sic", "description", "ciks"} from EDGAR's company list for an industry code. With a deadline
+        (a clock() value), raises TimeoutError instead of starting a page after it, so no partial list is kept."""
         if not re.fullmatch(r"\d{4}", str(sic)):
             raise ValueError(f"SIC code must be 4 digits: {sic!r}")
         if str(sic) in self.sic_lists:
@@ -117,6 +119,8 @@ class SecSectorAdapter(SecCompanyFactsAdapter):
         ciks: list[str] = []
         desc = None
         for page in range(MAX_SIC_PAGES):
+            if deadline is not None and (clock or time.monotonic)() >= deadline:
+                raise TimeoutError(f"SIC {sic}: time budget reached after {page} pages")
             data, _, _ = self._get(SIC_URL.format(sic=sic, start=page * 100), f"sic_{sic}_{page}.html")
             found, d = parse_sic_page(data.decode("utf-8", "replace"))
             desc = desc or d
