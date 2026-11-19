@@ -5,6 +5,12 @@
 Each company runs the DCF, plus comps when configs/public/assumptions/{TICKER}/comps.json
 exists. One failure doesn't stop the rest; the summary lists them, and the exit code is
 non-zero only when nothing at all was built.
+
+Two guards keep one slow source from using up the job's 90 minutes:
+- The SIC lists stop after SIC_BUDGET_MINUTES (EDGAR's company-list pages stalled the whole run on 2026-11-16).
+- The risk-free rate is fetched once before the companies. If FRED can't be reached, the companies are
+  skipped at once and keep their last published results: every DCF needs the rate, and fetching it per
+  company cost about two minutes each (2026-10-26 and 2026-11-02).
 """
 from __future__ import annotations
 
@@ -19,9 +25,24 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from valuation.runner.cli import main as pipeline  # noqa: E402
+from valuation.runner.paths import Paths  # noqa: E402
 
 UNIVERSE = ROOT / "configs" / "public" / "universe.json"
 ASSUMPTIONS = ROOT / "configs" / "public" / "assumptions"
+SIC_BUDGET_MINUTES = 20
+
+
+def fetch_risk_free(as_of: str, data_dir: Path = Path("data"), cache_dir: Path = Path(".cache/market")) -> None:
+    """Write data/_market/{as_of}/risk_free.json once, where each company's run looks for it first.
+    Raises MarketDataError when FRED can't be reached."""
+    from valuation.L0_ingest.cache import FileCache
+    from valuation.L0_ingest.market import MarketAdapter
+    out = Paths(data_dir, ASSUMPTIONS).risk_free(as_of)
+    if out.exists():
+        return
+    rf = MarketAdapter(cache=FileCache(cache_dir, ttl_seconds=6 * 3600)).risk_free(as_of)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(rf, indent=2))
 
 
 def models_for(ticker: str, assumptions: Path = ASSUMPTIONS) -> str:
@@ -29,7 +50,7 @@ def models_for(ticker: str, assumptions: Path = ASSUMPTIONS) -> str:
 
 
 def jobs(universe: dict, as_of: str, market: str, assumptions: Path = ASSUMPTIONS) -> list[tuple[str, list[str]]]:
-    out = [("SIC lists", ["sic-lists", "--as-of", as_of])]       # for in-browser screens (site/data/sic_members.json)
+    out = [("SIC lists", ["sic-lists", "--as-of", as_of, "--time-budget", str(SIC_BUDGET_MINUTES)])]       # for in-browser screens (site/data/sic_members.json)
     out += [(spec, ["sector", spec, "--as-of", as_of]) for spec in universe.get("sectors", [])]
     for t in dict.fromkeys(universe.get("tickers", [])):       # de-duplicated, order kept
         out.append((t, ["run", t, "--as-of", as_of, "--models", models_for(t, assumptions),
@@ -45,7 +66,20 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
 
     done, failed = [], []
+    rate_checked, no_rate = args.market == "none", None
     for name, cmd in jobs(json.loads(args.universe.read_text()), args.as_of, args.market):
+        if cmd[0] == "run" and not rate_checked:
+            rate_checked = True
+            print("== risk-free rate", flush=True)
+            try:
+                fetch_risk_free(args.as_of)
+            except Exception as e:
+                no_rate = f"{type(e).__name__}: {e}"
+                print(f"error: no risk-free rate ({no_rate}); companies keep their last published results",
+                      file=sys.stderr)
+        if cmd[0] == "run" and no_rate:
+            failed.append(name)
+            continue
         print(f"== {name}", flush=True)
         try:
             code = pipeline(cmd)
@@ -58,6 +92,8 @@ def main(argv: list[str] | None = None) -> int:
             print("warning: SIC lists not fetched; in-browser screens keep the last published ones", file=sys.stderr)
 
     summary = f"Refresh {args.as_of}: {len(done)} built, {len(failed)} failed" + (f" ({', '.join(failed)})" if failed else "")
+    if no_rate:
+        summary += f". Companies skipped: no risk-free rate from FRED ({no_rate})"
     print(summary)
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:

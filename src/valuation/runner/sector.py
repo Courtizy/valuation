@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import json
+import time
+from datetime import date
 from pathlib import Path
 from typing import Callable
 
@@ -32,19 +34,32 @@ def parse_sector_spec(spec: str) -> tuple[str, str]:
     return kind, value
 
 
-def sic_lists(as_of: str, paths: Paths, adapter_factory: Callable[[], SecSectorAdapter]) -> tuple[int, list[str]]:
+def sic_lists(as_of: str, paths: Paths, adapter_factory: Callable[[], SecSectorAdapter],
+              budget_seconds: float | None = None, clock: Callable[[], float] = time.monotonic) -> tuple[int, list[str]]:
     """EDGAR's company list for every SIC code in the taxonomy, into data/_screen/{as_of}/sic_*.json,
     for publishing as site/data/sic_members.json (the in-browser screens can't reach that EDGAR page).
-    Returns (codes fetched, codes that failed)."""
+    Returns (codes fetched, codes that failed).
+
+    budget_seconds caps the time spent: when EDGAR is slow the step stops starting new pages and codes, so
+    it can't use up the Refresh job (it did on 2026-11-16). Codes not reached keep their last published list
+    (publishing merges per code), and the starting code rotates weekly so each week reaches a different tail."""
     ad, tax = adapter_factory(), l1_taxonomy.load()
+    codes = list(dict.fromkeys(c for s in tax.sectors for c in tax.codes(s)))
+    if codes:
+        k = (date.fromisoformat(as_of).toordinal() // 7) % len(codes)
+        codes = codes[k:] + codes[:k]
+    deadline = None if budget_seconds is None else clock() + budget_seconds
     done, failed = 0, []
-    for code in dict.fromkeys(c for s in tax.sectors for c in tax.codes(s)):
+    for i, code in enumerate(codes):
         p = paths.sic_list(as_of, code)
         if p.exists():
             done += 1
             continue
+        if deadline is not None and clock() >= deadline:
+            failed.append(f"{len(codes) - i} codes not tried (time budget {budget_seconds / 60:g} min)")
+            break
         try:
-            lst = ad.sic_members(code)
+            lst = ad.sic_members(code, deadline=deadline, clock=clock)
         except Exception as e:                       # one code shouldn't stop the rest
             failed.append(f"{code} ({type(e).__name__})")
             continue
