@@ -2,6 +2,9 @@
 
 All notable changes to the Valuation Model. Newest first.
 
+## [Unreleased]
+- **Research links hidden.** The overview's "How its forecasts are tested" link and the Validation row's "Research & Analysis" link are removed while the research section is reconsidered. The calibrated ranges and their source note are unchanged. Restore by reverting this change.
+
 ## [0.11.1] - 2026-11-19
 - **Weekly Refresh no longer runs out the clock.** Three of the last four scheduled runs were cancelled at the 90-minute limit, so the live companies stopped updating. Two causes: on 2026-10-26 and 2026-11-02 FRED timed out and every company retried it for about two minutes before its DCF failed anyway; on 2026-11-16 EDGAR's SIC company-list pages stalled the first step for the whole run. The risk-free rate is now fetched once before the companies, and if FRED is down the companies are skipped at once and keep their last published results. The SIC lists stop after 20 minutes (`sic-lists --time-budget`); codes not reached keep their published lists, and the starting code rotates weekly.
 
