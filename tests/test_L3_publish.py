@@ -123,7 +123,8 @@ def test_export_changelog_parses():
     spec = importlib.util.spec_from_file_location("export_site", ROOT / "scripts" / "export_site.py")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
-    releases = mod.changelog()
+    # An "[Unreleased]" section at the top collects changes for the next version; it isn't a release.
+    releases = [r for r in mod.changelog() if r["version"].strip("[]").lower() != "unreleased"]
     # the newest release is the package version, so the two can't drift apart
     version = re.search(r'^version = "([^"]+)"', (ROOT / "pyproject.toml").read_text(), flags=re.M).group(1)
     assert releases[0]["version"] == version and releases[0]["items"]
