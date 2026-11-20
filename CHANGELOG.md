@@ -3,6 +3,7 @@
 All notable changes to the Valuation Model. Newest first.
 
 ## [Unreleased]
+- **Rounded shape.** Cards, buttons, tabs and pills follow the suite's rounded shape (after Delta Readiness): 22 px cards with a soft shadow in light, round buttons and Overview · Results · Method pill tabs. Colors, type and results are unchanged.
 - **Research links hidden.** The overview's "How its forecasts are tested" link and the Validation row's "Research & Analysis" link are removed while the research section is reconsidered. The calibrated ranges and their source note are unchanged. Restore by reverting this change.
 
 ## [0.11.1] - 2026-11-19

@@ -592,3 +592,29 @@ table.checks td:last-child { white-space: normal; min-width: 240px; }
   table.checks td:first-child { white-space: normal; }
   table.wrap-names td:first-child { white-space: normal; }
 }
+
+/* ---- Rounded shape (2026-11-19): the suite's soft, phone-native shape, using the brand kit's shape tokens.
+   Colors, type and layout are unchanged. ---- */
+:root { --radius: var(--radius-field, 12px); }
+.card, .tour, .ov-card, .ov-box, .results-side { border-radius: var(--radius-card, 22px); box-shadow: var(--shadow-card, 0 0 0 transparent); }
+.vstat { border-radius: var(--radius-control, 999px); }
+.tile, .kpi, .trait, .sector-action { border-radius: var(--radius-inner, 14px); }
+.kpi { box-shadow: var(--shadow-card, 0 0 0 transparent); }
+button, a.btn, .crumbs button { border-radius: var(--radius-control, 999px); }
+button.linkish { border-radius: 4px; }
+.pill { border-radius: var(--radius-control, 999px); }
+.app-status--live .app-status__dot { background: var(--accent); border-color: var(--accent); }
+/* Segmented controls: one rounded track, the chosen option a filled pill */
+.seg { border-radius: var(--radius-control, 999px); padding: 2px; gap: 2px; }
+.seg button { border-radius: var(--radius-control, 999px); }
+.seg button[aria-pressed="true"] { box-shadow: none; }
+.seg button + button { border-left: 0; }
+/* Overview · Results · Method as pill tabs: the current page is a tinted pill in the app's color */
+.tabs { gap: 4px; padding-block: 6px; }
+.tab { border-bottom: 0; border-radius: var(--radius-control, 999px); padding: 0 16px; }
+.tab:hover { background: color-mix(in srgb, var(--ink) 6%, transparent); }
+.tab[aria-selected="true"] { background: color-mix(in srgb, var(--brand-fill) 16%, var(--panel)); box-shadow: var(--shadow-card, 0 0 0 transparent); }
+/* Colored caps on rounded cards: an inset bar that follows the corners */
+.kpi--main { border-top: 1px solid var(--border); box-shadow: inset 0 3px 0 var(--series-1), var(--shadow-card, 0 0 0 transparent); }
+.card.sheet { border-top: 1px solid var(--border); box-shadow: inset 0 3px 0 var(--series-1), var(--shadow-card, 0 0 0 transparent); }
+.tour { border-top: 1px solid var(--border); box-shadow: inset 0 4px 0 var(--brand-fill), 0 8px 28px rgba(0, 0, 0, 0.25); }
