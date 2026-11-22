@@ -173,6 +173,28 @@ def test_derived_chain_and_missing_inputs(reg):
     assert recs(doc, "free_cash_flow") == {}                  # capex missing -> no record
 
 
+def test_ebitda_fallbacks_when_a_filer_skips_a_line(reg):
+    """IBM files no operating income; some filers split D&A into Depreciation and intangible
+    amortization. EBITDA falls back per period, and the record names the formula it used.
+    By hand: FY23 = 50 + 7 + 3 = 60 (D&A split); FY22 = pretax 40 + interest 5 + D&A 9 = 54."""
+    doc = normalize(raw(
+        fact("OperatingIncomeLoss", FY23, 50, K23),
+        fact("Depreciation", FY23, 7, K23),
+        fact("AmortizationOfIntangibleAssets", FY23, 3, K23),
+        fact("IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest", FY22, 40, K23),
+        fact("InterestExpense", FY22, 5, K23),
+        fact("DepreciationDepletionAndAmortization", FY22, 9, K23),
+    ), "2026-09-30", reg)
+    e = recs(doc, "ebitda")
+    assert e[FY23]["value"] == 60
+    assert e[FY23]["source"]["formula"] == "operating_income_loss + depreciation_ppe + amortization_of_intangibles"
+    assert e[FY23]["source"]["fallback"] is True
+    assert e[FY22]["value"] == 54 and e[FY22]["source"]["formula"].startswith("pretax_income_loss + interest_expense")
+    main = normalize(raw(fact("OperatingIncomeLoss", FY23, 50, K23), fact("Depreciation", FY23, 7, K23),
+                         fact("DepreciationDepletionAndAmortization", FY23, 10, K23)), "2026-09-30", reg)
+    assert recs(main, "ebitda")[FY23]["value"] == 60 and "fallback" not in recs(main, "ebitda")[FY23]["source"]
+
+
 def test_derived_ratio_and_divide_by_zero(reg):
     doc = normalize(raw(
         fact("IncomeTaxExpenseBenefit", FY23, 21, K23),

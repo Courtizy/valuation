@@ -1372,6 +1372,20 @@
       ]
     },
     {
+      "id": "depreciation_ppe",
+      "display_name": "Depreciation (Cash Flow)",
+      "edgartools_concept": null,
+      "statement": "CF",
+      "section": "cash_flow_adjustments",
+      "period_type": "duration",
+      "unit_type": "monetary",
+      "kind": "memo",
+      "source": "valuation_addition",
+      "primary_tags": [
+        "us-gaap:Depreciation"
+      ]
+    },
+    {
       "id": "share_based_compensation",
       "display_name": "Share-Based Compensation",
       "edgartools_concept": null,
@@ -1525,7 +1539,14 @@
       "kind": "derived",
       "source": "valuation_addition",
       "primary_tags": [],
-      "formula": "operating_income_loss + depreciation_amortization_cf"
+      "formula": "operating_income_loss + depreciation_amortization_cf",
+      "fallback_formulas": [
+        "operating_income_loss + depreciation_ppe + amortization_of_intangibles",
+        "operating_income_loss + depreciation_ppe",
+        "pretax_income_loss + interest_expense + depreciation_amortization_cf",
+        "pretax_income_loss + interest_expense + depreciation_ppe + amortization_of_intangibles",
+        "pretax_income_loss + interest_expense + depreciation_ppe"
+      ]
     },
     {
       "id": "free_cash_flow",

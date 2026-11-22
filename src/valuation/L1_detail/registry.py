@@ -49,14 +49,20 @@ class Concept:
     edgartools_concept: str | None = None
     primary_tags: tuple[str, ...] = ()
     formula: str | None = None
+    # derived only: tried in order, per period, when the formula's inputs aren't all there
+    fallback_formulas: tuple[str, ...] = ()
     aggregation: str = "first"
     components: tuple[tuple[str, ...], ...] = ()
 
     def all_tags(self) -> list[str]:
         return list(self.primary_tags) + [t for comp in self.components for t in comp]
 
+    def formulas(self) -> list[str]:
+        return [f for f in (self.formula, *self.fallback_formulas) if f]
+
     def formula_inputs(self) -> list[str]:
-        return FORMULA_TOKEN.findall(self.formula or "")
+        """Every concept any of the formulas reads (for ordering and validation)."""
+        return list(dict.fromkeys(t for f in self.formulas() for t in FORMULA_TOKEN.findall(f)))
 
 
 @dataclass
@@ -113,6 +119,7 @@ def load_registry(path: str | Path = DEFAULT_PATH) -> Registry:
             "primary_tags": tuple(raw.get("primary_tags") or ()),
             "components": tuple(tuple(comp) for comp in raw.get("components") or ()),
             "aggregation": raw.get("aggregation") or "first",
+            "fallback_formulas": tuple(raw.get("fallback_formulas") or ()),
         })
         if c.id in reg.concepts:
             raise ValueError(f"duplicate concept id: {c.id}")
@@ -162,7 +169,7 @@ def validate_registry(reg: Registry) -> list[str]:
                     errors.append(f"{where}: formula references unknown {ref!r}")
                 elif ref == c.id:
                     errors.append(f"{where}: formula references itself")
-        elif c.formula:
+        elif c.formula or c.fallback_formulas:
             errors.append(f"{where}: only derived concepts may have a formula")
 
     try:
