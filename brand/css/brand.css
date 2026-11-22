@@ -215,6 +215,11 @@ code, pre, .num { font-family: var(--font-mono); }
 .brand-header__question { margin: 0; font-size: 1rem; font-weight: 500; }
 .brand-header__by { font-size: 0.875rem; color: var(--ink-secondary); }
 
+/* ---- App status pill: "Live" (filled dot, app accent) or "In development" (hollow dot) ---- */
+.app-status { display: inline-flex; align-items: center; gap: 8px; font-size: 0.8125rem; color: var(--ink-secondary); white-space: nowrap; }
+.app-status__dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--ink-secondary); box-sizing: border-box; flex-shrink: 0; }
+.app-status--live .app-status__dot { background: var(--accent, var(--ink)); border-color: var(--accent, var(--ink)); }
+
 /* ---- Cards and footer ---- */
 .brand-card { background: var(--panel); border: 1px solid var(--line); padding: 20px; }
 .brand-footer {

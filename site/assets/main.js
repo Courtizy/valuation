@@ -7,6 +7,7 @@ import { $, banner, device, getJSON, runRoot, state, store } from "./state.js";
 import { renderValuation } from "./valuation.js";
 import { setTourHooks, startTour } from "./tour.js";
 import { renderMethod, renderOverview } from "./pages.js";
+import { dataNotesHTML } from "./notes.js";
 import { restoreTab, wireTabs } from "./tabs.js";
 
 // Demo mode: the pre-loaded demo (site/demo/data, rebuilt on every deploy) instead of the real data.
@@ -165,7 +166,7 @@ export async function selectRun(asOf) {
   const demo = state.company.demo || state.detail.demo;
   $("demo-badge").hidden = !demo;
   if (demo && !state.demoMode) banner("This company is synthetic demo data, made up to preview the pages. Run the pipeline for a real ticker.");
-  else if (state.detail.warnings?.length) banner(`Build warnings: ${state.detail.warnings.join("; ")}`);
+  $("data-notes").innerHTML = demo ? "" : dataNotesHTML(state.detail.warnings);
   renderCompany();
   renderValuation();
   renderOverview();
