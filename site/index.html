@@ -16,7 +16,8 @@
 </head>
 <body>
   <div class="hub-bar"><div class="hub-bar__inner">
-    <a href="https://courtizy.github.io/">← Decision Models</a><span>Jason C. Courtoy</span>
+    <a href="https://courtizy.github.io/">← Decision Models</a>
+    <span class="hub-bar__end"><span class="hub-bar__name">Jason C. Courtoy</span><button id="theme" class="hub-theme" type="button" aria-label="Theme: auto. Switch theme" title="Theme">Auto</button></span>
   </div></div>
   <header class="topbar brand-header">
     <div class="topbar-inner">
@@ -29,11 +30,7 @@
           <p class="brand-header__question">What is a public company worth across plausible assumptions?</p>
         </div>
       </div>
-      <span class="app-status app-status--live"><span class="app-status__dot" aria-hidden="true"></span>Live</span>
-      <div class="header-actions">
-        <button id="theme" type="button" aria-label="Toggle theme" title="Theme">Theme: auto</button>
-        <button id="demo-toggle" type="button" aria-pressed="false" title="Switch between the demo and the real data">Demo</button>
-      </div>
+      <button id="demo-toggle" class="app-status app-status--live app-status--toggle" type="button" aria-pressed="false" title="Switch between the live data and the synthetic demo"><span class="app-status__dot" aria-hidden="true"></span><span id="mode-label">Live</span><span class="app-status__alt" id="mode-alt">· <span class="alt-long">Try the demo</span><span class="alt-short">Demo</span></span></button>
     </div>
   </header>
   <div id="mode-strip" class="mode-strip" hidden>

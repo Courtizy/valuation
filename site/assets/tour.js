@@ -55,7 +55,7 @@ const STEPS = [
   { at: "#m-validation", title: "Method", go: async () => { tab("method"); },
     text: "Inputs and their sources, how the model works, what has been checked (and what is still planned), the limits and the changelog." },
   { at: "#here-form", title: "Run It on a Real Company", go: async () => { tab("run"); },
-    text: "The <b>Run ▸</b> page: type a ticker and press Run Here. Your browser fetches its SEC filings, picks its closest peers and builds the DCF and comps, saved on this device only. Press <b>Exit Demo</b> at the top to see your own data." },
+    text: "The <b>Run ▸</b> page: type a ticker and press Run Here. Your browser fetches its SEC filings, picks its closest peers and builds the DCF and comps, saved on this device only. Press <b>Back to live data</b> in the status pill at the top to see the real companies." },
 ];
 
 let i = -1, box = null, focused = null;
