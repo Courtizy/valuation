@@ -42,6 +42,7 @@ Companyfacts contains every fact, including notes. Summing there would double co
 | `investing_cash_flow` | completeness / tie-out | NetCashProvidedByUsedInInvestingActivities |
 | `financing_cash_flow` | completeness / tie-out | NetCashProvidedByUsedInFinancingActivities |
 | `depreciation_amortization_cf` | EBITDA; IS often embeds D&A | DepreciationDepletionAndAmortization, DepreciationAmortizationAndAccretionNet, DepreciationAndAmortization |
+| `depreciation_ppe` | EBITDA fallback when D&A is filed as Depreciation + intangible amortization | Depreciation |
 | `share_based_compensation` | edgartools buries it in other opex | ShareBasedCompensation, AllocatedShareBasedCompensationExpense |
 | `change_in_working_capital` | FCF bridge | IncreaseDecreaseInOperatingCapital |
 | `income_taxes_paid` | cash tax rate | IncomeTaxesPaidNet |
@@ -53,11 +54,13 @@ Companyfacts contains every fact, including notes. Summing there would double co
 
 | id | Formula |
 |---|---|
-| `ebitda` | operating_income_loss + depreciation_amortization_cf |
+| `ebitda` | operating_income_loss + depreciation_amortization_cf. Fallbacks, per period, in order: operating income + `depreciation_ppe` + intangible amortization; operating income + `depreciation_ppe`; then the same three with pretax income + interest expense in place of operating income (for filers such as IBM that report no operating income line). The record's `source.formula` names the one used and `source.fallback` is true. |
 | `free_cash_flow` | operating_cash_flow − capital_expenses |
 | `total_debt` | short_term_debt + long_term_debt |
 | `net_debt` | total_debt − cash_and_marketable_securities |
 | `lease_liabilities` | operating lease current + non-current |
+
+A derived concept can list `fallback_formulas` in `concepts.json`: each period uses the first formula whose inputs all have a value.
 | `effective_tax_rate` | income_taxes / pretax_income_loss |
 
 ## Known approximations (fix before L3/L4 rely on them)

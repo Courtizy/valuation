@@ -25,7 +25,8 @@ from pathlib import Path
 from valuation.lineage import lineage_block
 
 from .formula import evaluate
-from .registry import Concept, Registry, load_registry
+
+from .registry import FORMULA_TOKEN, Concept, Registry, load_registry
 from .schema import CANONICAL_SCHEMA_VERSION
 
 UNIT_FOR = {"monetary": "USD", "shares": "shares", "per_share": "USD/shares", "ratio": "pure"}
@@ -162,28 +163,32 @@ def _map_sum(c: Concept, fx: _FactIndex, unit: str, instant: bool,
 
 
 def _derive(c: Concept, by_concept: dict[str, dict[Period, dict]]) -> dict[Period, dict]:
-    inputs = c.formula_inputs()
-    if any(i not in by_concept for i in inputs):
-        return {}
-    shared = set.intersection(*(set(by_concept[i]) for i in inputs))
+    """Each period takes the first formula (the main one, then the fallbacks) whose inputs all
+    have a value for it; the record names the formula used."""
     out = {}
-    for period in shared:
-        recs = [by_concept[i][period] for i in inputs]
-        value = evaluate(c.formula, {i: r["value"] for i, r in zip(inputs, recs)})
-        if value is None:
+    for formula in c.formulas():
+        inputs = FORMULA_TOKEN.findall(formula)
+        if any(i not in by_concept for i in inputs):
             continue
-        as_filed = evaluate(c.formula, {i: r["value_as_filed"] for i, r in zip(inputs, recs)})
-        latest = max(recs, key=lambda r: r["source"]["filed"])
-        out[period] = {
-            "concept": c.id, "statement": c.statement, "period_type": c.period_type,
-            "unit": UNIT_FOR[c.unit_type], "start": period[0], "end": period[1],
-            "months": recs[0]["months"], "fiscal_year": recs[0]["fiscal_year"],
-            "fiscal_period": recs[0]["fiscal_period"],
-            "value": value, "value_as_filed": as_filed,
-            "restated": as_filed is not None and value != as_filed,
-            "method": "derived",
-            "source": {"formula": c.formula, "inputs": inputs, "filed": latest["source"]["filed"]},
-        }
+        shared = set.intersection(*(set(by_concept[i]) for i in inputs)) - set(out)
+        for period in shared:
+            recs = [by_concept[i][period] for i in inputs]
+            value = evaluate(formula, {i: r["value"] for i, r in zip(inputs, recs)})
+            if value is None:
+                continue
+            as_filed = evaluate(formula, {i: r["value_as_filed"] for i, r in zip(inputs, recs)})
+            latest = max(recs, key=lambda r: r["source"]["filed"])
+            out[period] = {
+                "concept": c.id, "statement": c.statement, "period_type": c.period_type,
+                "unit": UNIT_FOR[c.unit_type], "start": period[0], "end": period[1],
+                "months": recs[0]["months"], "fiscal_year": recs[0]["fiscal_year"],
+                "fiscal_period": recs[0]["fiscal_period"],
+                "value": value, "value_as_filed": as_filed,
+                "restated": as_filed is not None and value != as_filed,
+                "method": "derived",
+                "source": {"formula": formula, "inputs": inputs, "filed": latest["source"]["filed"],
+                           **({"fallback": True} if formula != c.formula else {})},
+            }
     return out
 
 
