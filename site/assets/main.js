@@ -24,7 +24,11 @@ async function chooseMode() {
   state.root = state.demoMode ? "demo/data/" : "data/";
   const btn = $("demo-toggle");
   btn.setAttribute("aria-pressed", String(state.demoMode));
-  btn.textContent = state.demoMode ? "Exit Demo" : "Demo";
+  // one status pill: what you're looking at, and the one tap that switches it
+  btn.classList.toggle("app-status--live", !state.demoMode);
+  $("mode-label").textContent = state.demoMode ? "Demo" : "Live";
+  $("mode-alt").innerHTML = state.demoMode ? '· <span class="alt-long">Back to live data</span><span class="alt-short">Exit</span>'
+    : '· <span class="alt-long">Try the demo</span><span class="alt-short">Demo</span>';
   btn.onclick = () => {
     store.set("mode", state.demoMode ? "live" : "demo");
     const url = new URL(location.href);
@@ -240,7 +244,9 @@ function setupTheme() {
   const apply = (t) => {
     if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
     else delete document.documentElement.dataset.theme;
-    btn.textContent = `Theme: ${t || "auto"}`;
+    const name = t ? t[0].toUpperCase() + t.slice(1) : "Auto";
+    btn.textContent = name;
+    btn.setAttribute("aria-label", `Theme: ${name.toLowerCase()}. Switch theme`);
   };
   apply(store.get("theme"));
   btn.onclick = () => {

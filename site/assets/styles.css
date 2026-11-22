@@ -396,7 +396,14 @@ table.sens td.base { outline: 2px solid var(--ink); outline-offset: -2px; font-w
 .hub-bar__inner { max-width: 1200px; }
 .app-status { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); }
 .app-status__dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid currentColor; box-sizing: border-box; }
-.header-actions { display: flex; gap: 8px; }
+/* Hub bar carries the theme switch (A2); the header keeps one status pill that is also the Demo switch */
+.hub-bar__end { display: inline-flex; align-items: center; gap: 12px; }
+.hub-bar .hub-theme { min-height: 32px; padding: 0 12px; font-size: 12px; }
+.app-status--toggle { min-height: 36px; padding: 4px 12px; border: 1px solid var(--border); background: transparent; cursor: pointer; font: inherit; font-size: 13px; font-weight: 600; }
+.app-status--toggle:hover { border-color: var(--ink-2); }
+.app-status__alt { font-weight: 400; color: var(--ink-2); }
+.alt-short { display: none; }
+@media (max-width: 640px) { .alt-short { display: inline; } }
 .tabs { align-items: center; }
 .tab { padding: 10px 12px; min-height: 44px; font-size: 15px; }
 .run-link { margin-left: auto; font-size: 13px; color: var(--ink-2); text-decoration: none; padding: 6px 8px; white-space: nowrap; }
@@ -477,7 +484,15 @@ a.btn:hover { filter: brightness(1.08); }
 @media (max-width: 640px) {
   .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .kpi__value { font-size: 17px; }
-  .header-actions { width: 100%; }
+  /* one-row header on phones: tile, name, status pill; the question is on the Overview below */
+  .brand { width: auto; flex: 1 1 auto; }
+  .topbar-inner { flex-wrap: nowrap; padding: 10px 16px; }
+  .brand .brand-tile { width: 36px; height: 36px; }
+  .brand .brand-tile svg { width: 22px; height: 22px; }
+  .brand-header__name { font-size: 17px; }
+  .brand-header__question { display: none; }
+  .alt-long { display: none; }
+  .hub-bar__name { display: none; }
   .results-bar .seg { width: 100%; }
   .results-bar .seg button { flex: 1; min-height: 44px; }
   .tab { padding: 10px 8px; }
