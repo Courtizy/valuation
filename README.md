@@ -1,6 +1,6 @@
 # Valuation Model
 
-*What is the business worth, and how sure are we?* Part of **[Decision Models](https://courtizy.github.io/)** by Jason C. Courtoy.
+*What is a public company worth across plausible assumptions?* Part of **[Decision Models](https://courtizy.github.io/)** by Jason C. Courtoy.
 
 [![Tests](https://github.com/Courtizy/valuation/actions/workflows/tests.yml/badge.svg)](https://github.com/Courtizy/valuation/actions/workflows/tests.yml)
 [![Pages](https://github.com/Courtizy/valuation/actions/workflows/pages.yml/badge.svg)](https://github.com/Courtizy/valuation/actions/workflows/pages.yml)

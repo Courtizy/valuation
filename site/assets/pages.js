@@ -2,6 +2,7 @@
 // changelog.json); this file only lays it out.
 import { esc, fin, pct, price } from "./format.js";
 import { $, getJSON, state } from "./state.js";
+import { dataNotesHTML } from "./notes.js";
 
 const repoUrl = () => {
   const h = location.hostname, first = location.pathname.split("/").filter(Boolean)[0];
@@ -43,6 +44,7 @@ export function renderOverview() {
         <div class="ov-actions"><a class="btn primary" href="#valuation">See results</a><a class="btn" href="#method">How it works</a></div>
       </div>
       <div class="ov-card">${headline}
+        ${co && !co.demo && !state.detail?.demo ? dataNotesHTML(state.detail?.warnings) : ""}
         <span class="muted small ov-disclaimer">Analysis of method, not investment advice.</span></div>
     </div>
     <section class="ov-section"><span class="eyebrow">How it works</span>

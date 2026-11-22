@@ -416,6 +416,12 @@ a.btn:hover { filter: brightness(1.08); }
 .ov-card { flex: 1 1 300px; background: var(--panel); border: 1px solid var(--border); padding: 24px; display: flex; flex-direction: column; gap: 8px; }
 .ov-range { white-space: nowrap; font-family: var(--font-mono, "JetBrains Mono", monospace); font-size: clamp(24px, 2.6vw, 32px); font-weight: 600; color: var(--series-1); }
 .ov-disclaimer { padding-top: 6px; }
+/* Data notes: the engine's build warnings, quiet and collapsed next to the result */
+.data-notes { font-size: 13px; color: var(--ink-2); }
+.data-notes summary { cursor: pointer; padding: 3px 0; width: fit-content; }
+.data-notes summary::marker { color: var(--ink-2); }
+.data-notes ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; }
+#data-notes .data-notes { margin: 0 0 12px; }
 .ov-section { display: flex; flex-direction: column; gap: 16px; }
 .ov-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
 .ov-step { border-top: 2px solid var(--series-1); padding-top: 12px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.5; }
