@@ -9,22 +9,22 @@
       "ticker": "HPQ"
     },
     {
-      "ticker": "IBM"
+      "ticker": "HPE"
     },
     {
       "ticker": "SNX"
     },
     {
+      "ticker": "SMCI"
+    },
+    {
       "ticker": "INGM"
     },
     {
-      "ticker": "CSCO"
-    },
-    {
-      "ticker": "JBL"
+      "ticker": "PANW"
     }
   ],
   "sources": {
-    "peers": "picked from Technology (screened 2026-10-03) on 2026-10-03"
+    "peers": "picked automatically: the 6 nearest on size and EBITDA margin in Technology (industry: hardware_peripherals), sector screen of 2026-11-18; hand-pick by editing this list"
   }
 }

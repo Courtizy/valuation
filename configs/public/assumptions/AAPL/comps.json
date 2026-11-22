@@ -6,22 +6,25 @@
   "range": "min_max",
   "peers": [
     {
-      "ticker": "SNX"
+      "ticker": "WDC"
+    },
+    {
+      "ticker": "FTNT"
+    },
+    {
+      "ticker": "NTAP"
+    },
+    {
+      "ticker": "STX"
+    },
+    {
+      "ticker": "PANW"
     },
     {
       "ticker": "DELL"
-    },
-    {
-      "ticker": "IBM"
-    },
-    {
-      "ticker": "HPQ"
-    },
-    {
-      "ticker": "INGM"
     }
   ],
   "sources": {
-    "peers": "picked from Technology (screened 2026-10-03) on 2026-10-03"
+    "peers": "picked automatically: the 6 nearest on size and EBITDA margin in Technology (industry: hardware_peripherals), sector screen of 2026-11-18; hand-pick by editing this list"
   }
 }
