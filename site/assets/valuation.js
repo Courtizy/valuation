@@ -142,15 +142,22 @@ export function renderHeadline() {
   const c = state.comparison, k = state.scn, blend = c.blend;
   const primary = (c.plan?.methods || []).filter((m) => m.weight > 0);
   const up = c.upside?.[k];
-  $("val-head").innerHTML = `<div>
-    <div class="headline">
-      <div><div class="label">Share Price</div><div class="big num">${price(c.price)}</div>
+  const blendTile = `<div><div class="label">Blended Value · ${SCENARIOS[k]}</div><div class="big num">${blend ? price(blend[k]) : NA}</div>
+        <div class="muted small">${blend ? `Bear ${price(blend.p10)} – Bull ${price(blend.p90)}` : "No weighted method has run"}</div></div>`;
+  // Public showcase without a price: two empty "–" tiles read as missing data, so show the value and say why there's no price.
+  const tiles = showcase() && !fin(c.price)
+    ? `${blendTile}
+      <div><div class="label">Against the Market Price</div>
+        <div class="muted small" style="margin-top:6px">${SHOWCASE_NOTE}, so this page shows no upside or downside. The Demo shows both with synthetic prices.</div></div>`
+    : `<div><div class="label">Share Price</div><div class="big num">${price(c.price)}</div>
         <div class="muted small">${c.price_source === "market data" ? marketLine(state.detail.market)
           : c.price_source ? `From ${esc(c.price_source.replace(/\bdcf\b/i, "DCF"))}` : showcase() ? SHOWCASE_NOTE : "No price yet: run the pipeline for market data"}</div></div>
-      <div><div class="label">Blended Value · ${SCENARIOS[k]}</div><div class="big num">${blend ? price(blend[k]) : NA}</div>
-        <div class="muted small">${blend ? `Bear ${price(blend.p10)} – Bull ${price(blend.p90)}` : "No weighted method has run"}</div></div>
+      ${blendTile}
       <div><div class="label">Upside / Downside</div><div class="big num ${upClass(up, 0.05)}">${signed(up)}</div>
-        <div class="muted small">${!fin(up) ? (showcase() ? "Needs a market price" : "") : Math.abs(up) < 0.05 ? "Within 5% of price: fairly valued" : up > 0 ? "Undervalued on this blend" : "Overvalued on this blend"}</div></div>
+        <div class="muted small">${!fin(up) ? (showcase() ? "Needs a market price" : "") : Math.abs(up) < 0.05 ? "Within 5% of price: fairly valued" : up > 0 ? "Undervalued on this blend" : "Overvalued on this blend"}</div></div>`;
+  $("val-head").innerHTML = `<div>
+    <div class="headline">
+      ${tiles}
     </div>
     <p class="small" style="margin:12px 0 0">${primary.map((m) => `${m.role === "primary" ? "Primary" : "Cross-Check"} <b>${esc(methodName(m))}</b> ${pct(m.weight, true)}`).join(" · ") || "No weighted methods yet"}.
       <span class="muted">${esc(c.plan?.summary || "")}</span></p>
