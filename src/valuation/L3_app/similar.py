@@ -64,16 +64,40 @@ def from_card(card: dict) -> dict:
             **{k: v.get(k) for k in KEYS if k != "log_revenue"}}
 
 
-def _size_gap(target: dict, c: dict) -> float:
+SIZE_STEP = math.log10(3)   # one step = revenue three times larger or smaller
+MARGIN_STEP = 0.05          # one step = 5 points of EBITDA margin
+
+
+def _margin(c: dict):
+    """EBITDA margin, else operating margin: the long-run profitability a multiple prices."""
+    for k in ("ebitda_margin", "operating_margin"):
+        v = c.get(k)
+        if isinstance(v, (int, float)) and math.isfinite(v):
+            return v
+    return None
+
+
+def _sector_gap(target: dict, c: dict) -> tuple[int, float]:
+    """Sort key for the sector set: distance in steps of size (a factor of 3 in revenue) and
+    margin (5 points). A company without a margin ranks after every one with one (size only);
+    when the target has none, size alone decides."""
     a, b = _value(target, "log_revenue"), _value(c, "log_revenue")
-    return abs(a - b) if a is not None and b is not None else math.inf
+    size = (a - b) / SIZE_STEP if a is not None and b is not None else math.inf
+    mt, mc = _margin(target), _margin(c)
+    if mt is None:
+        return (0, abs(size))
+    if mc is None:
+        return (1, abs(size))
+    return (0, math.hypot(size, (mt - mc) / MARGIN_STEP))
 
 
 def pick_peers(sector: dict, ticker: str, n: int = 6) -> dict | None:
     """Comps peers for a ticker from a sector screen: two sets.
 
     sector set   the traditional pick: the narrowest level (industry, then group, then sector)
-                 with at least n companies, the n nearest in size (revenue)
+                 with at least n companies, the n nearest on size and margin together
+                 (_sector_gap: a factor of 3 in revenue counts the same as 5 points of
+                 EBITDA margin), so a 3%-margin distributor isn't a 35%-margin maker's peer
     closest set  closest on fundamentals from the whole screen, whatever the industry: the n
                  best by the six-figure ranking above (growth, margins, cash-flow stability,
                  capital intensity, leverage, size)
@@ -93,7 +117,7 @@ def pick_peers(sector: dict, ticker: str, n: int = 6) -> dict | None:
         level, pool = "all", rows
     pool = [r for r in pool if r is not me]
     scores = {r["ticker"]: r["score"] for r in rank(me, rows)}
-    sector_set = sorted(pool, key=lambda r: _size_gap(me, r))[:n]
+    sector_set = sorted(pool, key=lambda r: _sector_gap(me, r))[:n]
     closest = [r for r in rank(me, rows) if r["ticker"] and r["score"] is not None][:n]
     if not sector_set:
         return None

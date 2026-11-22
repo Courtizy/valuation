@@ -246,6 +246,9 @@ def _value_set(live: list[dict], target: dict, wanted: list[str], weights: dict,
         if not vals:
             notes.append(f"{MULTIPLES[mid][0]} dropped: no peer has a positive multiple")
             continue
+        missing = [t for t, x in implied.items() if x is None]
+        if missing:
+            notes.append(f"{MULTIPLES[mid][0]}: {', '.join(missing)} left out (no positive multiple)")
         avg_mult = _avg_positive([r["multiples"][mid] for r in live])
         mults = [(r["multiples"][mid], peer_w.get(r["ticker"], 0.0)) for r in live if r["multiples"][mid]]
         wsum = sum(w for _, w in mults)
@@ -255,8 +258,10 @@ def _value_set(live: list[dict], target: dict, wanted: list[str], weights: dict,
             "peer_weighted_average": sum(m * w for m, w in mults) / wsum if wsum else avg_mult,
             "implied_at_average": implied_price(mid, avg_mult, target),
             "implied": implied,
-            **_wrange([(implied[t], peer_w.get(t, 0.0)) for t, x in implied.items() if x is not None], method),
+            **_wrange(pairs := [(implied[t], peer_w.get(t, 0.0)) for t, x in implied.items() if x is not None], method),
             "equal": _range(vals, method),
+            # quartiles need four peers with this multiple; fewer fall back to lowest / highest
+            "range": "quartiles" if method == "quartiles" and sum(1 for _, w in pairs if w > 0) >= 4 else "min_max",
         }
     used = {k: v for k, v in per_multiple.items() if v["weight"] > 0}
     if not used:
@@ -328,6 +333,16 @@ def sales_vs_ebitda(target: dict, rows: list[dict], w: dict[str, float]) -> dict
         note = ("peers earn a lower margin, so EV/Sales gives the lower value; EV/EBITDA fits better unless the "
                 "target's margin is temporarily high")
     return {"target_margin": tm, "peer_margin": pm, "ratio": ratio, "note": note}
+
+
+def range_note(per_multiple: dict, used: dict) -> str:
+    """How each used multiple's range was taken: one phrase if they agree, else per multiple."""
+    label = {"min_max": "lowest / median / highest", "quartiles": "Q1 / median / Q3"}
+    kinds = {per_multiple[k]["range"] for k in used}
+    if len(kinds) == 1:
+        return f"range = {label[kinds.pop()]} implied price across peers"
+    parts = [f"{per_multiple[k]['label']} {label[per_multiple[k]['range']]}" for k in used]
+    return "range = " + "; ".join(parts) + " implied price across peers (quartiles need four peers with the multiple)"
 
 
 class Comps:
@@ -447,7 +462,7 @@ class Comps:
                 **({"closest": [r["ticker"] for r in closest["peers"] if not r.get("excluded")]} if closest else {}),
             },
             lineage={},
-            notes=notes + [f"range = {'lowest / median / highest' if method == 'min_max' else 'Q1 / median / Q3'} implied price across peers"],
+            notes=notes + [range_note(per_multiple, used)],
             details={"target": target_row, "peers": rows, "multiples": per_multiple, "blend": blend, "blend_equal": blend_equal,
                      "peer_weights": "equal" if equal else "closeness", "peer_average": _peer_average(target_row, live, weigh(live)),
                      "market_price": target.get("price"), "range_method": method, "closest": closest,

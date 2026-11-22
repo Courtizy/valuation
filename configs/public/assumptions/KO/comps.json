@@ -6,25 +6,25 @@
   "range": "auto",
   "peers": [
     {
-      "ticker": "MDLZ"
+      "ticker": "STZ"
     },
     {
-      "ticker": "TSN"
+      "ticker": "KDP"
     },
     {
-      "ticker": "LW"
+      "ticker": "MNST"
     },
     {
-      "ticker": "KHC"
+      "ticker": "BF-B"
     },
     {
-      "ticker": "PPC"
+      "ticker": "PEP"
     },
     {
-      "ticker": "CPB"
+      "ticker": "COKE"
     }
   ],
   "sources": {
-    "peers": "picked from Consumer Staples (screened 2026-10-03) on 2026-10-03"
+    "peers": "picked automatically: the 6 nearest on size and EBITDA margin in Consumer Staples (industry: beverages), sector screen of 2026-11-18; hand-pick by editing this list"
   }
 }

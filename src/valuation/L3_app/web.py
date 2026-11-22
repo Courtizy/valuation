@@ -128,7 +128,7 @@ def auto_peers(ticker: str, as_of: str, work_dir: Path, paths: Paths, client, sc
             return ["pick peers", "warning", f"no peers found for {ticker} in {found[0].get('label')}"]
         doc = {"multiples": ["ev_ebitda", "ev_sales"], "range": "auto", "peers": [{"ticker": p["ticker"]} for p in pick["peers"]],
                "closest": [{"ticker": p["ticker"]} for p in pick["closest"]],
-               "sources": {"peers": f"picked automatically: the {len(pick['peers'])} nearest in size in {pick['sector']} "
+               "sources": {"peers": f"picked automatically: the {len(pick['peers'])} nearest on size and margin in {pick['sector']} "
                                     f"({pick['level']}: {pick['label']}) on {as_of}; change them in the peer picker",
                            "closest": f"picked automatically: the {len(pick['closest'])} closest on growth, margins, cash-flow "
                                       f"stability, capital intensity, leverage and size anywhere in {pick['sector']} on {as_of}"}}

@@ -6,7 +6,7 @@ import json
 import pytest
 
 from valuation.L2_models.base import get_model
-from valuation.L2_models.comps import CompsError, implied_price, match, peer_row
+from valuation.L2_models.comps import MODEL, CompsError, implied_price, match, peer_row
 from valuation.L3_app.demo import write_demo
 
 A = pytest.approx
@@ -138,3 +138,24 @@ def test_equal_peer_weights_option(details):
          "peers": [{"ticker": "DEMOG", "price": 18.0, "shares": 100e6}, {"ticker": "DEMOU", "price": 98.0, "shares": 250e6}]}
     d = get_model("comps").run(details["DEMO"], a, [details["DEMOG"], details["DEMOU"]]).details
     assert d["blend"] == A(d["blend_equal"]) and d["peer_weights"] == "equal"
+
+
+def test_hand_worked_example_and_range_label_per_multiple():
+    """Target: sales 1,000, EBITDA 200, net debt 200, 100 shares. Implied = (multiple x metric - 200) / 100.
+    EV/Sales from four peers: 8, 13, 18, 18, so Q1 / median / Q3 (inclusive) = 11.75 / 15.5 / 18.
+    EV/EBITDA has three (P4's EBITDA is negative): 13, 18, 22, so lowest / median / highest."""
+    detail = {"entity": {"ticker": "TGT"}, "views": {"annual": [{"label": "FY1", "values": {
+        "revenue": 1000, "ebitda": 200, "net_income": 100, "long_term_debt": 300,
+        "cash_and_marketable_securities": 100, "shares_year_end": 100}}]}}
+    peers = [("P1", 20, 50, 200, 0, 800, 160), ("P2", 30, 40, 100, 100, 600, 100),
+             ("P3", 10, 100, 0, 200, 400, 80), ("P4", 15, 60, 300, 0, 1200, -50)]
+    a = {"peers": [dict(ticker=t, price=p, shares=s, debt=d, cash=c, sales=sa, ebitda=e)
+                   for t, p, s, d, c, sa, e in peers]}
+    r = MODEL.run(detail, a, [])
+    m = r.details["multiples"]
+    assert [m["ev_sales"][k] for k in ("conservative", "expected", "aggressive")] == A([11.75, 15.5, 18.0])
+    assert [m["ev_ebitda"][k] for k in ("conservative", "expected", "aggressive")] == A([13.0, 18.0, 22.0])
+    assert m["ev_sales"]["range"] == "quartiles" and m["ev_ebitda"]["range"] == "min_max"
+    assert r.value_per_share["p50"] == A(16.75)
+    assert "EV / EBITDA lowest / median / highest" in r.notes[-1] and "EV / Sales Q1 / median / Q3" in r.notes[-1]
+    assert any(n == "EV / EBITDA: P4 left out (no positive multiple)" for n in r.notes)

@@ -201,6 +201,20 @@ def test_pick_peers_closest_set_crosses_industries():
     assert {"FAR1", "FAR2"} <= {p["ticker"] for p in pick["closest"]}       # same figures, other industry
 
 
+def test_pick_peers_sector_set_weighs_margin_with_size():
+    """A 35%-margin maker: a same-size distributor at 3% is 6.4 margin steps away; a 30%-margin
+    company a third the size is one size step and one margin step (sqrt 2). Margin decides."""
+    from valuation.L3_app.similar import pick_peers
+
+    def row(t, revenue, margin):
+        return {"ticker": t, "classification": {"sector": "technology", "group": "hw", "industry": "computers"},
+                "revenue": revenue, "ebitda_margin": margin, "revenue_cagr": 0.05, "traits": {}}
+    rows = [row("MAKER", 3e11, 0.35), row("DIST", 3e11, 0.03), row("NOMARGIN", 3e11, None),
+            row("SMALLER", 1e11, 0.30), row("SAME", 3e11, 0.33), row("TINY", 3e9, 0.35)]
+    pick = pick_peers({"id": "s", "label": "Tech", "companies": rows}, "MAKER", n=5)
+    assert [p["ticker"] for p in pick["peers"]] == ["SAME", "SMALLER", "TINY", "DIST", "NOMARGIN"]
+
+
 def test_web_auto_picks_peers_from_a_published_screen_and_runs_comps(tmp_path):
     out = json.loads(run_json("MSFT", fetch_text([]), AS_OF, "auto", "{}", "{}", screens_json=json.dumps([json.dumps(_screen())])))
     rows = {n: (s, m) for n, s, m in out["report"]}
