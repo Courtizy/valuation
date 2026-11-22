@@ -403,7 +403,7 @@ export function renderCompsCard() {
   const sve = d.sales_vs_ebitda;
   const notes = which === "sector" ? r.notes : d.notes;
   $("val-comps").innerHTML = `<div class="card">
-    <div class="card-head"><h2 class="action-title">${headline("comps", "Public Comps")}</h2><span class="muted small">${esc(d.range_method === "min_max" ? "Range = lowest to highest implied price (fewer than 4 peers)" : "Range = Q1 to Q3 implied price")}</span></div>
+    <div class="card-head"><h2 class="action-title">${headline("comps", "Public Comps")}</h2><span class="muted small">${esc(compsRangeNote(d))}</span></div>
     ${Object.keys(sets).length > 1 ? `<div class="seg" id="comps-set" role="group" aria-label="Peer set" style="margin-bottom:8px">${Object.keys(sets).map((k) =>
       `<button type="button" data-set="${k}" aria-pressed="${k === which}">${setNames[k]} · ${price(sets[k].blend.expected)}</button>`).join("")}</div>` : ""}
     <p class="muted small" style="margin:0 0 8px">${about}</p>
@@ -771,4 +771,14 @@ function renderSensitivity() {
   if (!box) return;
   box.innerHTML = d?.bridge ? `<div class="card"><div class="card-head"><h2 class="action-title">${headline("sensitivity", "Sensitivity")}</h2><span class="muted small">Discount rate × terminal growth, value per share</span></div>
     ${sensitivityTable(d, d.bridge.value_per_share)}</div>` : "";
+}
+
+
+/** Range wording for the comps card. Quartiles need four peers with a multiple; a multiple with
+ *  fewer (say EV/EBITDA when one peer's EBITDA is negative) uses lowest to highest, and says so. */
+function compsRangeNote(d) {
+  if (d.range_method === "min_max") return "Range = lowest to highest implied price (fewer than 4 peers)";
+  const short = Object.values(d.multiples || {}).filter((m) => m.weight > 0 && m.range === "min_max").map((m) => m.label);
+  return short.length ? `Range = Q1 to Q3 implied price; lowest to highest for ${short.join(", ")} (fewer than 4 peers)`
+    : "Range = Q1 to Q3 implied price";
 }

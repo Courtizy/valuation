@@ -4,6 +4,7 @@ All notable changes to the Valuation Model. Newest first.
 
 ## [Unreleased]
 - **Rounded shape.** Cards, buttons, tabs and pills follow the suite's rounded shape (after Delta Readiness): 22 px cards with a soft shadow in light, round buttons and Overview · Results · Method pill tabs. Colors, type and results are unchanged.
+- **Comps range says how each multiple was taken.** With four or more peers the comps range is Q1 / median / Q3, but a multiple that only three peers have (say EV/EBITDA when one peer's EBITDA is negative) quietly used lowest / median / highest while the note and the card said Q1 to Q3. Each multiple now records its own `range`, the note and the card name the exception, and a note lists the peers left out of each multiple. Values are unchanged; a hand-worked four-peer example is now a test.
 - **Research links hidden.** The overview's "How its forecasts are tested" link and the Validation row's "Research & Analysis" link are removed while the research section is reconsidered. The calibrated ranges and their source note are unchanged. Restore by reverting this change.
 
 ## [0.11.1] - 2026-11-19
