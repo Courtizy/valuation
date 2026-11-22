@@ -64,10 +64,30 @@ def sector_growth(sic, year: int) -> dict | None:
             "source": doc["source"]}
 
 
+MATCH_DAYS = 25     # a fiscal year's end may drift this much (52/53-week years)
+
+
+def _fiscal_chain(annual: list[dict]) -> list[float]:
+    """Revenue for the run of consecutive fiscal years (ends about a year apart) ending at the latest year,
+    as the study measures it. A stub or transition period filed as annual (Emerson's three months to
+    2022-12-31, between September years) ends the run instead of counting as a 90% fall in revenue."""
+    from datetime import date
+    rows = [p for p in annual if p.get("end") and p["values"].get("revenue") not in (None, 0)]
+    if not rows:
+        return []
+    chain = [rows[-1]]
+    for p in reversed(rows[:-1]):
+        gap = (date.fromisoformat(chain[0]["end"][:10]) - date.fromisoformat(p["end"][:10])).days
+        if abs(gap - 365) > MATCH_DAYS:
+            break
+        chain.insert(0, p)
+    return [p["values"]["revenue"] for p in chain][-HISTORY_YEARS:]
+
+
 def company_scale(detail: dict, table: dict) -> tuple[float, float]:
-    """(scale, volatility): pstdev of yearly log revenue growth over the last annual periods, plus the floor."""
+    """(scale, volatility): pstdev of yearly log revenue growth over the last consecutive fiscal years, plus the floor."""
     annual = ((detail or {}).get("views") or {}).get("annual") or []
-    rev = [p["values"].get("revenue") for p in annual][-HISTORY_YEARS:]
+    rev = _fiscal_chain(annual)
     g = [math.log(b / a) for a, b in zip(rev, rev[1:]) if a and b and a > 0 and b > 0]
     vol = pstdev(g) if len(g) >= 2 else table["scale"]["default_vol"]
     return vol + table["scale"]["floor"], vol

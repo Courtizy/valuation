@@ -385,3 +385,16 @@ def test_private_firm_keeps_the_course_convention_and_config_overrides(detail):
     assert priv.details["convention"] == "closing_year_zero"
     mid = get_model("dcf").run(detail, assumptions(discounting={"convention": "mid_year"}))
     assert mid.details["convention"] == "mid_year"
+
+
+def test_revenue_scale_ignores_a_stub_period_filed_as_annual():
+    # Emerson, as filed: September fiscal years plus a three-month transition period to 2022-12-31
+    from valuation.L2_models.dcf.revenue_range import company_scale
+    table = {"scale": {"floor": 0.10, "default_vol": 0.10}}
+    rows = [("2021-09-30", 12932e6), ("2022-09-30", 13804e6), ("2022-12-31", 1660e6), ("2023-09-30", 15165e6),
+            ("2024-09-30", 17492e6), ("2025-09-30", 18016e6), ("2026-09-30", 18982e6)]
+    detail = {"views": {"annual": [{"end": e, "values": {"revenue": r}} for e, r in rows]}}
+    scale, vol = company_scale(detail, table)
+    assert vol < 0.10 and scale < 0.20                 # was about 1.47 with the stub counted
+    clean = {"views": {"annual": [{"end": e, "values": {"revenue": r}} for e, r in rows if e != "2022-12-31"]}}
+    assert company_scale(clean, table)[1] < 0.10
