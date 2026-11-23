@@ -111,7 +111,7 @@ def method_plan(profile: dict | None, available: list[str], overrides: dict | No
             r["role"] = "reference"
         for i, r in enumerate(ranked):
             r["role"] = "primary" if i == 0 else "cross-check"
-        summary += " Weights set by override."
+        summary += f" Weights set by override: {overrides['why']}" if overrides.get("why") else " Weights set by override."
     order = {"primary": 0, "cross-check": 1, "reference": 2}
     methods = sorted(rows.values(), key=lambda r: (order[r["role"]], -r["weight"], r["model"]))
     if not total:

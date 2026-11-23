@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Thresholds for the company profile. Packs override any key under l1.profile_rules.",
   "history_years": 5,
   "stage": {
@@ -21,6 +21,7 @@
   "capital_structure": {
     "low_max_debt_to_ebitda": 2.0,
     "high_min_debt_to_ebitda": 4.0,
-    "financial_min_liabilities_to_assets": 0.85
+    "financial_min_liabilities_to_assets": 0.85,
+    "financial_min_financial_assets_share": 0.5
   }
 }

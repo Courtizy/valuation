@@ -52,3 +52,17 @@ def test_discount_rates_accept_an_unlevered_beta():
     assert via_u["wacc"] == pytest.approx(via_levered["wacc"])
     with pytest.raises(ValueError):
         discount_rates(beta=None, **kw)
+
+
+def test_erp_is_chosen_by_vintage():
+    # a replay as of 2025-08-22 (the Sysco study) uses the ERP at the end of 2024, not 2025's
+    html = (FIXTURES / "damodaran_erp.html").read_text()
+    assert parse_erp(html, "2026-11-23")["year"] == 2025
+    then = parse_erp(html, "2025-08-22")
+    assert then["year"] == 2024 and not then["after_as_of"]
+    assert parse_erp(html, "2010-06-30")["after_as_of"]          # nothing that old in the file
+
+
+def test_a_replay_says_when_the_betas_file_is_later():
+    from valuation.L0_ingest.damodaran import published_on
+    assert published_on("January 2026") == "2026-01-01" and published_on(None) is None

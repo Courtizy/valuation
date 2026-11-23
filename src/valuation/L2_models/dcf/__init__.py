@@ -299,10 +299,18 @@ class DCF:
             raise AssumptionError("market.price is needed to apply the treasury stock method")
         tsm = treasury_stock_method(basic, price, options) if price else None
         shares = tsm["diluted"] if tsm else basic
-        debt = (v.get("short_term_debt") or 0) + (v.get("long_term_debt") or 0)
-        cash = v.get("cash_and_marketable_securities") or 0
+        # the bridge uses the latest balance sheet (most recent quarter), as comps and the market
+        # block do; the forecast still starts from the base period's income statement
+        ttm = (detail["views"].get("ttm") or [None])[-1]
+        bs = ttm if ttm and ttm["end"] > period["end"] and any(
+            ttm["values"].get(k) is not None for k in ("long_term_debt", "short_term_debt", "cash_and_marketable_securities")) else period
+        bv = bs["values"]
+        if bs is not period:
+            warnings.append(f"bridge: debt and cash from the latest balance sheet ({bs['end']}), after the base period ({period['end']})")
+        debt = (bv.get("short_term_debt") or 0) + (bv.get("long_term_debt") or 0)
+        cash = bv.get("cash_and_marketable_securities") or 0
         if br.get("include_longterm_investments"):
-            cash += v.get("longterm_investments") or 0    # e.g. non-current marketable securities
+            cash += bv.get("longterm_investments") or 0    # e.g. non-current marketable securities
         op_cash = br.get("operating_cash_pct", 0.5)
         net_debt = debt - cash * (1 - op_cash)
 
@@ -322,7 +330,10 @@ class DCF:
         rf = _need(cc, "risk_free", "cost_of_capital")
         rating = synthetic_rating(v.get("operating_income_loss"), v.get("interest_expense") or v.get("interest_paid"),
                                   cc.get("rating_spreads"))
-        rd, rd_method = self.cost_of_debt(cc, v, debt, rf, warnings, rating)
+        # interest / debt pairs the base year's interest with that year's debt: debt raised since
+        # (say for an acquisition) hasn't paid a full year of interest yet, so it would show as cheap
+        base_debt = (v.get("short_term_debt") or 0) + (v.get("long_term_debt") or 0)
+        rd, rd_method = self.cost_of_debt(cc, v, base_debt or debt, rf, warnings, rating)
         rates = discount_rates(
             risk_free=rf,
             pre_tax_cost_of_debt=rd,
@@ -348,7 +359,7 @@ class DCF:
             "revenue_scale": scale, "revenue_volatility": vol,
             "period": period, "base": base, "drivers": drivers, "years": n + 1, "tax": tax, "nwc": nwc,
             "capex": capex, "rates": rates, "price": price, "shares": shares, "tsm": tsm,
-            "net_debt": net_debt, "debt": debt, "cash": cash, "operating_cash_pct": op_cash,
+            "net_debt": net_debt, "debt": debt, "cash": cash, "balance_sheet_end": bs["end"], "operating_cash_pct": op_cash,
             "tv_weight": a.get("terminal", {}).get("weight", 1.0),
             # public companies: standard end-of-year discounting; private firms keep the course's closing-year convention
             "convention": a.get("discounting", {}).get("convention", "closing_year_zero" if private else "end_of_year"),
@@ -660,6 +671,7 @@ class DCF:
             "rates": r,
             "bridge": {"enterprise_value": base_val["enterprise_value"], "pv_fcf": base_val["pv_fcf"],
                        "pv_terminal_value": base_val["pv_terminal_value"], "debt": p["debt"], "cash": p["cash"],
+                       "balance_sheet_end": p.get("balance_sheet_end"),
                        "operating_cash_pct": p["operating_cash_pct"], "net_debt": p["net_debt"],
                        "equity_value": base_val["equity_value"], "shares": p["shares"], "tsm": p["tsm"],
                        "value_per_share": base_val["value_per_share"]},
