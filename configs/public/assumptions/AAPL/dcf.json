@@ -9,9 +9,9 @@
   },
   "forecast": {
     "years_to_terminal": 10,
-    "revenue_growth": 0.06,
+    "revenue_growth": 0.10,
     "terminal_growth": 0.03,
-    "growth_adjust": null,
+    "growth_adjust": [0.0, -0.026, -0.0315, -0.037, -0.0425, -0.048, -0.0535, -0.059, -0.0645, -0.07, -0.07],
     "cost_pct_revenue": {},
     "capex_pct_revenue": null,
     "nwc_to_sales_change": null,
@@ -39,6 +39,6 @@
     "pre_tax_cost_of_debt": "interest expense / total debt from the latest TTM filings",
     "pre_tax_cost_of_debt_fallback": "5.8% marginal pre-tax cost of debt (Finbox, yield-based), Oct 2026",
     "shares": "latest shares outstanding from the 10-Q (filings), no options (Apple pays stock compensation in RSUs)",
-    "revenue_growth": "6% fading to 3% over 10 years: a placeholder from implied mode, not yet researched (CHANGELOG, 2026-11-23)"
+    "revenue_growth": "FY2027 10.0%: analysts' average, $528B on FY2026's $478.8B (Trefis, 2026-11-17); Apple guided the December quarter to +7-10% (call, 2026-11-02). FY2028 7.4%: analysts' average (Trefis). Then a straight line to 3% by FY2036. FY2026 grew 15.0% on an iPhone cycle (iPhone +21%, Services +13%), so it is not carried forward"
   }
 }

@@ -28,7 +28,7 @@
 
 ## Modes
 
-- **forecast:** your g0 gives a value per share.
+- **forecast:** your g0 gives a value per share. With a market price it also reports the reverse DCF, `details.price_implied_growth`: the year-1 growth that makes value equal the price, on a straight fade to terminal growth with every other input unchanged. The value itself is the forecast's. Public companies use this mode, so the price never sets their DCF.
 - **implied:** solves g0 so that value equals `market.price` (bisection over −50% to +100%), then builds the range around it. This is the course's practice of calibrating the standalone DCF to the pre-announcement price.
 
 ## Output

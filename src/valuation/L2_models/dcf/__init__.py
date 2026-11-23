@@ -554,6 +554,18 @@ class DCF:
             raise AssumptionError("mode must be 'forecast' or 'implied'")
 
         base_val = self.value(p)
+        price_implied = None
+        if p["mode"] == "forecast" and p["price"]:
+            # reverse DCF: the year-1 growth that makes value equal the price, on a plain linear fade to
+            # terminal growth (the implied mode's path) and with everything else as in this case
+            rev0 = {k: v for k, v in p["drivers"]["revenue"].items() if k not in ("adjust", "sector_growth", "blend_years")}
+            plain = {**p, "drivers": {**p["drivers"], "revenue": {**rev0, "method": "fade"}}}
+            try:
+                price_implied = solve(lambda g: self.value(plain, g0=g)["value_per_share"], p["price"], -0.5, 1.0)
+                notes.append(f"the price {p['price']:.2f} implies year-1 growth of {price_implied:.1%}, fading to "
+                             f"{rev0['g_terminal']:.1%} (the case starts at {rev0['g0']:.1%})")
+            except ValueError:
+                notes.append("no year-1 growth between -50% and 100% makes the DCF equal the price")
         r = p["rates"]
         rev = p["drivers"]["revenue"]
         s = p["sensitivity"]
@@ -631,6 +643,7 @@ class DCF:
             "convention": p["convention"],
             "default_case": p["default_case"],
             "implied_growth": implied,
+            "price_implied_growth": price_implied,
             "base_period": {"label": p["period"]["label"], "end": p["period"]["end"],
                             "fiscal_year": p["period"].get("fiscal_year"),
                             "kind": "fiscal" if p["period"].get("fiscal_period") == "FY" else "ltm"},

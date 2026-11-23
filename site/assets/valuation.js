@@ -646,7 +646,9 @@ export function renderDcfCard() {
         ? ` · <span class="tile-tag" title="No configs/public/assumptions/${esc(state.company.ticker)}/dcf.json: growth from the company's history, rates from the data. Add a dcf.json to set your own.">Default Assumptions</span>` : ""}</span></div>
     <div class="tiles">
       ${tile("Value per Share", price(b.value_per_share), `Simulated Bear ${price(r.value_per_share.p10)} – Bull ${price(r.value_per_share.p90)}`)}
-      ${d.implied_growth != null ? tile("Implied Near-Term Growth", pct(d.implied_growth), `At price ${price(d.market_price)}`) : tile("Share Price", price(d.market_price), state.detail.market?.price === d.market_price ? marketLine(state.detail.market).replace(/<[^>]+>/g, "") : "From the DCF assumptions")}
+      ${d.implied_growth != null ? tile("Implied Near-Term Growth", pct(d.implied_growth), `At price ${price(d.market_price)}`) : tile("Share Price", price(d.market_price), d.price_implied_growth != null
+        ? `Implies ${pct(d.price_implied_growth)} year-1 growth, fading to ${pct(d.drivers.revenue.g_terminal)} (this case: ${pct(d.drivers.revenue.g0)})`
+        : state.detail.market?.price === d.market_price ? marketLine(state.detail.market).replace(/<[^>]+>/g, "") : "From the DCF assumptions")}
       ${tile("WACC", pct(rt.wacc), `Terminal year ${pct(rt.wacc_terminal)}`)}
       ${tile("Terminal Value Share", pct(d.terminal_value_share), `Terminal EV/EBITDA ${mult(t.ev_to_ebitda)}`)}
     </div>
