@@ -131,3 +131,14 @@ def test_trend_case_projection_is_calculated_from_history():
 def test_trend_case_none_without_revenue():
     from valuation.L1_detail.forecast import trend_case
     assert trend_case({"views": {"ttm": [], "annual": []}, "analysis": {}}) is None
+
+
+def test_replay_warns_when_damodaran_is_later_than_as_of():
+    canon = {**two_years(), "as_of": "2025-08-22"}
+    dam = {"betas": {"updated": "January 2026", "industries": {"Total Market": {"beta": 1.0, "beta_unlevered": 0.9}}},
+           "erp": {"year": 2024, "value": 0.0433, "source": "x"}}
+    d = build_detail(canon, "2025-08-22", damodaran=dam)
+    assert any("January 2026 file, which is later than 2025-08-22" in w for w in d["warnings"])
+    assert d["equity_risk_premium"]["year"] == 2024
+    live = build_detail({**two_years(), "as_of": "2026-09-30"}, "2026-09-30", damodaran={**dam, "erp": {**dam["erp"], "year": 2025}})
+    assert not any("later than" in w or "isn't published yet" in w for w in live["warnings"])

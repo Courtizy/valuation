@@ -58,6 +58,11 @@ jobs:
       - name: Build sectors and companies
         run: python scripts/refresh_universe.py --as-of "$AS_OF" --market "$MARKET"
 
+      # stops the publish when a company's bridge debt, receivables or inventory fall short of
+      # what it filed and configs/public/balance_sheet_exceptions.json doesn't explain why
+      - name: Check balance sheets
+        run: python scripts/check_balance_sheets.py --as-of "$AS_OF"
+
       - name: Load published data
         run: scripts/site_data.sh load
 

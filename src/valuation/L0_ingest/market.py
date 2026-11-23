@@ -342,7 +342,7 @@ class MarketAdapter:
         from .damodaran import BETAS_URL, ERP_URL, parse_betas, parse_erp
         month = as_of[:7]
         betas = parse_betas(self._get("damodaran", BETAS_URL, f"damodaran_betas_{month}").decode("utf-8", "replace"))
-        erp = parse_erp(self._get("damodaran", ERP_URL, f"damodaran_erp_{month}").decode("utf-8", "replace"))
+        erp = parse_erp(self._get("damodaran", ERP_URL, f"damodaran_erp_{month}").decode("utf-8", "replace"), as_of)
         return {"source": "Aswath Damodaran, NYU Stern (pages.stern.nyu.edu/~adamodar)", "as_of": as_of,
                 "betas": betas, "erp": erp}
 

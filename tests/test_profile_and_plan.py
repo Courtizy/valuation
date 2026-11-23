@@ -79,6 +79,9 @@ def test_overrides_and_acquisition_context():
     w = {m["model"]: m["weight"] for m in p["methods"]}
     assert w == {"dcf": A(0.25), "precedents": A(0.75), "comps": 0.0, "lbo": 0.0, "dcf_synergy": 0.0, "just_synergy": 0.0}
     assert p["methods"][0]["model"] == "precedents" and p["methods"][0]["role"] == "primary"
+    assert p["summary"].endswith("Weights set by override.")
+    why = method_plan(None, ["dcf", "comps"], {"weights": {"comps": 1}, "why": "the base year has a one-off charge."})
+    assert why["summary"].endswith("Weights set by override: the base year has a one-off charge.")
     acq = method_plan(None, ["dcf", "precedents"], {"context": "acquisition"})
     assert acq["context"] == "acquisition"
     assert next(m for m in acq["methods"] if m["model"] == "precedents")["weight"] == A(1.0)
@@ -152,3 +155,28 @@ def test_a_method_with_no_positive_value_carries_no_weight(tmp_path):
     assert w["dcf"] == 1.0 and w["comps"] == 0.0
     assert c["blend"]["p50"] == 261.0
     assert any("no positive value" in n for n in c["plan"]["notes"])
+
+
+# Balance sheets as filed (latest fiscal year, 2026-11-23 run): liabilities / assets, and cash,
+# securities and long-term investments / assets. Buybacks push these operating companies past 85%
+# liabilities, but none of them lends.
+OPERATING_HIGH_LIABILITIES = {"SYY": ("5140", 0.906, 0.064), "CL": ("2844", 0.978, 0.085),
+                              "KR": ("5411", 0.881, 0.067), "MO": ("2111", 1.099, 0.128)}
+
+
+@pytest.mark.parametrize("ticker", sorted(OPERATING_HIGH_LIABILITIES))
+def test_buyback_balance_sheets_are_not_financial(ticker):
+    from valuation.L1_detail.profile import classify_capital
+    sic, l_a, fin = OPERATING_HIGH_LIABILITIES[ticker]
+    label, rule = classify_capital(10e9, 4e9, l_a, True, load_rules(), fin, sic)
+    assert label != "financial", rule
+    assert label == "moderate leverage"                     # falls through to debt / EBITDA (2.5x)
+
+
+def test_lenders_stay_financial():
+    from valuation.L1_detail.profile import classify_capital
+    bank = classify_capital(50e9, None, 0.90, True, load_rules(), 0.15, "6021")       # loans aren't "financial assets" here
+    insurer = classify_capital(5e9, 3e9, 0.88, True, load_rules(), 0.70, "6311")
+    broker_no_sic = classify_capital(5e9, 3e9, 0.92, True, load_rules(), 0.65, None)
+    assert bank[0] == insurer[0] == broker_no_sic[0] == "financial"
+    assert "finance SIC" in bank[1] and "financial assets" in broker_no_sic[1]

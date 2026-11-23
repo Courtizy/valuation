@@ -116,8 +116,22 @@ def parse_betas(html: str) -> dict:
     return {"updated": _updated(text), "source": BETAS_URL, "industries": out}
 
 
-def parse_erp(html: str) -> dict:
-    """The latest year's implied ERP: {year, value, tbond_rate, updated, source}."""
+MONTHS = {m: i for i, m in enumerate(("january", "february", "march", "april", "may", "june", "july", "august",
+                                      "september", "october", "november", "december"), 1)}
+
+
+def published_on(updated: str | None) -> str | None:
+    """'January 2026' -> '2026-01-01', the first day the file can have been read."""
+    m = re.match(r"([A-Za-z]+) (\d{4})$", updated or "")
+    if not m or m.group(1).lower() not in MONTHS:
+        return None
+    return f"{m.group(2)}-{MONTHS[m.group(1).lower()]:02d}-01"
+
+
+def parse_erp(html: str, as_of: str | None = None) -> dict:
+    """The implied ERP a run on as_of could have used: the latest year-end at or before the year
+    before as_of (the ERP at the end of 2025 is the one for 2026). Without as_of, the latest year.
+    {year, value, tbond_rate, updated, source, after_as_of}."""
     rows, text = _parse(html)
     header, body = _table(rows, "Year")
     i_erp = next((i for i, h in enumerate(header) if h.startswith("implied erp")), None)
@@ -128,5 +142,7 @@ def parse_erp(html: str) -> dict:
              for r in body if r and r[0].isdigit() and len(r) > i_erp and _num(r[i_erp]) is not None]
     if not years:
         raise ValueError("ERP table has no rows")
-    year, erp, tb = max(years)
-    return {"year": year, "value": erp, "tbond_rate": tb, "updated": _updated(text), "source": ERP_URL}
+    usable = [y for y in years if as_of is None or y[0] <= int(as_of[:4]) - 1]
+    year, erp, tb = max(usable or years)
+    return {"year": year, "value": erp, "tbond_rate": tb, "updated": _updated(text), "source": ERP_URL,
+            "after_as_of": not usable}
