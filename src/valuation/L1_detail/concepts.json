@@ -1,5 +1,5 @@
 {
-  "registry_version": "0.3.0",
+  "registry_version": "0.3.1",
   "attribution": "Concept set and display names from edgartools standardization (MIT), based on mpreiss9's taxonomy: https://edgartools.readthedocs.io/en/stable/xbrl/concepts/standardization/",
   "concepts": [
     {
@@ -38,7 +38,9 @@
       "kind": "reported",
       "source": "edgartools",
       "primary_tags": [
-        "us-gaap:AccountsReceivableNetCurrent"
+        "us-gaap:AccountsReceivableNetCurrent",
+        "us-gaap:AccountsNotesAndLoansReceivableNetCurrent",
+        "us-gaap:ReceivablesNetCurrent"
       ]
     },
     {
@@ -52,7 +54,8 @@
       "kind": "reported",
       "source": "edgartools",
       "primary_tags": [
-        "us-gaap:InventoryNet"
+        "us-gaap:InventoryNet",
+        "us-gaap:InventoryFinishedGoodsNetOfReserves"
       ]
     },
     {
@@ -296,7 +299,8 @@
           "us-gaap:CommercialPaper"
         ],
         [
-          "us-gaap:LongTermDebtCurrent"
+          "us-gaap:LongTermDebtCurrent",
+          "us-gaap:LongTermDebtAndCapitalLeaseObligationsCurrent"
         ]
       ]
     },
@@ -415,7 +419,8 @@
       "kind": "reported",
       "source": "edgartools",
       "primary_tags": [
-        "us-gaap:LongTermDebtNoncurrent"
+        "us-gaap:LongTermDebtNoncurrent",
+        "us-gaap:LongTermDebtAndCapitalLeaseObligations"
       ]
     },
     {

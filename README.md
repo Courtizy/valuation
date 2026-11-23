@@ -8,6 +8,8 @@
 
 **[Open the model](https://courtizy.github.io/valuation/)** · **[Guided demo](https://courtizy.github.io/valuation/?demo=1)** · [Architecture](docs/architecture.md) · [Changelog](CHANGELOG.md)
 
+**Worked example:** [Sysco, FY2026 cash flow and standalone value as of the FY2025 10-K](studies/sysco-fy2026/): a dated memo, a formula workbook and frozen SEC inputs that reproduce with one command.
+
 The Valuation Model values a public company from its SEC filings and shows how far the answer can move. It rebuilds the financial statements as they stood on a chosen date, analyzes them, runs a simulated DCF, prices the company against peers and past deals, and lines every method up on one football field that explains why they differ. An automated pipeline builds the published companies from SEC data, and the same Python engine runs in your browser on GitHub Pages. It is analysis of method, not investment advice.
 
 ![Valuation view: the engine's one-line answer, value against price, and the football field of methods with their weights](docs/images/valuation.png)
@@ -216,6 +218,7 @@ python -m http.server -d site 8000                         # http://localhost:80
 | `.github/workflows/` | Tests, Refresh, Pipeline, Pages |
 | `app/`, `private/` | Private door; `private/` is gitignored |
 | `tests/`, `docs/` | Tests per layer; a design doc per layer and model |
+| `studies/` | Dated case studies built on the engine, each with frozen inputs, a reproduction script and a workbook |
 
 ## Roadmap
 
