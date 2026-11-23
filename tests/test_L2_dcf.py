@@ -1,6 +1,7 @@
 """Standalone DCF model and the core math under it. Run: pytest tests/test_L2_dcf.py"""
 from __future__ import annotations
 
+import copy
 import json
 
 import pytest
@@ -160,7 +161,9 @@ def test_result_reconciles(detail, tmp_path):
 
 
 def test_longterm_investments_can_count_as_cash(detail):
-    detail["views"]["annual"][-1]["values"]["longterm_investments"] = 1e9
+    for view in ("annual", "ttm"):                  # the bridge reads the latest balance sheet
+        if detail["views"].get(view):
+            detail["views"][view][-1]["values"]["longterm_investments"] = 1e9
     base = get_model("dcf").run(detail, assumptions())
     incl = get_model("dcf").run(detail, assumptions(bridge={"include_longterm_investments": True}))
     assert incl.details["bridge"]["cash"] == A(base.details["bridge"]["cash"] + 1e9)
@@ -443,3 +446,25 @@ def test_cost_ratio_per_year_follows_the_list(detail):
     mf, mp = flat["assumptions_used"]["forecast"]["ebitda_margin"], path["assumptions_used"]["forecast"]["ebitda_margin"]
     assert mp[0] == A(mf[0]) and mp[1] == A(mf[1] + 0.02) and mp[-1] == A(mf[-1] + 0.04)
     assert path["details"]["bridge"]["value_per_share"] > flat["details"]["bridge"]["value_per_share"]
+
+
+def test_bridge_uses_the_latest_balance_sheet(detail):
+    measured = assumptions()
+    del measured["cost_of_capital"]["pre_tax_cost_of_debt"]          # interest / debt
+    before = get_model("dcf").run(copy.deepcopy(detail), measured).to_dict()["details"]["rates"]
+    assert before["cost_of_debt_method"] == "interest_over_debt"
+    # NVDA on 2026-11-23: base period FY2026 (ended 2026-01-25) carried $8.5B of debt; the 10-Q for
+    # 2026-07-26 shows $33.4B. The bridge reads the latest quarter, the forecast the base year.
+    ttm = detail["views"]["ttm"][-1]
+    annual = detail["views"]["annual"][-1]
+    assert ttm["end"] > annual["end"]
+    ttm["values"]["long_term_debt"] = annual["values"]["long_term_debt"] + 5e9
+    r = get_model("dcf").run(detail, assumptions()).to_dict()
+    b = r["details"]["bridge"]
+    assert b["balance_sheet_end"] == ttm["end"]
+    assert b["debt"] == A((ttm["values"].get("short_term_debt") or 0) + ttm["values"]["long_term_debt"])
+    assert any("latest balance sheet" in n for n in r["notes"])
+    # interest / debt stays on the base year: debt raised since hasn't paid a year's interest
+    # (KDP: FY2025 interest over the $28.9B after its 2026 borrowing read as a too-cheap rate)
+    after = get_model("dcf").run(detail, measured).to_dict()["details"]["rates"]
+    assert after["pre_tax_cost_of_debt"] == A(before["pre_tax_cost_of_debt"])

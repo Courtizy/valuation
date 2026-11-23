@@ -16,7 +16,10 @@ Valuation method follows the company's characteristics, not its sector label:
                       heavy         capex/sales > 10% or NOAT < 1x
                       moderate      otherwise
   capital structure debt / EBITDA and the liabilities share of assets
-                      financial     liabilities / assets >= 85% (debt is the business's raw material)
+                      financial     a lender's balance sheet: liabilities / assets >= 85% and either a
+                                    finance SIC code (6000-6799) or financial assets (cash, securities
+                                    and long-term investments) at least half of assets; an operating
+                                    company whose buybacks push liabilities past 85% is not one
                       low           debt/EBITDA < 2x
                       high          debt/EBITDA > 4x or EBITDA <= 0 with debt
                       moderate      otherwise
@@ -95,13 +98,25 @@ def classify_intensity(capex_s, noat, rules: dict) -> tuple[str, str]:
     return "moderate", "between the light and heavy rules"
 
 
-def classify_capital(debt: float, ebitda, l_a, has_balance_sheet: bool, rules: dict) -> tuple[str, str]:
+def is_finance_sic(sic) -> bool:
+    try:
+        return 6000 <= int(sic) <= 6799
+    except (TypeError, ValueError):
+        return False
+
+
+def classify_capital(debt: float, ebitda, l_a, has_balance_sheet: bool, rules: dict,
+                     financial_assets_share=None, sic=None) -> tuple[str, str]:
     r = rules["capital_structure"]
     d_ebitda = _div(debt, ebitda) if ebitda and ebitda > 0 else None
     if not has_balance_sheet:
         return "unknown", "needs a balance sheet"
-    if l_a is not None and l_a >= r["financial_min_liabilities_to_assets"]:
-        return "financial", f"liabilities ≥ {r['financial_min_liabilities_to_assets']:.0%} of assets"
+    lender = is_finance_sic(sic) or (financial_assets_share is not None
+                                     and financial_assets_share >= r["financial_min_financial_assets_share"])
+    if l_a is not None and l_a >= r["financial_min_liabilities_to_assets"] and lender:
+        why = "a finance SIC code" if is_finance_sic(sic) else \
+            f"financial assets ≥ {r['financial_min_financial_assets_share']:.0%} of assets"
+        return "financial", f"liabilities ≥ {r['financial_min_liabilities_to_assets']:.0%} of assets and {why}"
     if ebitda is not None and ebitda <= 0 and debt > 0:
         return "high leverage", "debt with EBITDA ≤ 0"
     if d_ebitda is None and debt == 0:
@@ -153,7 +168,9 @@ def build_profile(detail: dict, rules: dict | None = None) -> dict:
     equity = None if liab is None or v.get("assets") is None else v["assets"] - liab
     nd_e = _div(debt - (v.get("cash_and_marketable_securities") or 0), equity)
     has_bs = not (v.get("assets") is None and v.get("long_term_debt") is None)
-    cap, crule = classify_capital(debt, ebitda, l_a, has_bs, rules)
+    fin_assets = _div((v.get("cash_and_marketable_securities") or 0) + (v.get("longterm_investments") or 0), v.get("assets"))
+    sic = (detail.get("entity") or {}).get("sic")
+    cap, crule = classify_capital(debt, ebitda, l_a, has_bs, rules, fin_assets, sic)
 
     years = len(annual)
     return {
@@ -169,7 +186,7 @@ def build_profile(detail: dict, rules: dict | None = None) -> dict:
                                 "measures": {"capex_to_sales": capex_s, "noa_turnover": noat}},
             "capital_structure": {"label": cap, "rule": crule,
                                   "measures": {"debt_to_ebitda": d_ebitda, "net_debt_to_equity": nd_e,
-                                               "liabilities_to_assets": l_a}},
+                                               "liabilities_to_assets": l_a, "financial_assets_share": fin_assets}},
         },
         # flat numbers for comparing companies with each other
         "vector": {"revenue_cagr": cagr, "operating_margin": margin, "fcf_margin_stdev": sd,

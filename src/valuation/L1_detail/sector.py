@@ -113,7 +113,7 @@ class Frames:
         return out
 
 
-def company_metrics(fr: Frames, cik: int, year: int, rules: dict) -> dict | None:
+def company_metrics(fr: Frames, cik: int, year: int, rules: dict, sic=None) -> dict | None:
     base = year if fr.revenue(year, cik) is not None else year - 1
     rev = fr.revenue(base, cik)
     if rev is None or rev <= 0:
@@ -160,7 +160,9 @@ def company_metrics(fr: Frames, cik: int, year: int, rules: dict) -> dict | None
     stage, stage_rule = classify_stage(cagr, margin, rules)
     pred, pred_rule, _, sd = classify_predictability(fcf_margins, rules)
     intensity, int_rule = classify_intensity(capex_s, None, rules)
-    cap, cap_rule = classify_capital(debt, ebitda, l_a, has_bs, rules)
+    # a screen has cash but not securities, so its financial-assets share is a lower bound;
+    # lenders are caught by their finance SIC code
+    cap, cap_rule = classify_capital(debt, ebitda, l_a, has_bs, rules, _div(cash, assets), sic)
     return {
         "cik": str(cik).zfill(10), "name": rev_row[1] if rev_row else None,
         "period_start": rev_row[2] if rev_row else None, "period_end": rev_row[3] if rev_row else None,
@@ -257,7 +259,7 @@ def build_sector(raw_screen: dict, *, kind: str, value, as_of: str, tickers: lis
 
     rows = []
     for cik in cands:
-        m = company_metrics(fr, cik, year, rules)
+        m = company_metrics(fr, cik, year, rules, sic=(member_sic or {}).get(str(cik).zfill(10)))
         if m is None:
             no_data.append(cik)
             continue

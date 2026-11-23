@@ -37,6 +37,8 @@ file is missing and names the file it expected.
 {"context": "standalone", "weights": {"dcf": 0.7, "comps": 0.3}}
 ```
 
+`why` (optional) is one sentence shown with the plan, saying why the weights were set by hand.
+
 Without it, the company profile sets the primary method, cross-check and weights (`docs/L2_reconcile.md`). `context` is `standalone` (default) or `acquisition` (offer-price view: synergy methods and precedents).
 
 ## comps.json

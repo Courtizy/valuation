@@ -177,6 +177,19 @@ def build_detail(canonical: dict, as_of: str, raw_market: dict | None = None, pa
     # mode too), else the taxonomy's illustrative sector beta and no ERP (the DCF then uses its default)
     doc["sector_beta"] = load_taxonomy().industry_beta((canonical.get("entity") or {}).get("sic"), damodaran)
     erp = (damodaran or {}).get("erp") or {}
+    # point in time: say so when a Damodaran file is later than as_of (only the current betas file
+    # is published as a web page, so a replay of an earlier date uses it)
+    from valuation.L0_ingest.damodaran import published_on
+    betas_from = published_on(((damodaran or {}).get("betas") or {}).get("updated"))
+    if betas_from and betas_from > as_of and (doc["sector_beta"] or {}).get("industry"):
+        doc["warnings"].append(f"industry beta from Damodaran's {damodaran['betas']['updated']} file, which is later "
+                               f"than {as_of}: earlier files aren't published as web pages, so this replay looks ahead")
+    if erp.get("after_as_of"):
+        doc["warnings"].append(f"Damodaran's implied ERP for the end of {erp.get('year')} is later than {as_of}: "
+                               "no earlier year was in the file")
+    elif erp.get("year") is not None and erp["year"] < int(as_of[:4]) - 1:
+        doc["warnings"].append(f"Damodaran's implied ERP for the end of {int(as_of[:4]) - 1} isn't published yet; "
+                               f"the end of {erp['year']} is used")
     doc["equity_risk_premium"] = ({"value": erp["value"], "year": erp.get("year"), "source": erp.get("source"),
                                    "basis": f"Damodaran implied ERP (FCFE), start of {erp['year'] + 1}"}
                                   if erp.get("value") is not None else None)
