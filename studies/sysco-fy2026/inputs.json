@@ -1,0 +1,728 @@
+{
+ "company": "Sysco Corporation",
+ "ticker": "SYY",
+ "cik": "0000096021",
+ "units": "USD millions; shares in millions",
+ "cutoff": "2025-08-22",
+ "cutoff_filing": "10-K for fiscal 2025, accession 0000096021-25-000099",
+ "outcome_filing": "10-K for fiscal 2026, accession 0000096021-26-000033 (scoring only)",
+ "known": {
+  "revenue": {
+   "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+   "FY2022": {
+    "value": 68636.146,
+    "accn": "0000096021-22-000151",
+    "filed": "2022-08-26",
+    "end": "2022-07-02"
+   },
+   "FY2023": {
+    "value": 76324.675,
+    "accn": "0000096021-23-000117",
+    "filed": "2023-08-25",
+    "end": "2023-07-01"
+   },
+   "FY2024": {
+    "value": 78844.0,
+    "accn": "0000096021-24-000128",
+    "filed": "2024-08-28",
+    "end": "2024-06-29"
+   },
+   "FY2025": {
+    "value": 81370.0,
+    "accn": "0000096021-25-000099",
+    "filed": "2025-08-22",
+    "end": "2025-06-28"
+   }
+  },
+  "operating_income": {
+   "tag": "us-gaap:OperatingIncomeLoss",
+   "FY2022": {
+    "value": 2339.035,
+    "accn": "0000096021-22-000151",
+    "filed": "2022-08-26",
+    "end": "2022-07-02"
+   },
+   "FY2023": {
+    "value": 3038.549,
+    "accn": "0000096021-23-000117",
+    "filed": "2023-08-25",
+    "end": "2023-07-01"
+   },
+   "FY2024": {
+    "value": 3202.0,
+    "accn": "0000096021-24-000128",
+    "filed": "2024-08-28",
+    "end": "2024-06-29"
+   },
+   "FY2025": {
+    "value": 3088.0,
+    "accn": "0000096021-25-000099",
+    "filed": "2025-08-22",
+    "end": "2025-06-28"
+   }
+  },
+  "net_income": {
+   "tag": "us-gaap:NetIncomeLoss",
+   "FY2022": {
+    "value": 1358.768,
+    "accn": "0000096021-22-000151",
+    "filed": "2022-08-26",
+    "end": "2022-07-02"
+   },
+   "FY2023": {
+    "value": 1770.124,
+    "accn": "0000096021-23-000117",
+    "filed": "2023-08-25",
+    "end": "2023-07-01"
+   },
+   "FY2024": {
+    "value": 1955.0,
+    "accn": "0000096021-24-000128",
+    "filed": "2024-08-28",
+    "end": "2024-06-29"
+   },
+   "FY2025": {
+    "value": 1828.0,
+    "accn": "0000096021-25-000099",
+    "filed": "2025-08-22",
+    "end": "2025-06-28"
+   }
+  },
+  "pretax_income": {
+   "tag": "us-gaap:IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
+   "FY2022": {
+    "value": 1746.773,
+    "accn": "0000096021-22-000151",
+    "filed": "2022-08-26",
+    "end": "2022-07-02"
+   },
+   "FY2023": {
+    "value": 2285.355,
+    "accn": "0000096021-23-000117",
+    "filed": "2023-08-25",
+    "end": "2023-07-01"
+   },
+   "FY2024": {
+    "value": 2565.0,
+    "accn": "0000096021-24-000128",
+    "filed": "2024-08-28",
+    "end": "2024-06-29"
+   },
+   "FY2025": {
+    "value": 2415.0,
+    "accn": "0000096021-25-000099",
+    "filed": "2025-08-22",
+    "end": "2025-06-28"
+   }
+  },
+  "income_tax": {
+   "tag": "us-gaap:IncomeTaxExpenseBenefit",
+   "FY2022": {
+    "value": 388.005,
+    "accn": "0000096021-22-000151",
+    "filed": "2022-08-26",
+    "end": "2022-07-02"
+   },
+   "FY2023": {
+    "value": 515.231,
+    "accn": "0000096021-23-000117",
+    "filed": "2023-08-25",
+    "end": "2023-07-01"
+   },
+   "FY2024": {
+    "value": 610.0,
+    "accn": "0000096021-24-000128",
+    "filed": "2024-08-28",
+    "end": "2024-06-29"
+   },
+   "FY2025": {
+    "value": 587.0,
+    "accn": "0000096021-25-000099",
+    "filed": "2025-08-22",
+    "end": "2025-06-28"
+   }
+  },
+  "net_interest_expense": {
+   "tag": "us-gaap:InterestIncomeExpenseNonoperatingNet",
+   "FY2022": null,
+   "FY2023": {
+    "value": -527.0,
+    "accn": "0000096021-25-000099",
+    "filed": "2025-08-22",
+    "end": "2023-07-01"
+   },
+   "FY2024": {
+    "value": -607.0,
+    "accn": "0000096021-25-000099",
+    "filed": "2025-08-22",
+    "end": "2024-06-29"
+   },
+   "FY2025": {
+    "value": -635.0,
+    "accn": "0000096021-25-000099",
+    "filed": "2025-08-22",
+    "end": "2025-06-28"
+   }
+  },
+  "depreciation_amortization": {
+   "tag": "us-gaap:DepreciationAndAmortization",
+   "FY2022": {
+    "value": 772.881,
+    "accn": "0000096021-22-000151",
+    "filed": "2022-08-26",
+    "end": "2022-07-02"
+   },
+   "FY2023": {
+    "value": 775.604,
+    "accn": "0000096021-23-000117",
+    "filed": "2023-08-25",
+    "end": "2023-07-01"
+   },
+   "FY2024": {
+    "value": 873.0,
+    "accn": "0000096021-24-000128",
+    "filed": "2024-08-28",
+    "end": "2024-06-29"
+   },
+   "FY2025": {
+    "value": 945.0,
+    "accn": "0000096021-25-000099",
+    "filed": "2025-08-22",
+    "end": "2025-06-28"
+   }
+  },
+  "share_based_comp": {
+   "tag": "us-gaap:ShareBasedCompensation",
+   "FY2022": {
+    "value": 122.315,
+    "accn": "0000096021-22-000151",
+    "filed": "2022-08-26",
+    "end": "2022-07-02"
+   },
+   "FY2023": {
+    "value": 95.66,
+    "accn": "0000096021-23-000117",
+    "filed": "2023-08-25",
+    "end": "2023-07-01"
+   },
+   "FY2024": {
+    "value": 104.0,
+    "accn": "0000096021-24-000128",
+    "filed": "2024-08-28",
+    "end": "2024-06-29"
+   },
+   "FY2025": {
+    "value": 93.0,
+    "accn": "0000096021-25-000099",
+    "filed": "2025-08-22",
+    "end": "2025-06-28"
+   }
+  },
+  "capex": {
+   "tag": "us-gaap:PaymentsToAcquireProductiveAssets",
+   "FY2022": {
+    "value": 632.802,
+    "accn": "0000096021-22-000151",
+    "filed": "2022-08-26",
+    "end": "2022-07-02"
+   },
+   "FY2023": {
+    "value": 793.325,
+    "accn": "0000096021-23-000117",
+    "filed": "2023-08-25",
+    "end": "2023-07-01"
+   },
+   "FY2024": {
+    "value": 832.0,
+    "accn": "0000096021-24-000128",
+    "filed": "2024-08-28",
+    "end": "2024-06-29"
+   },
+   "FY2025": {
+    "value": 906.0,
+    "accn": "0000096021-25-000099",
+    "filed": "2025-08-22",
+    "end": "2025-06-28"
+   }
+  },
+  "operating_cash_flow": {
+   "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+   "FY2022": {
+    "value": 1791.286,
+    "accn": "0000096021-22-000151",
+    "filed": "2022-08-26",
+    "end": "2022-07-02"
+   },
+   "FY2023": {
+    "value": 2867.602,
+    "accn": "0000096021-23-000117",
+    "filed": "2023-08-25",
+    "end": "2023-07-01"
+   },
+   "FY2024": {
+    "value": 2989.0,
+    "accn": "0000096021-24-000128",
+    "filed": "2024-08-28",
+    "end": "2024-06-29"
+   },
+   "FY2025": {
+    "value": 2510.0,
+    "accn": "0000096021-25-000099",
+    "filed": "2025-08-22",
+    "end": "2025-06-28"
+   }
+  },
+  "chg_receivables": {
+   "tag": "us-gaap:IncreaseDecreaseInAccountsAndNotesReceivable",
+   "FY2022": {
+    "value": 971.17,
+    "accn": "0000096021-22-000151",
+    "filed": "2022-08-26",
+    "end": "2022-07-02"
+   },
+   "FY2023": {
+    "value": 270.639,
+    "accn": "0000096021-23-000117",
+    "filed": "2023-08-25",
+    "end": "2023-07-01"
+   },
+   "FY2024": {
+    "value": 110.0,
+    "accn": "0000096021-24-000128",
+    "filed": "2024-08-28",
+    "end": "2024-06-29"
+   },
+   "FY2025": {
+    "value": 206.0,
+    "accn": "0000096021-25-000099",
+    "filed": "2025-08-22",
+    "end": "2025-06-28"
+   }
+  },
+  "chg_inventory": {
+   "tag": "us-gaap:IncreaseDecreaseInFinishedGoodsAndWorkInProcessInventories",
+   "FY2022": {
+    "value": 708.61,
+    "accn": "0000096021-22-000151",
+    "filed": "2022-08-26",
+    "end": "2022-07-02"
+   },
+   "FY2023": {
+    "value": 22.219,
+    "accn": "0000096021-23-000117",
+    "filed": "2023-08-25",
+    "end": "2023-07-01"
+   },
+   "FY2024": {
+    "value": 70.0,
+    "accn": "0000096021-24-000128",
+    "filed": "2024-08-28",
+    "end": "2024-06-29"
+   },
+   "FY2025": {
+    "value": 330.0,
+    "accn": "0000096021-25-000099",
+    "filed": "2025-08-22",
+    "end": "2025-06-28"
+   }
+  },
+  "chg_payables": {
+   "tag": "us-gaap:IncreaseDecreaseInAccountsPayable",
+   "FY2022": {
+    "value": 810.451,
+    "accn": "0000096021-22-000151",
+    "filed": "2022-08-26",
+    "end": "2022-07-02"
+   },
+   "FY2023": {
+    "value": 195.607,
+    "accn": "0000096021-23-000117",
+    "filed": "2023-08-25",
+    "end": "2023-07-01"
+   },
+   "FY2024": {
+    "value": 104.0,
+    "accn": "0000096021-24-000128",
+    "filed": "2024-08-28",
+    "end": "2024-06-29"
+   },
+   "FY2025": {
+    "value": 143.0,
+    "accn": "0000096021-25-000099",
+    "filed": "2025-08-22",
+    "end": "2025-06-28"
+   }
+  },
+  "receivables": {
+   "tag": "us-gaap:AccountsNotesAndLoansReceivableNetCurrent",
+   "FY2022": {
+    "value": 4838.912,
+    "accn": "0000096021-22-000151",
+    "filed": "2022-08-26",
+    "end": "2022-07-02"
+   },
+   "FY2023": {
+    "value": 5091.97,
+    "accn": "0000096021-23-000117",
+    "filed": "2023-08-25",
+    "end": "2023-07-01"
+   },
+   "FY2024": {
+    "value": 5324.0,
+    "accn": "0000096021-24-000128",
+    "filed": "2024-08-28",
+    "end": "2024-06-29"
+   },
+   "FY2025": {
+    "value": 5502.0,
+    "accn": "0000096021-25-000099",
+    "filed": "2025-08-22",
+    "end": "2025-06-28"
+   }
+  },
+  "inventory": {
+   "tag": "us-gaap:InventoryFinishedGoodsNetOfReserves",
+   "FY2022": {
+    "value": 4437.498,
+    "accn": "0000096021-22-000151",
+    "filed": "2022-08-26",
+    "end": "2022-07-02"
+   },
+   "FY2023": {
+    "value": 4480.812,
+    "accn": "0000096021-23-000117",
+    "filed": "2023-08-25",
+    "end": "2023-07-01"
+   },
+   "FY2024": {
+    "value": 4678.0,
+    "accn": "0000096021-24-000128",
+    "filed": "2024-08-28",
+    "end": "2024-06-29"
+   },
+   "FY2025": {
+    "value": 5053.0,
+    "accn": "0000096021-25-000099",
+    "filed": "2025-08-22",
+    "end": "2025-06-28"
+   }
+  },
+  "payables": {
+   "tag": "us-gaap:AccountsPayableCurrent",
+   "FY2022": {
+    "value": 5752.958,
+    "accn": "0000096021-22-000151",
+    "filed": "2022-08-26",
+    "end": "2022-07-02"
+   },
+   "FY2023": {
+    "value": 6025.757,
+    "accn": "0000096021-23-000117",
+    "filed": "2023-08-25",
+    "end": "2023-07-01"
+   },
+   "FY2024": {
+    "value": 6290.0,
+    "accn": "0000096021-24-000128",
+    "filed": "2024-08-28",
+    "end": "2024-06-29"
+   },
+   "FY2025": {
+    "value": 6512.0,
+    "accn": "0000096021-25-000099",
+    "filed": "2025-08-22",
+    "end": "2025-06-28"
+   }
+  },
+  "debt_total": {
+   "tag": "us-gaap:DebtAndCapitalLeaseObligations",
+   "FY2022": {
+    "value": 10647.542,
+    "accn": "0000096021-22-000151",
+    "filed": "2022-08-26",
+    "end": "2022-07-02"
+   },
+   "FY2023": {
+    "value": 10410.547,
+    "accn": "0000096021-23-000117",
+    "filed": "2023-08-25",
+    "end": "2023-07-01"
+   },
+   "FY2024": {
+    "value": 11982.0,
+    "accn": "0000096021-24-000128",
+    "filed": "2024-08-28",
+    "end": "2024-06-29"
+   },
+   "FY2025": {
+    "value": 13309.0,
+    "accn": "0000096021-25-000099",
+    "filed": "2025-08-22",
+    "end": "2025-06-28"
+   }
+  },
+  "cash": {
+   "tag": "us-gaap:CashAndCashEquivalentsAtCarryingValue",
+   "FY2022": {
+    "value": 867.086,
+    "accn": "0000096021-22-000151",
+    "filed": "2022-08-26",
+    "end": "2022-07-02"
+   },
+   "FY2023": {
+    "value": 745.201,
+    "accn": "0000096021-23-000117",
+    "filed": "2023-08-25",
+    "end": "2023-07-01"
+   },
+   "FY2024": {
+    "value": 696.0,
+    "accn": "0000096021-24-000128",
+    "filed": "2024-08-28",
+    "end": "2024-06-29"
+   },
+   "FY2025": {
+    "value": 1071.0,
+    "accn": "0000096021-25-000099",
+    "filed": "2025-08-22",
+    "end": "2025-06-28"
+   }
+  },
+  "operating_lease_liability": {
+   "tag": "us-gaap:OperatingLeaseLiability",
+   "FY2022": {
+    "value": 742.106,
+    "accn": "0000096021-22-000151",
+    "filed": "2022-08-26",
+    "end": "2022-07-02"
+   },
+   "FY2023": {
+    "value": 755.32,
+    "accn": "0000096021-23-000117",
+    "filed": "2023-08-25",
+    "end": "2023-07-01"
+   },
+   "FY2024": {
+    "value": 963.0,
+    "accn": "0000096021-24-000128",
+    "filed": "2024-08-28",
+    "end": "2024-06-29"
+   },
+   "FY2025": {
+    "value": 1185.0,
+    "accn": "0000096021-25-000099",
+    "filed": "2025-08-22",
+    "end": "2025-06-28"
+   }
+  },
+  "shares_outstanding": {
+   "tag": "dei:EntityCommonStockSharesOutstanding",
+   "cover": {
+    "value": 478.212357,
+    "accn": "0000096021-25-000099",
+    "filed": "2025-08-22",
+    "end": "2025-08-05"
+   }
+  }
+ },
+ "outcome": {
+  "revenue": {
+   "tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+   "FY2026": {
+    "value": 84553.0,
+    "accn": "0000096021-26-000033",
+    "filed": "2026-08-21",
+    "end": "2026-06-27"
+   }
+  },
+  "operating_income": {
+   "tag": "us-gaap:OperatingIncomeLoss",
+   "FY2026": {
+    "value": 3095.0,
+    "accn": "0000096021-26-000033",
+    "filed": "2026-08-21",
+    "end": "2026-06-27"
+   }
+  },
+  "net_income": {
+   "tag": "us-gaap:NetIncomeLoss",
+   "FY2026": {
+    "value": 1757.0,
+    "accn": "0000096021-26-000033",
+    "filed": "2026-08-21",
+    "end": "2026-06-27"
+   }
+  },
+  "pretax_income": {
+   "tag": "us-gaap:IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
+   "FY2026": {
+    "value": 2276.0,
+    "accn": "0000096021-26-000033",
+    "filed": "2026-08-21",
+    "end": "2026-06-27"
+   }
+  },
+  "income_tax": {
+   "tag": "us-gaap:IncomeTaxExpenseBenefit",
+   "FY2026": {
+    "value": 519.0,
+    "accn": "0000096021-26-000033",
+    "filed": "2026-08-21",
+    "end": "2026-06-27"
+   }
+  },
+  "net_interest_expense": {
+   "tag": "us-gaap:InterestIncomeExpenseNonoperatingNet",
+   "FY2026": {
+    "value": -717.0,
+    "accn": "0000096021-26-000033",
+    "filed": "2026-08-21",
+    "end": "2026-06-27"
+   }
+  },
+  "depreciation_amortization": {
+   "tag": "us-gaap:DepreciationAndAmortization",
+   "FY2026": {
+    "value": 976.0,
+    "accn": "0000096021-26-000033",
+    "filed": "2026-08-21",
+    "end": "2026-06-27"
+   }
+  },
+  "share_based_comp": {
+   "tag": "us-gaap:ShareBasedCompensation",
+   "FY2026": {
+    "value": 118.0,
+    "accn": "0000096021-26-000033",
+    "filed": "2026-08-21",
+    "end": "2026-06-27"
+   }
+  },
+  "capex": {
+   "tag": "us-gaap:PaymentsToAcquireProductiveAssets",
+   "FY2026": {
+    "value": 700.0,
+    "accn": "0000096021-26-000033",
+    "filed": "2026-08-21",
+    "end": "2026-06-27"
+   }
+  },
+  "operating_cash_flow": {
+   "tag": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+   "FY2026": {
+    "value": 2638.0,
+    "accn": "0000096021-26-000033",
+    "filed": "2026-08-21",
+    "end": "2026-06-27"
+   }
+  },
+  "chg_receivables": {
+   "tag": "us-gaap:IncreaseDecreaseInAccountsAndNotesReceivable",
+   "FY2026": {
+    "value": 469.0,
+    "accn": "0000096021-26-000033",
+    "filed": "2026-08-21",
+    "end": "2026-06-27"
+   }
+  },
+  "chg_inventory": {
+   "tag": "us-gaap:IncreaseDecreaseInFinishedGoodsAndWorkInProcessInventories",
+   "FY2026": {
+    "value": 293.0,
+    "accn": "0000096021-26-000033",
+    "filed": "2026-08-21",
+    "end": "2026-06-27"
+   }
+  },
+  "chg_payables": {
+   "tag": "us-gaap:IncreaseDecreaseInAccountsPayable",
+   "FY2026": {
+    "value": 354.0,
+    "accn": "0000096021-26-000033",
+    "filed": "2026-08-21",
+    "end": "2026-06-27"
+   }
+  },
+  "receivables": {
+   "tag": "us-gaap:AccountsNotesAndLoansReceivableNetCurrent",
+   "FY2026": {
+    "value": 5865.0,
+    "accn": "0000096021-26-000033",
+    "filed": "2026-08-21",
+    "end": "2026-06-27"
+   }
+  },
+  "inventory": {
+   "tag": "us-gaap:InventoryFinishedGoodsNetOfReserves",
+   "FY2026": {
+    "value": 5338.0,
+    "accn": "0000096021-26-000033",
+    "filed": "2026-08-21",
+    "end": "2026-06-27"
+   }
+  },
+  "payables": {
+   "tag": "us-gaap:AccountsPayableCurrent",
+   "FY2026": {
+    "value": 6640.0,
+    "accn": "0000096021-26-000033",
+    "filed": "2026-08-21",
+    "end": "2026-06-27"
+   }
+  },
+  "debt_total": {
+   "tag": "us-gaap:DebtAndCapitalLeaseObligations",
+   "FY2026": {
+    "value": 13516.0,
+    "accn": "0000096021-26-000033",
+    "filed": "2026-08-21",
+    "end": "2026-06-27"
+   }
+  },
+  "cash": {
+   "tag": "us-gaap:CashAndCashEquivalentsAtCarryingValue",
+   "FY2026": {
+    "value": 1786.0,
+    "accn": "0000096021-26-000033",
+    "filed": "2026-08-21",
+    "end": "2026-06-27"
+   }
+  },
+  "operating_lease_liability": {
+   "tag": "us-gaap:OperatingLeaseLiability",
+   "FY2026": {
+    "value": 1451.0,
+    "accn": "0000096021-26-000033",
+    "filed": "2026-08-21",
+    "end": "2026-06-27"
+   }
+  }
+ },
+ "market": {
+  "risk_free": {
+   "value": 0.0426,
+   "source": "FRED DGS10, 2025-08-22 close",
+   "available_at_cutoff": true
+  },
+  "equity_risk_premium": {
+   "value": 0.0433,
+   "source": "Damodaran implied ERP (FCFE) at start of 2025, histimpl.xls",
+   "available_at_cutoff": true
+  },
+  "unlevered_beta_food_wholesalers": {
+   "value": 0.65,
+   "source": "Damodaran US 'Food Wholesalers' (13 firms), cash-corrected, January 2026 file; the January 2025 file is not online",
+   "available_at_cutoff": false
+  },
+  "unlevered_beta_retail_grocery": {
+   "value": 0.85,
+   "source": "Damodaran US 'Retail (Grocery and Food)' (15 firms), cash-corrected, January 2026 file: the industry the engine maps SIC 5140 to",
+   "available_at_cutoff": false
+  },
+  "industry_debt_to_equity": {
+   "value": 0.47,
+   "source": "Damodaran 'Food Wholesalers' market D/E, January 2026 file",
+   "available_at_cutoff": false
+  }
+ }
+}

@@ -14,6 +14,7 @@ The site only displays JSON; all math stays in src/valuation/.
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import sys
@@ -64,7 +65,9 @@ def main() -> int:
     print("demo ->", write_demo(SITE / "demo").relative_to(ROOT))
     (SITE / "data").mkdir(parents=True, exist_ok=True)
     (SITE / "data" / "changelog.json").write_text(json.dumps({"releases": changelog()}, indent=1))
-    publish(ROOT / "data-not-in-repo", SITE)   # refresh index.json / companies.json over the published data
+    # refresh index.json / companies.json over the published data; the index's market_data flag must match
+    # the Refresh's (repo variable SITE_MARKET_DATA), or the site labels published prices as unpublished
+    publish(ROOT / "data-not-in-repo", SITE, os.environ.get("SITE_MARKET_DATA") or "showcase")
     print("site/data index refreshed")
     print("engine ->", web_package().relative_to(ROOT))
     return 0

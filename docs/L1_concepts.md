@@ -21,7 +21,9 @@ Each concept carries: `id` (snake_case), `display_name`, `edgartools_concept`, `
 | Concept | Total tag (wins if present) | Components (alternatives in each) |
 |---|---|---|
 | `cash_and_marketable_securities` | CashCashEquivalentsAndShortTermInvestments | [CashAndCashEquivalentsAtCarryingValue] + [MarketableSecuritiesCurrent / ShortTermInvestments / AvailableForSaleSecuritiesDebtSecuritiesCurrent] |
-| `short_term_debt` | DebtCurrent | [ShortTermBorrowings / CommercialPaper] + [LongTermDebtCurrent] |
+| `short_term_debt` | DebtCurrent | [ShortTermBorrowings / CommercialPaper] + [LongTermDebtCurrent / LongTermDebtAndCapitalLeaseObligationsCurrent] |
+
+Fallbacks added in 0.3.1, each after the original tag: `long_term_debt` also reads LongTermDebtAndCapitalLeaseObligations, `trade_receivables` AccountsNotesAndLoansReceivableNetCurrent then ReceivablesNetCurrent, and `inventories` InventoryFinishedGoodsNetOfReserves (a filer that tags only inventory components, without a total, is undercounted).
 
 Within a component only the first alternative with a value counts, so overlapping tags never double count. The trade-off: a company reporting both commercial paper and other short-term borrowings separately is undercounted. Packs can override.
 

@@ -143,6 +143,34 @@ def test_component_alternatives_are_priority_picked(reg):
     assert recs(doc, "short_term_debt")[END23]["value"] == 16
 
 
+def test_debt_and_working_capital_read_the_lease_inclusive_tags(reg):
+    # Regression: Sysco (and KO, PM, CVS, KHC) file debt only as
+    # LongTermDebtAndCapitalLeaseObligations(+Current), receivables as
+    # AccountsNotesAndLoansReceivableNetCurrent and inventory as finished goods.
+    # Before registry 0.3.1 all four read as missing, so the DCF bridge used zero debt.
+    doc = normalize(raw(
+        fact("LongTermDebtAndCapitalLeaseObligations", END23, 12_360, K23),
+        fact("LongTermDebtAndCapitalLeaseObligationsCurrent", END23, 949, K23),
+        fact("AccountsNotesAndLoansReceivableNetCurrent", END23, 5_502, K23),
+        fact("InventoryFinishedGoodsNetOfReserves", END23, 5_053, K23),
+    ), "2026-09-30", reg)
+    assert recs(doc, "long_term_debt")[END23]["value"] == 12_360
+    assert recs(doc, "short_term_debt")[END23]["value"] == 949
+    assert recs(doc, "trade_receivables")[END23]["value"] == 5_502
+    assert recs(doc, "inventories")[END23]["value"] == 5_053
+
+
+def test_noncurrent_debt_tag_still_outranks_the_lease_inclusive_one(reg):
+    doc = normalize(raw(
+        fact("LongTermDebtNoncurrent", END23, 100, K23),
+        fact("LongTermDebtAndCapitalLeaseObligations", END23, 110, K23),
+        fact("LongTermDebtCurrent", END23, 10, K23),
+        fact("LongTermDebtAndCapitalLeaseObligationsCurrent", END23, 12, K23),
+    ), "2026-09-30", reg)
+    assert recs(doc, "long_term_debt")[END23]["value"] == 100
+    assert recs(doc, "short_term_debt")[END23]["value"] == 10
+
+
 def test_cash_includes_marketable_securities_and_records_gaps(reg):
     doc = normalize(raw(
         fact("CashAndCashEquivalentsAtCarryingValue", END23, 30, K23),

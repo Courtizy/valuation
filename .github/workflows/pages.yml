@@ -43,6 +43,8 @@ jobs:
       - name: Load published data
         run: scripts/site_data.sh load
       - run: python scripts/export_site.py
+        env:
+          SITE_MARKET_DATA: ${{ vars.SITE_MARKET_DATA || 'showcase' }}
       - name: Stamp asset versions
         # Browsers cache Pages files; a per-commit query string makes them fetch new CSS/JS after each deploy.
         run: |
