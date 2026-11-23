@@ -67,6 +67,7 @@ def plan(
     stop_after: str | None = None,
     market_factory: Callable[[], object] | None = None,
     market_prices: bool = True,
+    damodaran: bool = True,
 ) -> list[Step]:
     """Build the step list. `stop_after` ("L0", "L1" or "L2") drops later layers,
     e.g. "L1" refreshes company detail without running models.
@@ -93,7 +94,7 @@ def plan(
             out.parent.mkdir(parents=True, exist_ok=True)
             out.write_text(json.dumps(market_factory().risk_free(as_of), indent=2))
         steps.append(Step("risk-free rate", "L0", ticker, [paths.risk_free(as_of)], risk_free, soft=True, optional=True))
-    if market_factory and not paths.damodaran(as_of).exists():
+    if market_factory and damodaran and not paths.damodaran(as_of).exists():
         def damodaran():
             out = paths.damodaran(as_of)
             out.parent.mkdir(parents=True, exist_ok=True)

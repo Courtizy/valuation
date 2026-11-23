@@ -2,10 +2,18 @@ import importlib.util
 import json
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location("refresh_universe", ROOT / "scripts" / "refresh_universe.py")
 refresh = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(refresh)
+
+
+@pytest.fixture(autouse=True)
+def _no_damodaran_network(monkeypatch):
+    """No test here reaches Damodaran's site; the tests that care replace this."""
+    monkeypatch.setattr(refresh, "fetch_damodaran", lambda as_of: None)
 
 
 def test_universe_file_is_valid():
@@ -77,6 +85,39 @@ def test_no_risk_free_rate_skips_companies_at_once(tmp_path, monkeypatch, capsys
     assert ran == ["--as-of", "sector:technology"]                              # no company was started
     out = capsys.readouterr()
     assert "2 failed (A, B)" in out.out and "no risk-free rate" in out.out
+
+
+def test_damodaran_is_fetched_once_and_its_outage_costs_no_company_a_retry(tmp_path, monkeypatch, capsys):
+    """Damodaran is optional: when its one fetch fails, every company still runs, told not to retry it."""
+    cmds, asked = [], []
+    monkeypatch.setattr(refresh, "pipeline", lambda cmd: cmds.append(cmd) or 0)
+    monkeypatch.setattr(refresh, "fetch_risk_free", lambda as_of: None)
+
+    def down(as_of):
+        asked.append(as_of)
+        raise TimeoutError("The read operation timed out")
+    monkeypatch.setattr(refresh, "fetch_damodaran", down)
+    u = tmp_path / "u.json"
+    u.write_text(json.dumps({"tickers": ["A", "B"]}))
+    assert refresh.main(["--universe", str(u), "--as-of", "2026-11-23"]) == 0
+    assert asked == ["2026-11-23"]                                         # once, not once per company
+    runs = [c for c in cmds if c[0] == "run"]
+    assert [c[1] for c in runs] == ["A", "B"] and all(c[-1] == "--no-damodaran" for c in runs)
+    assert "Damodaran unavailable" in capsys.readouterr().out
+    cmds.clear()
+    monkeypatch.setattr(refresh, "fetch_damodaran", lambda as_of: None)
+    refresh.main(["--universe", str(u), "--as-of", "2026-11-23"])
+    assert not any("--no-damodaran" in c for c in cmds)                    # up: nothing changes
+
+
+def test_no_damodaran_drops_the_step_from_a_company_run(tmp_path):
+    from valuation.runner.company import plan
+    from valuation.runner.paths import Paths
+    paths = Paths(tmp_path / "data", tmp_path / "assumptions")
+    names = lambda **kw: [s.name for s in plan("ABC", ["dcf"], "2026-11-23", paths, object, "L2",  # noqa: E731
+                                               market_factory=object, market_prices=False, **kw)]
+    assert "industry betas and ERP (Damodaran)" in names()
+    assert "industry betas and ERP (Damodaran)" not in names(damodaran=False)
 
 
 def test_no_market_scope_never_asks_for_the_rate(tmp_path, monkeypatch):
