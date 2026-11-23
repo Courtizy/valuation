@@ -88,7 +88,39 @@ def _fiscal_calendar(idx: _Index, reg: Registry) -> list[dict]:
     starts_of_quarters = {_next_day(e) for ch in chains for m, e in ch["ends"].items() if m < 12}
     year_chains = [ch for ch in chains
                    if (set(ch["ends"]) & {6, 9, 12}) or ch["start"] not in starts_of_quarters]
-    return sorted(year_chains, key=lambda ch: ch["start"])
+    year_chains = _drop_overlapping_years(year_chains, by_start)
+    _relabel_comparative_years(year_chains)
+    return year_chains
+
+
+def _drop_overlapping_years(chains: list[dict], by_start) -> list[dict]:
+    """Fiscal years don't overlap. A start inside another chain's year is a rolling 12-month
+    figure some 10-Qs tag (INGM's restructuring, 2026-11-23), not a year: of two that overlap,
+    keep the one more facts support."""
+    support = {s: sum(sum(c.values()) for c in months.values()) for s, months in by_start.items()}
+    keep: list[dict] = []
+    for ch in sorted(chains, key=lambda ch: ch["start"]):
+        prev = keep[-1] if keep else None
+        if prev and 12 in prev["ends"] and ch["start"] <= prev["ends"][12]:
+            if support[ch["start"]] > support[prev["start"]]:
+                keep[-1] = ch
+            continue
+        keep.append(ch)
+    return keep
+
+
+def _relabel_comparative_years(chains: list[dict]) -> None:
+    """Labels come from the first filing that reports a period. A year first seen as a prior-year
+    column (a new filer's first 10-K) carries that filing's year: INGM's FY2022 and FY2023 both read
+    FY2024. Walking back from the latest year, each full year is at least one year before the next."""
+    nxt = None
+    for ch in reversed(chains):
+        if ch["fy"] is None or 12 not in ch["ends"]:
+            continue
+        if nxt is not None:
+            gap = max(1, round((date.fromisoformat(nxt["ends"][12]) - date.fromisoformat(ch["ends"][12])).days / 365.25))
+            ch["fy"] = min(ch["fy"], nxt["fy"] - gap)
+        nxt = ch
 
 
 def _quarters_of(chain: dict) -> list[tuple[int, str, str]]:

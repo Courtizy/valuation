@@ -127,3 +127,21 @@ def test_restated_flag_carried(reg):
 def test_calendar_label_shifts_early_month_ends():
     assert calendar_label("2023-09-30") == (2023, 3)
     assert calendar_label("2024-01-02") == (2023, 4)   # 52/53-week year ending in early Jan
+
+
+def test_rolling_twelve_months_in_a_10q_is_not_a_fiscal_year(reg):
+    """INGM, 2026-11-23: one restructuring figure tagged for the 12 months to a June quarter end made
+    an empty 'FY2025' after the real one, and the DCF found no revenue in it."""
+    r = year_records() + [rec("restructuring_expense_benefit", "2023-01-01", "2023-12-31", 37, fy=2024, fp="Q1")]
+    v = build_views(r, reg)
+    assert [(p["label"], p["end"]) for p in v["annual"]] == [("FY2023", FY_E)]
+
+
+def test_comparative_years_from_a_first_10k_get_their_own_labels(reg):
+    """A new filer's first 10-K reports three years, all tagged with that filing's fiscal year."""
+    r = (year_records(fy=2023, start="2020-10-01", ends=("2020-12-31", "2021-03-31", "2021-06-30", "2021-09-30"))
+         + year_records(fy=2023, start="2021-10-01", ends=("2021-12-31", "2022-03-31", "2022-06-30", "2022-09-30"))
+         + year_records(fy=2023))
+    v = build_views(r, reg)
+    assert [p["label"] for p in v["annual"]] == ["FY2021", "FY2022", "FY2023"]
+    assert [p["label"] for p in v["quarterly"]][:4] == ["FY2021 Q1", "FY2021 Q2", "FY2021 Q3", "FY2021 Q4"]
