@@ -135,3 +135,20 @@ def test_demo_covers_every_feature_and_stays_out_of_real_data(tmp_path):
     publish(tmp_path / "nodata", tmp_path / "site")
     assert not (tmp_path / "site" / "data" / "DEMO").exists()
     assert out == root / "DEMO" / AS_OF
+
+def test_a_method_with_no_positive_value_carries_no_weight(tmp_path):
+    # IBM on 2026-11-23: distributors' EV/Sales less IBM's debt gave comps -$33.81 a share,
+    # which pulled the blend from $261 to $114. A non-positive value is shown, not weighted.
+    import json as _json
+    def result(model, p50):
+        p = tmp_path / f"{model}.json"
+        p.write_text(_json.dumps({"model": model, "ticker": "X", "as_of": "2026-11-23",
+                                  "value_per_share": {"p10": p50 - 10, "p50": p50, "p90": p50 + 10, "mean": p50},
+                                  "assumptions_used": {}, "notes": [], "details": {}}))
+        return p
+    detail = {"profile": {"traits": {"stage": {"label": "mature"}, "predictability": {"label": "high"}}}}
+    c = build_comparison([result("dcf", 261.0), result("comps", -33.8)], detail)
+    w = {m["model"]: m["weight"] for m in c["plan"]["methods"]}
+    assert w["dcf"] == 1.0 and w["comps"] == 0.0
+    assert c["blend"]["p50"] == 261.0
+    assert any("no positive value" in n for n in c["plan"]["notes"])

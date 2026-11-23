@@ -124,3 +124,37 @@ def pick_peers(sector: dict, ticker: str, n: int = 6) -> dict | None:
     return {"level": level, "label": mine.get(level) or sector.get("label"), "sector": sector.get("label"),
             "peers": [{"ticker": r["ticker"], "score": scores.get(r["ticker"])} for r in sector_set],
             "closest": [{"ticker": r["ticker"], "score": r["score"]} for r in closest]}
+
+
+# The course's value drivers, as far as a sector screen has them, with the comps stoplight's
+# tolerances (L2_models/comps MATCH): past growth within 5 points, margin within 3 points.
+DRIVER_STEPS = {"revenue_cagr": 0.05, "operating_margin": 0.03}
+SIZE_FLOOR = 1 / 20         # candidates have at least a twentieth of the target's revenue
+
+
+def closest_on_drivers(target: dict, pool: list[dict], n: int = 6) -> list[dict]:
+    """Like companies on the drivers a multiple prices, from any sector: [{ticker, distance}].
+
+    A multiple is a DCF over current earnings, so a like company shares the target's growth and
+    margin whatever its industry. Distance = sqrt(sum ((x - x_target) / step)^2) over DRIVER_STEPS,
+    so one step is one tolerance of the comps stoplight. Size is not rated (the course calls it a
+    poor proxy) but gates the pool, so a $1B firm isn't a $400B firm's comparable. Companies
+    missing a driver are left out. The comps model then rates each peer on growth, discount
+    rate, margin and net debt / EV and weights it by closeness."""
+    tv = {k: _value(target, k) for k in DRIVER_STEPS}
+    rev = target.get("revenue")
+    if any(v is None for v in tv.values()):
+        return []
+    out = []
+    for c in {r.get("ticker"): r for r in pool if r.get("ticker")}.values():
+        if c["ticker"] == target.get("ticker"):
+            continue
+        if rev and (c.get("revenue") or 0) < rev * SIZE_FLOOR:
+            continue
+        cv = {k: _value(c, k) for k in DRIVER_STEPS}
+        if any(v is None for v in cv.values()):
+            continue
+        d = math.sqrt(sum(((cv[k] - tv[k]) / s) ** 2 for k, s in DRIVER_STEPS.items()))
+        out.append({"ticker": c["ticker"], "distance": d})
+    out.sort(key=lambda r: r["distance"])
+    return out[:n]
