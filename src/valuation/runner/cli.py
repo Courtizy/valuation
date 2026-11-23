@@ -42,6 +42,8 @@ def main(argv: list[str] | None = None,
     r.add_argument("--market", choices=["all", "risk-free", "none"], default="all",
                    help="all = prices + risk-free rate; risk-free = showcase mode (no prices); none = no market data")
     r.add_argument("--no-market", action="store_true", help="same as --market none")
+    r.add_argument("--no-damodaran", action="store_true",
+                   help="don't fetch Damodaran's betas and ERP (the Refresh passes it when its one fetch failed)")
     sc = sub.add_parser("sector", help="screen a sector: sic-of:AAPL | sector:technology | sic:3674 | traits:k=v;... | list:name")
     sc.add_argument("spec")
     sc.add_argument("--as-of", default=date.today().isoformat())
@@ -92,7 +94,8 @@ def main(argv: list[str] | None = None,
             market_cache = FileCache(args.cache_dir.parent / "market", ttl_seconds=6 * 3600)
             market_factory = lambda: MarketAdapter(cache=market_cache)  # noqa: E731
         steps = plan(args.ticker, models, args.as_of, paths, adapter_factory, args.stop_after,
-                     None if scope == "none" else market_factory, market_prices=scope == "all")
+                     None if scope == "none" else market_factory, market_prices=scope == "all",
+                     damodaran=not args.no_damodaran)
     except KeyError as e:
         print(f"error: {e.args[0]}", file=sys.stderr)
         return 2

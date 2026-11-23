@@ -11,6 +11,9 @@ Two guards keep one slow source from using up the job's 90 minutes:
 - The risk-free rate is fetched once before the companies. If FRED can't be reached, the companies are
   skipped at once and keep their last published results: every DCF needs the rate, and fetching it per
   company cost about two minutes each (2026-10-26 and 2026-11-02).
+- Damodaran's industry betas and ERP are fetched once too. They are optional (the DCF falls back to the
+  taxonomy's sector beta and the default ERP), so if the site is down the companies still run, with
+  --no-damodaran so none of them retries it.
 """
 from __future__ import annotations
 
@@ -45,6 +48,19 @@ def fetch_risk_free(as_of: str, data_dir: Path = Path("data"), cache_dir: Path =
     out.write_text(json.dumps(rf, indent=2))
 
 
+def fetch_damodaran(as_of: str, data_dir: Path = Path("data"), cache_dir: Path = Path(".cache/market")) -> None:
+    """Write data/_market/{as_of}/damodaran.json once, where each company's run looks for it first.
+    Raises when Damodaran's pages can't be read."""
+    from valuation.L0_ingest.cache import FileCache
+    from valuation.L0_ingest.market import MarketAdapter
+    out = Paths(data_dir, ASSUMPTIONS).damodaran(as_of)
+    if out.exists():
+        return
+    doc = MarketAdapter(cache=FileCache(cache_dir, ttl_seconds=6 * 3600)).damodaran(as_of)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(doc, indent=2))
+
+
 def models_for(ticker: str, assumptions: Path = ASSUMPTIONS) -> str:
     return "dcf,comps" if (assumptions / ticker / "comps.json").exists() else "dcf"
 
@@ -66,7 +82,7 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
 
     done, failed = [], []
-    rate_checked, no_rate = args.market == "none", None
+    rate_checked, no_rate, no_dam = args.market == "none", None, None
     for name, cmd in jobs(json.loads(args.universe.read_text()), args.as_of, args.market):
         if cmd[0] == "run" and not rate_checked:
             rate_checked = True
@@ -77,9 +93,19 @@ def main(argv: list[str] | None = None) -> int:
                 no_rate = f"{type(e).__name__}: {e}"
                 print(f"error: no risk-free rate ({no_rate}); companies keep their last published results",
                       file=sys.stderr)
+            print("== industry betas and ERP (Damodaran)", flush=True)
+            try:
+                if not no_rate:          # no companies will run, so there's nothing to fetch it for
+                    fetch_damodaran(args.as_of)
+            except Exception as e:
+                no_dam = f"{type(e).__name__}: {e}"
+                print(f"warning: no Damodaran data ({no_dam}); companies use the sector beta and default ERP",
+                      file=sys.stderr)
         if cmd[0] == "run" and no_rate:
             failed.append(name)
             continue
+        if cmd[0] == "run" and no_dam:
+            cmd = cmd + ["--no-damodaran"]
         print(f"== {name}", flush=True)
         try:
             code = pipeline(cmd)
@@ -94,6 +120,8 @@ def main(argv: list[str] | None = None) -> int:
     summary = f"Refresh {args.as_of}: {len(done)} built, {len(failed)} failed" + (f" ({', '.join(failed)})" if failed else "")
     if no_rate:
         summary += f". Companies skipped: no risk-free rate from FRED ({no_rate})"
+    elif no_dam:
+        summary += f". Damodaran unavailable ({no_dam}): sector betas and the default ERP were used"
     print(summary)
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
