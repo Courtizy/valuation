@@ -419,3 +419,17 @@ def test_blank_erp_in_a_dcf_json_uses_damodaran(detail):
     assert r["assumptions_used"]["cost_of_capital"]["equity_risk_premium"] == 0.0423
     assert "Damodaran" in r["assumptions_used"]["sources"]["equity_risk_premium"]
     assert r["assumptions_used"]["cost_of_capital"]["risk_free_terminal"] == 0.04     # same as today's rate
+
+
+def test_forecast_mode_reports_the_growth_the_price_implies(detail):
+    # Reverse DCF beside the forecast: the case's value is unchanged, and running the same case in
+    # implied mode lands on the same year-1 growth.
+    m = get_model("dcf")
+    fc = m.run(detail, assumptions()).to_dict()
+    im = m.run(detail, assumptions(mode="implied")).to_dict()
+    assert fc["details"]["price_implied_growth"] == A(im["details"]["implied_growth"], abs=1e-6)
+    assert fc["details"]["bridge"]["value_per_share"] != A(40.0, abs=0.5)   # the forecast keeps its own value
+    assert any("implies year-1 growth" in n for n in fc["notes"])
+    # no price: nothing to solve against
+    nop = m.run({**detail, "market": None}, {**assumptions(), "market": {"basic_shares": 1e8}}).to_dict()
+    assert nop["details"]["price_implied_growth"] is None
