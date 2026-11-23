@@ -408,3 +408,14 @@ def test_public_configs_do_not_value_in_implied_mode():
     from pathlib import Path
     for f in (Path(__file__).resolve().parents[1] / "configs" / "public" / "assumptions").glob("*/dcf.json"):
         assert json.loads(f.read_text()).get("mode", "forecast") == "forecast", f
+
+
+def test_blank_erp_in_a_dcf_json_uses_damodaran(detail):
+    # AAPL's hand-written dcf.json now leaves the ERP blank, like the default case, rather than
+    # carrying a flat 5% no other company uses.
+    d = {**detail, "equity_risk_premium": {"value": 0.0423, "basis": "Damodaran implied ERP (FCFE), start of 2026"}}
+    r = get_model("dcf").run(d, assumptions(cost_of_capital={"equity_risk_premium": None,
+                                                             "risk_free_terminal": None})).to_dict()
+    assert r["assumptions_used"]["cost_of_capital"]["equity_risk_premium"] == 0.0423
+    assert "Damodaran" in r["assumptions_used"]["sources"]["equity_risk_premium"]
+    assert r["assumptions_used"]["cost_of_capital"]["risk_free_terminal"] == 0.04     # same as today's rate

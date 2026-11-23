@@ -293,3 +293,10 @@ def test_run_rejects_non_raw_file(tmp_path):
     p.write_text("{}")
     with pytest.raises(ValueError):
         run(p, "2026-09-30", tmp_path / "o.json")
+
+
+def test_noncurrent_marketable_securities_fill_longterm_investments(reg):
+    # Regression: Apple's $80B of MarketableSecuritiesNoncurrent read as zero because
+    # longterm_investments had no tags, so its bridge left them out.
+    doc = normalize(raw(fact("MarketableSecuritiesNoncurrent", END23, 80_200, K23)), "2026-09-30", reg)
+    assert recs(doc, "longterm_investments")[END23]["value"] == 80_200

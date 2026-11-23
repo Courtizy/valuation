@@ -237,6 +237,11 @@ class DCF:
         elif cc.get("risk_free") is None and rf_doc.get("value") is not None:
             cc["risk_free"] = rf_doc["value"]
             sources["risk_free"] = f"{rf_doc.get('series', 'DGS10')} on {rf_doc.get('date')} (FRED)"
+        erp_doc = detail.get("equity_risk_premium") or {}
+        if cc.get("equity_risk_premium") is None and erp_doc.get("value") is not None:
+            # a hand-written dcf.json can leave the ERP blank to use the same data source as the default case
+            cc["equity_risk_premium"] = erp_doc["value"]
+            sources["equity_risk_premium"] = f"{erp_doc['value']:.2%}, {erp_doc.get('basis', 'Damodaran implied ERP')}"
         if cc.get("pre_tax_cost_of_debt_fallback") is None and a.get("default_case") and cc.get("risk_free") is not None:
             cc["pre_tax_cost_of_debt_fallback"] = cc["risk_free"] + DEFAULT_CREDIT_SPREAD
         beta_u = None
@@ -319,7 +324,8 @@ class DCF:
             target_debt_to_equity=cc.get("target_debt_to_equity"),
             risk_free_terminal=cc.get("risk_free_terminal"),
             country_risk_premium=cc.get("country_risk_premium") or 0.0)
-        rates.update(pre_tax_cost_of_debt=rd, cost_of_debt_method=rd_method, synthetic_rating=rating, total_beta=total_beta)
+        rates.update(pre_tax_cost_of_debt=rd, cost_of_debt_method=rd_method, synthetic_rating=rating, total_beta=total_beta,
+                     equity_risk_premium=cc["equity_risk_premium"])
         rate_args = dict(risk_free=rf, pre_tax_cost_of_debt=rd, beta=cc.get("beta"), beta_unlevered=beta_u,
                          equity_risk_premium=cc["equity_risk_premium"],
                          tax_rate=tax, target_debt_to_equity=cc.get("target_debt_to_equity"),
@@ -606,7 +612,7 @@ class DCF:
             "cost_of_capital": {
                 "risk_free": p["risk_free"],
                 "risk_free_terminal": r["risk_free_terminal"],
-                "equity_risk_premium": (assumptions.get("cost_of_capital") or {}).get("equity_risk_premium"),
+                "equity_risk_premium": p["rates"].get("equity_risk_premium", (assumptions.get("cost_of_capital") or {}).get("equity_risk_premium")),
                 "beta": r["beta_levered_observed"],
                 "beta_relevered": r["beta_relevered"],
                 "pre_tax_cost_of_debt": p["rates"]["pre_tax_cost_of_debt"],
