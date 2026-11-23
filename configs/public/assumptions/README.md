@@ -17,7 +17,7 @@ file is missing and names the file it expected.
 | `forecast.revenue_growth` | near-term growth g0; fades linearly to terminal growth over N years |
 | `forecast.growth_adjust` | optional per-year adjustments replacing the fade (all zeros = constant g0) |
 | `forecast.terminal_growth` | Gordon growth after year N |
-| `forecast.cost_pct_revenue` | optional overrides, e.g. `{"cogs": 0.6}`; default is the base period's ratio |
+| `forecast.cost_pct_revenue` | optional overrides, e.g. `{"cogs": 0.6}`, or one ratio per forecast year (`{"cogs": [0.51, 0.50, …]}`, the last repeats); default is the base period's ratio |
 | `forecast.capex_pct_revenue`, `nwc_to_sales_change`, `tax_rate` | null = from the filings |
 | `cost_of_capital.risk_free` | today's long-term government rate. Null = the 10-year Treasury from FRED on or before as_of |
 | `cost_of_capital.risk_free_terminal` | normalized long-run rate for the terminal-year WACC (null = same) |

@@ -9,10 +9,10 @@
   },
   "forecast": {
     "years_to_terminal": 10,
-    "revenue_growth": 0.10,
+    "revenue_growth": 0.0614,
     "terminal_growth": 0.03,
-    "growth_adjust": [0.0, -0.026, -0.0315, -0.037, -0.0425, -0.048, -0.0535, -0.059, -0.0645, -0.07, -0.07],
-    "cost_pct_revenue": {},
+    "growth_adjust": [0.0, -0.0014, -0.0033, -0.0057, -0.0086, -0.0118, -0.0153, -0.0191, -0.0231, -0.0272, -0.0314],
+    "cost_pct_revenue": {"cogs": [0.5064, 0.5012, 0.4964, 0.4921, 0.4883, 0.4852, 0.4826, 0.4807, 0.4794, 0.4787, 0.4787]},
     "capex_pct_revenue": null,
     "nwc_to_sales_change": null,
     "tax_rate": null
@@ -39,6 +39,7 @@
     "pre_tax_cost_of_debt": "interest expense / total debt from the latest TTM filings",
     "pre_tax_cost_of_debt_fallback": "5.8% marginal pre-tax cost of debt (Finbox, yield-based), Oct 2026",
     "shares": "latest shares outstanding from the 10-Q (filings), no options (Apple pays stock compensation in RSUs)",
-    "revenue_growth": "FY2027 10.0%: analysts' average, $528B on FY2026's $478.8B (Trefis, 2026-11-17); Apple guided the December quarter to +7-10% (call, 2026-11-02). FY2028 7.4%: analysts' average (Trefis). Then a straight line to 3% by FY2036. FY2026 grew 15.0% on an iPhone cycle (iPhone +21%, Services +13%), so it is not carried forward"
+    "revenue_growth": "Apple's own case (studies/apple-fy2027): iPhone, Services, Mac, iPad and Wearables each grow at their FY2021-FY2026 CAGR from the 10-Ks (5.8%, 12.5%, 1.5%, -2.6%, -1.5%), fading to 3% over 10 years; the lines add up to this path",
+    "cost_pct_revenue": "cost of sales follows the mix: products 60.7% and services 23.8% of their sales (FY2026 10-K), so the Services share moving from 25.7% to 34.8% lowers it from 51.2% to 47.9%"
   }
 }
