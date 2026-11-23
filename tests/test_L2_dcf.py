@@ -398,3 +398,13 @@ def test_revenue_scale_ignores_a_stub_period_filed_as_annual():
     assert vol < 0.10 and scale < 0.20                 # was about 1.47 with the stub counted
     clean = {"views": {"annual": [{"end": e, "values": {"revenue": r}} for e, r in rows if e != "2022-12-31"]}}
     assert company_scale(clean, table)[1] < 0.10
+
+
+def test_public_configs_do_not_value_in_implied_mode():
+    # Implied mode solves growth so the DCF equals the market price. With prices published
+    # (SITE_MARKET_DATA=real) that DCF would enter the blended value as the price itself:
+    # AAPL's headline on 2026-11-23 was 60% price. Public configs must forecast.
+    import json
+    from pathlib import Path
+    for f in (Path(__file__).resolve().parents[1] / "configs" / "public" / "assumptions").glob("*/dcf.json"):
+        assert json.loads(f.read_text()).get("mode", "forecast") == "forecast", f
