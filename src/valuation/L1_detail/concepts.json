@@ -1,5 +1,5 @@
 {
-  "registry_version": "0.3.1",
+  "registry_version": "0.3.2",
   "attribution": "Concept set and display names from edgartools standardization (MIT), based on mpreiss9's taxonomy: https://edgartools.readthedocs.io/en/stable/xbrl/concepts/standardization/",
   "concepts": [
     {
@@ -173,7 +173,10 @@
       "unit_type": "monetary",
       "kind": "reported",
       "source": "edgartools",
-      "primary_tags": []
+      "primary_tags": [
+        "us-gaap:LongTermInvestments",
+        "us-gaap:MarketableSecuritiesNoncurrent"
+      ]
     },
     {
       "id": "deferred_tax_noncurrent_assets",
