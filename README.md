@@ -178,18 +178,18 @@ VALUATION_COURSE_DIR=/path/to/workbooks pytest tests/test_course_parity.py
 
 ## Data and licensing
 
-Only government data and Damodaran's openly published datasets reach the public site. Third-party market data is used in private runs or in the visitor's own browser, and is never committed or published.
+The public site publishes SEC, FRED and Damodaran data, plus Yahoo Finance prices when the repository variable `SITE_MARKET_DATA` is `real` (set since 2026-11-23). Market data is never committed to `main`; it lives only on the `site-data` branch the Refresh writes.
 
 | Source | Provides | Public site | Your browser / private runs |
 |---|---|---|---|
 | [SEC EDGAR](https://www.sec.gov/search-filings/edgar-application-programming-interfaces) | Statements, share counts, sector membership | Yes | Yes |
 | [FRED](https://fred.stlouisfed.org/series/DGS10) (DGS10) | Risk-free rate | Yes | Yes |
 | [Damodaran, NYU Stern](https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/Betas.html) | Industry betas, implied ERP | Yes, cited | Yes |
-| Yahoo Finance (unofficial endpoints) | Prices, beta, gaps in the filings, cross-check | No | Yes |
+| Yahoo Finance (unofficial endpoints) | Prices, beta, gaps in the filings, cross-check | Yes, with `SITE_MARKET_DATA=real` | Yes |
 | [Alpha Vantage](https://www.alphavantage.co/), [Finnhub](https://finnhub.io/) (your own key) | Backup prices, beta | No | Yes |
 
 - SEC requests carry a contact User-Agent and stay within the fair-access limit of 10 requests a second.
-- **Showcase mode**, the public default, never fetches market prices. If a run carried them, publish strips the prices and everything derived from them. Price-based outputs on the public site appear only in the synthetic demo.
+- **Showcase mode** (`SITE_MARKET_DATA` unset or `showcase`) never fetches market prices; if a run carried them, publish strips the prices and everything derived from them. **Real mode** (`SITE_MARKET_DATA=real`) fetches and publishes them, so comps and upside appear on the live companies.
 - The repository ships code, configuration and the synthetic demo, not any third-party dataset.
 
 ## Quick start

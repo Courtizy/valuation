@@ -115,7 +115,7 @@ async function init() {
     if ((!state[k] || !Object.keys(state[k]).length) && device.files[f]) try { state[k] = JSON.parse(device.files[f]); } catch { /* keep */ }
   }
   fillSectorList();
-  $("footer-market").textContent = state.index.market_data === "real" ? "Market prices: Yahoo, checked against Alpha Vantage."
+  $("footer-market").textContent = state.index.market_data === "real" ? "Market prices: Yahoo Finance, last close (checked against Alpha Vantage when a key is set)."
     : state.index.market_data === "demo" ? "Demo: synthetic companies and synthetic market data, run through the real pipeline."
       : "Market prices aren't published here (data terms); the Demo uses synthetic market figures.";
   $("generated").textContent = state.index.generated_at ? `Data index updated ${state.index.generated_at.replace("T", " ").replace("+00:00", " UTC")}.` : "";

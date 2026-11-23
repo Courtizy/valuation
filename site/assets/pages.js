@@ -80,7 +80,7 @@ const INPUTS = [
   ["Beta", "Industry unlevered beta (cash-corrected), relevered at the company's own D/E", "Aswath Damodaran, NYU Stern: US industry betas"],
   ["Equity risk premium", "Implied ERP (FCFE), start of the year", "Aswath Damodaran, NYU Stern: implied ERP"],
   ["Discount rate (WACC)", "Triangular range around the built-up rate", "CAPM on the beta and ERP above; D/E at the model's own equity value"],
-  ["Share price, peer prices", "Not published here (data terms)", "Synthetic in the Demo; in-browser runs fetch them from Yahoo or your own key, kept on your device"],
+  ["Share price, peer prices", "Last close, 52-week range and 5-year monthly beta", "Yahoo Finance (unofficial endpoints), checked against Alpha Vantage when a key is set; synthetic in the Demo"],
   ["Peer set", "Hand-picked or ranked by similarity", "configs/public/assumptions/{ticker}/comps.json"],
 ];
 
