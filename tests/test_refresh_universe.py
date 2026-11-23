@@ -162,3 +162,52 @@ def test_sic_lists_stop_at_the_time_budget_and_rotate_weekly(tmp_path):
     clock.t, free = 0.0, _SlowEdgar(clock, 60)
     done, failed = sic_lists("2026-11-16", Paths(tmp_path / "w3", tmp_path), lambda: free, clock=clock)
     assert failed == [] and done == len(free.asked) > 10   # no budget: every code
+
+
+# ---- comps for every company: peers picked from this run's sector screens
+
+def _screens(tmp_path, as_of="2026-11-23"):
+    row = lambda t, rev, g, m, ind: {"ticker": t, "revenue": rev, "revenue_cagr": g, "operating_margin": m,  # noqa: E731
+                                     "classification": {"sector": "S", "industry": ind}}
+    tech = [row("AAA", 100e9, 0.08, 0.30, "hw"), row("HW1", 90e9, 0.02, 0.10, "hw"), row("HW2", 80e9, 0.03, 0.12, "hw"),
+            row("HW3", 70e9, 0.01, 0.08, "hw"), row("TINY", 1e9, 0.08, 0.30, "sw")]
+    food = [row("BEV", 60e9, 0.07, 0.29, "bev"), row("GRO", 150e9, 0.03, 0.02, "gro")]
+    for sid, rows in (("sector-technology", tech), ("sector-food", food)):
+        p = tmp_path / "data" / "sectors" / sid / as_of / "sector.json"
+        p.parent.mkdir(parents=True)
+        p.write_text(json.dumps({"label": sid, "companies": rows}))
+    src = tmp_path / "assumptions"
+    (src / "HAND").mkdir(parents=True)
+    (src / "HAND" / "comps.json").write_text('{"peers": ["X"]}')
+    return src
+
+
+def test_auto_comps_picks_like_companies_across_sectors(tmp_path):
+    src = _screens(tmp_path)
+    out, report = refresh.auto_comps(["AAA", "HAND", "NONE"], "2026-11-23", data_dir=tmp_path / "data",
+                                     source=src, out=tmp_path / "copy")
+    doc = json.loads((out / "AAA" / "comps.json").read_text())
+    assert {p["ticker"] for p in doc["peers"]} == {"HW1", "HW2", "HW3", "TINY"}   # the sector set, from its own screen
+    like = [p["ticker"] for p in doc["closest"]]
+    assert like[0] == "BEV"                       # same growth and margin, another sector
+    assert "TINY" not in like                     # under 1/20 of the revenue
+    assert json.loads((out / "HAND" / "comps.json").read_text()) == {"peers": ["X"]}   # hand-picked lists win
+    assert "NONE" in report and not (out / "NONE").exists()
+    assert not (src / "AAA").exists()             # configs are never written
+
+
+def test_refresh_passes_the_picked_assumptions_to_each_company(tmp_path, monkeypatch):
+    cmds = []
+    monkeypatch.setattr(refresh, "pipeline", lambda cmd: cmds.append(cmd) or 0)
+    monkeypatch.setattr(refresh, "fetch_risk_free", lambda as_of: None)
+    picked = tmp_path / "picked"
+    (picked / "A").mkdir(parents=True)
+    (picked / "A" / "comps.json").write_text("{}")
+    monkeypatch.setattr(refresh, "auto_comps", lambda tickers, as_of: (picked, {}))
+    u = tmp_path / "u.json"
+    u.write_text(json.dumps({"tickers": ["A", "B"]}))
+    assert refresh.main(["--universe", str(u), "--as-of", "2026-11-23", "--market", "all"]) == 0
+    runs = {c[1]: c for c in cmds if c[0] == "run"}
+    assert runs["A"][runs["A"].index("--models") + 1] == "dcf,comps"
+    assert runs["B"][runs["B"].index("--models") + 1] == "dcf"
+    assert all(c[-2:] == ["--assumptions-dir", str(picked)] for c in runs.values())

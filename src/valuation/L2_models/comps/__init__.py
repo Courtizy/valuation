@@ -23,7 +23,8 @@ Implied target value per share (per peer, per multiple)
 Two peer sets
 -------------
 "peers" is the sector set: companies from the target's own industry (the traditional pick).
-"closest" (optional) is the set closest on fundamentals, from anywhere in the sector screen.
+"closest" (optional) is the set closest on fundamentals: from the sector screen in the peer picker, from any
+screened sector in the Refresh.
 Both are valued the same way; the sector set is this model's value, the closest set is
 reported under details.closest and shown as its own football-field row.
 

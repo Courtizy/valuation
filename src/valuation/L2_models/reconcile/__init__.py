@@ -24,7 +24,7 @@ from valuation._core.checks import exit_multiple_check, margin_vs_peers
 
 from .deal import deal_summary
 from .headlines import deal_headlines, valuation_headlines
-from .methods import method_plan
+from .methods import METHOD_NAMES, method_plan
 
 COMPARISON_SCHEMA_VERSION = "0.4.0"
 
@@ -107,7 +107,20 @@ def build_comparison(result_paths: list[str | Path], detail: dict | None = None,
 
     by_model = {r["model"]: r for r in results}
     profile = (detail or {}).get("profile")
-    plan = method_plan(profile, sorted(by_model), overrides)
+    # a method whose base value per share is zero or less says the model doesn't fit this company
+    # (debt above its value on that method's inputs); it is shown, but carries no weight
+    not_meaningful = sorted(m for m, r in by_model.items()
+                            if ((r.get("value_per_share") or {}).get("p50") or 0) <= 0)
+    plan = method_plan(profile, sorted(m for m in by_model if m not in not_meaningful), overrides)
+    for m in not_meaningful:
+        row = next((x for x in plan["methods"] if x["model"] == m), None)
+        if row is None:
+            row = {"model": m, "name": METHOD_NAMES.get(m, m), "role": "reference", "default_weight": 0.0}
+            plan["methods"].append(row)
+        row.update(ran=True, weight=0.0, role="reference",
+                   reason=f"value per share {(by_model[m]['value_per_share'] or {}).get('p50', 0):.2f} is not positive: "
+                          "shown for reference, not weighted")
+        plan["notes"].append(f"{row['name']} gives no positive value per share, so its weight went to the other methods")
     for m in plan["methods"]:
         vps = by_model.get(m["model"], {}).get("value_per_share")
         m["value_per_share"] = vps
