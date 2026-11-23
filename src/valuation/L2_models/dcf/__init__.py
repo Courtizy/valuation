@@ -193,6 +193,15 @@ class DCF:
         cost_pct = fc.get("cost_pct_revenue") or {}
         ratio = lambda k: cost_pct.get(k, (base.get(k) or 0) / rev)  # noqa: E731
 
+        def cost_line(k: str) -> dict:
+            """A cost line as a share of sales: one ratio, or one per forecast year (a mix shift)."""
+            v = ratio(k)
+            if isinstance(v, (list, tuple)):
+                if not v or not v[0]:
+                    raise AssumptionError(f"forecast.cost_pct_revenue.{k} needs a non-zero first year")
+                return {"method": "pct_of_sales", "value": v[0], "adjust": [x / v[0] - 1 for x in v]}
+            return {"method": "pct_of_sales", "value": v}
+
         n = int(fc.get("years_to_terminal", 10))
         if n < 1:
             raise AssumptionError("forecast.years_to_terminal must be at least 1")
@@ -204,10 +213,10 @@ class DCF:
             revenue_driver["adjust"] = fc["growth_adjust"]
         drivers = {
             "revenue": revenue_driver,
-            "cogs": {"method": "pct_of_sales", "value": ratio("cogs")},
-            "sga": {"method": "pct_of_sales", "value": ratio("sga")},
-            "rnd": {"method": "pct_of_sales", "value": ratio("rnd")},
-            "other_opex": {"method": "pct_of_sales", "value": ratio("other_opex")},
+            "cogs": cost_line("cogs"),
+            "sga": cost_line("sga"),
+            "rnd": cost_line("rnd"),
+            "other_opex": cost_line("other_opex"),
             "depreciation": {"method": "pct_of_sales", "value": base["depreciation"] / rev},
             "amortization": {"method": "values", "values": [0]},
             "capex": {"method": "pct_of_sales", "value": capex},

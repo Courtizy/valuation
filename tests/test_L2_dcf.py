@@ -433,3 +433,13 @@ def test_forecast_mode_reports_the_growth_the_price_implies(detail):
     # no price: nothing to solve against
     nop = m.run({**detail, "market": None}, {**assumptions(), "market": {"basic_shares": 1e8}}).to_dict()
     assert nop["details"]["price_implied_growth"] is None
+
+
+def test_cost_ratio_per_year_follows_the_list(detail):
+    # A mix shift: cost of sales as one ratio per forecast year (the last one repeats).
+    m = get_model("dcf")
+    flat = m.run(detail, assumptions(forecast={"cost_pct_revenue": {"cogs": 0.60}})).to_dict()
+    path = m.run(detail, assumptions(forecast={"cost_pct_revenue": {"cogs": [0.60, 0.58, 0.56]}})).to_dict()
+    mf, mp = flat["assumptions_used"]["forecast"]["ebitda_margin"], path["assumptions_used"]["forecast"]["ebitda_margin"]
+    assert mp[0] == A(mf[0]) and mp[1] == A(mf[1] + 0.02) and mp[-1] == A(mf[-1] + 0.04)
+    assert path["details"]["bridge"]["value_per_share"] > flat["details"]["bridge"]["value_per_share"]
